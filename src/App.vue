@@ -1,47 +1,92 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
-</script>
-
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
-
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
+  <div id="app">
+    <div v-if="isLoading" class="loading-container">
+      <div class="spinner"></div>
+      <p>در حال بارگذاری...</p>
     </div>
-  </header>
 
-  <main>
-    <TheWelcome />
-  </main>
+    <template v-else>
+      <Navbar v-if="isLoggedIn" />
+      <router-view />
+    </template>
+  </div>
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
+<script>
+import Navbar from '@/components/layout/Navbar.vue'
+
+export default {
+  name: 'App',
+  components: {
+    Navbar
+  },
+  data() {
+    return {
+      isLoading: true
+    }
+  },
+  computed: {
+    isLoggedIn() {
+      return this.$store.getters.isLoggedIn
+    }
+  },
+  async created() {
+    try {
+      // بررسی اینکه آیا کاربر وارد شده است
+      await this.$store.dispatch('checkAuth')
+    } catch (error) {
+      console.error('Error checking authentication status:', error)
+    } finally {
+      this.isLoading = false
+    }
+  }
+}
+</script>
+
+<style>
+@import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+
+body {
+  font-family: 'Vazirmatn', Tahoma, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  direction: rtl;
+  background-color: #f5f5f5;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
+.loading-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border-right-color: #007bff;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
 
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter, .fade-leave-to {
+  opacity: 0;
 }
 </style>
