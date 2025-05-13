@@ -25,9 +25,11 @@
 </template>
 
 <script>
-import Sidebar from '@/components/layout/Sidebar.vue'
-import TeacherDashboard from '@/components/dashboard/TeacherDashboard.vue'
-import StudentDashboard from '@/components/dashboard/StudentDashboard.vue'
+import Sidebar from '@/components/layout/Sidebar.vue';
+import TeacherDashboard from '@/components/dashboard/TeacherDashboard.vue';
+import StudentDashboard from '@/components/dashboard/StudentDashboard.vue';
+import { useUser } from '@/composables/useUser.js';
+import { computed } from 'vue';
 
 export default {
   name: 'Dashboard',
@@ -36,13 +38,13 @@ export default {
     TeacherDashboard,
     StudentDashboard
   },
-  computed: {
-    user() {
-      return this.$store.getters.currentUser
-    },
-    isTeacher() {
-      return this.$store.getters.userRole.isTeacher
-    }
+  setup() {
+    const { currentUser, isTeacher } = useUser();
+
+    return {
+      user: currentUser,
+      isTeacher
+    };
   }
 }
 </script>

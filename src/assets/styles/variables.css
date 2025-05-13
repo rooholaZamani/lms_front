@@ -1,0 +1,71 @@
+/* متغیرهای CSS برای استفاده در سراسر پروژه */
+:root {
+    /* رنگ‌های اصلی */
+    --primary-color: #007bff;
+    --primary-light: #cce5ff;
+    --primary-dark: #0056b3;
+
+    --secondary-color: #6c757d;
+    --secondary-light: #e2e3e5;
+    --secondary-dark: #545b62;
+
+    --success-color: #28a745;
+    --success-light: #d4edda;
+    --success-dark: #1e7e34;
+
+    --danger-color: #dc3545;
+    --danger-light: #f8d7da;
+    --danger-dark: #bd2130;
+
+    --warning-color: #ffc107;
+    --warning-light: #fff3cd;
+    --warning-dark: #d39e00;
+
+    --info-color: #17a2b8;
+    --info-light: #d1ecf1;
+    --info-dark: #117a8b;
+
+    /* رنگ‌های خنثی */
+    --white: #ffffff;
+    --gray-100: #f8f9fa;
+    --gray-200: #e9ecef;
+    --gray-300: #dee2e6;
+    --gray-400: #ced4da;
+    --gray-500: #adb5bd;
+    --gray-600: #6c757d;
+    --gray-700: #495057;
+    --gray-800: #343a40;
+    --gray-900: #212529;
+    --black: #000000;
+
+    /* تنظیمات فونت */
+    --font-family: 'Vazirmatn', Tahoma, Arial, sans-serif;
+    --font-size-base: 1rem;
+    --font-size-sm: 0.875rem;
+    --font-size-lg: 1.25rem;
+    --font-weight-normal: 400;
+    --font-weight-bold: 700;
+
+    /* فاصله‌گذاری */
+    --spacing-1: 0.25rem;
+    --spacing-2: 0.5rem;
+    --spacing-3: 1rem;
+    --spacing-4: 1.5rem;
+    --spacing-5: 3rem;
+
+    /* سایه‌ها */
+    --shadow-sm: 0 .125rem .25rem rgba(0, 0, 0, .075);
+    --shadow: 0 .5rem 1rem rgba(0, 0, 0, .15);
+    --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, .175);
+
+    /* انیمیشن‌ها */
+    --transition-slow: 0.5s all ease;
+    --transition-normal: 0.3s all ease;
+    --transition-fast: 0.15s all ease;
+
+    /* گردی گوشه‌ها */
+    --border-radius-sm: 0.25rem;
+    --border-radius: 0.5rem;
+    --border-radius-lg: 1rem;
+    --border-radius-circle: 50%;
+}

@@ -10,35 +10,22 @@
           <li class="nav-item">
             <router-link class="nav-link" :to="{ name: 'Dashboard' }">داشبورد</router-link>
           </li>
+
           <li class="nav-item" v-if="isTeacher">
             <router-link class="nav-link" :to="{ name: 'TeachingCourses' }">دوره‌های من</router-link>
           </li>
+
           <li class="nav-item" v-if="isStudent">
             <router-link class="nav-link" :to="{ name: 'Courses' }">دوره‌های من</router-link>
           </li>
+
           <li class="nav-item" v-if="isStudent">
             <router-link class="nav-link" :to="{ name: 'AvailableCourses' }">دوره‌های موجود</router-link>
           </li>
         </ul>
+
         <div class="d-flex">
-          <div class="dropdown">
-            <button v-if="user" class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown">
-              <i class="fas fa-user"></i> {{ user.firstName ? user.firstName + ' ' + user.lastName : user.username }}
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li>
-                <router-link class="dropdown-item" :to="{ name: 'Profile' }">
-                  <i class="fas fa-user-cog"></i> پروفایل
-                </router-link>
-              </li>
-              <li><hr class="dropdown-divider"></li>
-              <li>
-                <a class="dropdown-item" href="#" @click.prevent="logout">
-                  <i class="fas fa-sign-out-alt"></i> خروج
-                </a>
-              </li>
-            </ul>
-          </div>
+          <user-dropdown v-if="user" :user="user" @logout="logout" />
         </div>
       </div>
     </div>
@@ -46,24 +33,29 @@
 </template>
 
 <script>
+import UserDropdown from '@/components/layout/UserDropdown.vue';
+import { useUser } from '@/composables/useUser.js';
+
 export default {
   name: 'Navbar',
-  computed: {
-    user() {
-      return this.$store.getters.currentUser
-    },
-    isTeacher() {
-      return this.$store.getters.userRole.isTeacher
-    },
-    isStudent() {
-      return this.$store.getters.userRole.isStudent
-    }
+  components: {
+    UserDropdown
   },
-  methods: {
-    async logout() {
-      await this.$store.dispatch('logout')
-      this.$router.push({ name: 'Login' })
-    }
+  setup() {
+    const { currentUser, isTeacher, isStudent, logout } = useUser();
+
+    const handleLogout = async () => {
+      await logout();
+      // انتقال به صفحه ورود
+      window.location.href = '/login';
+    };
+
+    return {
+      user: currentUser,
+      isTeacher,
+      isStudent,
+      logout: handleLogout
+    };
   }
 }
 </script>

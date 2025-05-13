@@ -1,0 +1,60 @@
+/* استایل‌های فرم‌ها */
+.form-container {
+    max-width: 600px;
+    width: 100%;
+    padding: 30px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.form-logo {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+}
+
+.form-logo.primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.form-logo.success {
+    background-color: #28a745;
+    color: white;
+}
+
+.form-title {
+    font-size: 1.5rem;
+    color: #333;
+}
+
+.form-footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* استایل‌های مودال */
+.modal-header {
+    padding: 15px 20px;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    padding: 15px 20px;
+}
