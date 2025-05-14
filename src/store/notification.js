@@ -1,4 +1,4 @@
-// src/store/modules/notification.js
+// src/store/notification.js
 export default {
     namespaced: true,
     state: {
@@ -30,7 +30,7 @@ export default {
                 ...notification
             });
 
-            // اگر autoClose فعال باشد، notifiction بعد از مدت مشخصی حذف می‌شود
+            // اگر autoClose فعال باشد، notification بعد از مدت مشخصی حذف می‌شود
             if (notification.autoClose !== false) {
                 setTimeout(() => {
                     commit('remove', notification.id);

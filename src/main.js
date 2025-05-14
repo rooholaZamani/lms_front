@@ -18,7 +18,7 @@ import UserGuide from './plugins/userGuide'
 import ToastPlugin from './plugins/toast'
 
 // اضافه کردن ماژول notification به store
-import notification from './store/modules/notification'
+import notification from './store/notification'
 store.registerModule('notification', notification)
 
 // تنظیم URL پایه برای Axios
