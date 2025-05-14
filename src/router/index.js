@@ -42,14 +42,14 @@ const routes = [
   {
     path: '/courses/:id',
     name: 'CourseDetail',
-    component: () => import(/* webpackChunkName: "course-detail" */ '../components/views/CourseDetail.vue'),
+    component: () => import(/* webpackChunkName: "course-detail" */ '../components/courses/CourseDetail.vue'),
     props: true,
     meta: { title: 'جزئیات دوره', requiresAuth: true }
   },
   {
     path: '/courses/teaching',
     name: 'TeachingCourses',
-    component: () => import(/* webpackChunkName: "teaching-courses" */ '../views/courses/TeachingCourses.vue'),
+    component: () => import(/* webpackChunkName: "teaching-courses" */ '../components/courses/TeachingCourses.vue'),
     meta: { title: 'دوره‌های تدریس', requiresAuth: true, requiresTeacher: true }
   },
   {
