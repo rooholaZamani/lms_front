@@ -15,4 +15,13 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  define: {
+    // تعریف process.env برای استفاده در کل پروژه
+    'process.env': {
+      NODE_ENV: JSON.stringify(process.env.NODE_ENV),
+      BASE_URL: JSON.stringify('/'),
+      VUE_APP_API_URL: JSON.stringify(process.env.VUE_APP_API_URL || '/api')
+      // سایر متغیرهای محیطی که در پروژه استفاده می‌کنید را اینجا اضافه کنید
+    }
+  }
 })
