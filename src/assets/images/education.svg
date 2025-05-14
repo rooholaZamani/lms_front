@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200px" height="200px" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <title>Education</title>
+    <g stroke="none" fill="none" fill-rule="evenodd">
+        <!-- Graduation Cap -->
+        <path d="M100,30 L160,60 L100,90 L40,60 L100,30" fill="#007bff" fill-rule="nonzero"/>
+        <path d="M70,70 L70,110 C70,120 100,130 100,130 C100,130 130,120 130,110 L130,70" stroke="#007bff" stroke-width="5" stroke-linecap="round"/>
+        <path d="M160,60 L160,100" stroke="#007bff" stroke-width="5" stroke-linecap="round"/>
+
+        <!-- Book -->
+        <rect x="60" y="140" width="80" height="10" rx="2" fill="#007bff"/>
+        <path d="M60,140 C60,140 60,110 60,110 C60,110 100,120 140,110 C140,110 140,140 140,140" fill="#ffffff" stroke="#007bff" stroke-width="3"/>
+        <path d="M100,110 L100,140" stroke="#007bff" stroke-width="1" stroke-dasharray="5,3"/>
+    </g>
+</svg>

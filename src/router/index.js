@@ -55,20 +55,20 @@ const routes = [
   {
     path: '/courses/available',
     name: 'AvailableCourses',
-    component: () => import(/* webpackChunkName: "available-courses" */ '../views/courses/AvailableCourses.vue'),
+    component: () => import(/* webpackChunkName: "available-courses" */ '../components/courses/AvailableCourses.vue'),
     meta: { title: 'دوره‌های موجود', requiresAuth: true }
   },
   {
     path: '/exams/:id',
     name: 'Exam',
-    component: () => import(/* webpackChunkName: "exam" */ '../views/exams/Exam.vue'),
+    component: () => import(/* webpackChunkName: "exam" */ '../components/exams/Exam.vue'),
     props: true,
     meta: { title: 'آزمون', requiresAuth: true }
   },
   {
     path: '/profile',
     name: 'Profile',
-    component: () => import(/* webpackChunkName: "profile" */ '../views/Profile.vue'),
+    component: () => import(/* webpackChunkName: "profile" */ '../components/views/Profile.vue'),
     meta: { title: 'پروفایل', requiresAuth: true }
   },
   {
