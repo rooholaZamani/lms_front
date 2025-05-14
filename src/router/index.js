@@ -30,19 +30,19 @@ const routes = [
   {
     path: '/dashboard',
     name: 'Dashboard',
-    component: () => import(/* webpackChunkName: "dashboard" */ '../views/Dashboard.vue'),
+    component: () => import(/* webpackChunkName: "dashboard" */ '../components/dashboard/Dashboard.vue'),
     meta: { title: 'داشبورد', requiresAuth: true }
   },
   {
     path: '/courses',
     name: 'Courses',
-    component: () => import(/* webpackChunkName: "courses" */ '../views/courses/CourseList.vue'),
+    component: () => import(/* webpackChunkName: "courses" */ '../components/courses/CourseList.vue'),
     meta: { title: 'دوره‌ها', requiresAuth: true }
   },
   {
     path: '/courses/:id',
     name: 'CourseDetail',
-    component: () => import(/* webpackChunkName: "course-detail" */ '../views/courses/CourseDetail.vue'),
+    component: () => import(/* webpackChunkName: "course-detail" */ '../components/views/CourseDetail.vue'),
     props: true,
     meta: { title: 'جزئیات دوره', requiresAuth: true }
   },
