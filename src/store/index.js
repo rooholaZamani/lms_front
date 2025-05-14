@@ -1,7 +1,7 @@
 // src/store/index.js
 import { createStore } from 'vuex'
-import auth from './modules/auth'
-import courses from './modules/courses'
+import auth from './auth'
+import courses from './courses'
 
 export default createStore({
     modules: {

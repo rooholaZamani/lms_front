@@ -2,10 +2,10 @@ import { createRouter, createWebHistory } from 'vue-router'
 import store from '../store'
 
 // لود صفحات اصلی
-import Home from '../views/Home.vue'
-import Login from '../views/Login.vue'
-import Register from '../views/Register.vue'
-import NotFound from '../views/NotFound.vue'
+import Home from '../components/views/Home.vue'
+import Login from '../components/views/Login.vue'
+import Register from '../components/views/Register.vue'
+import NotFound from '../components/views/NotFound.vue'
 
 // تعریف مسیرها
 const routes = [
