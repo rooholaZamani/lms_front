@@ -4,7 +4,6 @@
     <div class="background">
       <img src="@/assets/images/background.svg" class="svg-background" alt="background">
     </div>
-
     <!-- Login Form Container -->
     <div class="login-container">
       <div class="logo-container">
@@ -66,9 +65,13 @@
 
 <script>
 import formMixin from '@/mixins/formMixin.js';
+import BackgroundSVG from '@/components/common/BackgroundSVG.vue';
 
 export default {
   name: 'Login',
+  components: {
+    BackgroundSVG
+  },
   mixins: [formMixin],
   data() {
     return {
@@ -117,7 +120,6 @@ export default {
 }
 
 
-
 .background {
   position: fixed;
   top: 0;
@@ -135,7 +137,6 @@ export default {
   transform: scale(1.1);
   filter: blur(5px);
 }
-
 .login-container {
   width: 420px;
   background: rgba(255, 255, 255, 0.85);
