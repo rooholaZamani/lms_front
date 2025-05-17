@@ -1,7 +1,7 @@
 <template>
   <footer class="footer-section">
     <div class="container text-center">
-      <p>تمامی حقوق محفوظ است &copy; {{ currentYear }} سامانه مدیریت یادگیری</p>
+      <p>تمامی حقوق محفوظ است &copy; {{ currentYear }} سامانه  آموزش آنلاین</p>
     </div>
   </footer>
 </template>

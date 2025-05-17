@@ -13,7 +13,7 @@
         </div>
       </div>
 
-      <h1 class="login-title">ورود به سامانه مدیریت یادگیری</h1>
+      <h1 class="login-title">ورود به سامانه آموزش آنلاین</h1>
 
       <div v-if="error" class="alert alert-danger">
         {{ error }}
@@ -84,7 +84,7 @@ export default {
       this.startSubmitting();
 
       try {
-        const result = await this.$store.dispatch('login', {
+        const result = await this.$store.dispatch('auth/login', {
           username: this.formData.username,
           password: this.formData.password
         });

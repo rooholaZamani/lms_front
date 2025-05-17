@@ -5,7 +5,7 @@
         <div class="form-logo success">
           <i class="fas fa-user-plus"></i>
         </div>
-        <h1 class="form-title">ثبت نام در سامانه مدیریت یادگیری</h1>
+        <h1 class="form-title">ثبت نام در سامانه  آموزش آنلاین</h1>
       </div>
 
       <div v-if="error" class="alert alert-danger">

@@ -6,12 +6,11 @@
         <div class="col-md-2 d-none d-md-block">
           <Sidebar />
         </div>
-
         <!-- Main Content -->
         <div class="col-md-10 col-sm-12 px-4 py-3">
           <!-- داشبورد معلم -->
           <template v-if="isTeacher">
-            <TeacherDashboard :user="user" />
+            <TeacherDashboard :user="user"  assignments=""/>
           </template>
 
           <!-- داشبورد دانش‌آموز -->

@@ -31,8 +31,7 @@ export default {
   },
   async created() {
     try {
-      // بررسی اینکه آیا کاربر وارد شده است
-      await this.$store.dispatch('checkAuth')
+      await this.$store.dispatch('auth/checkAuth')
     } catch (error) {
       console.error('Error checking authentication status:', error)
     } finally {
