@@ -84,7 +84,7 @@ export default {
       this.startSubmitting();
 
       try {
-        const result = await this.$store.dispatch('login', {
+        const result = await this.$store.dispatch('auth/login', {
           username: this.formData.username,
           password: this.formData.password
         });
