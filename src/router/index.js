@@ -84,42 +84,68 @@ const router = createRouter({
   routes
 })
 
-// محافظت از مسیرهایی که نیاز به احراز هویت دارند
+// در فایل src/router/index.js
+
 router.beforeEach(async (to, from, next) => {
   // تنظیم عنوان صفحه
-  document.title = to.meta.title ? `${to.meta.title} - سامانه مدیریت یادگیری` : 'سامانه مدیریت یادگیری'
-  
+  document.title = to.meta.title ? `${to.meta.title} - سامانه  آموزش آنلاین` : 'سامانه  آموزش آنلاین'
+
   // بررسی نیاز به احراز هویت
   if (to.matched.some(record => record.meta.requiresAuth)) {
     // بررسی وضعیت لاگین کاربر
     if (!store.getters.isLoggedIn) {
+      console.log("کاربر لاگین نیست:", localStorage.getItem('token'), store.state.auth);
+
+      // یک راه میانبر برای حالت تست: اگر localStorage دارای token است، ولی store هنوز مقدار ندارد
+      if (localStorage.getItem('token') && process.env.NODE_ENV === 'development') {
+        console.log("بازیابی داده‌های تست از localStorage");
+        try {
+          const user = JSON.parse(localStorage.getItem('user') || 'null');
+          const userRole = JSON.parse(localStorage.getItem('userRole') || 'null');
+
+          if (user && userRole) {
+            // تنظیم مجدد state در Vuex
+            store.commit('auth/auth_success', {
+              token: localStorage.getItem('token'),
+              user: user,
+              userRole: userRole
+            });
+            return next(); // ادامه مسیر
+          }
+        } catch (e) {
+          console.error("خطا در بازیابی داده‌ها:", e);
+        }
+      }
+
       // کاربر وارد نشده است، به صفحه ورود منتقل می‌شود
-      next({ 
+      next({
         path: '/login',
         query: { redirect: to.fullPath }
-      })
+      });
     } else {
       // بررسی نقش در صورت نیاز
+      // (بقیه کد بدون تغییر)
       if (to.matched.some(record => record.meta.requiresTeacher)) {
         if (store.getters.userRole.isTeacher) {
-          next()
+          next();
         } else {
           // کاربر مجوز دسترسی ندارد
-          next({ name: 'Dashboard' })
+          next({ name: 'Dashboard' });
         }
       } else {
-        next()
+        next();
       }
     }
   } else {
     // صفحاتی که نیازی به احراز هویت ندارند
+    // (بقیه کد بدون تغییر)
     if (store.getters.isLoggedIn && (to.path === '/login' || to.path === '/register')) {
       // کاربر قبلاً وارد شده و می‌خواهد به صفحه ورود برود
-      next({ name: 'Dashboard' })
+      next({ name: 'Dashboard' });
     } else {
-      next()
+      next();
     }
   }
-})
+});
 
 export default router

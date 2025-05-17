@@ -1,4 +1,3 @@
-// src/store/modules/auth.js
 import axios from 'axios'
 
 export default {
@@ -43,15 +42,10 @@ export default {
             try {
                 commit('auth_request')
 
-                // با استفاده از فرم ورود اسپرینگ سکیوریتی
-                const formData = new FormData()
-                formData.append('username', user.username)
-                formData.append('password', user.password)
-
-                const response = await axios.post('/auth/login', formData, {
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    }
+                // استفاده از فرمت JSON به جای FormData
+                const response = await axios.post('/auth/login', {
+                    username: user.username,
+                    password: user.password
                 })
 
                 if (response.data.success) {
@@ -59,7 +53,8 @@ export default {
                     const userResponse = await axios.get('/user/current')
                     const roleResponse = await axios.get('/user/role')
 
-                    const token = 'dummy-token' // در یک پروژه واقعی از توکن JWT استفاده می‌شود
+                    // ذخیره نام کاربری و رمز عبور برای استفاده در Basic Authentication
+                    const token = btoa(`${user.username}:${user.password}`) // تبدیل به Base64
                     const userData = userResponse.data
                     const userRole = roleResponse.data
 
@@ -69,6 +64,9 @@ export default {
 
                     commit('auth_success', { token, user: userData, userRole })
                     return { success: true }
+                } else {
+                    // بازگرداندن وضعیت عدم موفقیت به همراه پیام
+                    return { success: false, message: response.data.message || 'نام کاربری یا رمز عبور اشتباه است' }
                 }
             } catch (err) {
                 commit('auth_error')

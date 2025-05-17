@@ -1,7 +1,7 @@
 <template>
   <section class="hero-section">
     <div class="container">
-      <h1>به سامانه مدیریت یادگیری خوش آمدید</h1>
+      <h1>به سامانه  آموزش آنلاین خوش آمدید</h1>
       <p class="lead">دسترسی آسان به آموزش‌های با کیفیت</p>
       <div class="hero-buttons">
         <router-link :to="{ name: 'Register' }" class="btn btn-light btn-lg">شروع یادگیری</router-link>
