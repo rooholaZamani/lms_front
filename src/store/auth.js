@@ -40,40 +40,68 @@ export default {
     actions: {
         async login({ commit }, user) {
             try {
-                commit('auth_request')
+                commit('auth_request');
 
-                // استفاده از فرمت JSON به جای FormData
+                // افزودن console.log برای دیباگ
+                console.log("Sending login request:", user.username);
+
+                // ارسال درخواست لاگین
                 const response = await axios.post('/auth/login', {
                     username: user.username,
                     password: user.password
-                })
+                });
 
+                // نمایش پاسخ API برای دیباگ
+                console.log("Login API response:", response.data);
+
+                // بررسی ساختار پاسخ و مقادیر مورد انتظار
                 if (response.data.success) {
-                    // دریافت اطلاعات کاربر
-                    const userResponse = await axios.get('/user/current')
-                    const roleResponse = await axios.get('/user/role')
 
-                    // ذخیره نام کاربری و رمز عبور برای استفاده در Basic Authentication
-                    const token = btoa(`${user.username}:${user.password}`) // تبدیل به Base64
-                    const userData = userResponse.data
-                    const userRole = roleResponse.data
+                    console.log("Login successful, retrieving user data");
+                    const token = btoa(`${user.username}:${user.password}`);
 
-                    localStorage.setItem('token', token)
-                    localStorage.setItem('user', JSON.stringify(userData))
-                    localStorage.setItem('userRole', JSON.stringify(userRole))
+                    localStorage.setItem('token', token);
+                    axios.defaults.headers.common['Authorization'] = `Basic ${token}`;
+                    try {
+                        // دریافت اطلاعات کاربر
+                        const userResponse = await axios.get('/user/current');
+                        console.log("User data response:", userResponse.data);
 
-                    commit('auth_success', { token, user: userData, userRole })
-                    return { success: true }
+                        const roleResponse = await axios.get('/user/role');
+                        console.log("User role response:", roleResponse.data);
+
+
+                        const userData = userResponse.data;
+                        const userRole = roleResponse.data || { isTeacher: response.data.isTeacher, isStudent: !response.data.isTeacher };
+
+
+                        // ذخیره در localStorage
+                        localStorage.setItem('token', token);
+                        localStorage.setItem('user', JSON.stringify(userData));
+                        localStorage.setItem('userRole', JSON.stringify(userRole));
+
+                        // بررسی داده‌های ذخیره شده
+                        console.log("Stored token:", localStorage.getItem('token'));
+                        console.log("Stored user:", localStorage.getItem('user'));
+                        console.log("Stored role:", localStorage.getItem('userRole'));
+
+                        // آپدیت state در Vuex
+                        commit('auth_success', { token, user: userData, userRole });
+
+                        return { success: true };
+                    } catch (err) {
+                        console.error("Error fetching user details:", err);
+                        commit('auth_error');
+                        return { success: false, message: 'خطا در دریافت اطلاعات کاربر' };
+                    }
                 } else {
-                    // بازگرداندن وضعیت عدم موفقیت به همراه پیام
-                    return { success: false, message: response.data.message || 'نام کاربری یا رمز عبور اشتباه است' }
+                    console.log("Login failed:", response.data.message);
+                    return { success: false, message: response.data.message || 'نام کاربری یا رمز عبور اشتباه است' };
                 }
             } catch (err) {
-                commit('auth_error')
-                localStorage.removeItem('token')
-                localStorage.removeItem('user')
-                localStorage.removeItem('userRole')
-                return { success: false, message: err.response?.data?.message || 'مشکلی در ورود به سیستم رخ داد!' }
+                console.error("Login request error:", err.response?.data || err.message);
+                commit('auth_error');
+                return { success: false, message: err.response?.data?.message || 'مشکلی در ارتباط با سرور رخ داد' };
             }
         },
 
