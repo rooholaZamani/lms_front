@@ -24,12 +24,13 @@ store.registerModule('notification', notification)
 // تنظیم URL پایه برای Axios
 // axios.defaults.baseURL = process.env.VUE_APP_API_URL || '/api'
 axios.defaults.baseURL = 'http://localhost:8080/api';
+axios.defaults.headers.common['Accept'] = 'application/json';
 // ارسال توکن احراز هویت با هر درخواست
 axios.interceptors.request.use(
     config => {
         const token = localStorage.getItem('token')
         if (token) {
-            config.headers['Authorization'] = `Basic  ${token}`
+            config.headers['Authorization'] = `Basic ${token}`
         }
         return config
     },

@@ -1,157 +1,835 @@
 <template>
-  <div class="assignment-grading-table">
-    <table class="table table-hover">
-      <thead class="table-light">
-      <tr>
-        <th scope="col">#</th>
-        <th scope="col">عنوان تکلیف</th>
-        <th scope="col">دوره</th>
-        <th scope="col">دانش‌آموز</th>
-        <th scope="col">تاریخ ارسال</th>
-        <th scope="col">وضعیت</th>
-        <th scope="col">عملیات</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr v-for="(assignment, index) in assignments" :key="assignment.id">
-        <td>{{ index + 1 }}</td>
-        <td>
-          <div class="d-flex align-items-center">
-            <div class="assignment-icon me-2">
-              <i :class="getAssignmentIcon(assignment.type)"></i>
-            </div>
-            <div>
-              {{ assignment.title }}
-              <div class="small text-muted">{{ truncateText(assignment.description, 50) }}</div>
+  <div class="teacher-dashboard">
+    <div class="d-flex justify-content-between align-items-center">
+      <h2 class="dashboard-title">داشبورد معلم</h2>
+      <div>
+        <button class="btn btn-primary me-2" @click="showCreateCourseModal">
+          <i class="fas fa-plus me-1"></i> ایجاد دوره جدید
+        </button>
+        <button class="btn btn-outline-secondary" @click="refreshData">
+          <i class="fas fa-sync-alt me-1"></i> بروزرسانی
+        </button>
+      </div>
+    </div>
+
+    <!-- خلاصه وضعیت -->
+    <div class="row mb-4">
+      <div class="col-md-3 col-sm-6 mb-3">
+        <stat-card
+            icon="fas fa-book"
+            :value="stats.totalCourses"
+            label="تعداد دوره‌ها"
+        />
+      </div>
+      <div class="col-md-3 col-sm-6 mb-3">
+        <stat-card
+            icon="fas fa-user-graduate"
+            :value="stats.totalStudents"
+            label="تعداد دانش‌آموزان"
+        />
+      </div>
+      <div class="col-md-3 col-sm-6 mb-3">
+        <stat-card
+            icon="fas fa-clipboard-check"
+            :value="stats.activeAssignments"
+            label="تکالیف در انتظار بررسی"
+        />
+      </div>
+      <div class="col-md-3 col-sm-6 mb-3">
+        <stat-card
+            icon="fas fa-chart-line"
+            :value="stats.averageProgress + '%'"
+            label="میانگین پیشرفت دانش‌آموزان"
+        />
+      </div>
+    </div>
+
+    <!-- دوره‌های در حال تدریس -->
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">دوره‌های من</h5>
+        <router-link :to="{ name: 'TeachingCourses' }" class="btn btn-sm btn-light">
+          مشاهده همه
+        </router-link>
+      </div>
+      <div class="card-body">
+        <loading-spinner :loading="loadingCourses">
+          <empty-state
+              v-if="courses.length === 0"
+              title="شما هنوز دوره‌ای ایجاد نکرده‌اید"
+              icon="book"
+          >
+            <button class="btn btn-primary mt-3" @click="showCreateCourseModal">
+              ایجاد دوره جدید
+            </button>
+          </empty-state>
+
+          <div v-else class="row">
+            <!-- کارت دوره‌ها -->
+            <div v-for="course in courses.slice(0, 3)" :key="course.id" class="col-md-4 mb-3">
+              <div class="card h-100 course-card">
+                <div class="card-header bg-primary text-white">
+                  <h5 class="card-title mb-0">{{ course.title }}</h5>
+                </div>
+                <div class="card-body">
+                  <p class="card-text" v-if="course.description">{{ truncateText(course.description, 100) }}</p>
+
+                  <div class="d-flex justify-content-between mb-3">
+                    <span>تعداد دانش‌آموزان:</span>
+                    <span>{{ course.enrolledStudents ? course.enrolledStudents.length : 0 }}</span>
+                  </div>
+
+                  <div class="d-flex justify-content-between mb-2">
+                    <span>تعداد دروس:</span>
+                    <span>{{ course.lessons ? course.lessons.length : 0 }}</span>
+                  </div>
+
+                  <router-link :to="{ name: 'CourseDetail', params: { id: course.id } }" class="btn btn-primary mt-3 w-100">
+                    مدیریت دوره
+                  </router-link>
+                </div>
+              </div>
             </div>
           </div>
-        </td>
-        <td>{{ assignment.course.title }}</td>
-        <td>
-          <div class="d-flex align-items-center">
-            <div class="avatar me-2">
-              <span>{{ getInitials(assignment.student.firstName, assignment.student.lastName) }}</span>
+        </loading-spinner>
+      </div>
+    </div>
+
+    <!-- تب‌های اطلاعات -->
+    <div class="card">
+      <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs">
+          <li class="nav-item">
+            <a class="nav-link" :class="{ active: activeTab === 'assignments' }" href="#" @click.prevent="activeTab = 'assignments'">
+              <i class="fas fa-tasks me-1"></i> تکالیف در انتظار بررسی
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" :class="{ active: activeTab === 'studentActivities' }" href="#" @click.prevent="activeTab = 'studentActivities'">
+              <i class="fas fa-user-graduate me-1"></i> فعالیت دانش‌آموزان
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" :class="{ active: activeTab === 'analytics' }" href="#" @click.prevent="activeTab = 'analytics'">
+              <i class="fas fa-chart-bar me-1"></i> تحلیل عملکرد
+            </a>
+          </li>
+        </ul>
+      </div>
+      <div class="card-body">
+        <!-- تکالیف در انتظار بررسی -->
+        <div v-if="activeTab === 'assignments'">
+          <loading-spinner :loading="loadingAssignments">
+            <empty-state
+                v-if="assignments.length === 0"
+                title="تکلیفی در انتظار بررسی نیست"
+                icon="tasks"
+                compact
+            />
+            <div v-else class="table-responsive">
+              <table class="table table-hover">
+                <thead class="table-light">
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">عنوان تکلیف</th>
+                  <th scope="col">دوره</th>
+                  <th scope="col">دانش‌آموز</th>
+                  <th scope="col">تاریخ ارسال</th>
+                  <th scope="col">وضعیت</th>
+                  <th scope="col">عملیات</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="(assignment, index) in assignments" :key="assignment.id">
+                  <td>{{ index + 1 }}</td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="assignment-icon me-2">
+                        <i class="fas fa-file-alt"></i>
+                      </div>
+                      <div>
+                        {{ assignment.title }}
+                        <div class="small text-muted">{{ truncateText(assignment.description || '', 50) }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ getCourseTitle(assignment.course) }}</td>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <div class="avatar me-2">
+                        <span>{{ getInitials(assignment.student) }}</span>
+                      </div>
+                      <div>
+                        {{ getStudentName(assignment.student) }}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div>{{ formatDate(assignment.submittedAt) }}</div>
+                  </td>
+                  <td>
+                    <span class="badge" :class="assignment.graded ? 'bg-success' : 'bg-warning'">
+                      {{ assignment.graded ? 'بررسی شده' : 'در انتظار بررسی' }}
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                        class="btn btn-sm btn-primary"
+                        @click="gradeAssignment(assignment)"
+                        title="نمره‌دهی">
+                      <i class="fas fa-check-circle me-1"></i> ارزیابی
+                    </button>
+                  </td>
+                </tr>
+                </tbody>
+              </table>
             </div>
-            <div>
-              {{ assignment.student.firstName }} {{ assignment.student.lastName }}
+          </loading-spinner>
+        </div>
+
+        <!-- فعالیت دانش‌آموزان -->
+        <div v-if="activeTab === 'studentActivities'">
+          <loading-spinner :loading="loadingStudentActivities">
+            <div v-if="selectedCourse">
+              <div class="mb-3">
+                <label for="courseSelect" class="form-label">انتخاب دوره:</label>
+                <select class="form-select" id="courseSelect" v-model="selectedCourseId" @change="fetchStudentActivities">
+                  <option v-for="course in courses" :key="course.id" :value="course.id">{{ course.title }}</option>
+                </select>
+              </div>
+
+              <empty-state
+                  v-if="studentActivities.length === 0"
+                  title="هیچ دانش‌آموزی در این دوره ثبت‌نام نکرده است"
+                  icon="user-graduate"
+                  compact
+              />
+              <div v-else>
+                <student-activity-table
+                    :students="studentActivities"
+                    @view-progress="viewStudentProgress"
+                    @send-message="sendMessageToStudent"
+                />
+              </div>
             </div>
-          </div>
-        </td>
-        <td>
-          <div>{{ formatDate(assignment.submissionDate) }}</div>
-          <div class="small text-muted">{{ getTimeAgo(assignment.submissionDate) }}</div>
-        </td>
-        <td>
-            <span
-                class="badge"
-                :class="getStatusBadgeClass(assignment.status)">
-              {{ getStatusLabel(assignment.status) }}
-            </span>
-        </td>
-        <td>
-          <button
-              class="btn btn-sm btn-primary"
-              @click="$emit('grade', assignment)"
-              title="نمره‌دهی">
-            <i class="fas fa-check-circle me-1"></i> ارزیابی
-          </button>
-          <button
-              class="btn btn-sm btn-outline-secondary ms-1"
-              @click="previewAssignment(assignment)"
-              title="پیش‌نمایش">
-            <i class="fas fa-eye"></i>
-          </button>
-        </td>
-      </tr>
-      </tbody>
-    </table>
+            <empty-state
+                v-else
+                title="لطفاً یک دوره انتخاب کنید"
+                icon="book"
+                compact
+            />
+          </loading-spinner>
+        </div>
+
+        <!-- تحلیل عملکرد -->
+        <div v-if="activeTab === 'analytics'">
+          <loading-spinner :loading="loadingAnalytics">
+            <div v-if="selectedCourse">
+              <div class="mb-3">
+                <label for="analyticsSelect" class="form-label">انتخاب دوره:</label>
+                <select class="form-select" id="analyticsSelect" v-model="selectedCourseId" @change="fetchAnalytics">
+                  <option v-for="course in courses" :key="course.id" :value="course.id">{{ course.title }}</option>
+                </select>
+              </div>
+
+              <div class="row">
+                <!-- نمودار توزیع نمرات -->
+                <div class="col-md-6 mb-4">
+                  <div class="card h-100">
+                    <div class="card-header">
+                      <h5 class="card-title">توزیع نمرات</h5>
+                    </div>
+                    <div class="card-body" style="height: 300px;">
+                      <scores-distribution-chart :data="scoresData" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- نمودار فعالیت -->
+                <div class="col-md-6 mb-4">
+                  <div class="card h-100">
+                    <div class="card-header">
+                      <h5 class="card-title">فعالیت‌های اخیر</h5>
+                    </div>
+                    <div class="card-body" style="height: 300px;">
+                      <activity-chart :data="activityData" />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- درس‌های چالش‌برانگیز -->
+                <div class="col-md-6">
+                  <div class="card">
+                    <div class="card-header">
+                      <h5 class="card-title">درس‌های چالش‌برانگیز</h5>
+                    </div>
+                    <div class="card-body">
+                      <table class="table table-sm">
+                        <thead>
+                        <tr>
+                          <th>عنوان درس</th>
+                          <th>نرخ شکست</th>
+                          <th>میانگین زمان تکمیل</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="lesson in difficultLessons" :key="lesson.id">
+                          <td>{{ lesson.title }}</td>
+                          <td>
+                            <div class="d-flex align-items-center">
+                              <div class="progress flex-grow-1" style="height: 6px;">
+                                <div class="progress-bar bg-danger" :style="`width: ${lesson.failRate}%`"></div>
+                              </div>
+                              <span class="ms-2">{{ lesson.failRate }}%</span>
+                            </div>
+                          </td>
+                          <td>{{ lesson.avgCompletionTime }} دقیقه</td>
+                        </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- دانش‌آموزان نیازمند کمک -->
+                <div class="col-md-6">
+                  <div class="card">
+                    <div class="card-header">
+                      <h5 class="card-title">دانش‌آموزان نیازمند کمک</h5>
+                    </div>
+                    <div class="card-body">
+                      <table class="table table-sm">
+                        <thead>
+                        <tr>
+                          <th>نام دانش‌آموز</th>
+                          <th>پیشرفت</th>
+                          <th>میانگین نمره</th>
+                          <th>عملیات</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr v-for="student in strugglingStudents" :key="student.id">
+                          <td>{{ getStudentName(student) }}</td>
+                          <td>
+                            <div class="progress" style="height: 6px;">
+                              <div class="progress-bar bg-warning" :style="`width: ${student.progress}%`"></div>
+                            </div>
+                            <small>{{ student.progress }}%</small>
+                          </td>
+                          <td>{{ student.averageScore }}</td>
+                          <td>
+                            <button class="btn btn-sm btn-outline-primary" @click="sendMessageToStudent(student)">
+                              <i class="fas fa-envelope"></i>
+                            </button>
+                          </td>
+                        </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <empty-state
+                v-else
+                title="لطفاً یک دوره انتخاب کنید"
+                icon="chart-bar"
+                compact
+            />
+          </loading-spinner>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <!-- مودال ایجاد دوره جدید -->
+  <base-modal
+      modal-id="createCourseModal"
+      title="ایجاد دوره جدید"
+      header-class="bg-primary text-white"
+      ref="createCourseModal"
+  >
+    <form @submit.prevent="createCourse">
+      <div class="mb-3">
+        <label for="courseTitle" class="form-label">عنوان دوره</label>
+        <input type="text" class="form-control" id="courseTitle" v-model="newCourse.title" required>
+      </div>
+      <div class="mb-3">
+        <label for="courseDescription" class="form-label">توضیحات دوره</label>
+        <textarea class="form-control" id="courseDescription" v-model="newCourse.description" rows="4"></textarea>
+      </div>
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        پس از ایجاد دوره، می‌توانید دروس و محتوای آن را اضافه کنید.
+      </div>
+
+      <template #footer>
+        <button type="button" class="btn btn-secondary" @click="$refs.createCourseModal.hide()">انصراف</button>
+        <button type="submit" class="btn btn-primary" :disabled="isSubmitting">
+          <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          ایجاد دوره
+        </button>
+      </template>
+    </form>
+  </base-modal>
 </template>
 
 <script>
+import { ref, reactive, onMounted, computed, watch } from 'vue';
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
+import StatCard from '@/components/common/StatCard.vue';
+import EmptyState from '@/components/common/EmptyState.vue';
+import BaseModal from '@/components/common/BaseModal.vue';
+import StudentActivityTable from '@/components/dashboard/StudentActivityTable.vue';
+import ScoresDistributionChart from '@/components/charts/ScoresDistributionChart.vue';
+import ActivityChart from '@/components/charts/ActivityChart.vue';
 import { useFormatters } from '@/composables/useFormatters.js';
+import axios from 'axios';
 
 export default {
-  name: 'AssignmentGradingTable',
+  name: 'TeacherDashboard',
+  components: {
+    LoadingSpinner,
+    StatCard,
+    EmptyState,
+    BaseModal,
+    StudentActivityTable,
+    ScoresDistributionChart,
+    ActivityChart
+  },
   props: {
-    assignments: {
-      type: Array,
+    user: {
+      type: Object,
       required: true
     }
   },
-  setup() {
+  setup(props) {
     const { formatDate, truncateText } = useFormatters();
 
-    return { formatDate, truncateText };
-  },
-  methods: {
-    getInitials(firstName, lastName) {
-      if (!firstName && !lastName) return 'N/A';
+    // State
+    const activeTab = ref('assignments');
+    const loadingCourses = ref(true);
+    const loadingAssignments = ref(true);
+    const loadingStudentActivities = ref(false);
+    const loadingAnalytics = ref(false);
+    const isSubmitting = ref(false);
+
+    const courses = ref([]);
+    const assignments = ref([]);
+    const studentActivities = ref([]);
+    const selectedCourseId = ref(null);
+    const scoresData = ref([]);
+    const activityData = ref([]);
+    const difficultLessons = ref([]);
+    const strugglingStudents = ref([]);
+
+    const stats = reactive({
+      totalCourses: 0,
+      totalStudents: 0,
+      activeAssignments: 0,
+      averageProgress: 0
+    });
+
+    const newCourse = reactive({
+      title: '',
+      description: ''
+    });
+
+    const createCourseModal = ref(null);
+
+    // Computed
+    const selectedCourse = computed(() => {
+      if (!selectedCourseId.value) return null;
+      return courses.value.find(course => course.id === selectedCourseId.value);
+    });
+
+    // Methods
+    const fetchData = async () => {
+      try {
+        await fetchCourses();
+        await fetchAssignments();
+        calculateStats();
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+        window.showError(error);
+      }
+    };
+
+    const fetchCourses = async () => {
+      loadingCourses.value = true;
+      try {
+        const response = await axios.get('/courses/teaching');
+        courses.value = response.data;
+
+        if (courses.value.length > 0 && !selectedCourseId.value) {
+          selectedCourseId.value = courses.value[0].id;
+        }
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+      } finally {
+        loadingCourses.value = false;
+      }
+    };
+
+    const fetchAssignments = async () => {
+      loadingAssignments.value = true;
+      try {
+        // Fetch all pending assignments across all courses
+        const pendingAssignments = [];
+
+        for (const course of courses.value) {
+          try {
+            // Get all lessons for the course
+            const lessonsResponse = await axios.get(`/lessons/course/${course.id}`);
+            const lessons = lessonsResponse.data;
+
+            // For each lesson, get assignments
+            for (const lesson of lessons) {
+              try {
+                const assignmentsResponse = await axios.get(`/assignments/lesson/${lesson.id}`);
+                const lessonAssignments = assignmentsResponse.data;
+
+                // For each assignment, get submissions
+                for (const assignment of lessonAssignments) {
+                  try {
+                    const submissionsResponse = await axios.get(`/assignments/${assignment.id}/submissions`);
+                    const submissions = submissionsResponse.data;
+
+                    // Add non-graded submissions to the pending list
+                    const nonGradedSubmissions = submissions
+                        .filter(submission => !submission.graded)
+                        .map(submission => ({
+                          ...submission,
+                          title: assignment.title,
+                          description: assignment.description,
+                          course: course
+                        }));
+
+                    pendingAssignments.push(...nonGradedSubmissions);
+                  } catch (error) {
+                    console.error(`Error fetching submissions for assignment ${assignment.id}:`, error);
+                  }
+                }
+              } catch (error) {
+                console.error(`Error fetching assignments for lesson ${lesson.id}:`, error);
+              }
+            }
+          } catch (error) {
+            console.error(`Error fetching lessons for course ${course.id}:`, error);
+          }
+        }
+
+        assignments.value = pendingAssignments;
+      } catch (error) {
+        console.error('Error fetching assignments:', error);
+      } finally {
+        loadingAssignments.value = false;
+      }
+    };
+
+    const fetchStudentActivities = async () => {
+      if (!selectedCourseId.value) return;
+
+      loadingStudentActivities.value = true;
+      try {
+        // Get all enrolled students for the course
+        const courseDetailsResponse = await axios.get(`/courses/${selectedCourseId.value}`);
+        const courseDetails = courseDetailsResponse.data;
+        const enrolledStudents = courseDetails.course.enrolledStudents || [];
+
+        // Get participation data
+        const participationResponse = await axios.get(`/analytics/teacher/course/${selectedCourseId.value}/participation`);
+        const participationData = participationResponse.data;
+
+        // Combine data
+        studentActivities.value = enrolledStudents.map(student => {
+          const participation = participationData.find(p => p.studentId === student.id) || {};
+          return {
+            ...student,
+            course: courseDetails.course,
+            progress: participation.progress || 0,
+            lastActivity: participation.lastActivity,
+            performance: getPerformanceLevel(participation.averageScore),
+            trend: participation.trend || 'stable'
+          };
+        });
+      } catch (error) {
+        console.error('Error fetching student activities:', error);
+        window.showError(error);
+      } finally {
+        loadingStudentActivities.value = false;
+      }
+    };
+
+    const fetchAnalytics = async () => {
+      if (!selectedCourseId.value) return;
+
+      loadingAnalytics.value = true;
+      try {
+        // Get course performance
+        const performanceResponse = await axios.get(`/analytics/teacher/course/${selectedCourseId.value}/performance`);
+        const performanceData = performanceResponse.data;
+
+        // Generate scores distribution data
+        scoresData.value = generateScoresDistribution(performanceData.examScores || []);
+
+        // Generate activity data (last 30 days)
+        activityData.value = generateActivityData(performanceData.activityData || {});
+
+        // Get difficult lessons
+        const difficultLessonsResponse = await axios.get(`/analytics/teacher/course/${selectedCourseId.value}/difficult-lessons`);
+        difficultLessons.value = difficultLessonsResponse.data || [];
+
+        // Get struggling students
+        const strugglingStudentsResponse = await axios.get(`/analytics/teacher/course/${selectedCourseId.value}/struggling-students`);
+        strugglingStudents.value = strugglingStudentsResponse.data || [];
+      } catch (error) {
+        console.error('Error fetching analytics:', error);
+        window.showError(error);
+      } finally {
+        loadingAnalytics.value = false;
+      }
+    };
+
+    const calculateStats = () => {
+      // Calculate total courses
+      stats.totalCourses = courses.value.length;
+
+      // Calculate total students (unique students across all courses)
+      const uniqueStudents = new Set();
+      courses.value.forEach(course => {
+        if (course.enrolledStudents) {
+          course.enrolledStudents.forEach(student => {
+            uniqueStudents.add(student.id);
+          });
+        }
+      });
+      stats.totalStudents = uniqueStudents.size;
+
+      // Calculate active assignments
+      stats.activeAssignments = assignments.value.length;
+
+      // Calculate average progress
+      let totalProgress = 0;
+      let studentCount = 0;
+
+      studentActivities.value.forEach(student => {
+        if (student.progress) {
+          totalProgress += student.progress;
+          studentCount++;
+        }
+      });
+
+      stats.averageProgress = studentCount > 0 ? Math.round(totalProgress / studentCount) : 0;
+    };
+
+    const getPerformanceLevel = (score) => {
+      if (!score) return 'average';
+      if (score >= 85) return 'excellent';
+      if (score >= 70) return 'good';
+      if (score >= 50) return 'average';
+      return 'poor';
+    };
+
+    const generateScoresDistribution = (scores) => {
+      // Create ranges: 0-10, 11-20, ..., 91-100
+      const ranges = Array.from({ length: 10 }, (_, i) => `${i * 10 + 1}-${(i + 1) * 10}`);
+      const distribution = ranges.map(range => {
+        const [min, max] = range.split('-').map(Number);
+        const count = scores.filter(score => score >= min && score <= max).length;
+        return { range, count };
+      });
+
+      return distribution;
+    };
+
+    const generateActivityData = (activityData) => {
+      // Generate data for the last 30 days
+      const result = [];
+      const now = new Date();
+
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        const dateString = date.toISOString().split('T')[0];
+
+        result.push({
+          date: dateString,
+          views: activityData[dateString]?.views || 0,
+          submissions: activityData[dateString]?.submissions || 0,
+          completions: activityData[dateString]?.completions || 0
+        });
+      }
+
+      return result;
+    };
+
+    const showCreateCourseModal = () => {
+      createCourseModal.value.show();
+    };
+
+    const createCourse = async () => {
+      isSubmitting.value = true;
+      try {
+        await axios.post('/courses', newCourse);
+        window.toast.success('دوره جدید با موفقیت ایجاد شد.');
+        createCourseModal.value.hide();
+
+        // Reset form
+        newCourse.title = '';
+        newCourse.description = '';
+
+        // Refresh courses
+        await fetchCourses();
+        calculateStats();
+      } catch (error) {
+        console.error('Error creating course:', error);
+        window.showError(error);
+      } finally {
+        isSubmitting.value = false;
+      }
+    };
+
+    const gradeAssignment = (assignment) => {
+      // In a real application, navigate to grading page or show grading modal
+      console.log('Grade assignment:', assignment);
+    };
+
+    const viewStudentProgress = (student) => {
+      // In a real application, navigate to student progress page or show progress modal
+      console.log('View progress:', student);
+    };
+
+    const sendMessageToStudent = (student) => {
+      // In a real application, show message composer modal
+      console.log('Send message to:', student);
+    };
+
+    const refreshData = async () => {
+      await fetchData();
+      if (activeTab.value === 'studentActivities') {
+        await fetchStudentActivities();
+      } else if (activeTab.value === 'analytics') {
+        await fetchAnalytics();
+      }
+    };
+
+    const getInitials = (student) => {
+      if (!student) return 'N/A';
+
+      const firstName = student.firstName || '';
+      const lastName = student.lastName || '';
 
       const firstInitial = firstName ? firstName.charAt(0) : '';
       const lastInitial = lastName ? lastName.charAt(0) : '';
 
       return (firstInitial + lastInitial).toUpperCase();
-    },
+    };
 
-    getAssignmentIcon(type) {
-      const icons = {
-        document: 'fas fa-file-alt',
-        code: 'fas fa-code',
-        research: 'fas fa-search',
-        presentation: 'fas fa-file-powerpoint',
-        design: 'fas fa-paint-brush',
-        writing: 'fas fa-pen'
-      };
+    const getStudentName = (student) => {
+      if (!student) return 'نامشخص';
+      return student.firstName && student.lastName
+          ? `${student.firstName} ${student.lastName}`
+          : student.username;
+    };
 
-      return icons[type] || 'fas fa-file-alt';
-    },
+    const getCourseTitle = (course) => {
+      if (!course) return 'نامشخص';
+      return course.title || 'نامشخص';
+    };
 
-    getStatusBadgeClass(status) {
-      if (status === 'pending') return 'bg-warning';
-      if (status === 'reviewed') return 'bg-success';
-      if (status === 'late') return 'bg-danger';
-      if (status === 'resubmit') return 'bg-info';
-      return 'bg-secondary';
-    },
+    // Watchers
+    watch(activeTab, (newTab) => {
+      if (newTab === 'studentActivities' && selectedCourseId.value) {
+        fetchStudentActivities();
+      } else if (newTab === 'analytics' && selectedCourseId.value) {
+        fetchAnalytics();
+      }
+    });
 
-    getStatusLabel(status) {
-      const labels = {
-        pending: 'در انتظار بررسی',
-        reviewed: 'بررسی شده',
-        late: 'با تاخیر',
-        resubmit: 'نیاز به ارسال مجدد'
-      };
+    watch(selectedCourseId, (newCourseId) => {
+      if (newCourseId) {
+        if (activeTab.value === 'studentActivities') {
+          fetchStudentActivities();
+        } else if (activeTab.value === 'analytics') {
+          fetchAnalytics();
+        }
+      }
+    });
 
-      return labels[status] || 'نامشخص';
-    },
+    // Lifecycle hooks
+    onMounted(() => {
+      fetchData();
+    });
 
-    getTimeAgo(dateString) {
-      if (!dateString) return 'نامشخص';
-
-      const date = new Date(dateString);
-      const now = new Date();
-      const diffInSeconds = Math.floor((now - date) / 1000);
-
-      if (diffInSeconds < 60) return 'هم‌اکنون';
-      if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} دقیقه پیش`;
-      if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} ساعت پیش`;
-      if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} روز پیش`;
-      if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 604800)} هفته پیش`;
-
-      return `${Math.floor(diffInSeconds / 2592000)} ماه پیش`;
-    },
-
-    previewAssignment(assignment) {
-      // در اینجا منطق پیش‌نمایش تکلیف پیاده‌سازی می‌شود
-      // برای مثال، می‌توان مودال پیش‌نمایش را نمایش داد
-      this.$emit('preview', assignment);
-    }
+    return {
+      activeTab,
+      loadingCourses,
+      loadingAssignments,
+      loadingStudentActivities,
+      loadingAnalytics,
+      isSubmitting,
+      courses,
+      assignments,
+      studentActivities,
+      selectedCourseId,
+      selectedCourse,
+      scoresData,
+      activityData,
+      difficultLessons,
+      strugglingStudents,
+      stats,
+      newCourse,
+      createCourseModal,
+      formatDate,
+      truncateText,
+      getInitials,
+      getStudentName,
+      getCourseTitle,
+      showCreateCourseModal,
+      createCourse,
+      gradeAssignment,
+      viewStudentProgress,
+      sendMessageToStudent,
+      refreshData,
+      fetchStudentActivities,
+      fetchAnalytics
+    };
   }
 }
 </script>
 
 <style scoped>
+.dashboard-title {
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-subtitle {
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.course-card {
+  transition: transform 0.3s;
+}
+
+.course-card:hover {
+  transform: translateY(-5px);
+}
+
+.assignment-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  background-color: #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: #495057;
+}
+
 .avatar {
   width: 32px;
   height: 32px;
@@ -165,15 +843,13 @@ export default {
   color: #495057;
 }
 
-.assignment-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 4px;
+.progress {
+  height: 6px;
+  border-radius: 10px;
   background-color: #e9ecef;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  color: #495057;
+}
+
+.progress-bar {
+  border-radius: 10px;
 }
 </style>
