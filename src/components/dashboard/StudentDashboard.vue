@@ -69,17 +69,18 @@
         <!-- دوره‌ها -->
         <div v-if="activeTab === 'courses'">
           <loading-spinner :loading="loading">
-            <empty-state
-                v-if="courses.length === 0"
-                title="شما هنوز در هیچ دوره‌ای ثبت‌نام نکرده‌اید"
-                icon="book"
-            >
-              <router-link :to="{ name: 'AvailableCourses' }" class="btn btn-primary mt-3">
-                جستجوی دوره‌های جدید
-              </router-link>
-            </empty-state>
+            <template v-if="courses.length === 0">
+              <empty-state
+                  title="شما هنوز در هیچ دوره‌ای ثبت‌نام نکرده‌اید"
+                  icon="book"
+              >
+                <router-link :to="{ name: 'AvailableCourses' }" class="btn btn-primary mt-3">
+                  جستجوی دوره‌های جدید
+                </router-link>
+              </empty-state>
+            </template>
 
-            <div v-else>
+            <template v-else>
               <div class="row">
                 <!-- کارت دوره‌ها -->
                 <div v-for="course in courses" :key="course.id" class="col-md-4 mb-4">
@@ -96,21 +97,22 @@
                   مشاهده همه دوره‌ها
                 </router-link>
               </div>
-            </div>
+            </template>
           </loading-spinner>
         </div>
 
         <!-- آزمون‌ها -->
         <div v-if="activeTab === 'exams'">
           <loading-spinner :loading="loadingExams">
-            <empty-state
-                v-if="exams.length === 0"
-                title="شما هنوز در هیچ آزمونی شرکت نکرده‌اید"
-                icon="clipboard-check"
-                compact
-            />
+            <template v-if="exams.length === 0">
+              <empty-state
+                  title="شما هنوز در هیچ آزمونی شرکت نکرده‌اید"
+                  icon="clipboard-check"
+                  compact
+              />
+            </template>
 
-            <div v-else>
+            <template v-else>
               <!-- آزمون‌های اخیر -->
               <div class="table-responsive">
                 <student-exams-table :exams="exams" />
@@ -128,21 +130,22 @@
                   </div>
                 </div>
               </div>
-            </div>
+            </template>
           </loading-spinner>
         </div>
 
         <!-- پیشرفت تحصیلی -->
         <div v-if="activeTab === 'progress'">
           <loading-spinner :loading="loadingProgress">
-            <empty-state
-                v-if="progressList.length === 0"
-                title="اطلاعات پیشرفت تحصیلی موجود نیست"
-                icon="chart-line"
-                compact
-            />
+            <template v-if="progressList.length === 0">
+              <empty-state
+                  title="اطلاعات پیشرفت تحصیلی موجود نیست"
+                  icon="chart-line"
+                  compact
+              />
+            </template>
 
-            <div v-else>
+            <template v-else>
               <!-- نمودار پیشرفت دوره‌ها -->
               <div class="card mb-4">
                 <div class="card-header bg-light">
@@ -225,21 +228,22 @@
                   </div>
                 </div>
               </div>
-            </div>
+            </template>
           </loading-spinner>
         </div>
 
         <!-- تقویم آموزشی -->
         <div v-if="activeTab === 'calendar'">
           <loading-spinner :loading="loadingCalendar">
-            <empty-state
-                v-if="events.length === 0"
-                title="رویدادی در تقویم آموزشی شما موجود نیست"
-                icon="calendar-alt"
-                compact
-            />
+            <template v-if="events.length === 0">
+              <empty-state
+                  title="رویدادی در تقویم آموزشی شما موجود نیست"
+                  icon="calendar-alt"
+                  compact
+              />
+            </template>
 
-            <div v-else>
+            <template v-else>
               <div class="upcoming-events mb-4">
                 <h5 class="mb-3">رویدادهای نزدیک</h5>
                 <div class="list-group">
@@ -282,7 +286,7 @@
                   </div>
                 </div>
               </div>
-            </div>
+            </template>
           </loading-spinner>
         </div>
       </div>
