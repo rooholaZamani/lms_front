@@ -54,43 +54,46 @@
       </div>
       <div class="card-body">
         <loading-spinner :loading="loadingCourses">
-          <empty-state
-              v-if="courses.length === 0"
-              title="شما هنوز دوره‌ای ایجاد نکرده‌اید"
-              icon="book"
-          >
-            <button class="btn btn-primary mt-3" @click="showCreateCourseModal">
-              ایجاد دوره جدید
-            </button>
-          </empty-state>
+          <template v-if="courses.length === 0">
+            <empty-state
+                title="شما هنوز دوره‌ای ایجاد نکرده‌اید"
+                icon="book"
+            >
+              <button class="btn btn-primary mt-3" @click="showCreateCourseModal">
+                ایجاد دوره جدید
+              </button>
+            </empty-state>
+          </template>
 
-          <div v-else class="row">
-            <!-- کارت دوره‌ها -->
-            <div v-for="course in courses.slice(0, 3)" :key="course.id" class="col-md-4 mb-3">
-              <div class="card h-100 course-card">
-                <div class="card-header bg-primary text-white">
-                  <h5 class="card-title mb-0">{{ course.title }}</h5>
-                </div>
-                <div class="card-body">
-                  <p class="card-text" v-if="course.description">{{ truncateText(course.description, 100) }}</p>
-
-                  <div class="d-flex justify-content-between mb-3">
-                    <span>تعداد دانش‌آموزان:</span>
-                    <span>{{ course.enrolledStudents ? course.enrolledStudents.length : 0 }}</span>
+          <template v-else>
+            <div class="row">
+              <!-- کارت دوره‌ها -->
+              <div v-for="course in courses.slice(0, 3)" :key="course.id" class="col-md-4 mb-3">
+                <div class="card h-100 course-card">
+                  <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">{{ course.title }}</h5>
                   </div>
+                  <div class="card-body">
+                    <p v-if="course.description" class="card-text">{{ truncateText(course.description, 100) }}</p>
 
-                  <div class="d-flex justify-content-between mb-2">
-                    <span>تعداد دروس:</span>
-                    <span>{{ course.lessons ? course.lessons.length : 0 }}</span>
+                    <div class="d-flex justify-content-between mb-3">
+                      <span>تعداد دانش‌آموزان:</span>
+                      <span>{{ course.enrolledStudents ? course.enrolledStudents.length : 0 }}</span>
+                    </div>
+
+                    <div class="d-flex justify-content-between mb-2">
+                      <span>تعداد دروس:</span>
+                      <span>{{ course.lessons ? course.lessons.length : 0 }}</span>
+                    </div>
+
+                    <router-link :to="{ name: 'CourseDetail', params: { id: course.id } }" class="btn btn-primary mt-3 w-100">
+                      مدیریت دوره
+                    </router-link>
                   </div>
-
-                  <router-link :to="{ name: 'CourseDetail', params: { id: course.id } }" class="btn btn-primary mt-3 w-100">
-                    مدیریت دوره
-                  </router-link>
                 </div>
               </div>
             </div>
-          </div>
+          </template>
         </loading-spinner>
       </div>
     </div>
@@ -120,77 +123,80 @@
         <!-- تکالیف در انتظار بررسی -->
         <div v-if="activeTab === 'assignments'">
           <loading-spinner :loading="loadingAssignments">
-            <empty-state
-                v-if="assignments.length === 0"
-                title="تکلیفی در انتظار بررسی نیست"
-                icon="tasks"
-                compact
-            />
-            <div v-else class="table-responsive">
-              <table class="table table-hover">
-                <thead class="table-light">
-                <tr>
-                  <th scope="col">#</th>
-                  <th scope="col">عنوان تکلیف</th>
-                  <th scope="col">دوره</th>
-                  <th scope="col">دانش‌آموز</th>
-                  <th scope="col">تاریخ ارسال</th>
-                  <th scope="col">وضعیت</th>
-                  <th scope="col">عملیات</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr v-for="(assignment, index) in assignments" :key="assignment.id">
-                  <td>{{ index + 1 }}</td>
-                  <td>
-                    <div class="d-flex align-items-center">
-                      <div class="assignment-icon me-2">
-                        <i class="fas fa-file-alt"></i>
+            <template v-if="assignments.length === 0">
+              <empty-state
+                  title="تکلیفی در انتظار بررسی نیست"
+                  icon="tasks"
+                  compact
+              />
+            </template>
+            <template v-else>
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead class="table-light">
+                  <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">عنوان تکلیف</th>
+                    <th scope="col">دوره</th>
+                    <th scope="col">دانش‌آموز</th>
+                    <th scope="col">تاریخ ارسال</th>
+                    <th scope="col">وضعیت</th>
+                    <th scope="col">عملیات</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr v-for="(assignment, index) in assignments" :key="assignment.id">
+                    <td>{{ index + 1 }}</td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div class="assignment-icon me-2">
+                          <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div>
+                          {{ assignment.title }}
+                          <div class="small text-muted">{{ truncateText(assignment.description || '', 50) }}</div>
+                        </div>
                       </div>
-                      <div>
-                        {{ assignment.title }}
-                        <div class="small text-muted">{{ truncateText(assignment.description || '', 50) }}</div>
+                    </td>
+                    <td>{{ getCourseTitle(assignment.course) }}</td>
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div class="avatar me-2">
+                          <span>{{ getInitials(assignment.student) }}</span>
+                        </div>
+                        <div>
+                          {{ getStudentName(assignment.student) }}
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td>{{ getCourseTitle(assignment.course) }}</td>
-                  <td>
-                    <div class="d-flex align-items-center">
-                      <div class="avatar me-2">
-                        <span>{{ getInitials(assignment.student) }}</span>
-                      </div>
-                      <div>
-                        {{ getStudentName(assignment.student) }}
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <div>{{ formatDate(assignment.submittedAt) }}</div>
-                  </td>
-                  <td>
-                    <span class="badge" :class="assignment.graded ? 'bg-success' : 'bg-warning'">
-                      {{ assignment.graded ? 'بررسی شده' : 'در انتظار بررسی' }}
-                    </span>
-                  </td>
-                  <td>
-                    <button
-                        class="btn btn-sm btn-primary"
-                        @click="gradeAssignment(assignment)"
-                        title="نمره‌دهی">
-                      <i class="fas fa-check-circle me-1"></i> ارزیابی
-                    </button>
-                  </td>
-                </tr>
-                </tbody>
-              </table>
-            </div>
+                    </td>
+                    <td>
+                      <div>{{ formatDate(assignment.submittedAt) }}</div>
+                    </td>
+                    <td>
+                      <span class="badge" :class="assignment.graded ? 'bg-success' : 'bg-warning'">
+                        {{ assignment.graded ? 'بررسی شده' : 'در انتظار بررسی' }}
+                      </span>
+                    </td>
+                    <td>
+                      <button
+                          class="btn btn-sm btn-primary"
+                          @click="gradeAssignment(assignment)"
+                          title="نمره‌دهی">
+                        <i class="fas fa-check-circle me-1"></i> ارزیابی
+                      </button>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </template>
           </loading-spinner>
         </div>
 
         <!-- فعالیت دانش‌آموزان -->
         <div v-if="activeTab === 'studentActivities'">
           <loading-spinner :loading="loadingStudentActivities">
-            <div v-if="selectedCourse">
+            <template v-if="selectedCourse">
               <div class="mb-3">
                 <label for="courseSelect" class="form-label">انتخاب دوره:</label>
                 <select class="form-select" id="courseSelect" v-model="selectedCourseId" @change="fetchStudentActivities">
@@ -198,33 +204,35 @@
                 </select>
               </div>
 
-              <empty-state
-                  v-if="studentActivities.length === 0"
-                  title="هیچ دانش‌آموزی در این دوره ثبت‌نام نکرده است"
-                  icon="user-graduate"
-                  compact
-              />
-              <div v-else>
+              <template v-if="studentActivities.length === 0">
+                <empty-state
+                    title="هیچ دانش‌آموزی در این دوره ثبت‌نام نکرده است"
+                    icon="user-graduate"
+                    compact
+                />
+              </template>
+              <template v-else>
                 <student-activity-table
                     :students="studentActivities"
                     @view-progress="viewStudentProgress"
                     @send-message="sendMessageToStudent"
                 />
-              </div>
-            </div>
-            <empty-state
-                v-else
-                title="لطفاً یک دوره انتخاب کنید"
-                icon="book"
-                compact
-            />
+              </template>
+            </template>
+            <template v-else>
+              <empty-state
+                  title="لطفاً یک دوره انتخاب کنید"
+                  icon="book"
+                  compact
+              />
+            </template>
           </loading-spinner>
         </div>
 
         <!-- تحلیل عملکرد -->
         <div v-if="activeTab === 'analytics'">
           <loading-spinner :loading="loadingAnalytics">
-            <div v-if="selectedCourse">
+            <template v-if="selectedCourse">
               <div class="mb-3">
                 <label for="analyticsSelect" class="form-label">انتخاب دوره:</label>
                 <select class="form-select" id="analyticsSelect" v-model="selectedCourseId" @change="fetchAnalytics">
@@ -329,13 +337,14 @@
                   </div>
                 </div>
               </div>
-            </div>
-            <empty-state
-                v-else
-                title="لطفاً یک دوره انتخاب کنید"
-                icon="chart-bar"
-                compact
-            />
+            </template>
+            <template v-else>
+              <empty-state
+                  title="لطفاً یک دوره انتخاب کنید"
+                  icon="chart-bar"
+                  compact
+              />
+            </template>
           </loading-spinner>
         </div>
       </div>
