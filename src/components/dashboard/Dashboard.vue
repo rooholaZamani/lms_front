@@ -8,12 +8,9 @@
         </div>
         <!-- Main Content -->
         <div class="col-md-10 col-sm-12 px-4 py-3">
-          <!-- داشبورد معلم -->
           <template v-if="isTeacher">
-            <TeacherDashboard :user="user"  assignments=""/>
+            <TeacherDashboard :user="user"/>
           </template>
-
-          <!-- داشبورد دانش‌آموز -->
           <template v-else>
             <StudentDashboard :user="user" />
           </template>

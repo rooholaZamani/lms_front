@@ -252,7 +252,6 @@
                     </div>
                   </div>
                 </div>
-
                 <!-- نمودار فعالیت -->
                 <div class="col-md-6 mb-4">
                   <div class="card h-100">
@@ -372,13 +371,13 @@
         پس از ایجاد دوره، می‌توانید دروس و محتوای آن را اضافه کنید.
       </div>
 
-      <template #footer>
+      <div slot="footer">
         <button type="button" class="btn btn-secondary" @click="$refs.createCourseModal.hide()">انصراف</button>
         <button type="submit" class="btn btn-primary" :disabled="isSubmitting">
           <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
           ایجاد دوره
         </button>
-      </template>
+      </div>
     </form>
   </base-modal>
 </template>
@@ -480,6 +479,12 @@ export default {
       }
     };
 
+    const safelyAccessProperty = (obj, path, defaultValue = null) => {
+      return path.split('.').reduce((prev, curr) => {
+        return prev && prev[curr] !== undefined ? prev[curr] : defaultValue;
+      }, obj);
+    };
+
     const fetchAssignments = async () => {
       loadingAssignments.value = true;
       try {
@@ -536,6 +541,7 @@ export default {
       }
     };
 
+    // Update fetchStudentActivities method
     const fetchStudentActivities = async () => {
       if (!selectedCourseId.value) return;
 
@@ -543,25 +549,27 @@ export default {
       try {
         // Get all enrolled students for the course
         const courseDetailsResponse = await axios.get(`/courses/${selectedCourseId.value}`);
-        const courseDetails = courseDetailsResponse.data;
-        const enrolledStudents = courseDetails.course.enrolledStudents || [];
+        const courseDetails = courseDetailsResponse.data || {};
+        const enrolledStudents = safelyAccessProperty(courseDetails, 'course.enrolledStudents', []);
 
         // Get participation data
         const participationResponse = await axios.get(`/analytics/teacher/course/${selectedCourseId.value}/participation`);
-        const participationData = participationResponse.data;
+        const participationData = participationResponse.data || [];
 
-        // Combine data
+        // Combine data with safe property access
         studentActivities.value = enrolledStudents.map(student => {
-          const participation = participationData.find(p => p.studentId === student.id) || {};
+          if (!student) return null;
+
+          const participation = participationData.find(p => p && p.studentId === student.id) || {};
           return {
             ...student,
-            course: courseDetails.course,
-            progress: participation.progress || 0,
-            lastActivity: participation.lastActivity,
-            performance: getPerformanceLevel(participation.averageScore),
-            trend: participation.trend || 'stable'
+            course: safelyAccessProperty(courseDetails, 'course', {}),
+            progress: safelyAccessProperty(participation, 'progress', 0),
+            lastActivity: safelyAccessProperty(participation, 'lastActivity'),
+            performance: getPerformanceLevel(safelyAccessProperty(participation, 'averageScore')),
+            trend: safelyAccessProperty(participation, 'trend', 'stable')
           };
-        });
+        }).filter(Boolean); // Filter out any null values
       } catch (error) {
         console.error('Error fetching student activities:', error);
         window.showError(error);

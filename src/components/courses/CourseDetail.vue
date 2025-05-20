@@ -168,13 +168,12 @@
 
 <script>
 import axios from 'axios';
-import bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
 import BaseModal from '@/components/common/BaseModal.vue';
 import CourseHeader from '@/components/courses/CourseHeader.vue';
 import CourseDescription from '@/components/courses/CourseDescription.vue';
 import LessonList from '@/components/courses/LessonList.vue';
-import ExamsTab from '@/components/courses/ExamsTab.vue';
+import ExamsTab from '@/components/exams/ExamsTab.vue';
 import StudentsTab from '@/components/courses/StudentsTab.vue';
 import ContentModal from '@/components/courses/ContentModal.vue';
 import { useUser } from '@/composables/useUser.js';
