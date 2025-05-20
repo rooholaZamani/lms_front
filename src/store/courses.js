@@ -78,10 +78,21 @@ export default {
 
             try {
                 const response = await axios.get('/courses')
+
+                // بررسی اعتبارسنجی پاسخ
+                if (!response.data || !Array.isArray(response.data)) {
+                    console.error('خطا: پاسخ دریافتی از API معتبر نیست:', response.data)
+                    commit('setError', 'داده های دریافتی از سرور معتبر نیستند')
+                    commit('setLoading', false)
+                    throw new Error('خطا در فرمت داده‌های دریافتی')
+                }
+
+                console.log('دوره‌های دریافت شده:', response.data.length, response.data)
                 commit('setCourses', response.data)
                 commit('setLoading', false)
                 return response.data
             } catch (error) {
+                console.error('خطا در دریافت دوره‌ها:', error)
                 commit('setError', error.response?.data?.message || 'خطا در دریافت دوره‌ها')
                 commit('setLoading', false)
                 throw error

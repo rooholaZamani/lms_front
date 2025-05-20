@@ -1,6 +1,6 @@
 <template>
   <div class="lesson-list">
-    <div v-for="(lesson, index) in lessons" :key="lesson.id" class="lesson-item">
+    <div v-for="(lesson, index) in lessonsWithExpanded" :key="lesson.id" class="lesson-item">
       <div class="lesson-header" @click="toggleLesson(index)">
         <div class="lesson-title">
           <span class="lesson-number">{{ index + 1 }}</span>
@@ -103,10 +103,86 @@ export default {
       default: () => []
     }
   },
+  data() {
+    return {
+      // کپی داخلی از دروس با ویژگی expanded
+      internalLessons: []
+    }
+  },
+  computed: {
+    // ایجاد آرایه‌ای از دروس که هرکدام ویژگی expanded را دارند
+    lessonsWithExpanded() {
+      return this.internalLessons;
+    }
+  },
+  watch: {
+    // هر زمان که prop lessons تغییر کند، کپی داخلی را بروزرسانی می‌کنیم
+    lessons: {
+      immediate: true,
+      handler(newLessons) {
+        if (newLessons && Array.isArray(newLessons)) {
+          console.log("درس‌ها تغییر کردند، تعداد:", newLessons.length);
+          this.initializeLessons(newLessons);
+        } else {
+          console.warn("درس‌های دریافتی معتبر نیستند:", newLessons);
+          this.internalLessons = [];
+        }
+      }
+    }
+  },
+  created() {
+    // مقداردهی اولیه دروس
+    this.initializeLessons(this.lessons);
+  },
   methods: {
+    // مقداردهی اولیه دروس با ویژگی expanded
+    initializeLessons(lessons) {
+      if (!lessons || !Array.isArray(lessons)) {
+        console.warn("درس‌های ورودی معتبر نیستند:", lessons);
+        this.internalLessons = [];
+        return;
+      }
+
+      // ایجاد کپی عمیق از دروس و افزودن ویژگی expanded
+      this.internalLessons = lessons.map(lesson => {
+        const newLesson = { ...lesson };
+        // اگر expanded وجود نداشت، آن را اضافه می‌کنیم
+        if (newLesson.expanded === undefined) {
+          newLesson.expanded = false;
+        }
+        return newLesson;
+      });
+
+      console.log("درس‌ها مقداردهی شدند:", this.internalLessons);
+    },
+
+    // تغییر وضعیت نمایش درس
     toggleLesson(index) {
+      console.log("درخواست تغییر وضعیت درس با شاخص:", index);
+
+      // بررسی معتبر بودن شاخص
+      if (index < 0 || index >= this.internalLessons.length) {
+        console.error("شاخص درس نامعتبر است:", index);
+        return;
+      }
+
+      // بستن سایر دروس اگر درس فعلی قرار است باز شود
+      if (!this.internalLessons[index].expanded) {
+        this.internalLessons.forEach((lesson, i) => {
+          if (i !== index) {
+            this.$set(this.internalLessons[i], 'expanded', false);
+          }
+        });
+      }
+
+      // تغییر وضعیت درس فعلی
+      this.$set(this.internalLessons[index], 'expanded', !this.internalLessons[index].expanded);
+
+      // ارسال رویداد به والد
       this.$emit('toggle-lesson', index);
     },
+
+    // بررسی تکمیل شدن درس
     isLessonCompleted(lessonId) {
       return this.completedLessons.includes(lessonId);
     }
