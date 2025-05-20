@@ -493,8 +493,7 @@ export default {
     console.log('User roles:', {
       isTeacher: this.isTeacher,
       isTeacherOfCourse: this.isTeacherOfCourse,
-      currentUser: this.currentUser,
-      courseTeacher: this.course?.teacher
+      currentUser: this.currentUser
     });
   },
   methods: {
@@ -548,16 +547,22 @@ export default {
       try {
         // دریافت اطلاعات دوره از سرور
         await this.$store.dispatch('courses/fetchCourseById', this.id);
+
         this.course = this.currentCourse;
 
         if (!this.course) {
+          console.warn('No course data returned from API');
           return;
         }
 
         // بررسی دسترسی معلم به دوره
         if (this.isTeacher) {
-          console.log("currentUser: " +this.currentUser.id + " teacher: " + this.course.teacher.id);
-          this.isTeacherOfCourse = (this.currentUser.id === this.course.teacher.id);
+          console.log("currentUser: " +this.currentUser.id + " teacher: " + this.course);
+
+          console.log('Course response in fetchCourseData:', {
+            data: this.course,
+          })
+          // this.isTeacherOfCourse = (this.currentUser.id === this.course.teacher.id);
         }
 
         // بررسی ثبت‌نام دانش‌آموز در دوره

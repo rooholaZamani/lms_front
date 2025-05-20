@@ -31,6 +31,7 @@ export default {
             state.enrolledCourses = courses
         },
         setCurrentCourse(state, course) {
+            console.log("setCurrentCourse: "+JSON.stringify(this.course))
             state.currentCourse = course
         },
         addCourse(state, course) {
@@ -107,7 +108,7 @@ export default {
                 const response = await axios.get('/courses/teaching')
                 commit('setTeachingCourses', response.data)
                 commit('setLoading', false)
-                console.log(response.data)
+                console.log("fetchTeachingCourses: "+response.data)
                 return response.data
             } catch (error) {
                 commit('setError', error.response?.data?.message || 'خطا در دریافت دوره‌های تدریس')
@@ -124,6 +125,7 @@ export default {
                 const response = await axios.get('/courses/enrolled')
                 commit('setEnrolledCourses', response.data)
                 commit('setLoading', false)
+                console.log("fetchEnrolledCourses: "+response.data)
                 return response.data
             } catch (error) {
                 commit('setError', error.response?.data?.message || 'خطا در دریافت دوره‌های ثبت‌نام شده')
@@ -138,13 +140,23 @@ export default {
 
             try {
                 const response = await axios.get(`/courses/${courseId}`)
-                commit('setCurrentCourse', response.data)
+                commit('setCurrentCourse in fetchCourseById', response.data)
                 commit('setLoading', false)
-                console.log(response.data)
+
+                console.log('Course response:', {
+                    data: response.data,
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: response.headers,
+
+                    teacher: response.data.course.teacher
+                })
+
                 return response.data
             } catch (error) {
                 commit('setError', error.response?.data?.message || 'خطا در دریافت اطلاعات دوره')
                 commit('setLoading', false)
+                console.log("fetchCourseById error:"+error)
                 throw error
             }
         },
