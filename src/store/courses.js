@@ -140,10 +140,10 @@ export default {
 
             try {
                 const response = await axios.get(`/courses/${courseId}`)
-                commit('setCurrentCourse in fetchCourseById', response.data)
+                commit('setCurrentCourse', response.data)
                 commit('setLoading', false)
 
-                console.log('Course response:', {
+                console.log('Course response in fetchCourseById:', {
                     data: response.data,
                     status: response.status,
                     statusText: response.statusText,
