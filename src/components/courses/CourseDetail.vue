@@ -548,7 +548,7 @@ export default {
         // دریافت اطلاعات دوره از سرور
         await this.$store.dispatch('courses/fetchCourseById', this.id);
 
-        this.course = this.currentCourse;
+        this.course = this.currentCourse.course;
 
         if (!this.course) {
           console.warn('No course data returned from API');
@@ -562,7 +562,7 @@ export default {
           console.log('Course response in fetchCourseData:', {
             data: this.course,
           })
-          // this.isTeacherOfCourse = (this.currentUser.id === this.course.teacher.id);
+          this.isTeacherOfCourse = (this.currentUser.id === this.course.teacher.id);
         }
 
         // بررسی ثبت‌نام دانش‌آموز در دوره
