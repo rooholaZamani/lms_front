@@ -3,23 +3,137 @@
     <div class="container-fluid p-4">
       <loading-spinner :loading="loading">
         <div v-if="course">
-          <!-- Course Header (sin cambios) -->
-          <div class="course-header">
-            <!-- ... (código existente para el encabezado) ... -->
-          </div>
+          <!-- Course Header -->
+          <course-header
+              :course="course"
+              :is-teacher="isTeacher"
+              :is-teacher-of-course="isTeacherOfCourse"
+              :is-enrolled="isEnrolled"
+              @edit-course="showEditCourseModal"
+              @add-lesson="showAddLessonModal"
+              @enroll-course="enrollInCourse"
+          />
 
           <!-- Tabs for different sections -->
           <div class="course-content-tabs">
             <ul class="nav nav-tabs" id="courseTab" role="tablist">
-              <!-- ... (pestañas existentes) ... -->
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview"
+                        type="button" role="tab" aria-controls="overview" aria-selected="true">
+                  معرفی دوره
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="lessons-tab" data-bs-toggle="tab" data-bs-target="#lessons"
+                        type="button" role="tab" aria-controls="lessons" aria-selected="false">
+                  درس‌ها
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="students-tab" data-bs-toggle="tab" data-bs-target="#students"
+                        type="button" role="tab" aria-controls="students" aria-selected="false">
+                  دانش‌آموزان
+                </button>
+              </li>
+              <li v-if="isTeacher && isTeacherOfCourse" class="nav-item" role="presentation">
+                <button class="nav-link" id="manage-tab" data-bs-toggle="tab" data-bs-target="#manage"
+                        type="button" role="tab" aria-controls="manage" aria-selected="false">
+                  مدیریت دوره
+                </button>
+              </li>
             </ul>
 
             <div class="tab-content p-4 course-tab-content" id="courseTabContent">
-              <!-- ... (otras pestañas existentes) ... -->
+              <!-- Overview Tab -->
+              <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+                <!-- Course Information -->
+                <div class="course-info">
+                  <h3>معرفی دوره</h3>
+                  <div class="course-description">
+                    <p>{{ course.description }}</p>
+                  </div>
 
-              <!-- Manage Tab (Teacher Only) - Updated -->
+                  <!-- Course Stats -->
+                  <div class="course-stats mt-4">
+                    <div class="row">
+                      <div class="col-md-4">
+                        <div class="stat-card">
+                          <div class="stat-icon"><i class="fas fa-book"></i></div>
+                          <div class="stat-value">{{ course.lessons ? course.lessons.length : 0 }}</div>
+                          <div class="stat-label">تعداد درس‌ها</div>
+                        </div>
+                      </div>
+                      <div class="col-md-4">
+                        <div class="stat-card">
+                          <div class="stat-icon"><i class="fas fa-users"></i></div>
+                          <div class="stat-value">{{ course.enrolledStudents ? course.enrolledStudents.length : 0 }}</div>
+                          <div class="stat-label">دانش‌آموزان</div>
+                        </div>
+                      </div>
+                      <div class="col-md-4">
+                        <div class="stat-card">
+                          <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                          <div class="stat-value">{{ getTotalDuration() }} دقیقه</div>
+                          <div class="stat-label">مدت زمان دوره</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Course Teacher -->
+                  <div class="course-teacher mt-4">
+                    <h3>استاد دوره</h3>
+                    <div class="teacher-info">
+                      <div class="teacher-avatar">
+<!--                        <img src="/api/placeholder/80/80" alt="Teacher Avatar">-->
+                      </div>
+                      <div class="teacher-details">
+                        <h4>{{ getTeacherName() }}</h4>
+                        <p>{{ course.teacher?.description || 'توضیحات استاد در دسترس نیست.' }}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Course Prerequisites if any -->
+                  <div class="course-prerequisites mt-4">
+                    <h3>پیش‌نیازها</h3>
+                    <ul v-if="course.prerequisites && course.prerequisites.length > 0">
+                      <li v-for="prerequisite in course.prerequisites" :key="prerequisite.id">
+                        {{ prerequisite.title }}
+                      </li>
+                    </ul>
+                    <p v-else>این دوره پیش‌نیازی ندارد.</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Lessons Tab -->
+              <div class="tab-pane fade" id="lessons" role="tabpanel" aria-labelledby="lessons-tab">
+                <lesson-list
+                    :lessons="course.lessons || []"
+                    :is-teacher="isTeacher"
+                    :is-teacher-of-course="isTeacherOfCourse"
+                    :is-enrolled="isEnrolled"
+                    :completed-lessons="progress.completedLessonIds || []"
+                    @edit-lesson="editLesson"
+                    @add-content="showAddContentModal"
+                    @add-exam="showAddExamModal"
+                    @toggle-lesson="toggleLesson"
+                    @mark-complete="markLessonComplete"
+                />
+              </div>
+
+              <!-- Students Tab -->
+              <div class="tab-pane fade" id="students" role="tabpanel" aria-labelledby="students-tab">
+                <students-tab
+                    :course="course"
+                    @view-student-progress="viewStudentProgress"
+                />
+              </div>
+
+              <!-- Manage Tab (Teacher Only) -->
               <div
-                  v-if="isTeacher"
+                  v-if="isTeacher && isTeacherOfCourse"
                   class="tab-pane fade"
                   id="manage"
                   role="tabpanel"
@@ -131,102 +245,50 @@
       </loading-spinner>
     </div>
 
-    <!-- Modal for adding/editing lessons (existing modal) -->
+    <!-- Modal for adding/editing lessons -->
     <div class="modal fade" id="lessonModal" tabindex="-1" aria-labelledby="lessonModalLabel" aria-hidden="true">
-      <!-- ... (modal existing content) ... -->
-    </div>
-
-    <!-- Modal for adding content to a lesson -->
-    <div class="modal fade" id="contentModal" tabindex="-1" aria-labelledby="contentModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
+      <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="contentModalLabel">افزودن محتوا به درس: {{ selectedLesson.title }}</h5>
+            <h5 class="modal-title" id="lessonModalLabel">
+              {{ lessonForm.id ? 'ویرایش درس' : 'افزودن درس جدید' }}
+            </h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <ul class="nav nav-tabs mb-3" id="contentTab" role="tablist">
-              <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="text-tab" data-bs-toggle="tab" data-bs-target="#text"
-                        type="button" role="tab" aria-controls="text" aria-selected="true">
-                  متن
-                </button>
-              </li>
-              <li class="nav-item" role="presentation">
-                <button class="nav-link" id="file-tab" data-bs-toggle="tab" data-bs-target="#file"
-                        type="button" role="tab" aria-controls="file" aria-selected="false">
-                  فایل
-                </button>
-              </li>
-              <li class="nav-item" role="presentation">
-                <button class="nav-link" id="video-tab" data-bs-toggle="tab" data-bs-target="#video"
-                        type="button" role="tab" aria-controls="video" aria-selected="false">
-                  ویدیو
-                </button>
-              </li>
-            </ul>
-            <div class="tab-content" id="contentTabContent">
-              <!-- Tab: متن -->
-              <div class="tab-pane fade show active" id="text" role="tabpanel" aria-labelledby="text-tab">
-                <form @submit.prevent="saveTextContent">
-                  <div class="mb-3">
-                    <label for="contentTitle" class="form-label">عنوان محتوا</label>
-                    <input type="text" class="form-control" id="contentTitle" v-model="contentForm.title" required>
-                  </div>
-                  <div class="mb-3">
-                    <label for="textContent" class="form-label">محتوای متنی</label>
-                    <textarea class="form-control" id="textContent"
-                              v-model="contentForm.text" rows="10" required></textarea>
-                  </div>
-                  <button type="submit" class="btn btn-primary" :disabled="isContentSubmitting">
-                    <span v-if="isContentSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    ذخیره محتوای متنی
-                  </button>
-                </form>
+            <form @submit.prevent="saveLesson">
+              <div class="mb-3">
+                <label for="lessonTitle" class="form-label">عنوان درس</label>
+                <input type="text" class="form-control" id="lessonTitle" v-model="lessonForm.title" required>
               </div>
-
-              <!-- Tab: فایل -->
-              <div class="tab-pane fade" id="file" role="tabpanel" aria-labelledby="file-tab">
-                <form @submit.prevent="uploadFile">
-                  <div class="mb-3">
-                    <label for="fileUpload" class="form-label">آپلود فایل</label>
-                    <input type="file" class="form-control" id="fileUpload" @change="handleFileSelect">
-                    <small class="form-text text-muted">فرمت‌های مجاز: PDF, DOCX, PPT, ZIP (حداکثر 10MB)</small>
-                  </div>
-                  <div class="mb-3">
-                    <label for="fileName" class="form-label">نام نمایشی فایل</label>
-                    <input type="text" class="form-control" id="fileName" v-model="contentForm.fileName" required>
-                  </div>
-                  <button type="submit" class="btn btn-primary" :disabled="isContentSubmitting || !contentForm.file">
-                    <span v-if="isContentSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    آپلود فایل
-                  </button>
-                </form>
+              <div class="mb-3">
+                <label for="lessonDescription" class="form-label">توضیحات درس</label>
+                <textarea class="form-control" id="lessonDescription" v-model="lessonForm.description" rows="3"></textarea>
               </div>
-
-              <!-- Tab: ویدیو -->
-              <div class="tab-pane fade" id="video" role="tabpanel" aria-labelledby="video-tab">
-                <form @submit.prevent="uploadVideo">
-                  <div class="mb-3">
-                    <label for="videoUpload" class="form-label">آپلود ویدیو</label>
-                    <input type="file" class="form-control" id="videoUpload" @change="handleVideoSelect" accept="video/mp4,video/webm">
-                    <small class="form-text text-muted">فرمت‌های مجاز: MP4, WEBM (حداکثر 100MB)</small>
-                  </div>
-                  <div class="mb-3">
-                    <label for="videoTitle" class="form-label">عنوان ویدیو</label>
-                    <input type="text" class="form-control" id="videoTitle" v-model="contentForm.videoTitle" required>
-                  </div>
-                  <button type="submit" class="btn btn-primary" :disabled="isContentSubmitting || !contentForm.video">
-                    <span v-if="isContentSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    آپلود ویدیو
-                  </button>
-                </form>
+              <div class="mb-3">
+                <label for="lessonOrder" class="form-label">ترتیب نمایش</label>
+                <input type="number" class="form-control" id="lessonOrder" v-model="lessonForm.orderIndex" min="0">
               </div>
-            </div>
+              <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="submit" class="btn btn-primary" :disabled="savingLesson">
+                  <span v-if="savingLesson" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                  ذخیره
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- مودال افزودن محتوا به درس -->
+    <content-modal
+        :modal-id="'contentModal'"
+        :lesson-id="selectedLesson.id"
+        ref="contentModal"
+        @content-saved="handleContentSaved"
+    />
 
     <!-- Modal for adding assignment -->
     <div class="modal fade" id="assignmentModal" tabindex="-1" aria-labelledby="assignmentModalLabel" aria-hidden="true">
@@ -354,14 +416,21 @@ import { useFormatters } from '@/composables/useFormatters.js';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
 import EmptyState from '@/components/common/EmptyState.vue';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog.vue';
-// import bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import ContentModal from '@/components/courses/ContentModal.vue';
+import CourseHeader from '@/components/courses/CourseHeader.vue';
+import LessonList from '@/components/courses/LessonList.vue';
+import StudentsTab from '@/components/courses/StudentsTab.vue';
 
 export default {
   name: 'CourseDetail',
   components: {
     LoadingSpinner,
     EmptyState,
-    ConfirmationDialog
+    ConfirmationDialog,
+    ContentModal,
+    CourseHeader,
+    LessonList,
+    StudentsTab
   },
   props: {
     id: {
@@ -389,8 +458,9 @@ export default {
       savingLesson: false,
       course: null,
       isEnrolled: false,
+      isTeacherOfCourse: false,
 
-      // Para el modal de lecciones existente
+      // فرم درس
       lessonForm: {
         id: null,
         title: '',
@@ -398,19 +468,16 @@ export default {
         orderIndex: 0
       },
 
-      // Para el modal de contenido
-      selectedLesson: {},
-      contentForm: {
+      // فرم ویرایش دوره
+      editCourseForm: {
         title: '',
-        text: '',
-        file: null,
-        fileName: '',
-        video: null,
-        videoTitle: ''
+        description: ''
       },
-      isContentSubmitting: false,
 
-      // Para el modal de tareas
+      // درس انتخاب شده برای افزودن محتوا
+      selectedLesson: {},
+
+      // فرم تکلیف
       assignmentForm: {
         title: '',
         description: '',
@@ -419,7 +486,7 @@ export default {
       },
       isAssignmentSubmitting: false,
 
-      // Para el modal de exámenes
+      // فرم آزمون
       examForm: {
         title: '',
         description: '',
@@ -429,7 +496,7 @@ export default {
       },
       isExamSubmitting: false,
 
-      // Datos del progreso
+      // اطلاعات پیشرفت
       progress: {
         completedLessons: 0,
         totalTimeSpent: 0,
@@ -437,206 +504,336 @@ export default {
         examsTotal: 0,
         exercisesCompleted: 0,
         exercisesTotal: 0,
-        circleLength: 439.6, // 2 * PI * 70 (radio del círculo)
-        circleDashOffset: 439.6, // Desplazamiento inicial (0% de progreso)
+        circleLength: 439.6, // 2 * PI * 70 (شعاع دایره)
+        circleDashOffset: 439.6, // جابجایی اولیه (0٪ پیشرفت)
         completedLessonIds: [],
         timeline: []
       }
     };
   },
-  computed: {
-    // ... (computed properties del componente original)
-  },
   async created() {
-    // ... (método created del componente original)
+    try {
+      await this.fetchCourseData();
+      this.setupBootstrapTabs();
+    } catch (error) {
+      console.error('Error fetching course data:', error);
+      this.$toast.error('خطا در دریافت اطلاعات دوره');
+    } finally {
+      this.loading = false;
+    }
+  },
+  mounted() {
+    // فعال‌سازی زبانه‌های بوت‌استرپ
+    this.setupBootstrapTabs();
   },
   methods: {
-    // ... (mantener todos los métodos originales)
+    // راه‌اندازی زبانه‌های Bootstrap
+    setupBootstrapTabs() {
+      // بررسی وجود زبانه‌های Bootstrap
+      if (window.bootstrap) {
+        const tabListEl = document.getElementById('courseTab');
+        if (tabListEl) {
+          // فعال‌سازی زبانه فعال بر اساس پارامتر URL
+          const urlParams = new URLSearchParams(window.location.search);
+          const tabParam = urlParams.get('tab');
+          if (tabParam) {
+            // دکمه زبانه مربوطه را پیدا کنید
+            const tabToShow = document.querySelector(`#${tabParam}-tab`);
+            if (tabToShow) {
+              // ایجاد نمونه Tab بوت‌استرپ و نمایش زبانه مربوطه
+              const tab = new bootstrap.Tab(tabToShow);
+              tab.show();
+            }
+          }
 
-    // Métodos para gestionar el contenido
-    showAddContentModal(lesson) {
-      this.selectedLesson = lesson;
-      this.contentForm = {
-        title: '',
-        text: '',
-        file: null,
-        fileName: '',
-        video: null,
-        videoTitle: ''
+          // ایجاد Event Listener برای تغییر URL هنگام تغییر زبانه
+          tabListEl.addEventListener('shown.bs.tab', function (event) {
+            const tabId = event.target.id.replace('-tab', '');
+            const newUrl = new URL(window.location);
+            newUrl.searchParams.set('tab', tabId);
+            window.history.replaceState({}, '', newUrl);
+          });
+        }
+      }
+    },
+
+    async fetchCourseData() {
+      try {
+        // دریافت اطلاعات دوره از سرور
+        await this.$store.dispatch('courses/fetchCourseById', this.id);
+        this.course = this.currentCourse;
+
+        if (!this.course) {
+          return;
+        }
+
+        // بررسی دسترسی معلم به دوره
+        if (this.isTeacher && this.course.teacher) {
+          this.isTeacherOfCourse = this.currentUser.id === this.course.teacher.id;
+        }
+
+        // بررسی ثبت‌نام دانش‌آموز در دوره
+        if (this.isStudent && this.course.enrolledStudents) {
+          this.isEnrolled = this.course.enrolledStudents.some(student => student.id === this.currentUser.id);
+        }
+
+        // تنظیم داده‌های فرم ویرایش دوره
+        this.editCourseForm = {
+          title: this.course.title,
+          description: this.course.description
+        };
+
+        // دریافت اطلاعات پیشرفت برای دانش‌آموزان
+        if (this.isStudent && this.isEnrolled) {
+          await this.fetchProgressData();
+        }
+
+        console.log("Course loaded:", this.course);
+
+      } catch (error) {
+        console.error('Error in fetchCourseData:', error);
+        throw error;
+      }
+    },
+
+    async fetchProgressData() {
+      try {
+        // در پروژه واقعی، اطلاعات پیشرفت از سرور دریافت می‌شود
+        // this.progress = await API.getProgress(this.id);
+
+        // برای نمونه، یک پیشرفت ساختگی ایجاد می‌کنیم
+        if (this.course.lessons) {
+          const totalLessons = this.course.lessons.length;
+          const completedLessons = Math.floor(Math.random() * (totalLessons + 1));
+
+          // ایجاد آرایه‌ای از شناسه‌های درس‌های تکمیل‌شده
+          const completedLessonIds = [];
+          for (let i = 0; i < completedLessons; i++) {
+            if (this.course.lessons[i]) {
+              completedLessonIds.push(this.course.lessons[i].id);
+            }
+          }
+
+          this.progress = {
+            completedLessons,
+            totalLessons,
+            completedLessonIds,
+            totalTimeSpent: Math.floor(Math.random() * 1000),
+            examsPassed: Math.floor(Math.random() * 3),
+            examsTotal: Math.floor(Math.random() * 5),
+            exercisesCompleted: Math.floor(Math.random() * 4),
+            exercisesTotal: Math.floor(Math.random() * 6),
+            circleLength: 439.6,
+            circleDashOffset: 439.6 * (1 - (completedLessons / totalLessons))
+          };
+        }
+      } catch (error) {
+        console.error('Error fetching progress data:', error);
+        // نمایش خطا به کاربر
+        this.$toast.error('خطا در دریافت اطلاعات پیشرفت');
+      }
+    },
+
+    getTeacherName() {
+      if (!this.course.teacher) return 'نامشخص';
+      return this.getUserFullName(this.course.teacher);
+    },
+
+    getTotalDuration() {
+      if (!this.course.lessons) return 0;
+
+      let totalMinutes = 0;
+      this.course.lessons.forEach(lesson => {
+        if (lesson.duration) {
+          totalMinutes += parseInt(lesson.duration);
+        }
+      });
+
+      return totalMinutes;
+    },
+
+    async enrollInCourse() {
+      if (this.enrolling || this.isEnrolled) return;
+
+      this.enrolling = true;
+
+      try {
+        await this.$store.dispatch('courses/enrollCourse', this.id);
+        this.isEnrolled = true;
+        this.$toast.success('شما با موفقیت در این دوره ثبت‌نام کردید.');
+      } catch (error) {
+        console.error('Error enrolling in course:', error);
+        this.$toast.error('خطا در ثبت‌نام دوره');
+      } finally {
+        this.enrolling = false;
+      }
+    },
+
+    showEditCourseModal() {
+      this.editCourseForm = {
+        title: this.course.title,
+        description: this.course.description
       };
 
-      const modal = new bootstrap.Modal(document.getElementById('contentModal'));
+      // در پروژه واقعی، یک مودال برای ویرایش دوره نمایش داده می‌شود
+      console.log('Edit course modal should be shown');
+    },
+
+    async updateCourseInfo() {
+      if (this.updatingCourse) return;
+
+      this.updatingCourse = true;
+
+      try {
+        await this.$store.dispatch('courses/updateCourse', {
+          courseId: this.id,
+          courseData: this.editCourseForm
+        });
+
+        this.$toast.success('اطلاعات دوره با موفقیت به‌روزرسانی شد.');
+      } catch (error) {
+        console.error('Error updating course:', error);
+        this.$toast.error('خطا در به‌روزرسانی اطلاعات دوره');
+      } finally {
+        this.updatingCourse = false;
+      }
+    },
+
+    showAddLessonModal() {
+      this.lessonForm = {
+        id: null,
+        title: '',
+        description: '',
+        orderIndex: this.course.lessons ? this.course.lessons.length : 0
+      };
+
+      const modal = new bootstrap.Modal(document.getElementById('lessonModal'));
       modal.show();
     },
 
-    saveTextContent() {
-      if (this.isContentSubmitting) return;
-      this.isContentSubmitting = true;
+    editLesson(lesson) {
+      this.lessonForm = {
+        id: lesson.id,
+        title: lesson.title,
+        description: lesson.description,
+        orderIndex: lesson.orderIndex || 0
+      };
 
-      try {
-        // En un entorno real, esto enviaría una solicitud a la API
-        console.log('Saving text content:', {
-          lessonId: this.selectedLesson.id,
-          title: this.contentForm.title,
-          content: this.contentForm.text
-        });
-
-        // Simulamos una respuesta exitosa
-        setTimeout(() => {
-          // Agregamos el nuevo contenido a la lección
-          if (!this.selectedLesson.contents) {
-            this.selectedLesson.contents = [];
-          }
-
-          const newContent = {
-            id: Date.now(),
-            title: this.contentForm.title,
-            type: 'TEXT',
-            textContent: this.contentForm.text,
-            orderIndex: this.selectedLesson.contents.length
-          };
-
-          this.selectedLesson.contents.push(newContent);
-
-          this.$toast.success('محتوای متنی با موفقیت اضافه شد');
-
-          // Cerrar el modal
-          const modal = bootstrap.Modal.getInstance(document.getElementById('contentModal'));
-          modal.hide();
-
-          this.isContentSubmitting = false;
-        }, 800);
-      } catch (error) {
-        console.error('Error saving text content:', error);
-        this.$toast.error('خطا در ذخیره محتوای متنی');
-        this.isContentSubmitting = false;
-      }
+      const modal = new bootstrap.Modal(document.getElementById('lessonModal'));
+      modal.show();
     },
 
-    handleFileSelect(event) {
-      if (event.target.files.length > 0) {
-        this.contentForm.file = event.target.files[0];
-        if (!this.contentForm.fileName) {
-          this.contentForm.fileName = this.contentForm.file.name;
+    async saveLesson() {
+      if (this.savingLesson) return;
+
+      this.savingLesson = true;
+
+      try {
+        let response;
+
+        if (this.lessonForm.id) {
+          // ویرایش درس موجود
+          response = await this.$http.put(`/lessons/${this.lessonForm.id}`, this.lessonForm);
+
+          // به‌روزرسانی درس در لیست دروس
+          const index = this.course.lessons.findIndex(l => l.id === this.lessonForm.id);
+          if (index !== -1) {
+            this.$set(this.course.lessons, index, response.data);
+          }
+
+          this.$toast.success('درس با موفقیت به‌روزرسانی شد.');
+        } else {
+          // ایجاد درس جدید
+          response = await this.$http.post(`/lessons/course/${this.id}`, this.lessonForm);
+
+          // افزودن درس جدید به لیست دروس
+          if (!this.course.lessons) {
+            this.course.lessons = [];
+          }
+
+          this.course.lessons.push(response.data);
+          this.$toast.success('درس جدید با موفقیت افزوده شد.');
         }
+
+        // بستن مودال
+        const modal = bootstrap.Modal.getInstance(document.getElementById('lessonModal'));
+        modal.hide();
+      } catch (error) {
+        console.error('Error saving lesson:', error);
+        this.$toast.error('خطا در ذخیره درس');
+      } finally {
+        this.savingLesson = false;
       }
     },
 
-    uploadFile() {
-      if (this.isContentSubmitting || !this.contentForm.file) return;
-      this.isContentSubmitting = true;
+    async deleteLesson(lesson) {
+      // نمایش دیالوگ تأیید
+      const confirmed = await this.$refs.confirmDialog.show();
+
+      if (!confirmed) return;
 
       try {
-        // En un entorno real, esto enviaría una solicitud a la API
-        console.log('Uploading file:', {
-          lessonId: this.selectedLesson.id,
-          fileName: this.contentForm.fileName,
-          file: this.contentForm.file
-        });
+        await this.$http.delete(`/lessons/${lesson.id}`);
 
-        // Simulamos una respuesta exitosa
-        setTimeout(() => {
-          // Agregamos el nuevo contenido a la lección
-          if (!this.selectedLesson.contents) {
-            this.selectedLesson.contents = [];
-          }
+        // حذف درس از لیست دروس
+        this.course.lessons = this.course.lessons.filter(l => l.id !== lesson.id);
 
-          const fileType = this.contentForm.file.name.split('.').pop().toLowerCase();
-
-          const newContent = {
-            id: Date.now(),
-            title: this.contentForm.fileName,
-            type: fileType === 'pdf' ? 'PDF' : 'FILE',
-            file: {
-              id: Date.now(),
-              originalFilename: this.contentForm.file.name,
-              contentType: this.contentForm.file.type,
-              filePath: `/courses/${this.courseId}/lessons/${this.selectedLesson.id}/files/${Date.now()}_${this.contentForm.file.name}`,
-              fileSize: this.contentForm.file.size
-            },
-            orderIndex: this.selectedLesson.contents.length
-          };
-
-          this.selectedLesson.contents.push(newContent);
-
-          this.$toast.success('فایل با موفقیت آپلود شد');
-
-          // Cerrar el modal
-          const modal = bootstrap.Modal.getInstance(document.getElementById('contentModal'));
-          modal.hide();
-
-          this.isContentSubmitting = false;
-        }, 1000);
+        this.$toast.success('درس با موفقیت حذف شد.');
       } catch (error) {
-        console.error('Error uploading file:', error);
-        this.$toast.error('خطا در آپلود فایل');
-        this.isContentSubmitting = false;
+        console.error('Error deleting lesson:', error);
+        this.$toast.error('خطا در حذف درس');
       }
     },
 
-    handleVideoSelect(event) {
-      if (event.target.files.length > 0) {
-        this.contentForm.video = event.target.files[0];
-        if (!this.contentForm.videoTitle) {
-          this.contentForm.videoTitle = this.contentForm.video.name.split('.')[0];
+    toggleLesson(index) {
+      if (!this.course.lessons[index].expanded) {
+        this.course.lessons.forEach((lesson, i) => {
+          if (i !== index) {
+            this.$set(lesson, 'expanded', false);
+          }
+        });
+      }
+
+      this.$set(this.course.lessons[index], 'expanded', !this.course.lessons[index].expanded);
+    },
+
+    async markLessonComplete(lessonId) {
+      try {
+        await this.$http.post(`/progress/lesson/${lessonId}/complete`);
+
+        // به‌روزرسانی وضعیت پیشرفت
+        if (!this.progress.completedLessonIds) {
+          this.progress.completedLessonIds = [];
         }
-      }
-    },
 
-    uploadVideo() {
-      if (this.isContentSubmitting || !this.contentForm.video) return;
-      this.isContentSubmitting = true;
+        this.progress.completedLessonIds.push(lessonId);
+        this.progress.completedLessons++;
 
-      try {
-        // En un entorno real, esto enviaría una solicitud a la API
-        console.log('Uploading video:', {
-          lessonId: this.selectedLesson.id,
-          videoTitle: this.contentForm.videoTitle,
-          video: this.contentForm.video
-        });
+        // به‌روزرسانی درصد پیشرفت
+        const percentage = this.progress.completedLessons / this.progress.totalLessons;
+        this.progress.circleDashOffset = this.progress.circleLength * (1 - percentage);
 
-        // Simulamos una respuesta exitosa
-        setTimeout(() => {
-          // Agregamos el nuevo contenido a la lección
-          if (!this.selectedLesson.contents) {
-            this.selectedLesson.contents = [];
-          }
-
-          const newContent = {
-            id: Date.now(),
-            title: this.contentForm.videoTitle,
-            type: 'VIDEO',
-            file: {
-              id: Date.now(),
-              originalFilename: this.contentForm.video.name,
-              contentType: this.contentForm.video.type,
-              filePath: `/courses/${this.courseId}/lessons/${this.selectedLesson.id}/videos/${Date.now()}_${this.contentForm.video.name}`,
-              fileSize: this.contentForm.video.size
-            },
-            orderIndex: this.selectedLesson.contents.length
-          };
-
-          this.selectedLesson.contents.push(newContent);
-
-          this.$toast.success('ویدیو با موفقیت آپلود شد');
-
-          // Cerrar el modal
-          const modal = bootstrap.Modal.getInstance(document.getElementById('contentModal'));
-          modal.hide();
-
-          this.isContentSubmitting = false;
-        }, 1200);
+        this.$toast.success('درس به عنوان تکمیل شده علامت‌گذاری شد.');
       } catch (error) {
-        console.error('Error uploading video:', error);
-        this.$toast.error('خطا در آپلود ویدیو');
-        this.isContentSubmitting = false;
+        console.error('Error marking lesson complete:', error);
+        this.$toast.error('خطا در علامت‌گذاری درس');
       }
     },
 
-    // Métodos para gestionar las tareas (assignments)
+    showAddContentModal(lesson) {
+      this.selectedLesson = lesson;
+
+      // استفاده از کامپوننت ContentModal
+      this.$nextTick(() => {
+        const modal = new bootstrap.Modal(document.getElementById('contentModal'));
+        modal.show();
+      });
+    },
+
     showAddAssignmentModal(lesson) {
       this.selectedLesson = lesson;
-      // Establecer la fecha de entrega a 7 días a partir de hoy
+
+      // تنظیم تاریخ تحویل به 7 روز بعد
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 7);
 
@@ -657,12 +854,13 @@ export default {
       }
     },
 
-    saveAssignment() {
+    async saveAssignment() {
       if (this.isAssignmentSubmitting) return;
+
       this.isAssignmentSubmitting = true;
 
       try {
-        // En un entorno real, esto enviaría una solicitud a la API
+        // در یک پروژه واقعی، این درخواست به API ارسال می‌شود
         console.log('Creating assignment:', {
           lessonId: this.selectedLesson.id,
           title: this.assignmentForm.title,
@@ -671,17 +869,17 @@ export default {
           file: this.assignmentForm.file
         });
 
-        // Simulamos una respuesta exitosa
+        // شبیه‌سازی پاسخ موفقیت‌آمیز
         setTimeout(() => {
-          // Actualizar la lección para indicar que tiene una tarea
+          // به‌روزرسانی درس برای نشان دادن اینکه یک تکلیف دارد
           const lessonIndex = this.course.lessons.findIndex(l => l.id === this.selectedLesson.id);
           if (lessonIndex !== -1) {
-            this.course.lessons[lessonIndex].hasAssignment = true;
+            this.$set(this.course.lessons[lessonIndex], 'hasAssignment', true);
           }
 
-          this.$toast.success('تکلیف با موفقیت ایجاد شد');
+          this.$toast.success('تکلیف با موفقیت ایجاد شد.');
 
-          // Cerrar el modal
+          // بستن مودال
           const modal = bootstrap.Modal.getInstance(document.getElementById('assignmentModal'));
           modal.hide();
 
@@ -694,7 +892,6 @@ export default {
       }
     },
 
-    // Métodos para gestionar los exámenes
     showAddExamModal(lesson) {
       this.selectedLesson = lesson;
 
@@ -714,12 +911,13 @@ export default {
       this.$toast.info('لطفاً ابتدا آزمون را ایجاد کنید، سپس می‌توانید سوالات را اضافه کنید.');
     },
 
-    saveExam() {
+    async saveExam() {
       if (this.isExamSubmitting) return;
+
       this.isExamSubmitting = true;
 
       try {
-        // En un entorno real, esto enviaría una solicitud a la API
+        // در یک پروژه واقعی، این درخواست به API ارسال می‌شود
         console.log('Creating exam:', {
           lessonId: this.selectedLesson.id,
           title: this.examForm.title,
@@ -729,24 +927,24 @@ export default {
           shuffleQuestions: this.examForm.shuffleQuestions
         });
 
-        // Simulamos una respuesta exitosa
+        // شبیه‌سازی پاسخ موفقیت‌آمیز
         setTimeout(() => {
-          // Actualizar la lección para indicar que tiene un examen
+          // به‌روزرسانی درس برای نشان دادن اینکه یک آزمون دارد
           const lessonIndex = this.course.lessons.findIndex(l => l.id === this.selectedLesson.id);
           if (lessonIndex !== -1) {
-            this.course.lessons[lessonIndex].hasExam = true;
+            this.$set(this.course.lessons[lessonIndex], 'hasExam', true);
           }
 
-          this.$toast.success('آزمون با موفقیت ایجاد شد');
+          this.$toast.success('آزمون با موفقیت ایجاد شد.');
 
-          // Mostrar mensaje sobre cómo añadir preguntas
+          // نمایش پیام در مورد نحوه افزودن سوالات
           this.$toast.info('برای افزودن سوالات به آزمون، به صفحه مدیریت آزمون‌ها مراجعه کنید.');
 
-          // Cerrar el modal
+          // بستن مودال
           const modal = bootstrap.Modal.getInstance(document.getElementById('examModal'));
           modal.hide();
 
-          // Redirigir a la página de creación de exámenes
+          // هدایت به صفحه ایجاد آزمون
           this.$router.push(`/exams/create?lessonId=${this.selectedLesson.id}`);
 
           this.isExamSubmitting = false;
@@ -756,49 +954,232 @@ export default {
         this.$toast.error('خطا در ایجاد آزمون');
         this.isExamSubmitting = false;
       }
+    },
+
+    viewStudentProgress(student) {
+      // در یک پروژه واقعی، به صفحه پیشرفت دانش‌آموز هدایت می‌شود
+      this.$router.push({
+        name: 'StudentProgress',
+        params: { courseId: this.id, studentId: student.id }
+      });
+    },
+
+    handleContentSaved(updatedLesson) {
+      // به‌روزرسانی درس پس از ذخیره محتوا
+      const index = this.course.lessons.findIndex(l => l.id === updatedLesson.id);
+      if (index !== -1) {
+        this.$set(this.course.lessons, index, updatedLesson);
+      }
+
+      this.$toast.success('محتوای درس با موفقیت به‌روزرسانی شد.');
     }
+  },
+  computed: {
+    ...mapGetters({
+      currentCourse: 'courses/getCurrentCourse',
+      currentUser: 'currentUser'
+    })
   }
 }
 </script>
 
 <style scoped>
-/* Mantener los estilos existentes */
-
-/* Estilos adicionales para la gestión de contenido */
-.content-list {
-  max-height: 300px;
-  overflow-y: auto;
+.course-detail-container {
+  min-height: calc(100vh - 56px);
 }
 
-.content-item {
+.course-header {
+  margin-bottom: 2rem;
+}
+
+.course-tab-content {
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-top: none;
+  border-radius: 0 0 0.25rem 0.25rem;
+}
+
+.course-info {
+  margin-bottom: 2rem;
+}
+
+.course-description {
+  line-height: 1.6;
+  margin-top: 1rem;
+}
+
+/* Course Stats */
+.stat-card {
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  height: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s;
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stat-icon {
+  font-size: 2rem;
+  color: #007bff;
   margin-bottom: 10px;
-  padding: 10px;
-  border: 1px solid #eee;
-  border-radius: 4px;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+/* Teacher Info */
+.course-teacher {
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 2rem;
+}
+
+.teacher-info {
   display: flex;
   align-items: center;
+  margin-top: 1rem;
 }
 
-.content-type-icon {
-  margin-left: 10px;
-  font-size: 1.5rem;
-  width: 40px;
+.teacher-avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-left: 1rem;
+}
+
+.teacher-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.teacher-details h4 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.teacher-details p {
+  color: #6c757d;
+  margin-bottom: 0;
+}
+
+/* Course Progress */
+.course-progress {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+}
+
+.progress-title {
+  margin-bottom: 1rem;
+}
+
+.progress-stats {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.progress-item {
   text-align: center;
+  padding: 0 10px;
+  margin-bottom: 1rem;
 }
 
-.content-info {
-  flex-grow: 1;
+.progress-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #007bff;
 }
 
-.content-title {
-  font-weight: 600;
+.progress-label {
+  color: #6c757d;
+  font-size: 0.9rem;
 }
 
-.content-actions {
-  margin-right: 10px;
+.circle-progress {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin: 0 auto;
 }
 
-/* Estilos adicionales para la gestión de tareas y exámenes */
+.circle-progress-percentage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+/* Timeline */
+.course-timeline {
+  margin-top: 2rem;
+}
+
+.timeline-item {
+  position: relative;
+  padding-right: 30px;
+  padding-bottom: 20px;
+  border-right: 2px solid #e9ecef;
+}
+
+.timeline-marker {
+  position: absolute;
+  top: 0;
+  right: -9px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #007bff;
+  border: 2px solid #fff;
+}
+
+.timeline-date {
+  color: #6c757d;
+  font-size: 0.85rem;
+  margin-bottom: 0.3rem;
+}
+
+.timeline-content {
+  background-color: #f8f9fa;
+  padding: 10px 15px;
+  border-radius: 5px;
+}
+
+/* Course Management */
+.course-management {
+  margin-top: 1rem;
+}
+
+.management-section {
+  margin-bottom: 2rem;
+}
+
+.lesson-management-list {
+  margin-top: 1rem;
+}
+
 .lesson-management-item {
   position: relative;
   padding: 15px;
@@ -830,7 +1211,7 @@ export default {
   gap: 5px;
 }
 
-/* Si los botones necesitan ajustes para pantallas más pequeñas */
+/* Responsive adjustments */
 @media (max-width: 768px) {
   .lesson-management-item {
     flex-direction: column;
@@ -840,7 +1221,17 @@ export default {
   .lesson-management-item .lesson-actions {
     margin-top: 10px;
     width: 100%;
-    justify-content: flex-start;
+    justify-content: space-between;
+  }
+
+  .teacher-info {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .teacher-avatar {
+    margin-left: 0;
+    margin-bottom: 1rem;
   }
 }
 </style>
