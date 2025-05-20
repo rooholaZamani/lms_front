@@ -1,305 +1,261 @@
 <template>
-  <div class="course-list">
+  <div class="course-list-container">
     <div class="container-fluid p-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>دوره‌های من</h2>
-        <router-link :to="{ name: 'AvailableCourses' }" class="btn btn-primary">
-          <i class="fas fa-plus me-2"></i> یافتن دوره‌های جدید
-        </router-link>
+
+        <div class="d-flex">
+          <div class="me-2">
+            <input
+                type="text"
+                class="form-control"
+                v-model="searchQuery"
+                placeholder="جستجو در دوره‌ها..."
+                @input="filterCourses"
+            >
+          </div>
+
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+              مرتب‌سازی
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="sortDropdown">
+              <li><a class="dropdown-item" href="#" @click.prevent="sortCourses('title')">نام (الفبا)</a></li>
+              <li><a class="dropdown-item" href="#" @click.prevent="sortCourses('date')">تاریخ (جدیدترین)</a></li>
+              <li><a class="dropdown-item" href="#" @click.prevent="sortCourses('progress')">پیشرفت (بیشترین)</a></li>
+            </ul>
+          </div>
+        </div>
       </div>
 
-      <!-- فیلتر و جستجو -->
-      <div class="card mb-4">
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-4">
-              <div class="form-group mb-3">
-                <label for="searchQuery" class="form-label">جستجو</label>
-                <div class="input-group">
-                  <input
-                      type="text"
-                      class="form-control"
-                      id="searchQuery"
-                      v-model="searchQuery"
-                      placeholder="عنوان دوره یا نام استاد"
-                  >
-                  <button class="btn btn-primary" @click="searchCourses">
-                    <i class="fas fa-search"></i>
+      <loading-spinner :loading="loading">
+        <div v-if="filteredCourses.length > 0" class="row">
+          <div v-for="course in filteredCourses" :key="course.id" class="col-md-4 col-lg-3 mb-4">
+            <div class="course-card">
+              <div class="course-card-header">
+                <div class="course-image">
+                  <img :src="getCourseImage(course)" :alt="course.title">
+                  <div class="course-progress" v-if="isStudent && getCourseProgress(course)">
+                    <div class="progress">
+                      <div
+                          class="progress-bar bg-success"
+                          role="progressbar"
+                          :style="`width: ${getCourseProgress(course)}%`"
+                          :aria-valuenow="getCourseProgress(course)"
+                          aria-valuemin="0"
+                          aria-valuemax="100"
+                      >
+                        {{ getCourseProgress(course) }}%
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="course-actions">
+                  <button class="btn-action" @click="toggleFavorite(course)" title="افزودن به علاقه‌مندی‌ها">
+                    <i class="fas" :class="course.isFavorite ? 'fa-heart text-danger' : 'fa-heart-o'"></i>
                   </button>
                 </div>
               </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group">
-                <label for="statusFilter" class="form-label">وضعیت</label>
-                <select class="form-select" id="statusFilter" v-model="statusFilter" @change="filterCourses">
-                  <option value="all">همه</option>
-                  <option value="in-progress">در حال انجام</option>
-                  <option value="completed">تکمیل شده</option>
-                </select>
+
+              <div class="course-card-body">
+                <h5 class="course-title">{{ course.title }}</h5>
+                <p class="course-description">{{ truncateText(course.description, 100) }}</p>
+
+                <div class="course-meta">
+                  <div class="course-teacher">
+                    <i class="fas fa-chalkboard-teacher me-1"></i>
+                    {{ getTeacherName(course.teacher) }}
+                  </div>
+                  <div class="course-lessons">
+                    <i class="fas fa-book-open me-1"></i>
+                    {{ course.lessons ? course.lessons.length : 0 }} درس
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="col-md-3">
-              <div class="form-group">
-                <label for="sortBy" class="form-label">مرتب‌سازی بر اساس</label>
-                <select class="form-select" id="sortBy" v-model="sortBy" @change="sortCourses">
-                  <option value="date">تاریخ ثبت‌نام</option>
-                  <option value="name">نام</option>
-                  <option value="progress">پیشرفت</option>
-                </select>
+
+              <div class="course-card-footer">
+                <router-link :to="`/courses/${course.id}`" class="btn btn-primary btn-sm">
+                  مشاهده دوره
+                </router-link>
+
+                <div class="course-students">
+                  <i class="fas fa-users me-1"></i>
+                  {{ course.enrolledStudents ? course.enrolledStudents.length : 0 }} دانش‌آموز
+                </div>
               </div>
-            </div>
-            <div class="col-md-2 d-flex align-items-end">
-              <button class="btn btn-secondary w-100" @click="resetFilters">
-                <i class="fas fa-redo me-2"></i> بازنشانی
-              </button>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- لیست دوره‌ها -->
-      <loading-spinner :loading="loading">
         <empty-state
-            v-if="filteredCourses.length === 0"
-            title="دوره‌ای یافت نشد"
-            description="شما در هیچ دوره‌ای ثبت‌نام نکرده‌اید یا دوره‌ای که با فیلترهای انتخابی مطابقت داشته باشد، وجود ندارد."
-            icon="book-open"
+            v-else
+            title="هیچ دوره‌ای یافت نشد"
+            description="شما در هیچ دوره‌ای ثبت‌نام نکرده‌اید یا نتیجه‌ای با جستجوی شما مطابقت ندارد"
+            icon="graduation-cap"
         >
-          <router-link :to="{ name: 'AvailableCourses' }" class="btn btn-primary mt-3">
-            جستجوی دوره‌های جدید
+          <router-link :to="{ name: 'AvailableCourses' }" class="btn btn-primary">
+            مشاهده دوره‌های قابل ثبت‌نام
           </router-link>
         </empty-state>
-
-        <div v-else class="row">
-          <div v-for="course in filteredCourses" :key="course.id" class="col-md-4 mb-4">
-            <div class="card course-card h-100">
-              <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">{{ course.title }}</h5>
-              </div>
-              <div class="card-body">
-                <p class="card-text">{{ truncateText(course.description, 100) }}</p>
-
-                <!-- نمایش پیشرفت دوره -->
-                <div v-if="course.progress">
-                  <div class="d-flex justify-content-between mb-2">
-                    <span>پیشرفت دوره:</span>
-                    <span>{{ Math.round(course.progress.completionPercentage) }}%</span>
-                  </div>
-                  <div class="progress mb-3">
-                    <div class="progress-bar bg-success"
-                         :style="`width: ${course.progress.completionPercentage}%`"
-                         :aria-valuenow="course.progress.completionPercentage"
-                         role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
-                  </div>
-                  <div class="d-flex justify-content-between">
-                    <small class="text-muted">{{ course.progress.completedLessonCount }} از {{ course.lessonsCount }} درس</small>
-                    <small class="text-muted" v-if="course.progress.lastAccessed">
-                      آخرین بازدید: {{ formatDate(course.progress.lastAccessed) }}
-                    </small>
-                  </div>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center mt-3">
-                  <span class="badge" :class="getCourseStatusClass(course)">{{ getCourseStatusText(course) }}</span>
-                  <router-link :to="{ name: 'CourseDetail', params: { id: course.id } }" class="btn btn-primary">
-                    مشاهده دوره
-                  </router-link>
-                </div>
-              </div>
-              <div class="card-footer text-muted">
-                <small>استاد: {{ getTeacherName(course) }}</small>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Pagination -->
-        <pagination
-            v-if="totalPages > 1"
-            :current-page="currentPage"
-            :total-pages="totalPages"
-            @page-changed="changePage"
-        />
       </loading-spinner>
     </div>
   </div>
 </template>
 
 <script>
-import axios from 'axios';
-import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
+import { mapGetters } from 'vuex';
 import EmptyState from '@/components/common/EmptyState.vue';
-import Pagination from '@/components/common/Pagination.vue';
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
+import { useUser } from '@/composables/useUser.js';
 import { useFormatters } from '@/composables/useFormatters.js';
 
 export default {
   name: 'CourseList',
   components: {
-    LoadingSpinner,
     EmptyState,
-    Pagination
+    LoadingSpinner
   },
   setup() {
-    const { formatDate, truncateText } = useFormatters();
+    const { isStudent, isTeacher, getUserFullName } = useUser();
+    const { truncateText } = useFormatters();
 
     return {
-      formatDate,
+      isStudent,
+      isTeacher,
+      getUserFullName,
       truncateText
     };
   },
   data() {
     return {
-      courses: [],
       loading: true,
-      error: null,
-
-      // pagination
-      currentPage: 1,
-      itemsPerPage: 9,
-      totalCourses: 0,
-
-      // filters
       searchQuery: '',
-      statusFilter: 'all',
-      sortBy: 'date'
+      coursesData: [],
+      sortBy: 'title',
+      sortDirection: 'asc'
     };
   },
   computed: {
+    ...mapGetters({
+      enrolledCourses: 'courses/getEnrolledCourses'
+    }),
     filteredCourses() {
-      let result = [...this.courses];
-
-      // apply search filter
-      if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase();
-        result = result.filter(course =>
-            course.title.toLowerCase().includes(query) ||
-            (course.teacher && course.teacher.firstName && course.teacher.lastName &&
-                `${course.teacher.firstName} ${course.teacher.lastName}`.toLowerCase().includes(query))
-        );
+      // اگر جستجو خالی باشد، همه دوره‌ها را نمایش بده
+      if (!this.searchQuery.trim()) {
+        return this.coursesData;
       }
 
-      // apply status filter
-      if (this.statusFilter !== 'all') {
-        if (this.statusFilter === 'completed') {
-          result = result.filter(course => this.isCourseCompleted(course));
-        } else if (this.statusFilter === 'in-progress') {
-          result = result.filter(course => !this.isCourseCompleted(course));
-        }
-      }
-
-      // apply sorting
-      if (this.sortBy === 'name') {
-        result.sort((a, b) => a.title.localeCompare(b.title));
-      } else if (this.sortBy === 'progress') {
-        result.sort((a, b) => {
-          const progressA = a.progress ? a.progress.completionPercentage : 0;
-          const progressB = b.progress ? b.progress.completionPercentage : 0;
-          return progressB - progressA;
-        });
-      } else {
-        // default: date
-        result.sort((a, b) => new Date(b.enrollmentDate) - new Date(a.enrollmentDate));
-      }
-
-      return result;
-    },
-    totalPages() {
-      return Math.ceil(this.filteredCourses.length / this.itemsPerPage);
-    },
-    paginatedCourses() {
-      const start = (this.currentPage - 1) * this.itemsPerPage;
-      const end = start + this.itemsPerPage;
-      return this.filteredCourses.slice(start, end);
+      // فیلتر دوره‌ها بر اساس عنوان یا توضیحات
+      const query = this.searchQuery.toLowerCase().trim();
+      return this.coursesData.filter(course => {
+        return course.title.toLowerCase().includes(query) ||
+            (course.description && course.description.toLowerCase().includes(query));
+      });
     }
   },
-  created() {
-    this.fetchCourses();
+  async created() {
+    try {
+      await this.fetchCourses();
+    } catch (error) {
+      console.error('Error fetching courses:', error);
+      this.$toast.error('خطا در دریافت لیست دوره‌ها');
+    } finally {
+      this.loading = false;
+    }
   },
   methods: {
     async fetchCourses() {
+      // استفاده از اکشن‌های مربوط به Vuex برای دریافت دوره‌ها
       try {
-        this.loading = true;
+        await this.$store.dispatch('courses/fetchEnrolledCourses');
+        this.coursesData = [...this.enrolledCourses];
 
-        // fetch enrolled courses
-        const response = await axios.get('/courses/enrolled');
-        this.courses = response.data.map(course => ({
+        // اضافه کردن فیلد isFavorite برای دوره‌ها (در پروژه واقعی این داده از سرور می‌آید)
+        this.coursesData = this.coursesData.map(course => ({
           ...course,
-          lessonsCount: course.lessons ? course.lessons.length : 0
+          isFavorite: false
         }));
 
-        // fetch progress data
-        const progressResponse = await axios.get('/progress');
-
-        // map progress data to courses
-        for (const progress of progressResponse.data) {
-          const courseIndex = this.courses.findIndex(c => c.id === progress.courseId);
-          if (courseIndex !== -1) {
-            this.courses[courseIndex].progress = progress;
-          }
-        }
-
-        this.loading = false;
+        this.sortCourses(this.sortBy);
       } catch (error) {
-        console.error('Error fetching courses:', error);
-        this.error = 'مشکلی در دریافت لیست دوره‌ها رخ داد. لطفاً دوباره تلاش کنید.';
-        this.loading = false;
+        throw error;
       }
     },
 
-    getTeacherName(course) {
-      if (!course.teacher) return 'نامشخص';
-      return course.teacher.firstName && course.teacher.lastName
-          ? `${course.teacher.firstName} ${course.teacher.lastName}`
-          : course.teacher.username;
+    getCourseImage(course) {
+      // در یک پروژه واقعی، تصویر دوره از سرور دریافت می‌شود
+      // این یک پیاده‌سازی موقت است
+      return `/api/placeholder/400/200`;
     },
 
-    isCourseCompleted(course) {
-      return course.progress && course.progress.completionPercentage >= 100;
+    getTeacherName(teacher) {
+      if (!teacher) return 'نامشخص';
+      return this.getUserFullName(teacher);
     },
 
-    getCourseStatusClass(course) {
-      if (this.isCourseCompleted(course)) {
-        return 'bg-success';
-      } else if (course.progress && course.progress.completionPercentage > 0) {
-        return 'bg-primary';
-      } else {
-        return 'bg-secondary';
+    getCourseProgress(course) {
+      // در یک پروژه واقعی، پیشرفت از سرور دریافت می‌شود
+      // در اینجا یک عدد تصادفی بین 0 تا 100 تولید می‌کنیم
+      if (!course.progress) {
+        // تولید عدد تصادفی بین 0 تا 100 برای نمایش
+        course.progress = Math.floor(Math.random() * 101);
       }
+      return course.progress;
     },
 
-    getCourseStatusText(course) {
-      if (this.isCourseCompleted(course)) {
-        return 'تکمیل شده';
-      } else if (course.progress && course.progress.completionPercentage > 0) {
-        return 'در حال انجام';
-      } else {
-        return 'شروع نشده';
-      }
-    },
+    toggleFavorite(course) {
+      // تغییر وضعیت علاقه‌مندی به دوره
+      course.isFavorite = !course.isFavorite;
 
-    changePage(page) {
-      this.currentPage = page;
-      window.scrollTo(0, 0);
-    },
+      // در یک پروژه واقعی، این تغییر در سرور ذخیره می‌شود
+      const message = course.isFavorite
+          ? `"${course.title}" به علاقه‌مندی‌ها اضافه شد`
+          : `"${course.title}" از علاقه‌مندی‌ها حذف شد`;
 
-    searchCourses() {
-      this.currentPage = 1;
+      this.$toast.info(message);
     },
 
     filterCourses() {
-      this.currentPage = 1;
+      // فیلتر کردن بر اساس جستجو در computed property انجام می‌شود
+      // این متد برای زمانی است که بخواهید پیاده‌سازی پیچیده‌تری داشته باشید
     },
 
-    sortCourses() {
-      this.currentPage = 1;
-    },
+    sortCourses(criterion) {
+      this.sortBy = criterion;
 
-    resetFilters() {
-      this.searchQuery = '';
-      this.statusFilter = 'all';
-      this.sortBy = 'date';
-      this.currentPage = 1;
+      // تغییر جهت مرتب‌سازی اگر معیار یکسان باشد
+      if (this.previousSortBy === criterion) {
+        this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        this.sortDirection = 'asc';
+      }
+
+      this.previousSortBy = criterion;
+
+      // مرتب‌سازی بر اساس معیار و جهت انتخاب شده
+      this.coursesData.sort((a, b) => {
+        let comparison = 0;
+
+        switch(criterion) {
+          case 'title':
+            comparison = a.title.localeCompare(b.title);
+            break;
+          case 'date':
+            // فرض می‌کنیم هر دوره دارای فیلد createdAt است
+            const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+            const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+            comparison = dateB - dateA; // مرتب‌سازی نزولی برای تاریخ
+            break;
+          case 'progress':
+            const progressA = this.getCourseProgress(a);
+            const progressB = this.getCourseProgress(b);
+            comparison = progressB - progressA; // مرتب‌سازی نزولی برای پیشرفت
+            break;
+        }
+
+        // اعمال جهت مرتب‌سازی
+        return this.sortDirection === 'asc' ? comparison : -comparison;
+      });
     }
   }
 }
@@ -307,14 +263,120 @@ export default {
 
 <style scoped>
 .course-card {
-  transition: transform 0.3s;
+  background-color: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s, box-shadow 0.3s;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .course-card:hover {
   transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
 }
 
-.course-list {
-  min-height: calc(100vh - 56px);
+.course-card-header {
+  position: relative;
+}
+
+.course-image {
+  position: relative;
+  height: 160px;
+  overflow: hidden;
+}
+
+.course-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s;
+}
+
+.course-card:hover .course-image img {
+  transform: scale(1.05);
+}
+
+.course-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.course-progress .progress {
+  height: 8px;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.course-actions {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  gap: 5px;
+}
+
+.btn-action {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.9);
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn-action:hover {
+  background-color: #fff;
+}
+
+.course-card-body {
+  padding: 16px;
+  flex-grow: 1;
+}
+
+.course-title {
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+.course-description {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.course-meta {
+  display: flex;
+  justify-content: space-between;
+  color: #6c757d;
+  font-size: 0.85rem;
+  margin-top: auto;
+}
+
+.course-card-footer {
+  padding: 12px 16px;
+  background-color: #f8f9fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #eee;
+}
+
+.course-students {
+  font-size: 0.85rem;
+  color: #6c757d;
 }
 </style>
