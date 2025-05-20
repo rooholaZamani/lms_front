@@ -107,6 +107,7 @@ export default {
                 const response = await axios.get('/courses/teaching')
                 commit('setTeachingCourses', response.data)
                 commit('setLoading', false)
+                console.log(response.data)
                 return response.data
             } catch (error) {
                 commit('setError', error.response?.data?.message || 'خطا در دریافت دوره‌های تدریس')
@@ -139,6 +140,7 @@ export default {
                 const response = await axios.get(`/courses/${courseId}`)
                 commit('setCurrentCourse', response.data)
                 commit('setLoading', false)
+                console.log(response.data)
                 return response.data
             } catch (error) {
                 commit('setError', error.response?.data?.message || 'خطا در دریافت اطلاعات دوره')
@@ -171,6 +173,7 @@ export default {
                 const response = await axios.put(`/courses/${courseId}`, courseData)
                 commit('updateCourse', response.data)
                 commit('setLoading', false)
+                console.log(response.data)
                 return response.data
             } catch (error) {
                 commit('setError', error.response?.data?.message || 'خطا در به‌روزرسانی دوره')

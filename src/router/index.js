@@ -1,3 +1,4 @@
+// src/router/index.js with the added TeacherExams route
 import { createRouter, createWebHistory } from 'vue-router'
 import store from '../store'
 
@@ -14,6 +15,18 @@ const routes = [
     name: 'Home',
     component: Home,
     meta: { title: 'صفحه اصلی', requiresAuth: false }
+  },
+  {
+    path: '/students',
+    name: 'Students',
+    component: () => import(/* webpackChunkName: "students" */ '../components/views/Students.vue'),
+    meta: { title: 'دانش‌آموزان', requiresAuth: true, requiresTeacher: true }
+  },
+  {
+    path: '/reports',
+    name: 'Reports',
+    component: () => import(/* webpackChunkName: "reports" */ '../components/views/Reports.vue'),
+    meta: { title: 'گزارش‌ها', requiresAuth: true }
   },
   {
     path: '/login',
@@ -71,6 +84,33 @@ const routes = [
     component: () => import(/* webpackChunkName: "profile" */ '../components/views/Profile.vue'),
     meta: { title: 'پروفایل', requiresAuth: true }
   },
+  // اضافه کردن مسیر TeacherExams
+  {
+    path: '/teacher/exams',
+    name: 'TeacherExams',
+    component: () => import(/* webpackChunkName: "teacher-exams" */ '../components/exams/TeacherExams.vue'),
+    meta: { title: 'آزمون‌های من', requiresAuth: true, requiresTeacher: true }
+  },
+  {
+    path: '/exams/create',
+    name: 'ExamCreator',
+    component: () => import(/* webpackChunkName: "exam-creator" */ '../components/exams/ExamCreator.vue'),
+    meta: { title: 'ایجاد آزمون جدید', requiresAuth: true, requiresTeacher: true }
+  },
+  {
+    path: '/exams/:id/edit',
+    name: 'ExamEditor',
+    component: () => import(/* webpackChunkName: "exam-creator" */ '../components/exams/ExamCreator.vue'),
+    props: true,
+    meta: { title: 'ویرایش آزمون', requiresAuth: true, requiresTeacher: true }
+  },
+  {
+    path: '/exams/:id/results',
+    name: 'ExamResults',
+    component: () => import(/* webpackChunkName: "exam-results" */ '../components/exams/ExamResults.vue'),
+    props: true,
+    meta: { title: 'نتایج آزمون', requiresAuth: true, requiresTeacher: true }
+  },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
@@ -80,7 +120,7 @@ const routes = [
 ]
 
 const router = createRouter({
-  history: createWebHistory(process.env.BASE_URL),
+  history: createWebHistory("/"),
   routes
 })
 
@@ -124,7 +164,6 @@ router.beforeEach(async (to, from, next) => {
       });
     } else {
       // بررسی نقش در صورت نیاز
-      // (بقیه کد بدون تغییر)
       if (to.matched.some(record => record.meta.requiresTeacher)) {
         if (store.getters.userRole.isTeacher) {
           next();
@@ -138,7 +177,6 @@ router.beforeEach(async (to, from, next) => {
     }
   } else {
     // صفحاتی که نیازی به احراز هویت ندارند
-    // (بقیه کد بدون تغییر)
     if (store.getters.isLoggedIn && (to.path === '/login' || to.path === '/register')) {
       // کاربر قبلاً وارد شده و می‌خواهد به صفحه ورود برود
       next({ name: 'Dashboard' });

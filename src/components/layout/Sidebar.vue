@@ -14,6 +14,10 @@
                       :to="isTeacher ? { name: 'TeachingCourses' } : { name: 'Courses' }">
             <i class="fas fa-book"></i> {{ isTeacher ? 'دوره‌های من' : 'دوره‌های من' }}
           </router-link>
+          <router-link v-if="isTeacher" :to="{ name: 'TeacherExams' }" class="nav-link">
+            <i class="fas fa-clipboard-check me-2"></i>
+            آزمون‌های من
+          </router-link>
         </li>
 
         <!-- لینک‌های دانش‌آموز -->
