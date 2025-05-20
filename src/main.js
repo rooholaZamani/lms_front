@@ -10,7 +10,9 @@ import './assets/styles/main.css'
 import 'bootstrap/dist/css/bootstrap.rtl.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import '@fortawesome/fontawesome-free/css/all.min.css'
+import * as bootstrap from 'bootstrap'
 
+window.bootstrap = bootstrap
 // پلاگین‌ها
 import PerformancePlugin from './plugins/performance'
 import ErrorHandler from './plugins/errorHandler'

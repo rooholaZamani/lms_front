@@ -354,6 +354,7 @@ import { useFormatters } from '@/composables/useFormatters.js';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
 import EmptyState from '@/components/common/EmptyState.vue';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog.vue';
+// import bootstrap from 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 export default {
   name: 'CourseDetail',
