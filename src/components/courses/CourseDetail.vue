@@ -85,7 +85,7 @@
                     <h3>استاد دوره</h3>
                     <div class="teacher-info">
                       <div class="teacher-avatar">
-<!--                        <img src="/api/placeholder/80/80" alt="Teacher Avatar">-->
+                        <!--                        <img src="/api/placeholder/80/80" alt="Teacher Avatar">-->
                       </div>
                       <div class="teacher-details">
                         <h4>{{ getTeacherName() }}</h4>
@@ -176,54 +176,17 @@
                   </div>
 
                   <hr class="my-4">
-
                   <!-- Lessons Management Section -->
                   <div class="management-section">
-                    <h4>مدیریت دروس</h4>
-                    <button class="btn btn-success mb-3" @click="showAddLessonModal">
-                      <i class="fas fa-plus me-1"></i> افزودن درس جدید
-                    </button>
-
-                    <div v-if="course.lessons && course.lessons.length > 0" class="lesson-management-list">
-                      <div v-for="(lesson, index) in course.lessons" :key="lesson.id" class="lesson-management-item">
-                        <div class="lesson-number">{{ index + 1 }}</div>
-                        <div class="lesson-info">
-                          <div class="lesson-title">{{ lesson.title }}</div>
-                          <div class="lesson-meta">
-                            <span v-if="lesson.contents">{{ lesson.contents?.length || 0 }} محتوا</span>
-                            <span v-if="lesson.hasExam">
-                              <i class="fas fa-file-alt ms-2 me-1"></i> آزمون
-                            </span>
-                            <span v-if="lesson.hasExercise">
-                              <i class="fas fa-tasks ms-2 me-1"></i> تمرین
-                            </span>
-                          </div>
-                        </div>
-                        <div class="lesson-actions">
-                          <button class="btn btn-sm btn-outline-primary me-1" @click="showAddContentModal(lesson)">
-                            <i class="fas fa-plus"></i> محتوا
-                          </button>
-                          <button class="btn btn-sm btn-outline-warning me-1" @click="showAddAssignmentModal(lesson)">
-                            <i class="fas fa-tasks"></i> تکلیف
-                          </button>
-                          <button class="btn btn-sm btn-outline-info me-1" @click="showAddExamModal(lesson)">
-                            <i class="fas fa-file-alt"></i> آزمون
-                          </button>
-                          <button class="btn btn-sm btn-outline-secondary me-1" @click="editLesson(lesson)">
-                            <i class="fas fa-edit"></i>
-                          </button>
-                          <button class="btn btn-sm btn-outline-danger" @click="deleteLesson(lesson)">
-                            <i class="fas fa-trash"></i>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                    <empty-state
-                        v-else
-                        title="هنوز درسی اضافه نشده است"
-                        description="با استفاده از دکمه بالا، درس جدید اضافه کنید."
-                        icon="book"
-                        compact
+                    <lesson-manager
+                        :course-id="id"
+                        :lessons="course.lessons"
+                        @lesson-added="handleLessonAdded"
+                        @lesson-updated="handleLessonUpdated"
+                        @lesson-deleted="handleLessonDeleted"
+                        @add-content="showAddContentModal"
+                        @add-assignment="showAddAssignmentModal"
+                        @add-exam="showAddExamModal"
                     />
                   </div>
                 </div>
@@ -232,16 +195,16 @@
           </div>
         </div>
 
-        <empty-state
-            v-else
-            title="دوره یافت نشد"
-            description="متأسفانه دوره مورد نظر یافت نشد یا شما دسترسی به آن ندارید."
-            icon="graduation-cap"
-        >
-          <router-link :to="{ name: 'Courses' }" class="btn btn-primary">
-            بازگشت به لیست دوره‌ها
-          </router-link>
-        </empty-state>
+                <empty-state
+                    v-else
+                    title="دوره یافت نشد"
+                    description="متأسفانه دوره مورد نظر یافت نشد یا شما دسترسی به آن ندارید."
+                    icon="graduation-cap"
+                >
+                  <router-link :to="{ name: 'Courses' }" class="btn btn-primary">
+                    بازگشت به لیست دوره‌ها
+                  </router-link>
+                </empty-state>
       </loading-spinner>
     </div>
 
@@ -420,6 +383,7 @@ import ContentModal from '@/components/courses/ContentModal.vue';
 import CourseHeader from '@/components/courses/CourseHeader.vue';
 import LessonList from '@/components/courses/LessonList.vue';
 import StudentsTab from '@/components/courses/StudentsTab.vue';
+import LessonManager from '@/components/courses/LessonManager.vue';
 
 export default {
   name: 'CourseDetail',
@@ -430,7 +394,8 @@ export default {
     ContentModal,
     CourseHeader,
     LessonList,
-    StudentsTab
+    StudentsTab,
+    LessonManager
   },
   props: {
     id: {
@@ -458,7 +423,7 @@ export default {
       savingLesson: false,
       course: null,
       isEnrolled: false,
-      isTeacherOfCourse: false,
+      isTeacherOfCourse: true,
 
       // فرم درس
       lessonForm: {
@@ -525,6 +490,12 @@ export default {
   mounted() {
     // فعال‌سازی زبانه‌های بوت‌استرپ
     this.setupBootstrapTabs();
+    console.log('User roles:', {
+      isTeacher: this.isTeacher,
+      isTeacherOfCourse: this.isTeacherOfCourse,
+      currentUser: this.currentUser,
+      courseTeacher: this.course?.teacher
+    });
   },
   methods: {
     // راه‌اندازی زبانه‌های Bootstrap
@@ -556,7 +527,23 @@ export default {
         }
       }
     },
+    handleLessonAdded(newLesson) {
+      if (!this.course.lessons) {
+        this.course.lessons = [];
+      }
+      this.course.lessons.push(newLesson);
+    },
 
+    handleLessonUpdated(updatedLesson) {
+      const index = this.course.lessons.findIndex(l => l.id === updatedLesson.id);
+      if (index !== -1) {
+        this.$set(this.course.lessons, index, updatedLesson);
+      }
+    },
+
+    handleLessonDeleted(lessonId) {
+      this.course.lessons = this.course.lessons.filter(l => l.id !== lessonId);
+    },
     async fetchCourseData() {
       try {
         // دریافت اطلاعات دوره از سرور
@@ -568,8 +555,9 @@ export default {
         }
 
         // بررسی دسترسی معلم به دوره
-        if (this.isTeacher && this.course.teacher) {
-          this.isTeacherOfCourse = this.currentUser.id === this.course.teacher.id;
+        if (this.isTeacher) {
+          console.log("currentUser: " +this.currentUser.id + " teacher: " + this.course.teacher.id);
+          this.isTeacherOfCourse = (this.currentUser.id === this.course.teacher.id);
         }
 
         // بررسی ثبت‌نام دانش‌آموز در دوره
