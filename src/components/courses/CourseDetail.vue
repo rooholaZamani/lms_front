@@ -414,8 +414,8 @@ export default {
     }
   },
   setup() {
-    const { isStudent, isTeacher, getUserFullName } = useUser();
-    const { formatDate, truncateText } = useFormatters();
+    const {isStudent, isTeacher, getUserFullName} = useUser();
+    const {formatDate, truncateText} = useFormatters();
 
     return {
       isStudent,
@@ -512,7 +512,6 @@ export default {
     // راه‌اندازی زبانه‌های Bootstrap
     setupBootstrapTabs() {
       // بررسی وجود زبانه‌های Bootstrap
-      if (window.bootstrap) {
         const tabListEl = document.getElementById('courseTab');
         if (tabListEl) {
           // فعال‌سازی زبانه فعال بر اساس پارامتر URL
@@ -528,14 +527,13 @@ export default {
             }
           }
 
-          // ایجاد Event Listener برای تغییر URL هنگام تغییر زبانه
-          tabListEl.addEventListener('shown.bs.tab', function (event) {
-            const tabId = event.target.id.replace('-tab', '');
-            const newUrl = new URL(window.location);
-            newUrl.searchParams.set('tab', tabId);
-            window.history.replaceState({}, '', newUrl);
-          });
-        }
+        // ایجاد Event Listener برای تغییر URL هنگام تغییر زبانه
+        tabListEl.addEventListener('shown.bs.tab', function (event) {
+          const tabId = event.target.id.replace('-tab', '');
+          const newUrl = new URL(window.location);
+          newUrl.searchParams.set('tab', tabId);
+          window.history.replaceState({}, '', newUrl);
+        });
       }
     },
     showLessonQuestionsManager(lesson) {
@@ -553,8 +551,8 @@ export default {
     hideLessonQuestionsManager() {
       this.showQuestionsManager = false;
       this.selectedLessonForQuestions = null;
-    }
-  },
+    },
+
     handleLessonAdded(newLesson) {
       if (!this.course.lessons) {
         this.course.lessons = [];
@@ -579,6 +577,9 @@ export default {
         // دریافت اطلاعات دوره از سرور
         await this.$store.dispatch('courses/fetchCourseById', this.id);
 
+        // console.log('Course response in fetchCourseData:', {
+        //   data: this.course,
+        // })
         this.course = this.currentCourse.course;
 
         if (!this.course) {
@@ -902,7 +903,7 @@ export default {
           const lessonIndex = this.course.lessons.findIndex(l => l.id === this.selectedLesson.id);
           if (lessonIndex !== -1) {
             // this.$set(this.course.lessons[lessonIndex], 'hasAssignment', true);
-            this.course.lessons[lessonIndex]['hasAssignment'] =  true;
+            this.course.lessons[lessonIndex]['hasAssignment'] = true;
           }
 
           this.$toast.success('تکلیف با موفقیت ایجاد شد.');
@@ -989,7 +990,7 @@ export default {
       // در یک پروژه واقعی، به صفحه پیشرفت دانش‌آموز هدایت می‌شود
       this.$router.push({
         name: 'StudentProgress',
-        params: { courseId: this.id, studentId: student.id }
+        params: {courseId: this.id, studentId: student.id}
       });
     },
 
@@ -1003,12 +1004,13 @@ export default {
 
       this.$toast.success('محتوای درس با موفقیت به‌روزرسانی شد.');
 
-  },
-  computed: {
-    ...mapGetters({
-      currentCourse: 'courses/getCurrentCourse',
-      currentUser: 'currentUser'
-    })
+    },
+    computed: {
+      ...mapGetters({
+        currentCourse: 'courses/getCurrentCourse',
+        currentUser: 'currentUser'
+      })
+    }
   }
 }
 </script>
