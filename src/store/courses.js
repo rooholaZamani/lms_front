@@ -31,7 +31,6 @@ export default {
             state.enrolledCourses = courses
         },
         setCurrentCourse(state, course) {
-            console.log("setCurrentCourse: "+JSON.stringify(this.course))
             state.currentCourse = course
         },
         addCourse(state, course) {
@@ -143,14 +142,14 @@ export default {
                 commit('setCurrentCourse', response.data)
                 commit('setLoading', false)
 
-                console.log('Course response in fetchCourseById:', {
-                    data: response.data,
-                    status: response.status,
-                    statusText: response.statusText,
-                    headers: response.headers,
-
-                    teacher: response.data.course.teacher
-                })
+                // console.log('Course response in fetchCourseById:', {
+                //     data: response.data,
+                //     status: response.status,
+                //     statusText: response.statusText,
+                //     headers: response.headers,
+                //
+                //     teacher: response.data.course.teacher
+                // })
 
                 return response.data
             } catch (error) {

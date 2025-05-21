@@ -714,7 +714,8 @@ export default {
           // Update question in the list
           const index = this.exercise.questions.findIndex(q => q.id === this.selectedQuestion.id);
           if (index !== -1) {
-            this.$set(this.exercise.questions, index, response.data);
+            // this.$set(this.exercise.questions, index, response.data);
+            this.exercise.questions[index] = response.data;
           }
           
           this.showSuccessToast('سوال با موفقیت به‌روزرسانی شد.');

@@ -264,7 +264,8 @@ export default {
     },
 
     updateAnswer(questionIndex, answer) {
-      this.$set(this.answers, questionIndex, answer);
+      // this.$set(this.answers, questionIndex, answer);
+      this.answers[questionIndex]= answer;
     },
 
     markForReview() {

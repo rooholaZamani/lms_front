@@ -423,7 +423,7 @@ export default {
       savingLesson: false,
       course: null,
       isEnrolled: false,
-      isTeacherOfCourse: true,
+      isTeacherOfCourse: false,
 
       // فرم درس
       lessonForm: {
@@ -536,7 +536,8 @@ export default {
     handleLessonUpdated(updatedLesson) {
       const index = this.course.lessons.findIndex(l => l.id === updatedLesson.id);
       if (index !== -1) {
-        this.$set(this.course.lessons, index, updatedLesson);
+        // this.$set(this.course.lessons, index, updatedLesson);
+        this.course.lessons[index] = updatedLesson;
       }
     },
 
@@ -557,11 +558,11 @@ export default {
 
         // بررسی دسترسی معلم به دوره
         if (this.isTeacher) {
-          console.log("currentUser: " +this.currentUser.id + " teacher: " + this.course);
+          // console.log("currentUser: " +this.currentUser.id + " teacher: " + this.course);
 
-          console.log('Course response in fetchCourseData:', {
-            data: this.course,
-          })
+          // console.log('Course response in fetchCourseData:', {
+          //   data: this.course,
+          // })
           this.isTeacherOfCourse = (this.currentUser.id === this.course.teacher.id);
         }
 
@@ -731,7 +732,8 @@ export default {
           // به‌روزرسانی درس در لیست دروس
           const index = this.course.lessons.findIndex(l => l.id === this.lessonForm.id);
           if (index !== -1) {
-            this.$set(this.course.lessons, index, response.data);
+            // this.$set(this.course.lessons, index, response.data);
+            this.course.lessons[index] = response.data;
           }
 
           this.$toast.success('درس با موفقیت به‌روزرسانی شد.');
@@ -782,12 +784,14 @@ export default {
       if (!this.course.lessons[index].expanded) {
         this.course.lessons.forEach((lesson, i) => {
           if (i !== index) {
-            this.$set(lesson, 'expanded', false);
+            // this.$set(lesson, 'expanded', false);
+            lesson['expanded'] = false;
           }
         });
       }
 
-      this.$set(this.course.lessons[index], 'expanded', !this.course.lessons[index].expanded);
+      // this.$set(this.course.lessons[index], 'expanded', !this.course.lessons[index].expanded);
+      this.course.lessons[index]['expanded'] = !this.course.lessons[index].expanded;
     },
 
     async markLessonComplete(lessonId) {
@@ -867,7 +871,8 @@ export default {
           // به‌روزرسانی درس برای نشان دادن اینکه یک تکلیف دارد
           const lessonIndex = this.course.lessons.findIndex(l => l.id === this.selectedLesson.id);
           if (lessonIndex !== -1) {
-            this.$set(this.course.lessons[lessonIndex], 'hasAssignment', true);
+            // this.$set(this.course.lessons[lessonIndex], 'hasAssignment', true);
+            this.course.lessons[lessonIndex]['hasAssignment'] =  true;
           }
 
           this.$toast.success('تکلیف با موفقیت ایجاد شد.');
@@ -925,7 +930,8 @@ export default {
           // به‌روزرسانی درس برای نشان دادن اینکه یک آزمون دارد
           const lessonIndex = this.course.lessons.findIndex(l => l.id === this.selectedLesson.id);
           if (lessonIndex !== -1) {
-            this.$set(this.course.lessons[lessonIndex], 'hasExam', true);
+            // this.$set(this.course.lessons[lessonIndex], 'hasExam', true);
+            this.course.lessons[lessonIndex]['hasExam'] = true;
           }
 
           this.$toast.success('آزمون با موفقیت ایجاد شد.');
@@ -961,7 +967,8 @@ export default {
       // به‌روزرسانی درس پس از ذخیره محتوا
       const index = this.course.lessons.findIndex(l => l.id === updatedLesson.id);
       if (index !== -1) {
-        this.$set(this.course.lessons, index, updatedLesson);
+        // this.$set(this.course.lessons, index, updatedLesson);
+        this.course.lessons[index] = updatedLesson;
       }
 
       this.$toast.success('محتوای درس با موفقیت به‌روزرسانی شد.');

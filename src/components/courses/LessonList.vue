@@ -170,13 +170,16 @@ export default {
       if (!this.internalLessons[index].expanded) {
         this.internalLessons.forEach((lesson, i) => {
           if (i !== index) {
-            this.$set(this.internalLessons[i], 'expanded', false);
+            // this.$set(this.internalLessons[i], 'expanded', false);
+            this.internalLessons[i]['expanded']=false;
           }
         });
       }
 
       // تغییر وضعیت درس فعلی
-      this.$set(this.internalLessons[index], 'expanded', !this.internalLessons[index].expanded);
+      // this.$set(this.internalLessons[index], 'expanded', !this.internalLessons[index].expanded);
+
+      this.internalLessons[index]['expanded'] = !this.internalLessons[index].expanded;
 
       // ارسال رویداد به والد
       this.$emit('toggle-lesson', index);

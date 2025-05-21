@@ -278,7 +278,8 @@ export default {
           // به‌روزرسانی سوال در لیست
           const index = this.questions.findIndex(q => q.id === this.selectedQuestionId);
           if (index !== -1) {
-            this.$set(this.questions, index, response.data);
+            // this.$set(this.questions, index, response.data);
+            this.questions[index] = response.data;
           }
 
           this.showSuccessToast('سوال با موفقیت به‌روزرسانی شد.');
