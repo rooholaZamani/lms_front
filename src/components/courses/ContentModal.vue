@@ -96,7 +96,7 @@ export default {
       default: 'contentModal'
     },
     lessonId: {
-      type: String,
+      type: [String, Number],
       default: null
     }
   },
@@ -132,23 +132,19 @@ export default {
     },
 
     show() {
-      // اطمینان از وجود متد show در BaseModal
       if (this.$refs.baseModal && typeof this.$refs.baseModal.show === 'function') {
         this.$refs.baseModal.show();
       } else {
         console.error('متد show در BaseModal یافت نشد');
-        // تلاش برای نمایش مودال با استفاده از Bootstrap
         this.showWithBootstrap();
       }
     },
 
     hide() {
-      // اطمینان از وجود متد hide در BaseModal
       if (this.$refs.baseModal && typeof this.$refs.baseModal.hide === 'function') {
         this.$refs.baseModal.hide();
       } else {
         console.error('متد hide در BaseModal یافت نشد');
-        // تلاش برای مخفی کردن مودال با استفاده از Bootstrap
         this.hideWithBootstrap();
       }
     },
@@ -245,18 +241,27 @@ export default {
       try {
         console.log('در حال آپلود فایل برای درس:', this.lessonId);
 
-        // ایجاد FormData برای آپلود فایل
+        // ایجاد FormData برای آپلود فایل (فقط شامل فایل)
         const formData = new FormData();
         formData.append('file', this.contentData.file);
-        formData.append('name', this.contentData.fileName);
-        formData.append('lessonId', this.lessonId);
 
-        const response = await axios.post('/attachments', formData, {
+        // ایجاد پارامترهای URL به صورت query string
+        const params = new URLSearchParams();
+        params.append('lessonId', this.lessonId);
+        params.append('title', this.contentData.fileName);
+        params.append('contentType', 'PDF');
+        params.append('orderIndex', '1');
+
+        // URL کامل با پارامترها
+        const url = `/content/upload?${params.toString()}`;
+
+        console.log('URL آپلود فایل:', url);
+
+        const response = await axios.post(url, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           },
           onUploadProgress: (progressEvent) => {
-            // محاسبه درصد پیشرفت
             const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
             this.progressMap.file = percentCompleted;
             console.log(`پیشرفت آپلود فایل: ${percentCompleted}%`);
@@ -332,18 +337,27 @@ export default {
       try {
         console.log('در حال آپلود ویدیو برای درس:', this.lessonId);
 
-        // ایجاد FormData برای آپلود ویدیو
+        // ایجاد FormData برای آپلود ویدیو (فقط شامل فایل)
         const formData = new FormData();
-        formData.append('video', this.contentData.video);
-        formData.append('title', this.contentData.videoTitle);
-        formData.append('lessonId', this.lessonId);
+        formData.append('file', this.contentData.video);
 
-        const response = await axios.post('/videos', formData, {
+        // ایجاد پارامترهای URL به صورت query string
+        const params = new URLSearchParams();
+        params.append('lessonId', this.lessonId);
+        params.append('title', this.contentData.videoTitle);
+        params.append('contentType', 'VIDEO');
+        params.append('orderIndex', '1');
+
+        // URL کامل با پارامترها
+        const url = `/content/upload?${params.toString()}`;
+
+        console.log('URL آپلود ویدیو:', url);
+
+        const response = await axios.post(url, formData, {
           headers: {
             'Content-Type': 'multipart/form-data'
           },
           onUploadProgress: (progressEvent) => {
-            // محاسبه درصد پیشرفت
             const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
             this.progressMap.video = percentCompleted;
             console.log(`پیشرفت آپلود ویدیو: ${percentCompleted}%`);
@@ -389,7 +403,6 @@ export default {
 </script>
 
 <style scoped>
-/* استایل‌های مربوط به نوار پیشرفت */
 .progress {
   margin-top: 10px;
   height: 5px;
