@@ -573,6 +573,7 @@ export default {
     handleLessonDeleted(lessonId) {
       this.course.lessons = this.course.lessons.filter(l => l.id !== lessonId);
     },
+
     async fetchCourseData() {
       try {
         // دریافت اطلاعات دوره از سرور
