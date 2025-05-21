@@ -42,6 +42,9 @@
             <button class="btn btn-sm btn-primary" @click="$emit('add-content', lesson)">
               <i class="fas fa-plus"></i> افزودن محتوا
             </button>
+            <button class="btn btn-sm btn-info" @click="$emit('add-questions', lesson)">
+              <i class="fas fa-question-circle"></i> مدیریت سوالات
+            </button>
             <button class="btn btn-sm btn-warning" @click="$emit('add-exam', lesson)">
               <i class="fas fa-clipboard-check"></i> ایجاد آزمون
             </button>

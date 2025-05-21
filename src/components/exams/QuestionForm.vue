@@ -8,7 +8,7 @@
 
       <div class="mb-3">
         <label for="questionType" class="form-label">نوع سوال <span class="text-danger">*</span></label>
-        <select class="form-select" id="questionType" v-model="questionData.type" required>
+        <select class="form-select" id="questionType" v-model="questionData.type" required @change="handleTypeChange">
           <option value="MULTIPLE_CHOICE">چند گزینه‌ای</option>
           <option value="TRUE_FALSE">درست/نادرست</option>
           <option value="SHORT_ANSWER">پاسخ کوتاه</option>
@@ -77,6 +77,12 @@
         <div class="form-text">این توضیحات پس از آزمون به دانش‌آموز نمایش داده خواهد شد.</div>
       </div>
 
+      <div class="mb-3">
+        <label for="questionPoints" class="form-label">امتیاز سوال <span class="text-danger">*</span></label>
+        <input type="number" class="form-control" id="questionPoints"
+               v-model="questionData.points" min="1" max="100" required>
+      </div>
+
       <div class="text-end">
         <button type="button" class="btn btn-secondary me-2" @click="$emit('cancel')">انصراف</button>
         <button type="submit" class="btn btn-primary" :disabled="isSubmitting">
@@ -115,7 +121,34 @@ export default {
         return;
       }
 
-      this.$emit('save');
+      // تبدیل داده‌ها به فرمت مورد نیاز API
+      const formattedData = this.formatQuestionData();
+
+      this.$emit('save', formattedData);
+    },
+
+    formatQuestionData() {
+      const data = { ...this.questionData };
+
+      // تبدیل گزینه‌های چند گزینه‌ای به فرمت آرایه answers
+      if (data.type === 'MULTIPLE_CHOICE') {
+        data.answers = data.options.map((option, index) => ({
+          text: option,
+          correct: index === parseInt(data.correctOption)
+        }));
+      } else if (data.type === 'TRUE_FALSE') {
+        data.answers = [
+          { text: 'درست', correct: data.correctOption === 'true' },
+          { text: 'نادرست', correct: data.correctOption === 'false' }
+        ];
+      }
+
+      // اطمینان از وجود مقدار برای points
+      if (!data.points) {
+        data.points = 10; // مقدار پیش‌فرض
+      }
+
+      return data;
     },
 
     addOption() {
@@ -141,6 +174,23 @@ export default {
         }
       } else {
         this.showErrorToast('حداقل دو گزینه برای سوال چندگزینه‌ای لازم است.');
+      }
+    },
+
+    handleTypeChange() {
+      // تنظیم مقادیر پیش‌فرض بر اساس نوع سوال
+      if (this.questionData.type === 'MULTIPLE_CHOICE') {
+        // اطمینان از وجود آرایه گزینه‌ها
+        if (!this.questionData.options || this.questionData.options.length < 2) {
+          this.questionData.options = ['', '', '', ''];
+          this.questionData.correctOption = 0;
+        }
+      } else if (this.questionData.type === 'TRUE_FALSE') {
+        this.questionData.correctOption = 'true';
+      } else if (this.questionData.type === 'SHORT_ANSWER') {
+        this.questionData.correctOption = '';
+      } else if (this.questionData.type === 'ESSAY') {
+        this.questionData.maxScore = 10;
       }
     },
 
@@ -179,6 +229,12 @@ export default {
           this.showErrorToast('لطفاً حداکثر نمره سوال را وارد کنید.');
           return false;
         }
+      }
+
+      // بررسی مقدار points
+      if (!this.questionData.points || this.questionData.points < 1) {
+        this.showErrorToast('لطفاً امتیاز سوال را وارد کنید.');
+        return false;
       }
 
       return true;

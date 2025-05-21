@@ -304,7 +304,7 @@ export default {
     },
 
     addExam(lesson) {
-      this.$emit('add-exam', lesson);
+      this.$emit('show-questions-manager', lesson);
     }
   }
 };

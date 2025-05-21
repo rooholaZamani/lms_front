@@ -152,6 +152,13 @@
                           v-model="editCourseForm.title"
                           placeholder="عنوان دوره"
                       >
+                      <div v-if="showQuestionsManager && selectedLessonForQuestions" class="management-section mt-4">
+                        <lesson-questions-manager
+                            :lesson-id="selectedLessonForQuestions.id"
+                            :lesson-title="selectedLessonForQuestions.title"
+                            @close="hideLessonQuestionsManager"
+                        />
+                      </div>
                     </div>
 
                     <div class="form-group mb-3">
@@ -186,7 +193,7 @@
                         @lesson-deleted="handleLessonDeleted"
                         @add-content="showAddContentModal"
                         @add-assignment="showAddAssignmentModal"
-                        @add-exam="showAddExamModal"
+                        @show-questions-manager="showLessonQuestionsManager"
                     />
                   </div>
                 </div>
@@ -373,6 +380,7 @@
 </template>
 
 <script>
+import LessonQuestionsManager from '@/components/exams/LessonQuestionsManager.vue';
 import { mapGetters } from 'vuex';
 import { useUser } from '@/composables/useUser.js';
 import { useFormatters } from '@/composables/useFormatters.js';
@@ -385,6 +393,7 @@ import LessonList from '@/components/courses/LessonList.vue';
 import StudentsTab from '@/components/courses/StudentsTab.vue';
 import LessonManager from '@/components/courses/LessonManager.vue';
 
+
 export default {
   name: 'CourseDetail',
   components: {
@@ -395,7 +404,8 @@ export default {
     CourseHeader,
     LessonList,
     StudentsTab,
-    LessonManager
+    LessonManager,
+    LessonQuestionsManager
   },
   props: {
     id: {
@@ -424,6 +434,8 @@ export default {
       course: null,
       isEnrolled: false,
       isTeacherOfCourse: false,
+      selectedLessonForQuestions: null,
+      showQuestionsManager: false,
 
       // فرم درس
       lessonForm: {
@@ -526,6 +538,23 @@ export default {
         }
       }
     },
+    showLessonQuestionsManager(lesson) {
+      this.selectedLessonForQuestions = lesson;
+      this.showQuestionsManager = true;
+
+      // If you're using tabs, switch to the manage tab
+      const manageTab = document.querySelector('#manage-tab');
+      if (manageTab) {
+        const tab = new bootstrap.Tab(manageTab);
+        tab.show();
+      }
+    },
+
+    hideLessonQuestionsManager() {
+      this.showQuestionsManager = false;
+      this.selectedLessonForQuestions = null;
+    }
+  },
     handleLessonAdded(newLesson) {
       if (!this.course.lessons) {
         this.course.lessons = [];
@@ -972,7 +1001,7 @@ export default {
       }
 
       this.$toast.success('محتوای درس با موفقیت به‌روزرسانی شد.');
-    }
+
   },
   computed: {
     ...mapGetters({

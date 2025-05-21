@@ -180,9 +180,7 @@ export default {
         };
 
         // دریافت سوالات
-        if (examData.questions) {
-          this.questions = examData.questions;
-        }
+        await this.fetchExamQuestions();
 
         this.loading = false;
         this.finishSubmitting();
@@ -190,6 +188,17 @@ export default {
         console.error('Error fetching exam data:', error);
         this.finishSubmitting(null, 'مشکلی در دریافت اطلاعات آزمون رخ داد. لطفاً دوباره تلاش کنید.');
         this.loading = false;
+      }
+    },
+
+    async fetchExamQuestions() {
+      try {
+        // دریافت سوالات آزمون - با استفاده از endpoint صحیح
+        const response = await axios.get(`/exams/${this.examId}/questions`);
+        this.questions = response.data;
+      } catch (error) {
+        console.error('Error fetching exam questions:', error);
+        this.showErrorToast('مشکلی در دریافت سوالات آزمون رخ داد.');
       }
     },
 
@@ -218,8 +227,8 @@ export default {
           // ویرایش آزمون موجود
           response = await axios.put(`/exams/${this.examId}`, this.examData);
         } else {
-          // ایجاد آزمون جدید
-          response = await axios.post('/exams', this.examData);
+          // ایجاد آزمون جدید - اصلاح endpoint مطابق با API
+          response = await axios.post(`/exams/lesson/${this.examData.lessonId}`, this.examData);
           this.examId = response.data.id;
           this.isEditMode = true;
         }
@@ -267,8 +276,7 @@ export default {
       try {
         let response;
         const questionData = {
-          ...this.currentQuestion,
-          examId: this.examId
+          ...this.currentQuestion
         };
 
         if (this.isEditingQuestion) {
@@ -278,14 +286,13 @@ export default {
           // به‌روزرسانی سوال در لیست
           const index = this.questions.findIndex(q => q.id === this.selectedQuestionId);
           if (index !== -1) {
-            // this.$set(this.questions, index, response.data);
             this.questions[index] = response.data;
           }
 
           this.showSuccessToast('سوال با موفقیت به‌روزرسانی شد.');
         } else {
-          // افزودن سوال جدید
-          response = await axios.post('/questions', questionData);
+          // افزودن سوال جدید - اصلاح endpoint مطابق با API
+          response = await axios.post(`/exams/${this.examId}/questions`, questionData);
 
           // افزودن سوال جدید به لیست
           this.questions.push(response.data);
