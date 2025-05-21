@@ -488,6 +488,12 @@ export default {
       }
     };
   },
+  computed: {
+    ...mapGetters({
+      currentCourse: 'courses/getCurrentCourse',
+      currentUser: 'currentUser'
+    })
+  },
   async created() {
     try {
       await this.fetchCourseData();
@@ -1004,13 +1010,8 @@ export default {
 
       this.$toast.success('محتوای درس با موفقیت به‌روزرسانی شد.');
 
-    },
-    computed: {
-      ...mapGetters({
-        currentCourse: 'courses/getCurrentCourse',
-        currentUser: 'currentUser'
-      })
     }
+
   }
 }
 </script>
