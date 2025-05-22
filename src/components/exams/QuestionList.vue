@@ -82,6 +82,27 @@
             </div>
           </div>
         </div>
+
+        <!-- بعد از نمایش توضیحات -->
+        <div v-if="question.hint" class="hint mt-2">
+          <div class="alert alert-info">
+            <i class="fas fa-lightbulb me-2"></i>
+            <strong>راهنمایی:</strong> {{ question.hint }}
+          </div>
+        </div>
+
+        <div class="question-meta mt-2 d-flex gap-3">
+  <span v-if="question.timeLimit" class="badge bg-secondary">
+    <i class="fas fa-clock me-1"></i> {{ question.timeLimit }} ثانیه
+  </span>
+          <span v-if="question.difficulty" class="badge bg-info">
+    <i class="fas fa-tachometer-alt me-1"></i> سطح {{ question.difficulty }}
+  </span>
+          <span v-if="question.isRequired" class="badge bg-danger">
+    <i class="fas fa-asterisk me-1"></i> اجباری
+  </span>
+        </div>
+
       </div>
     </div>
   </div>

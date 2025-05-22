@@ -264,7 +264,12 @@ export default {
         options: ['', '', '', ''],
         correctOption: 0,
         explanation: '',
-        maxScore: 10
+        points: 10,
+        // اضافه کردن فیلدهای جدید
+        hint: '',
+        timeLimit: null,
+        difficulty: 3.0,
+        isRequired: false
       };
       this.$refs.questionModal.show();
     },
@@ -306,7 +311,7 @@ export default {
           this.showSuccessToast('سوال با موفقیت به‌روزرسانی شد.');
         } else {
           // افزودن سوال جدید - اصلاح endpoint مطابق با API
-          response = await axios.post(`/exams/${this.examId}/questions`, questionData);
+          response = await axios.post(`/questions/exam/${this.examId}`, questionData);
 
           // افزودن سوال جدید به لیست
           this.questions.push(response.data);

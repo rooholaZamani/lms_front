@@ -339,17 +339,23 @@ export default {
       // کپی اطلاعات سوال
       this.currentQuestion = { ...question };
 
-      // تنظیم گزینه‌ها برای سوال چندگزینه‌ای
-      if (question.type === 'MULTIPLE_CHOICE') {
+      // تبدیل answers به options برای نمایش در فرم
+      if (question.type === 'MULTIPLE_CHOICE' || question.questionType === 'MULTIPLE_CHOICE') {
         if (question.answers && Array.isArray(question.answers)) {
-          // تبدیل ساختار answers به options و correctOption
           this.currentQuestion.options = question.answers.map(a => a.text);
           const correctIndex = question.answers.findIndex(a => a.correct);
           this.currentQuestion.correctOption = correctIndex >= 0 ? correctIndex : 0;
-        } else if (!this.currentQuestion.options) {
-          this.currentQuestion.options = ['', '', '', ''];
-          this.currentQuestion.correctOption = 0;
+        } else if (question.options && Array.isArray(question.options)) {
+          // اگر از قبل options داشته باشد
+          this.currentQuestion.options = question.options.map(o => o.text || o);
+          const correctIndex = question.options.findIndex(o => o.correct);
+          this.currentQuestion.correctOption = correctIndex >= 0 ? correctIndex : 0;
         }
+      }
+
+      // تبدیل questionType به type برای فرم
+      if (question.questionType && !question.type) {
+        this.currentQuestion.type = question.questionType;
       }
 
       this.$refs.questionModal.show();
@@ -400,7 +406,7 @@ export default {
           this.showSuccessToast('سوال با موفقیت به‌روزرسانی شد.');
         } else {
           // افزودن سوال جدید
-          response = await axios.post(`/exams/${this.examData.id}/questions`, questionData);
+          response = await axios.post(`/questions/exam/${this.examData.id}`, questionData);
 
           // افزودن سوال جدید به لیست
           this.questions.push(response.data);

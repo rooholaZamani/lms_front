@@ -13,6 +13,10 @@
           <option value="TRUE_FALSE">درست/نادرست</option>
           <option value="SHORT_ANSWER">پاسخ کوتاه</option>
           <option value="ESSAY">تشریحی</option>
+          <!-- اضافه کردن انواع جدید -->
+          <option value="FILL_IN_THE_BLANKS">جای خالی</option>
+          <option value="MATCHING">تطبیقی</option>
+          <option value="CATEGORIZATION">دسته‌بندی</option>
         </select>
       </div>
 
@@ -91,6 +95,40 @@
           {{ isEditing ? 'ذخیره تغییرات' : 'افزودن سوال' }}
         </button>
       </div>
+      <!-- اضافه کردن فیلدهای جدید -->
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="questionHint" class="form-label">راهنمایی (اختیاری)</label>
+            <input type="text" class="form-control" id="questionHint" v-model="questionData.hint">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="questionTimeLimit" class="form-label">محدودیت زمانی (ثانیه) (اختیاری)</label>
+            <input type="number" class="form-control" id="questionTimeLimit" v-model="questionData.timeLimit" min="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label for="questionDifficulty" class="form-label">سطح دشواری (1-5)</label>
+            <input type="number" class="form-control" id="questionDifficulty" v-model="questionData.difficulty" min="1" max="5" step="0.5">
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="mb-3">
+            <div class="form-check mt-4">
+              <input class="form-check-input" type="checkbox" id="isRequired" v-model="questionData.isRequired">
+              <label class="form-check-label" for="isRequired">
+                سوال اجباری
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
     </form>
   </div>
 </template>
@@ -131,22 +169,40 @@ export default {
     formatQuestionData() {
       const data = { ...this.questionData };
 
-      // تبدیل گزینه‌های چند گزینه‌ای به فرمت آرایه answers
       if (data.type === 'MULTIPLE_CHOICE') {
-        data.answers = data.options.map((option, index) => ({
-          text: option,
-          correct: index === parseInt(data.correctOption)
+        data.options = data.options.map((text, index) => ({
+          text: text,
+          correct: index === parseInt(data.correctOption),
+          answerType: 'TEXT',
+          points: index === parseInt(data.correctOption) ? (data.points || 10) : 0,
+          orderIndex: index
         }));
       } else if (data.type === 'TRUE_FALSE') {
-        data.answers = [
-          { text: 'درست', correct: data.correctOption === 'true' },
-          { text: 'نادرست', correct: data.correctOption === 'false' }
+        data.options = [
+          {
+            text: 'درست',
+            correct: data.correctOption === 'true',
+            answerType: 'TEXT',
+            points: data.correctOption === 'true' ? (data.points || 10) : 0,
+            orderIndex: 0
+          },
+          {
+            text: 'نادرست',
+            correct: data.correctOption === 'false',
+            answerType: 'TEXT',
+            points: data.correctOption === 'false' ? (data.points || 10) : 0,
+            orderIndex: 1
+          }
         ];
       }
 
-      // اطمینان از وجود مقدار برای points
+      // تنظیم questionType به جای type
+      data.questionType = data.type;
+      delete data.type;
+
+      // اطمینان از وجود points
       if (!data.points) {
-        data.points = 10; // مقدار پیش‌فرض
+        data.points = 10;
       }
 
       return data;
