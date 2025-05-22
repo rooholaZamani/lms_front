@@ -294,9 +294,51 @@ export default {
 
       try {
         let response;
+
+        // آماده‌سازی داده‌ها مطابق API
         const questionData = {
-          ...this.currentQuestion
+          text: this.currentQuestion.text,
+          questionType: this.currentQuestion.type, // استفاده از questionType
+          points: this.currentQuestion.points || 10,
+          explanation: this.currentQuestion.explanation || '',
+          hint: this.currentQuestion.hint || '',
+          timeLimit: this.currentQuestion.timeLimit || null,
+          difficulty: this.currentQuestion.difficulty || 3.0,
+          isRequired: this.currentQuestion.isRequired || false
         };
+
+        // تنظیم فیلدهای مخصوص هر نوع سوال
+        if (this.currentQuestion.type === 'MULTIPLE_CHOICE') {
+          // برای چند گزینه‌ای از answers استفاده کنید
+          questionData.answers = this.currentQuestion.options.map((text, index) => ({
+            text: text,
+            correct: index === parseInt(this.currentQuestion.correctOption),
+            answerType: 'TEXT',
+            points: index === parseInt(this.currentQuestion.correctOption) ? questionData.points : 0,
+            orderIndex: index
+          }));
+        } else if (this.currentQuestion.type === 'TRUE_FALSE') {
+          questionData.answers = [
+            {
+              text: 'درست',
+              correct: this.currentQuestion.correctOption === 'true',
+              answerType: 'TEXT',
+              points: this.currentQuestion.correctOption === 'true' ? questionData.points : 0,
+              orderIndex: 0
+            },
+            {
+              text: 'نادرست',
+              correct: this.currentQuestion.correctOption === 'false',
+              answerType: 'TEXT',
+              points: this.currentQuestion.correctOption === 'false' ? questionData.points : 0,
+              orderIndex: 1
+            }
+          ];
+        } else if (this.currentQuestion.type === 'SHORT_ANSWER') {
+          questionData.correctOption = this.currentQuestion.correctOption;
+        } else if (this.currentQuestion.type === 'ESSAY') {
+          questionData.maxScore = this.currentQuestion.maxScore || 10;
+        }
 
         if (this.isEditingQuestion) {
           // ویرایش سوال موجود
@@ -323,7 +365,7 @@ export default {
         this.$refs.questionModal.hide();
       } catch (error) {
         console.error('Error saving question:', error);
-        this.showErrorToast(error.message || 'مشکلی در ذخیره سوال رخ داد. لطفاً دوباره تلاش کنید.');
+        this.showErrorToast(error.response?.data?.message || 'مشکلی در ذخیره سوال رخ داد. لطفاً دوباره تلاش کنید.');
       } finally {
         this.isQuestionSubmitting = false;
       }

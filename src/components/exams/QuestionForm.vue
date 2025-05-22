@@ -170,15 +170,18 @@ export default {
       const data = { ...this.questionData };
 
       if (data.type === 'MULTIPLE_CHOICE') {
-        data.options = data.options.map((text, index) => ({
+        // برای سوال چند گزینه‌ای، از answers استفاده کنید نه options
+        data.answers = data.options.map((text, index) => ({
           text: text,
           correct: index === parseInt(data.correctOption),
           answerType: 'TEXT',
           points: index === parseInt(data.correctOption) ? (data.points || 10) : 0,
           orderIndex: index
         }));
+        // options را حذف کنید
+        delete data.options;
       } else if (data.type === 'TRUE_FALSE') {
-        data.options = [
+        data.answers = [
           {
             text: 'درست',
             correct: data.correctOption === 'true',
