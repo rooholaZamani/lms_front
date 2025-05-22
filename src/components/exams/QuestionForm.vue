@@ -25,7 +25,8 @@
               <input class="form-check-input" type="radio"
                      :name="'correctOption'"
                      :value="index"
-                     v-model="questionData.correctOption">
+                     :checked="Number(questionData.correctOption) === index"
+                     @change="questionData.correctOption = index">
             </div>
             <input type="text" class="form-control" v-model="questionData.options[index]"
                    :placeholder="`گزینه ${index + 1}`" required>
