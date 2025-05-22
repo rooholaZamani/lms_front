@@ -6,6 +6,17 @@
         <router-link :to="{ name: 'ExamCreator' }" class="btn btn-primary">
           <i class="fas fa-plus me-1"></i> ایجاد آزمون جدید
         </router-link>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+          <h2>آزمون‌های من</h2>
+          <div>
+            <router-link :to="{ name: 'QuestionBank' }" class="btn btn-outline-primary me-2">
+              <i class="fas fa-database me-1"></i> بانک سوالات
+            </router-link>
+            <router-link :to="{ name: 'ExamCreator' }" class="btn btn-primary">
+              <i class="fas fa-plus me-1"></i> ایجاد آزمون جدید
+            </router-link>
+          </div>
+        </div>
       </div>
 
       <!-- فیلترها و جستجو -->

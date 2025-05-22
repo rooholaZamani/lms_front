@@ -509,12 +509,13 @@ export default {
         dueDate: '',
         file: null
       };
+      console.log('showCreateAssignmentModal called', this.newAssignment);
       this.$refs.createAssignmentModal.show();
     },
 
     async createAssignment() {
       this.startSubmitting();
-
+      console.log("createAssignment: "+this.newAssignment.lessonId)
       try {
         const formData = new FormData();
         formData.append('title', this.newAssignment.title);

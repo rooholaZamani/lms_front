@@ -21,9 +21,14 @@
         <div v-if="examId" class="card">
           <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
             <h5 class="mb-0">سوالات آزمون</h5>
-            <button class="btn btn-light" @click="showAddQuestionModal">
-              <i class="fas fa-plus"></i> افزودن سوال
-            </button>
+            <div>
+              <button class="btn btn-light me-2" @click="importFromQuestionBank">
+                <i class="fas fa-database"></i> استفاده از بانک سوالات
+              </button>
+              <button class="btn btn-light" @click="showAddQuestionModal">
+                <i class="fas fa-plus"></i> افزودن سوال
+              </button>
+            </div>
           </div>
           <div class="card-body">
             <question-list
@@ -190,7 +195,16 @@ export default {
         this.loading = false;
       }
     },
+    importFromQuestionBank() {
+      // Store the current exam ID in localStorage
+      localStorage.setItem('currentExamId', this.examId);
 
+      // Navigate to the question bank
+      this.$router.push({
+        name: 'QuestionBank',
+        query: { returnTo: 'ExamCreator', examId: this.examId }
+      });
+    },
     async fetchExamQuestions() {
       try {
         // دریافت سوالات آزمون - با استفاده از endpoint صحیح

@@ -278,10 +278,16 @@
                 <label for="assignmentDescription" class="form-label">توضیحات تکلیف</label>
                 <textarea class="form-control" id="assignmentDescription" v-model="assignmentForm.description" rows="4" required></textarea>
               </div>
-              <div class="mb-3">
-                <label for="assignmentDueDate" class="form-label">تاریخ تحویل</label>
-                <input type="date" class="form-control" id="assignmentDueDate" v-model="assignmentForm.dueDate" required>
-              </div>
+
+                <div class="mb-3">
+                  <label for="assignmentDueDate" class="form-label">تاریخ تحویل</label>
+                  <input type="date" class="form-control" id="assignmentDueDate" v-model="assignmentForm.dueDate" required>
+                </div>
+                <div class="mb-3">
+                  <label for="assignmentDueTime" class="form-label">ساعت تحویل</label>
+                  <input type="time" class="form-control" id="assignmentDueTime" v-model="assignmentForm.dueTime" required>
+                </div>
+
               <div class="mb-3">
                 <label for="assignmentFile" class="form-label">فایل پیوست (اختیاری)</label>
                 <input type="file" class="form-control" id="assignmentFile" @change="handleAssignmentFileSelect">
@@ -433,9 +439,9 @@ export default {
       savingLesson: false,
       course: null,
       isEnrolled: false,
-      isTeacherOfCourse: false,
+      isTeacherOfCourse: true,
       selectedLessonForQuestions: null,
-      showQuestionsManager: false,
+      showQuestionsManager: true,
 
       // فرم درس
       lessonForm: {
@@ -894,35 +900,63 @@ export default {
       this.isAssignmentSubmitting = true;
 
       try {
-        // در یک پروژه واقعی، این درخواست به API ارسال می‌شود
-        console.log('Creating assignment:', {
-          lessonId: this.selectedLesson.id,
+        // Create query parameters object for the URL
+        let dueDateTime = this.assignmentForm.dueDate;
+
+        if (dueDateTime && !dueDateTime.includes('T')) {
+          dueDateTime = `${dueDateTime}T23:59:00`;
+        }
+        const params = {
           title: this.assignmentForm.title,
           description: this.assignmentForm.description,
-          dueDate: this.assignmentForm.dueDate,
-          file: this.assignmentForm.file
-        });
+          dueDate: dueDateTime,
+        };
 
-        // شبیه‌سازی پاسخ موفقیت‌آمیز
-        setTimeout(() => {
-          // به‌روزرسانی درس برای نشان دادن اینکه یک تکلیف دارد
-          const lessonIndex = this.course.lessons.findIndex(l => l.id === this.selectedLesson.id);
-          if (lessonIndex !== -1) {
-            // this.$set(this.course.lessons[lessonIndex], 'hasAssignment', true);
-            this.course.lessons[lessonIndex]['hasAssignment'] = true;
+        // Construct the query string
+        const queryString = Object.keys(params)
+            .map(key => `${key}=${encodeURIComponent(params[key])}`)
+            .join('&');
+
+        // For the file, we'll send it as JSON in the request body
+        const fileData = this.assignmentForm.file ? {
+          file: "string" // Or potentially convert the file to base64
+        } : {};
+
+        // Send API request according to Swagger documentation
+        const response = await axios.post(
+            `/assignments/lesson/${this.selectedLesson.id}?${queryString}`,
+            fileData,
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+              }
+            }
+        );
+
+        // Update the lesson to show it has an assignment
+        const lessonIndex = this.course.lessons.findIndex(l => l.id === this.selectedLesson.id);
+        if (lessonIndex !== -1) {
+          this.course.lessons[lessonIndex]['hasAssignment'] = true;
+
+          // If we have assignment data from the response, use it to update the UI
+          if (response.data) {
+            if (!this.course.lessons[lessonIndex].assignments) {
+              this.course.lessons[lessonIndex].assignments = [];
+            }
+            this.course.lessons[lessonIndex].assignments.push(response.data);
           }
+        }
 
-          this.$toast.success('تکلیف با موفقیت ایجاد شد.');
+        this.$toast.success('تکلیف با موفقیت ایجاد شد.');
 
-          // بستن مودال
-          const modal = bootstrap.Modal.getInstance(document.getElementById('assignmentModal'));
-          modal.hide();
-
-          this.isAssignmentSubmitting = false;
-        }, 800);
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('assignmentModal'));
+        modal.hide();
       } catch (error) {
         console.error('Error creating assignment:', error);
         this.$toast.error('خطا در ایجاد تکلیف');
+      } finally {
         this.isAssignmentSubmitting = false;
       }
     },

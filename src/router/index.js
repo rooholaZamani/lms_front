@@ -112,6 +112,12 @@ const routes = [
     meta: { title: 'نتایج آزمون', requiresAuth: true, requiresTeacher: true }
   },
   {
+    path: '/question-bank',
+    name: 'QuestionBank',
+    component: () => import(/* webpackChunkName: "question-bank" */ '../components/exams/QuestionBank.vue'),
+    meta: { title: 'بانک سوالات', requiresAuth: true, requiresTeacher: true }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: NotFound,

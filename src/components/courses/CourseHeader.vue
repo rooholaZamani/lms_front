@@ -47,7 +47,7 @@ export default {
     },
     isTeacherOfCourse: {
       type: Boolean,
-      default: false
+      default: true
     },
     isEnrolled: {
       type: Boolean,
