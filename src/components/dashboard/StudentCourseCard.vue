@@ -1,41 +1,53 @@
 <template>
-  <div class="card course-card">
-    <div class="card-header bg-primary text-white">
-      <h5 class="card-title mb-0">{{ course.title }}</h5>
+  <div class="lms-card course-card">
+    <div class="lms-card-header">
+      <h5 class="mb-0">{{ course.title }}</h5>
     </div>
-    <div class="card-body">
-      <p class="card-text" v-if="course.description">{{ truncatedDescription }}</p>
+    <div class="lms-card-body">
+      <p class="text-muted" v-if="course.description">{{ truncatedDescription }}</p>
 
-      <!-- نمایش پیشرفت دوره -->
-      <div v-if="progress">
-        <div class="d-flex justify-content-between mb-2">
+      <!-- Progress Display -->
+      <div v-if="progress" class="mt-3">
+        <div class="d-flex justify-content-between align-items-center mb-2">
           <span>پیشرفت دوره:</span>
-          <span>{{ Math.round(progress.completionPercentage) }}%</span>
+          <span class="text-primary fw-bold">{{ Math.round(progress.completionPercentage) }}%</span>
         </div>
-        <div class="progress mb-3">
-          <div class="progress-bar bg-success"
+
+        <div class="progress-modern progress-success">
+          <div class="progress-bar-modern"
                :style="`width: ${progress.completionPercentage}%`"
                :aria-valuenow="progress.completionPercentage"
                role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
         </div>
 
-        <div class="d-flex justify-content-between">
-          <small class="text-muted">
-            {{ progress.completedLessonCount }} از
-            {{ progress.totalLessons }} درس تکمیل شده
-          </small>
-          <small class="text-muted" v-if="progress.lastAccessed">
-            آخرین بازدید: {{ formatDate(progress.lastAccessed) }}
-          </small>
+        <div class="meta-info mt-3">
+          <div class="meta-item">
+            <i class="fas fa-book-open"></i>
+            <span>{{ progress.completedLessonCount }} از {{ progress.totalLessons }} درس</span>
+          </div>
+          <div class="meta-item" v-if="progress.lastAccessed">
+            <i class="fas fa-clock"></i>
+            <span>{{ formatDate(progress.lastAccessed) }}</span>
+          </div>
         </div>
       </div>
 
-      <router-link :to="{ name: 'CourseDetail', params: { id: course.id } }" class="btn btn-primary mt-3 w-100">
+      <router-link :to="{ name: 'CourseDetail', params: { id: course.id } }"
+                   class="btn btn-primary mt-3 w-100">
         مشاهده دوره
       </router-link>
     </div>
-    <div class="card-footer text-muted">
-      <small>استاد: {{ teacherName }}</small>
+
+    <div class="lms-card-footer">
+      <div class="user-display">
+        <div class="avatar avatar-sm">
+          <span>{{ getTeacherInitials() }}</span>
+        </div>
+        <div class="user-info">
+          <div class="user-name">{{ teacherName }}</div>
+          <div class="user-role">استاد</div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -73,14 +85,24 @@ export default {
     truncatedDescription() {
       return this.truncateText(this.course.description, 100);
     }
+  },
+  methods: {
+    getTeacherInitials() {
+      if (!this.course.teacher) return 'نا';
+      const firstName = this.course.teacher.firstName || '';
+      const lastName = this.course.teacher.lastName || '';
+      const firstInitial = firstName ? firstName.charAt(0) : '';
+      const lastInitial = lastName ? lastName.charAt(0) : '';
+      return (firstInitial + lastInitial).toUpperCase() || 'نا';
+    }
   }
 }
 </script>
 
 <style scoped>
+/* Component-specific styles only (most styles now come from global.css) */
 .course-card {
   transition: transform 0.3s;
-  height: 100%;
 }
 
 .course-card:hover {
