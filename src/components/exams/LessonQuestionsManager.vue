@@ -6,9 +6,7 @@
         <button class="btn btn-light" @click="createNewExam" v-if="!hasExam">
           <i class="fas fa-plus"></i> ایجاد آزمون جدید
         </button>
-        <button class="btn btn-light" @click="showAddQuestionModal" v-else>
-          <i class="fas fa-plus"></i> افزودن سوال
-        </button>
+
       </div>
       <div class="card-body">
         <!-- نمایش حالت خالی -->
@@ -62,9 +60,7 @@
           />
 
           <div class="text-center mt-4">
-            <button class="btn btn-success" @click="showAddQuestionModal">
-              <i class="fas fa-plus me-1"></i> افزودن سوال جدید
-            </button>
+
           </div>
         </div>
       </div>
@@ -316,20 +312,6 @@ export default {
         name: 'Exam',
         params: { id: this.examData.id }
       });
-    },
-
-    showAddQuestionModal() {
-      this.isEditingQuestion = false;
-      this.currentQuestion = {
-        text: '',
-        type: 'MULTIPLE_CHOICE',
-        options: ['', '', '', ''],
-        correctOption: 0,
-        explanation: '',
-        points: 10,
-        maxScore: 10
-      };
-      this.$refs.questionModal.show();
     },
 
     editQuestion(question) {

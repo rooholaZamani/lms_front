@@ -1,82 +1,86 @@
 <template>
-  <div class="modal-container">
-    <base-modal :modal-id="modalId" title="افزودن محتوا به درس" modal-size="modal-lg" ref="baseModal">
-      <ul class="nav nav-tabs mb-3" id="contentTab" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="text-tab" data-bs-toggle="tab" data-bs-target="#text"
-                  type="button" role="tab" aria-controls="text" aria-selected="true">
-            متن
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="file-tab" data-bs-toggle="tab" data-bs-target="#file"
-                  type="button" role="tab" aria-controls="file" aria-selected="false">
-            فایل
-          </button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="video-tab" data-bs-toggle="tab" data-bs-target="#video"
-                  type="button" role="tab" aria-controls="video" aria-selected="false">
-            ویدیو
-          </button>
-        </li>
-      </ul>
-      <div class="tab-content" id="contentTabContent">
-        <!-- Tab: متن -->
-        <div class="tab-pane fade show active" id="text" role="tabpanel" aria-labelledby="text-tab">
-          <form @submit.prevent="saveTextContent">
-            <div class="mb-3">
-              <label for="textContent" class="form-label">محتوای متنی</label>
-              <textarea class="form-control rich-editor" id="textContent"
-                        v-model="contentData.text" rows="10" required></textarea>
-            </div>
-            <button type="submit" class="btn btn-primary" :disabled="isSubmitting">
-              <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-              ذخیره محتوای متنی
-            </button>
-          </form>
-        </div>
+  <base-modal
+      :modal-id="modalId"
+      title="افزودن محتوا به درس"
+      modal-size="modal-lg"
+      ref="baseModal"
+  >
+    <div class="content-form">
+      <!-- Content Type Selection -->
+      <div class="mb-4">
+        <label class="form-label">نوع محتوا</label>
+        <div class="btn-group w-100" role="group">
+          <input type="radio" class="btn-check" name="contentType" id="text" value="TEXT" v-model="contentForm.type">
+          <label class="btn btn-outline-primary" for="text">
+            <i class="fas fa-font me-2"></i> متن
+          </label>
 
-        <!-- Tab: فایل -->
-        <div class="tab-pane fade" id="file" role="tabpanel" aria-labelledby="file-tab">
-          <form @submit.prevent="uploadFile">
-            <div class="mb-3">
-              <label for="fileUpload" class="form-label">آپلود فایل</label>
-              <input type="file" class="form-control" id="fileUpload" @change="handleFileSelect">
-              <small class="form-text text-muted">فرمت‌های مجاز: PDF, DOCX, PPT, ZIP (حداکثر 10MB)</small>
-            </div>
-            <div class="mb-3">
-              <label for="fileName" class="form-label">نام نمایشی فایل</label>
-              <input type="text" class="form-control" id="fileName" v-model="contentData.fileName" required>
-            </div>
-            <button type="submit" class="btn btn-primary" :disabled="isSubmitting || !contentData.file">
-              <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-              آپلود فایل
-            </button>
-          </form>
-        </div>
+          <input type="radio" class="btn-check" name="contentType" id="video" value="VIDEO" v-model="contentForm.type">
+          <label class="btn btn-outline-primary" for="video">
+            <i class="fas fa-video me-2"></i> ویدیو
+          </label>
 
-        <!-- Tab: ویدیو -->
-        <div class="tab-pane fade" id="video" role="tabpanel" aria-labelledby="video-tab">
-          <form @submit.prevent="uploadVideo">
-            <div class="mb-3">
-              <label for="videoUpload" class="form-label">آپلود ویدیو</label>
-              <input type="file" class="form-control" id="videoUpload" @change="handleVideoSelect" accept="video/mp4,video/webm">
-              <small class="form-text text-muted">فرمت‌های مجاز: MP4, WEBM (حداکثر 100MB)</small>
-            </div>
-            <div class="mb-3">
-              <label for="videoTitle" class="form-label">عنوان ویدیو</label>
-              <input type="text" class="form-control" id="videoTitle" v-model="contentData.videoTitle" required>
-            </div>
-            <button type="submit" class="btn btn-primary" :disabled="isSubmitting || !contentData.video">
-              <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-              آپلود ویدیو
-            </button>
-          </form>
+          <input type="radio" class="btn-check" name="contentType" id="pdf" value="PDF" v-model="contentForm.type">
+          <label class="btn btn-outline-primary" for="pdf">
+            <i class="fas fa-file-pdf me-2"></i> فایل PDF
+          </label>
         </div>
       </div>
-    </base-modal>
-  </div>
+
+      <!-- Text Content Form -->
+      <div v-if="contentForm.type === 'TEXT'">
+        <div class="mb-3">
+          <label for="textTitle" class="form-label">عنوان محتوا <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="textTitle" v-model="contentForm.title" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="textContent" class="form-label">محتوای متنی <span class="text-danger">*</span></label>
+          <textarea class="form-control" id="textContent" v-model="contentForm.textContent" rows="8" required></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label for="textOrder" class="form-label">ترتیب نمایش</label>
+          <input type="number" class="form-control" id="textOrder" v-model="contentForm.orderIndex" min="0">
+        </div>
+      </div>
+
+      <!-- File Upload Form (Video/PDF) -->
+      <div v-else-if="contentForm.type === 'VIDEO' || contentForm.type === 'PDF'">
+        <div class="mb-3">
+          <label for="fileTitle" class="form-label">عنوان محتوا <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="fileTitle" v-model="contentForm.title" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="contentFile" class="form-label">
+            انتخاب فایل
+            <span class="text-danger">*</span>
+            <small class="text-muted">
+              ({{ contentForm.type === 'VIDEO' ? 'فرمت‌های پشتیبانی شده: MP4, AVI, MOV' : 'فرمت PDF' }})
+            </small>
+          </label>
+          <input type="file" class="form-control" id="contentFile"
+                 :accept="contentForm.type === 'VIDEO' ? 'video/*' : 'application/pdf'"
+                 @change="handleFileSelect" required>
+        </div>
+
+        <div class="mb-3">
+          <label for="fileOrder" class="form-label">ترتیب نمایش</label>
+          <input type="number" class="form-control" id="fileOrder" v-model="contentForm.orderIndex" min="0">
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-secondary" @click="closeModal">انصراف</button>
+        <button type="button" class="btn btn-primary" @click="saveContent" :disabled="isSubmitting">
+          <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status"></span>
+          ذخیره محتوا
+        </button>
+      </div>
+    </div>
+  </base-modal>
 </template>
 
 <script>
@@ -97,320 +101,173 @@ export default {
     },
     lessonId: {
       type: [String, Number],
-      default: null
+      required: true
     }
   },
   data() {
     return {
-      contentData: {
-        text: '',
-        file: null,
-        fileName: '',
-        video: null,
-        videoTitle: ''
+      contentForm: {
+        type: 'TEXT',
+        title: '',
+        textContent: '',
+        orderIndex: 0,
+        file: null
       },
-      progressMap: {
-        file: 0,
-        video: 0
-      }
-    }
+      isSubmitting: false
+    };
   },
   methods: {
-    // متدهای عمومی
-    reset() {
-      this.contentData = {
-        text: '',
-        file: null,
-        fileName: '',
-        video: null,
-        videoTitle: ''
-      };
-      this.progressMap = {
-        file: 0,
-        video: 0
-      };
-    },
-
-    show() {
-      if (this.$refs.baseModal && typeof this.$refs.baseModal.show === 'function') {
-        this.$refs.baseModal.show();
-      } else {
-        console.error('متد show در BaseModal یافت نشد');
-        this.showWithBootstrap();
-      }
-    },
-
-    hide() {
-      if (this.$refs.baseModal && typeof this.$refs.baseModal.hide === 'function') {
-        this.$refs.baseModal.hide();
-      } else {
-        console.error('متد hide در BaseModal یافت نشد');
-        this.hideWithBootstrap();
-      }
-    },
-
-    showWithBootstrap() {
-      const modalEl = document.getElementById(this.modalId);
-      if (modalEl) {
-        const bsModal = new bootstrap.Modal(modalEl);
-        bsModal.show();
-      } else {
-        console.error(`مودال با ID ${this.modalId} یافت نشد`);
-      }
-    },
-
-    hideWithBootstrap() {
-      const modalEl = document.getElementById(this.modalId);
-      if (modalEl) {
-        const bsModal = bootstrap.Modal.getInstance(modalEl);
-        if (bsModal) {
-          bsModal.hide();
-        } else {
-          console.error(`نمونه Bootstrap Modal برای ID ${this.modalId} یافت نشد`);
-        }
-      } else {
-        console.error(`مودال با ID ${this.modalId} یافت نشد`);
-      }
-    },
-
-    // متدهای مربوط به تب متن
-    async saveTextContent() {
-      if (!this.lessonId) {
-        this.showErrorToast('شناسه درس نامعتبر است.');
-        return;
-      }
-
-      this.startSubmitting();
-
-      try {
-        console.log('در حال ذخیره محتوای متنی برای درس:', this.lessonId);
-
-        const contentData = {
-          content: this.contentData.text
-        };
-
-        const response = await axios.put(`/lessons/${this.lessonId}/content`, contentData);
-        console.log('پاسخ ذخیره محتوای متنی:', response.data);
-
-        this.finishSubmitting('محتوای متنی با موفقیت ذخیره شد.');
-
-        // انتشار رویداد برای اطلاع دادن به کامپوننت والد
-        this.$emit('content-saved', response.data);
-
-        // بستن مودال
-        this.hide();
-      } catch (error) {
-        console.error('Error saving text content:', error);
-        this.finishSubmitting(null, 'مشکلی در ذخیره محتوای متنی رخ داد. لطفاً دوباره تلاش کنید.');
-      }
-    },
-
-    // متدهای مربوط به تب فایل
     handleFileSelect(event) {
       if (event.target.files.length > 0) {
-        const file = event.target.files[0];
-
-        // بررسی اندازه فایل (حداکثر 10MB)
-        if (file.size > 10 * 1024 * 1024) {
-          this.showErrorToast('حجم فایل نباید بیشتر از 10 مگابایت باشد.');
-          event.target.value = ''; // پاک کردن فایل انتخاب شده
-          return;
-        }
-
-        this.contentData.file = file;
-        if (!this.contentData.fileName) {
-          this.contentData.fileName = this.contentData.file.name;
-        }
-
-        console.log('فایل انتخاب شده:', {
-          name: file.name,
-          size: file.size,
-          type: file.type
-        });
+        this.contentForm.file = event.target.files[0];
       }
     },
 
-    async uploadFile() {
-      if (!this.lessonId || !this.contentData.file) {
-        this.showErrorToast('لطفاً فایل را انتخاب کنید.');
+    async saveContent() {
+      if (!this.validateForm()) {
         return;
       }
 
-      this.startSubmitting();
+      this.isSubmitting = true;
 
       try {
-        console.log('در حال آپلود فایل برای درس:', this.lessonId);
+        let response;
 
-        // ایجاد FormData برای آپلود فایل (فقط شامل فایل)
-        const formData = new FormData();
-        formData.append('file', this.contentData.file);
+        if (this.contentForm.type === 'TEXT') {
+          // ارسال محتوای متنی با استفاده از query parameters
+          const params = new URLSearchParams({
+            lessonId: this.lessonId.toString(),
+            title: this.contentForm.title,
+            textContent: this.contentForm.textContent,
+            orderIndex: this.contentForm.orderIndex.toString()
+          });
 
-        // ایجاد پارامترهای URL به صورت query string
-        const params = new URLSearchParams();
-        params.append('lessonId', this.lessonId);
-        params.append('title', this.contentData.fileName);
-        params.append('contentType', 'PDF');
-        params.append('orderIndex', '1');
+          response = await axios.post(`/api/content/text?${params}`, {}, {
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+        } else {
+          // ارسال فایل (ویدیو یا PDF) با استفاده از FormData
+          const formData = new FormData();
+          formData.append('file', this.contentForm.file);
+          formData.append('lessonId', this.lessonId.toString());
+          formData.append('title', this.contentForm.title);
+          formData.append('contentType', this.contentForm.type);
+          formData.append('orderIndex', this.contentForm.orderIndex.toString());
 
-        // URL کامل با پارامترها
-        const url = `/content/upload?${params.toString()}`;
-
-        console.log('URL آپلود فایل:', url);
-
-        const response = await axios.post(url, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          },
-          onUploadProgress: (progressEvent) => {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            this.progressMap.file = percentCompleted;
-            console.log(`پیشرفت آپلود فایل: ${percentCompleted}%`);
-          }
-        });
-
-        console.log('پاسخ آپلود فایل:', response.data);
-        this.finishSubmitting('فایل با موفقیت آپلود شد.');
-
-        // بازیابی اطلاعات به‌روز شده درس
-        try {
-          console.log('دریافت اطلاعات به‌روز شده درس');
-          const lessonResponse = await axios.get(`/lessons/${this.lessonId}`);
-          console.log('اطلاعات به‌روز شده درس:', lessonResponse.data);
-
-          // انتشار رویداد برای اطلاع دادن به کامپوننت والد
-          this.$emit('content-saved', lessonResponse.data);
-        } catch (lessonError) {
-          console.error('خطا در دریافت اطلاعات به‌روز شده درس:', lessonError);
-          // حتی در صورت خطا در دریافت اطلاعات به‌روز شده، پیام موفقیت آپلود فایل را نمایش می‌دهیم
-          this.$emit('content-saved', { id: this.lessonId });
+          response = await axios.post('/api/content/upload', formData, {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            }
+          });
         }
 
-        // بستن مودال
-        this.hide();
+        this.showSuccessToast('محتوا با موفقیت اضافه شد.');
+        this.$emit('content-saved', response.data);
+        this.closeModal();
       } catch (error) {
-        console.error('Error uploading file:', error);
-        const errorMessage = error.response?.data?.message || 'مشکلی در آپلود فایل رخ داد. لطفاً دوباره تلاش کنید.';
-        this.finishSubmitting(null, errorMessage);
+        console.error('Error saving content:', error);
+
+        // نمایش پیام خطای مناسب
+        let errorMessage = 'مشکلی در ذخیره محتوا رخ داد.';
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        } else if (error.response?.status === 413) {
+          errorMessage = 'حجم فایل بیش از حد مجاز است.';
+        } else if (error.response?.status === 415) {
+          errorMessage = 'فرمت فایل پشتیبانی نمی‌شود.';
+        }
+
+        this.showErrorToast(errorMessage);
+      } finally {
+        this.isSubmitting = false;
       }
     },
 
-    // متدهای مربوط به تب ویدیو
-    handleVideoSelect(event) {
-      if (event.target.files.length > 0) {
-        const video = event.target.files[0];
+    validateForm() {
+      if (!this.contentForm.title.trim()) {
+        this.showErrorToast('لطفاً عنوان محتوا را وارد کنید.');
+        return false;
+      }
 
-        // بررسی اندازه ویدیو (حداکثر 100MB)
-        if (video.size > 100 * 1024 * 1024) {
-          this.showErrorToast('حجم ویدیو نباید بیشتر از 100 مگابایت باشد.');
-          event.target.value = ''; // پاک کردن فایل انتخاب شده
-          return;
+      if (this.contentForm.type === 'TEXT') {
+        if (!this.contentForm.textContent.trim()) {
+          this.showErrorToast('لطفاً محتوای متنی را وارد کنید.');
+          return false;
+        }
+      } else {
+        if (!this.contentForm.file) {
+          this.showErrorToast('لطفاً فایل مورد نظر را انتخاب کنید.');
+          return false;
+        }
+
+        // بررسی حجم فایل (حداکثر 100 مگابایت)
+        const maxSize = 100 * 1024 * 1024; // 100MB
+        if (this.contentForm.file.size > maxSize) {
+          this.showErrorToast('حجم فایل نباید بیش از 100 مگابایت باشد.');
+          return false;
         }
 
         // بررسی نوع فایل
-        if (!['video/mp4', 'video/webm'].includes(video.type)) {
-          this.showErrorToast('فرمت ویدیو باید MP4 یا WEBM باشد.');
-          event.target.value = ''; // پاک کردن فایل انتخاب شده
-          return;
+        if (this.contentForm.type === 'VIDEO') {
+          const allowedTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/quicktime'];
+          if (!allowedTypes.includes(this.contentForm.file.type)) {
+            this.showErrorToast('لطفاً فایل ویدیویی معتبر انتخاب کنید.');
+            return false;
+          }
+        } else if (this.contentForm.type === 'PDF') {
+          if (this.contentForm.file.type !== 'application/pdf') {
+            this.showErrorToast('لطفاً فایل PDF معتبر انتخاب کنید.');
+            return false;
+          }
         }
-
-        this.contentData.video = video;
-        if (!this.contentData.videoTitle) {
-          this.contentData.videoTitle = video.name.split('.')[0];
-        }
-
-        console.log('ویدیو انتخاب شده:', {
-          name: video.name,
-          size: video.size,
-          type: video.type
-        });
       }
+
+      return true;
     },
 
-    async uploadVideo() {
-      if (!this.lessonId || !this.contentData.video) {
-        this.showErrorToast('لطفاً ویدیو را انتخاب کنید.');
-        return;
-      }
+    closeModal() {
+      // ری‌ست کردن فرم
+      this.contentForm = {
+        type: 'TEXT',
+        title: '',
+        textContent: '',
+        orderIndex: 0,
+        file: null
+      };
 
-      this.startSubmitting();
+      // بستن مودال
+      this.$refs.baseModal.hide();
+    },
 
-      try {
-        console.log('در حال آپلود ویدیو برای درس:', this.lessonId);
+    show() {
+      this.$refs.baseModal.show();
+    },
 
-        // ایجاد FormData برای آپلود ویدیو (فقط شامل فایل)
-        const formData = new FormData();
-        formData.append('file', this.contentData.video);
-
-        // ایجاد پارامترهای URL به صورت query string
-        const params = new URLSearchParams();
-        params.append('lessonId', this.lessonId);
-        params.append('title', this.contentData.videoTitle);
-        params.append('contentType', 'VIDEO');
-        params.append('orderIndex', '1');
-
-        // URL کامل با پارامترها
-        const url = `/content/upload?${params.toString()}`;
-
-        console.log('URL آپلود ویدیو:', url);
-
-        const response = await axios.post(url, formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          },
-          onUploadProgress: (progressEvent) => {
-            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            this.progressMap.video = percentCompleted;
-            console.log(`پیشرفت آپلود ویدیو: ${percentCompleted}%`);
-          }
-        });
-
-        console.log('پاسخ آپلود ویدیو:', response.data);
-        this.finishSubmitting('ویدیو با موفقیت آپلود شد.');
-
-        // بازیابی اطلاعات به‌روز شده درس
-        try {
-          console.log('دریافت اطلاعات به‌روز شده درس');
-          const lessonResponse = await axios.get(`/lessons/${this.lessonId}`);
-          console.log('اطلاعات به‌روز شده درس:', lessonResponse.data);
-
-          // انتشار رویداد برای اطلاع دادن به کامپوننت والد
-          this.$emit('content-saved', lessonResponse.data);
-        } catch (lessonError) {
-          console.error('خطا در دریافت اطلاعات به‌روز شده درس:', lessonError);
-          // حتی در صورت خطا در دریافت اطلاعات به‌روز شده، پیام موفقیت آپلود ویدیو را نمایش می‌دهیم
-          this.$emit('content-saved', { id: this.lessonId });
-        }
-
-        // بستن مودال
-        this.hide();
-      } catch (error) {
-        console.error('Error uploading video:', error);
-        const errorMessage = error.response?.data?.message || 'مشکلی در آپلود ویدیو رخ داد. لطفاً دوباره تلاش کنید.';
-        this.finishSubmitting(null, errorMessage);
-      }
+    hide() {
+      this.$refs.baseModal.hide();
     }
-  },
-  watch: {
-    // وقتی lessonId تغییر می‌کند، فرم را ریست می‌کنیم
-    lessonId() {
-      this.reset();
-    }
-  },
-  mounted() {
-    console.log('ContentModal mounted - lessonId:', this.lessonId);
   }
-}
+};
 </script>
 
 <style scoped>
-.progress {
-  margin-top: 10px;
-  height: 5px;
-  border-radius: 3px;
-  margin-bottom: 10px;
+.content-form {
+  padding: 1rem;
 }
 
-.rich-editor {
-  min-height: 200px;
+.btn-group .btn-check:checked + .btn {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  color: white;
+}
+
+.form-label {
+  font-weight: 600;
+}
+
+.text-muted {
+  font-size: 0.875em;
 }
 </style>
