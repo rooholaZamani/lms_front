@@ -38,7 +38,7 @@
               <li v-if="isTeacher && isTeacherOfCourse" class="nav-item" role="presentation">
                 <button class="nav-link" id="manage-tab" data-bs-toggle="tab" data-bs-target="#manage"
                         type="button" role="tab" aria-controls="manage" aria-selected="false">
-                  مدیریت دوره
+                  ویرایش دوره
                 </button>
               </li>
             </ul>
