@@ -170,31 +170,52 @@ export default {
       const data = { ...this.questionData };
 
       if (data.type === 'MULTIPLE_CHOICE') {
-        // برای سوال چند گزینه‌ای، از answers استفاده کنید نه options
-        data.answers = data.options.map((text, index) => ({
+        // برای سوال چند گزینه‌ای، از options استفاده کنید
+        const validOptions = data.options.filter(opt => opt && opt.trim() !== '');
+        data.options = validOptions.map((text, index) => ({
           text: text,
           correct: index === parseInt(data.correctOption),
           answerType: 'TEXT',
           points: index === parseInt(data.correctOption) ? (data.points || 10) : 0,
           orderIndex: index
         }));
-        // options را حذف کنید
-        delete data.options;
       } else if (data.type === 'TRUE_FALSE') {
-        data.answers = [
+        data.options = [
           {
-            text: 'درست',
+            text: 'True',
             correct: data.correctOption === 'true',
             answerType: 'TEXT',
             points: data.correctOption === 'true' ? (data.points || 10) : 0,
             orderIndex: 0
           },
           {
-            text: 'نادرست',
+            text: 'False',
             correct: data.correctOption === 'false',
             answerType: 'TEXT',
             points: data.correctOption === 'false' ? (data.points || 10) : 0,
             orderIndex: 1
+          }
+        ];
+      } else if (data.type === 'SHORT_ANSWER') {
+        // برای SHORT_ANSWER هم نیاز به options است
+        data.options = [
+          {
+            text: data.correctOption,
+            correct: true,
+            answerType: 'TEXT',
+            points: data.points || 10,
+            orderIndex: 0
+          }
+        ];
+      } else if (data.type === 'ESSAY') {
+        // برای ESSAY که نیاز به بررسی دستی دارد
+        data.options = [
+          {
+            text: 'Essay Answer',
+            correct: true,
+            answerType: 'TEXT',
+            points: data.maxScore || data.points || 10,
+            orderIndex: 0
           }
         ];
       }
@@ -202,6 +223,10 @@ export default {
       // تنظیم questionType به جای type
       data.questionType = data.type;
       delete data.type;
+
+      // حذف فیلدهای اضافی
+      delete data.correctOption;
+      delete data.maxScore;
 
       // اطمینان از وجود points
       if (!data.points) {

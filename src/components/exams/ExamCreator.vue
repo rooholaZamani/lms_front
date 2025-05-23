@@ -309,8 +309,9 @@ export default {
 
         // تنظیم فیلدهای مخصوص هر نوع سوال
         if (this.currentQuestion.type === 'MULTIPLE_CHOICE') {
-          // برای چند گزینه‌ای از answers استفاده کنید
-          questionData.answers = this.currentQuestion.options.map((text, index) => ({
+          // برای چند گزینه‌ای از options استفاده کنید
+          const options = this.currentQuestion.options.filter(opt => opt && opt.trim() !== '');
+          questionData.options = options.map((text, index) => ({
             text: text,
             correct: index === parseInt(this.currentQuestion.correctOption),
             answerType: 'TEXT',
@@ -318,16 +319,16 @@ export default {
             orderIndex: index
           }));
         } else if (this.currentQuestion.type === 'TRUE_FALSE') {
-          questionData.answers = [
+          questionData.options = [
             {
-              text: 'درست',
+              text: 'True',
               correct: this.currentQuestion.correctOption === 'true',
               answerType: 'TEXT',
               points: this.currentQuestion.correctOption === 'true' ? questionData.points : 0,
               orderIndex: 0
             },
             {
-              text: 'نادرست',
+              text: 'False',
               correct: this.currentQuestion.correctOption === 'false',
               answerType: 'TEXT',
               points: this.currentQuestion.correctOption === 'false' ? questionData.points : 0,
@@ -335,9 +336,27 @@ export default {
             }
           ];
         } else if (this.currentQuestion.type === 'SHORT_ANSWER') {
-          questionData.correctOption = this.currentQuestion.correctOption;
+          // برای SHORT_ANSWER هم نیاز به options است
+          questionData.options = [
+            {
+              text: this.currentQuestion.correctOption,
+              correct: true,
+              answerType: 'TEXT',
+              points: questionData.points,
+              orderIndex: 0
+            }
+          ];
         } else if (this.currentQuestion.type === 'ESSAY') {
-          questionData.maxScore = this.currentQuestion.maxScore || 10;
+          // برای ESSAY که نیاز به بررسی دستی دارد
+          questionData.options = [
+            {
+              text: 'Essay Answer',
+              correct: true,
+              answerType: 'TEXT',
+              points: this.currentQuestion.maxScore || questionData.points,
+              orderIndex: 0
+            }
+          ];
         }
 
         if (this.isEditingQuestion) {
@@ -370,7 +389,6 @@ export default {
         this.isQuestionSubmitting = false;
       }
     },
-
     confirmDeleteQuestion(question) {
       this.selectedQuestion = question;
       this.$refs.deleteConfirmDialog.show();
