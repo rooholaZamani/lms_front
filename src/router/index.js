@@ -1,4 +1,4 @@
-// src/router/index.js with the added TeacherExams route
+// src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 import store from '../store'
 
@@ -84,12 +84,30 @@ const routes = [
     component: () => import(/* webpackChunkName: "profile" */ '../components/views/Profile.vue'),
     meta: { title: 'پروفایل', requiresAuth: true }
   },
-  // اضافه کردن مسیر TeacherExams
+  // Teacher routes
   {
     path: '/teacher/exams',
     name: 'TeacherExams',
     component: () => import(/* webpackChunkName: "teacher-exams" */ '../components/exams/TeacherExams.vue'),
     meta: { title: 'آزمون‌های من', requiresAuth: true, requiresTeacher: true }
+  },
+  {
+    path: '/teacher/assignments/pending',
+    name: 'PendingAssignments',
+    component: () => import(/* webpackChunkName: "pending-assignments" */ '../components/assignments/PendingAssignments.vue'),
+    meta: { title: 'تکالیف در حال بررسی', requiresAuth: true, requiresTeacher: true }
+  },
+  {
+    path: '/teacher/student-activities',
+    name: 'StudentActivities',
+    component: () => import(/* webpackChunkName: "student-activities" */ '../components/analytics/StudentActivities.vue'),
+    meta: { title: 'فعالیت دانش‌آموزان', requiresAuth: true, requiresTeacher: true }
+  },
+  {
+    path: '/teacher/performance-analysis',
+    name: 'PerformanceAnalysis',
+    component: () => import(/* webpackChunkName: "performance-analysis" */ '../components/analytics/PerformanceAnalysis.vue'),
+    meta: { title: 'تحلیل عملکرد', requiresAuth: true, requiresTeacher: true }
   },
   {
     path: '/exams/create',
@@ -117,6 +135,13 @@ const routes = [
     component: () => import(/* webpackChunkName: "question-bank" */ '../components/exams/QuestionBank.vue'),
     meta: { title: 'بانک سوالات', requiresAuth: true, requiresTeacher: true }
   },
+  // Student routes
+  {
+    path: '/student/assignments',
+    name: 'StudentAssignments',
+    component: () => import(/* webpackChunkName: "student-assignments" */ '../components/assignments/StudentAssignments.vue'),
+    meta: { title: 'تکالیف', requiresAuth: true, requiresStudent: true }
+  },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
@@ -129,8 +154,6 @@ const router = createRouter({
   history: createWebHistory("/"),
   routes
 })
-
-// در فایل src/router/index.js
 
 router.beforeEach(async (to, from, next) => {
   // تنظیم عنوان صفحه
@@ -172,6 +195,13 @@ router.beforeEach(async (to, from, next) => {
       // بررسی نقش در صورت نیاز
       if (to.matched.some(record => record.meta.requiresTeacher)) {
         if (store.getters.userRole.isTeacher) {
+          next();
+        } else {
+          // کاربر مجوز دسترسی ندارد
+          next({ name: 'Dashboard' });
+        }
+      } else if (to.matched.some(record => record.meta.requiresStudent)) {
+        if (store.getters.userRole.isStudent) {
           next();
         } else {
           // کاربر مجوز دسترسی ندارد

@@ -142,7 +142,7 @@ export default {
             orderIndex: this.contentForm.orderIndex.toString()
           });
 
-          response = await axios.post(`/api/content/text?${params}`, {}, {
+          response = await axios.post(`/content/text?${params}`, {}, {
             headers: {
               'Content-Type': 'application/json'
             }
@@ -156,7 +156,7 @@ export default {
           formData.append('contentType', this.contentForm.type);
           formData.append('orderIndex', this.contentForm.orderIndex.toString());
 
-          response = await axios.post('/api/content/upload', formData, {
+          response = await axios.post('/content/upload', formData, {
             headers: {
               'Content-Type': 'multipart/form-data'
             }

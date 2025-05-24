@@ -986,7 +986,7 @@ export default {
         }
 
         const response = await axios.post(
-            `/api/assignments/lesson/${this.selectedLesson.id}`,
+            `/assignments/lesson/${this.selectedLesson.id}`,
             formData,
             {
               headers: {
@@ -1099,7 +1099,7 @@ export default {
         };
 
         const response = await axios.post(
-            `/api/exams/lesson/${this.selectedLesson.id}`,
+            `/exams/lesson/${this.selectedLesson.id}`,
             examData,
             {
               headers: {
@@ -1154,7 +1154,7 @@ export default {
         await this.fetchCourseData();
 
         // یا اگر می‌خواهید فقط درس مربوطه را به‌روزرسانی کنید:
-        const updatedLessonResponse = await axios.get(`/api/lessons/${this.selectedLesson.id}`);
+        const updatedLessonResponse = await axios.get(`/lessons/${this.selectedLesson.id}`);
         const updatedLesson = updatedLessonResponse.data;
 
         // پیدا کردن ایندکس درس و به‌روزرسانی آن

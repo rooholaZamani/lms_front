@@ -7,17 +7,17 @@
       </button>
       <div class="collapse navbar-collapse" id="navbarNavDropdown">
         <ul class="navbar-nav me-auto">
-          <li class="nav-item">
-            <router-link class="nav-link" :to="{ name: 'Dashboard' }">داشبورد</router-link>
-          </li>
+<!--          <li class="nav-item">-->
+<!--            <router-link class="nav-link" :to="{ name: 'Dashboard' }">داشبورد</router-link>-->
+<!--          </li>-->
 
-          <li class="nav-item" v-if="isTeacher">
-            <router-link class="nav-link" :to="{ name: 'TeachingCourses' }">دوره‌های من</router-link>
-          </li>
+<!--          <li class="nav-item" v-if="isTeacher">-->
+<!--            <router-link class="nav-link" :to="{ name: 'TeachingCourses' }">دوره‌های من</router-link>-->
+<!--          </li>-->
 
-          <li class="nav-item" v-if="isStudent">
-            <router-link class="nav-link" :to="{ name: 'Courses' }">دوره‌های من</router-link>
-          </li>
+<!--          <li class="nav-item" v-if="isStudent">-->
+<!--            <router-link class="nav-link" :to="{ name: 'Courses' }">دوره‌های من</router-link>-->
+<!--          </li>-->
 
           <li class="nav-item" v-if="isStudent">
             <router-link class="nav-link" :to="{ name: 'AvailableCourses' }">دوره‌های موجود</router-link>

@@ -3,9 +3,9 @@
     <div class="container-fluid p-4">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>آزمون‌های من</h2>
-        <router-link :to="{ name: 'ExamCreator' }" class="btn btn-primary">
-          <i class="fas fa-plus me-1"></i> ایجاد آزمون جدید
-        </router-link>
+<!--        <router-link :to="{ name: 'ExamCreator' }" class="btn btn-primary">-->
+<!--          <i class="fas fa-plus me-1"></i> ایجاد آزمون جدید-->
+<!--        </router-link>-->
         <div class="d-flex justify-content-between align-items-center mb-4">
           <h2>آزمون‌های من</h2>
           <div>
