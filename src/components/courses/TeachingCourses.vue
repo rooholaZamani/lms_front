@@ -98,7 +98,6 @@
                 <th scope="col">دانش‌آموزان</th>
                 <th scope="col">دروس</th>
                 <th scope="col">میانگین پیشرفت</th>
-                <th scope="col">تعداد سوال درست</th>
                 <th scope="col">وضعیت</th>
                 <th scope="col">عملیات</th>
               </tr>
@@ -120,12 +119,12 @@
                 <td>
                   <div class="d-flex align-items-center">
                     <span class="badge bg-primary me-1">{{ getStudentCount(course) }}</span>
-                    <div class="students-trend">
+                    <div class="students-trend" v-if="course.studentsTrend !== 0">
                       <i
                           class="fas"
                           :class="getStudentsTrendIcon(course.studentsTrend)"
                           :style="`color: ${getStudentsTrendColor(course.studentsTrend)}`"></i>
-                      <span>{{ course.studentsTrend || 0 }}%</span>
+                      <span>{{ Math.abs(course.studentsTrend) }}%</span>
                     </div>
                   </div>
                 </td>
@@ -364,16 +363,53 @@ export default {
       try {
         await this.$store.dispatch('courses/fetchTeachingCourses');
 
-        // اضافه کردن اطلاعات دیگر به دوره‌ها
-        this.coursesData = this.teachingCourses.map(course => {
-          return {
-            ...course,
-            // اطلاعات اضافی که در یک پروژه واقعی از API دریافت می‌شود
-            status: this.getRandomStatus(),
-            progress: Math.floor(Math.random() * 101),
-            studentsTrend: Math.floor(Math.random() * 31) - 10, // -10 تا 20
-          };
-        });
+        // دریافت جزئیات هر دوره از API
+        const coursesWithDetails = await Promise.all(
+            this.teachingCourses.map(async (course) => {
+              try {
+                // دریافت جزئیات دوره شامل دانش‌آموزان و دروس
+                const courseDetailResponse = await this.$http.get(`/courses/${course.id}`);
+                const courseDetail = courseDetailResponse.data.course;
+
+                // دریافت آمارهای عملکرد برای این دوره (اختیاری)
+                let courseStats = null;
+                try {
+                  const statsResponse = await this.$http.get(`/analytics/teacher/course/${course.id}/performance`);
+                  courseStats = statsResponse.data;
+                } catch (statsError) {
+                  console.warn(`Could not fetch stats for course ${course.id}:`, statsError);
+                  // در صورت عدم دسترسی به آمار، مقادیر پیش‌فرض قرار می‌دهیم
+                  courseStats = {
+                    averageProgress: 0,
+                    studentGrowth: 0
+                  };
+                }
+
+                return {
+                  ...course,
+                  // اطلاعات واقعی از API
+                  enrolledStudents: courseDetail.enrolledStudents || [],
+                  lessons: courseDetail.lessons || [],
+                  status: 'active', // یا از courseDetail.status اگر موجود باشد
+                  progress: courseStats.averageProgress || 0,
+                  studentsTrend: courseStats.studentGrowth || 0,
+                };
+              } catch (error) {
+                console.error(`Error fetching details for course ${course.id}:`, error);
+                // در صورت خطا، داده‌های پایه را برمی‌گردانیم
+                return {
+                  ...course,
+                  enrolledStudents: [],
+                  lessons: [],
+                  status: 'active',
+                  progress: 0,
+                  studentsTrend: 0,
+                };
+              }
+            })
+        );
+
+        this.coursesData = coursesWithDetails;
 
         // مرتب‌سازی اولیه
         this.sortCourses();
@@ -383,7 +419,7 @@ export default {
     },
 
     calculateStats() {
-      // محاسبه آمارهای کلی
+      // محاسبه آمارهای کلی براساس داده‌های واقعی
       if (this.coursesData.length === 0) {
         this.coursesStats = {
           totalCourses: 0,
@@ -418,7 +454,7 @@ export default {
       this.coursesData.forEach(course => {
         totalProgress += this.getCourseProgress(course);
       });
-      const averageProgress = Math.round(totalProgress / totalCourses);
+      const averageProgress = totalCourses > 0 ? Math.round(totalProgress / totalCourses) : 0;
 
       this.coursesStats = {
         totalCourses,
@@ -428,26 +464,12 @@ export default {
       };
     },
 
-    getRandomStatus() {
-      // تولید وضعیت تصادفی برای دوره
-      const statuses = ['active', 'draft', 'completed', 'pending'];
-      const weights = [0.7, 0.1, 0.1, 0.1]; // احتمال هر وضعیت
-
-      let random = Math.random();
-      let weightSum = 0;
-
-      for (let i = 0; i < weights.length; i++) {
-        weightSum += weights[i];
-        if (random <= weightSum) {
-          return statuses[i];
-        }
-      }
-
-      return statuses[0];
-    },
-
     getCourseImage(course) {
-      // در یک پروژه واقعی، تصویر دوره از سرور دریافت می‌شود
+      // اگر در API تصویری برای دوره موجود است، از آن استفاده کنید
+      if (course.imageUrl) {
+        return course.imageUrl;
+      }
+      // در غیر این صورت تصویر پیش‌فرض
       return `/api/placeholder/80/60`;
     },
 
@@ -462,7 +484,7 @@ export default {
     },
 
     getCourseProgress(course) {
-      // در یک پروژه واقعی، این مقدار از API دریافت می‌شود
+      // اگر از API آمار واقعی داریم، از آن استفاده می‌کنیم
       return course.progress || 0;
     },
 
@@ -572,7 +594,7 @@ export default {
 
         const newCourse = await this.$store.dispatch('courses/createCourse', courseData);
 
-        // اضافه کردن اطلاعات اضافی
+        // اضافه کردن اطلاعات اضافی (برای دوره جدید که هنوز دانش‌آموزی ندارد)
         const courseWithExtras = {
           ...newCourse,
           status: 'draft',
