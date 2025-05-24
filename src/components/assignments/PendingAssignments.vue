@@ -47,6 +47,7 @@
                       <td>{{ formatDate(assignment.submittedAt) }}</td>
                       <td>
                         <button
+
                             class="btn btn-sm btn-primary"
                             @click="gradeAssignment(assignment)"
                             title="نمره‌دهی">
