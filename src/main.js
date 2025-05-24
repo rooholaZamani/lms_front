@@ -9,22 +9,12 @@ import axios from 'axios'
 
 
 
-
-import { createApp } from 'vue'
-import App from './App.vue'
-import router from './router'
-import store from './store'
-
-// Import Bootstrap CSS and JS
-import 'bootstrap/dist/css/bootstrap.min.css'
+// استایل‌ها
+import './assets/styles/main.css'
+import 'bootstrap/dist/css/bootstrap.rtl.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
-
-// Import FontAwesome
 import '@fortawesome/fontawesome-free/css/all.min.css'
-
-// Import Global Styles (must be imported after Bootstrap)
-import './assets/styles/global.css'
-
+import * as bootstrap from 'bootstrap'
 
 window.bootstrap = bootstrap
 // پلاگین‌ها
