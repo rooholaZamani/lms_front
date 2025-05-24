@@ -98,6 +98,7 @@
                 <th scope="col">دانش‌آموزان</th>
                 <th scope="col">دروس</th>
                 <th scope="col">میانگین پیشرفت</th>
+                <th scope="col">تعداد سوال درست</th>
                 <th scope="col">وضعیت</th>
                 <th scope="col">عملیات</th>
               </tr>
