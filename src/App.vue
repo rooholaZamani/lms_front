@@ -7,10 +7,13 @@
 
       <div class="app-content" :class="{ 'with-sidebar': showSidebar && isLoggedIn }">
         <!-- Sidebar -->
-        <Sidebar v-if="showSidebar && isLoggedIn" />
+        <Sidebar v-if="showSidebar && isLoggedIn" @sidebar-collapsed="handleSidebarToggle" />
 
         <!-- Main Content -->
-        <main class="main-content" :class="{ 'with-sidebar': showSidebar && isLoggedIn }">
+        <main class="main-content" :class="{
+          'with-sidebar': showSidebar && isLoggedIn,
+          'sidebar-collapsed': sidebarCollapsed && showSidebar && isLoggedIn
+        }">
           <router-view />
         </main>
       </div>
@@ -22,7 +25,7 @@
 </template>
 
 <script>
-import { computed, watch } from 'vue';
+import { computed, watch, ref } from 'vue';
 import { useRoute } from 'vue-router';
 import Navbar from '@/components/layout/Navbar.vue';
 import Sidebar from '@/components/layout/Sidebar.vue';
@@ -39,7 +42,8 @@ export default {
   },
   data() {
     return {
-      isLoading: true
+      isLoading: true,
+      sidebarCollapsed: false
     }
   },
   setup() {
@@ -79,6 +83,12 @@ export default {
       return this.$store.getters.isLoggedIn
     }
   },
+  methods: {
+    handleSidebarToggle(collapsed) {
+      this.sidebarCollapsed = collapsed;
+      console.log('Sidebar collapsed:', collapsed); // برای debug
+    }
+  },
   async created() {
     try {
       await this.$store.dispatch('auth/checkAuth')
@@ -115,6 +125,7 @@ export default {
   transition: margin-right 0.3s ease;
   background-color: #f8f9fa;
   min-height: calc(100vh - 56px);
+  width: 100%;
 }
 
 .main-content.with-sidebar {
@@ -128,7 +139,8 @@ export default {
 
 /* Responsive design */
 @media (max-width: 768px) {
-  .main-content.with-sidebar {
+  .main-content.with-sidebar,
+  .main-content.with-sidebar.sidebar-collapsed {
     margin-right: 0;
   }
 }
