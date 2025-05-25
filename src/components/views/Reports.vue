@@ -1,98 +1,139 @@
 <template>
-  <div class="reports-container">
-    <div class="container-fluid p-4">
+  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: calc(100vh - 56px); padding: 2rem 1rem;">
+    <div class="container-fluid">
+      <!-- Header -->
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>گزارش‌ها</h2>
+        <div>
+          <h2 class="text-white mb-2">
+            <i class="fas fa-chart-line me-3"></i>
+            گزارش‌ها و آمارها
+          </h2>
+          <p class="text-white-50 mb-0">مشاهده کامل عملکرد سیستم آموزشی</p>
+        </div>
 
         <div class="d-flex gap-2">
-          <button class="btn btn-outline-primary">
+          <button class="modern-btn modern-btn-outline text-white">
             <i class="fas fa-download me-1"></i> دانلود گزارش
           </button>
-          <button class="btn btn-outline-secondary">
+          <button class="modern-btn modern-btn-outline text-white">
             <i class="fas fa-print me-1"></i> چاپ
           </button>
         </div>
       </div>
 
       <loading-spinner :loading="loading">
+        <!-- Stats Overview -->
         <div class="row mb-4">
           <div class="col-md-3 mb-3">
-            <div class="stat-card">
-              <div class="stat-icon"><i class="fas fa-users"></i></div>
-              <div class="stat-value">152</div>
-              <div class="stat-label">کل دانش‌آموزان</div>
+            <div class="modern-stat-card animate-slide-up">
+              <div class="modern-stat-icon text-primary">
+                <i class="fas fa-users"></i>
+              </div>
+              <div class="modern-stat-value">152</div>
+              <div class="modern-stat-label">کل دانش‌آموزان</div>
             </div>
           </div>
 
           <div class="col-md-3 mb-3">
-            <div class="stat-card">
-              <div class="stat-icon"><i class="fas fa-book"></i></div>
-              <div class="stat-value">24</div>
-              <div class="stat-label">کل دوره‌ها</div>
+            <div class="modern-stat-card animate-slide-up" style="animation-delay: 0.1s;">
+              <div class="modern-stat-icon text-success">
+                <i class="fas fa-book"></i>
+              </div>
+              <div class="modern-stat-value">24</div>
+              <div class="modern-stat-label">کل دوره‌ها</div>
             </div>
           </div>
 
           <div class="col-md-3 mb-3">
-            <div class="stat-card">
-              <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
-              <div class="stat-value">87%</div>
-              <div class="stat-label">نرخ قبولی</div>
+            <div class="modern-stat-card animate-slide-up" style="animation-delay: 0.2s;">
+              <div class="modern-stat-icon text-warning">
+                <i class="fas fa-check-circle"></i>
+              </div>
+              <div class="modern-stat-value">87%</div>
+              <div class="modern-stat-label">نرخ قبولی</div>
             </div>
           </div>
 
           <div class="col-md-3 mb-3">
-            <div class="stat-card">
-              <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
-              <div class="stat-value">68%</div>
-              <div class="stat-label">میانگین پیشرفت</div>
+            <div class="modern-stat-card animate-slide-up" style="animation-delay: 0.3s;">
+              <div class="modern-stat-icon text-info">
+                <i class="fas fa-chart-line"></i>
+              </div>
+              <div class="modern-stat-value">68%</div>
+              <div class="modern-stat-label">میانگین پیشرفت</div>
             </div>
           </div>
         </div>
 
         <div class="row">
-          <!-- نمودار پیشرفت دانش‌آموزان -->
+          <!-- Chart Section -->
           <div class="col-md-8 mb-4">
-            <div class="card">
-              <div class="card-header">
-                <h5 class="mb-0">پیشرفت دانش‌آموزان در دوره‌ها</h5>
+            <div class="modern-card animate-slide-right">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="modern-title mb-0">
+                  <i class="fas fa-chart-area text-primary me-2"></i>
+                  پیشرفت دانش‌آموزان در دوره‌ها
+                </h5>
+                <div class="dropdown">
+                  <button class="modern-btn modern-btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-filter me-1"></i> فیلتر
+                  </button>
+                  <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="#">ماه اخیر</a></li>
+                    <li><a class="dropdown-item" href="#">سه ماه اخیر</a></li>
+                    <li><a class="dropdown-item" href="#">سال اخیر</a></li>
+                  </ul>
+                </div>
               </div>
-              <div class="card-body">
-                <div class="chart-placeholder">
-                  <img src="/api/placeholder/800/300" alt="نمودار پیشرفت دانش‌آموزان" class="img-fluid">
+
+              <div class="chart-container bg-light rounded p-4" style="height: 300px;">
+                <div class="d-flex align-items-center justify-content-center h-100">
+                  <div class="text-center">
+                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">نمودار پیشرفت دانش‌آموزان</p>
+                    <small class="text-muted">داده‌های واقعی در اینجا نمایش داده می‌شود</small>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- دوره‌های محبوب -->
+          <!-- Popular Courses -->
           <div class="col-md-4 mb-4">
-            <div class="card">
-              <div class="card-header">
-                <h5 class="mb-0">دوره‌های محبوب</h5>
-              </div>
-              <div class="card-body">
-                <ul class="list-group">
-                  <li v-for="course in popularCourses" :key="course.id" class="list-group-item d-flex justify-content-between align-items-center">
-                    {{ course.title }}
-                    <span class="badge bg-primary rounded-pill">{{ course.students }}</span>
-                  </li>
-                </ul>
+            <div class="modern-card animate-slide-left">
+              <h5 class="modern-title mb-4">
+                <i class="fas fa-star text-warning me-2"></i>
+                دوره‌های محبوب
+              </h5>
+
+              <div class="list-group list-group-flush">
+                <div v-for="course in popularCourses" :key="course.id"
+                     class="list-group-item d-flex justify-content-between align-items-center bg-transparent border-0 px-0">
+                  <div>
+                    <h6 class="mb-1">{{ course.title }}</h6>
+                    <small class="text-muted">{{ course.students }} دانش‌آموز</small>
+                  </div>
+                  <span class="modern-badge modern-badge-primary">{{ course.students }}</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
+        <!-- Activity Table -->
         <div class="row">
-          <!-- جدول فعالیت دانش‌آموزان -->
-          <div class="col-md-12 mb-4">
-            <div class="card">
-              <div class="card-header d-flex justify-content-between">
-                <h5 class="mb-0">فعالیت دانش‌آموزان</h5>
+          <div class="col-12">
+            <div class="modern-card animate-slide-up" style="animation-delay: 0.4s;">
+              <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="modern-title mb-0">
+                  <i class="fas fa-history text-info me-2"></i>
+                  فعالیت‌های اخیر دانش‌آموزان
+                </h5>
                 <div class="dropdown">
-                  <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="activityPeriodDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    هفته اخیر
+                  <button class="modern-btn modern-btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-calendar me-1"></i> هفته اخیر
                   </button>
-                  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="activityPeriodDropdown">
+                  <ul class="dropdown-menu dropdown-menu-end">
                     <li><a class="dropdown-item" href="#">امروز</a></li>
                     <li><a class="dropdown-item" href="#">هفته اخیر</a></li>
                     <li><a class="dropdown-item" href="#">ماه اخیر</a></li>
@@ -100,35 +141,68 @@
                   </ul>
                 </div>
               </div>
-              <div class="card-body">
-                <div class="table-responsive">
-                  <table class="table table-hover">
-                    <thead class="table-light">
-                    <tr>
-                      <th>دانش‌آموز</th>
-                      <th>نوع فعالیت</th>
-                      <th>دوره</th>
-                      <th>درس</th>
-                      <th>تاریخ</th>
-                      <th>نمره</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr v-for="activity in studentActivities" :key="activity.id">
-                      <td>{{ activity.student }}</td>
-                      <td>
-                          <span class="badge" :class="getActivityBadgeClass(activity.type)">
-                            {{ getActivityTypeText(activity.type) }}
-                          </span>
-                      </td>
-                      <td>{{ activity.course }}</td>
-                      <td>{{ activity.lesson }}</td>
-                      <td>{{ formatDate(activity.date) }}</td>
-                      <td>{{ activity.score !== null ? activity.score : '-' }}</td>
-                    </tr>
-                    </tbody>
-                  </table>
-                </div>
+
+              <div class="modern-table-container">
+                <table class="modern-table table">
+                  <thead>
+                  <tr>
+                    <th>
+                      <i class="fas fa-user me-1"></i>
+                      دانش‌آموز
+                    </th>
+                    <th>
+                      <i class="fas fa-tasks me-1"></i>
+                      نوع فعالیت
+                    </th>
+                    <th>
+                      <i class="fas fa-book me-1"></i>
+                      دوره
+                    </th>
+                    <th>
+                      <i class="fas fa-play-circle me-1"></i>
+                      درس
+                    </th>
+                    <th>
+                      <i class="fas fa-clock me-1"></i>
+                      تاریخ
+                    </th>
+                    <th>
+                      <i class="fas fa-star me-1"></i>
+                      نمره
+                    </th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr v-for="activity in studentActivities" :key="activity.id">
+                    <td>
+                      <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
+                             style="width: 32px; height: 32px; font-size: 0.8rem;">
+                          {{ activity.student.charAt(0) }}
+                        </div>
+                        {{ activity.student }}
+                      </div>
+                    </td>
+                    <td>
+                        <span class="modern-badge" :class="getActivityBadgeClass(activity.type)">
+                          <i :class="getActivityIcon(activity.type)" class="me-1"></i>
+                          {{ getActivityTypeText(activity.type) }}
+                        </span>
+                    </td>
+                    <td>{{ activity.course }}</td>
+                    <td>{{ activity.lesson }}</td>
+                    <td>
+                      <small>{{ formatDate(activity.date) }}</small>
+                    </td>
+                    <td>
+                        <span v-if="activity.score !== null" class="fw-bold text-success">
+                          {{ activity.score }}
+                        </span>
+                      <span v-else class="text-muted">-</span>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -162,7 +236,6 @@ export default {
     };
   },
   created() {
-    // در یک برنامه واقعی، این داده‌ها از API دریافت می‌شوند
     setTimeout(() => {
       this.popularCourses = this.generatePopularCourses();
       this.studentActivities = this.generateStudentActivities();
@@ -233,15 +306,30 @@ export default {
     getActivityBadgeClass(type) {
       switch (type) {
         case 'exam':
-          return 'bg-primary';
+          return 'modern-badge-primary';
         case 'lesson_complete':
-          return 'bg-success';
+          return 'modern-badge-success';
         case 'assignment':
-          return 'bg-warning';
+          return 'modern-badge-warning';
         case 'course_enrollment':
-          return 'bg-info';
+          return 'modern-badge-secondary';
         default:
-          return 'bg-secondary';
+          return 'modern-badge-secondary';
+      }
+    },
+
+    getActivityIcon(type) {
+      switch (type) {
+        case 'exam':
+          return 'fas fa-clipboard-check';
+        case 'lesson_complete':
+          return 'fas fa-check-circle';
+        case 'assignment':
+          return 'fas fa-file-alt';
+        case 'course_enrollment':
+          return 'fas fa-user-plus';
+        default:
+          return 'fas fa-circle';
       }
     },
 
@@ -264,50 +352,89 @@ export default {
 </script>
 
 <style scoped>
-.reports-container {
-  min-height: calc(100vh - 56px);
+/* Component specific styles */
+.chart-container {
+  border: 2px dashed #dee2e6;
 }
 
-.stat-card {
-  background-color: #fff;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  text-align: center;
-  height: 100%;
-  transition: transform 0.3s, box-shadow 0.3s;
+/* List styling */
+.list-group-item {
+  transition: background-color 0.2s ease;
 }
 
-.stat-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+.list-group-item:hover {
+  background-color: rgba(102, 126, 234, 0.05) !important;
 }
 
-.stat-icon {
-  font-size: 2rem;
-  margin-bottom: 10px;
-  color: #007bff;
+/* Avatar styling */
+.rounded-circle {
+  font-weight: 600;
 }
 
-.stat-value {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #2c3e50;
+/* Animation effects */
+.animate-slide-right {
+  animation: slideInRight 0.6s ease forwards;
 }
 
-.stat-label {
-  color: #6c757d;
-  font-size: 0.9rem;
+.animate-slide-left {
+  animation: slideInLeft 0.6s ease forwards;
 }
 
-.chart-placeholder {
-  background-color: #f8f9fa;
-  border-radius: 5px;
-  overflow: hidden;
-  text-align: center;
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
-.table th, .table td {
-  vertical-align: middle;
+/* Responsive */
+@media (max-width: 768px) {
+  .d-flex.justify-content-between {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .modern-stat-card {
+    padding: 1rem;
+  }
+
+  .modern-stat-icon {
+    font-size: 2rem;
+  }
+
+  .modern-stat-value {
+    font-size: 1.5rem;
+  }
+
+  .chart-container {
+    height: 200px !important;
+  }
+}
+
+/* Table responsive */
+@media (max-width: 992px) {
+  .modern-table-container {
+    overflow-x: auto;
+  }
+
+  .modern-table {
+    min-width: 600px;
+  }
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+  .chart-container {
+    background-color: #2d3748 !important;
+    border-color: #4a5568;
+  }
+
+  .list-group-item:hover {
+    background-color: rgba(102, 126, 234, 0.1) !important;
+  }
 }
 </style>

@@ -7,16 +7,16 @@ import router from './router'
 import store from './store'
 import axios from 'axios'
 
-
-
 // استایل‌ها
 import './assets/styles/main.css'
+import './assets/styles/common-pages.css'
 import 'bootstrap/dist/css/bootstrap.rtl.min.css'
 import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import '@fortawesome/fontawesome-free/css/all.min.css'
 import * as bootstrap from 'bootstrap'
 
 window.bootstrap = bootstrap
+
 // پلاگین‌ها
 import PerformancePlugin from './plugins/performance'
 import ErrorHandler from './plugins/errorHandler'
@@ -31,6 +31,7 @@ store.registerModule('notification', notification)
 // axios.defaults.baseURL = process.env.VUE_APP_API_URL || '/api'
 axios.defaults.baseURL = 'http://localhost:8080/api';
 axios.defaults.headers.common['Accept'] = 'application/json';
+
 // ارسال توکن احراز هویت با هر درخواست
 axios.interceptors.request.use(
     config => {
@@ -108,6 +109,7 @@ if (process.env.NODE_ENV === 'development') {
     window.store = store
     window.axios = axios
 }
+
 const options = {
     position: "top-right",
     timeout: 3000,
@@ -122,6 +124,8 @@ const options = {
     icon: true,
     rtl: true // برای پشتیبانی از راست به چپ
 }
+
 app.use(Toast, options)
+
 // نصب اپلیکیشن
 app.mount('#app')

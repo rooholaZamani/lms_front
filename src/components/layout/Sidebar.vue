@@ -1,15 +1,23 @@
 <template>
   <div class="sidebar-wrapper" :class="{ 'collapsed': collapsed }">
     <!-- Toggle Button -->
-    <button class="sidebar-toggle" @click="toggleSidebar" :title="collapsed ? 'باز کردن منو' : 'بستن منو'">
+    <button class="sidebar-toggle modern-btn modern-btn-primary" @click="toggleSidebar" :title="collapsed ? 'باز کردن منو' : 'بستن منو'">
       <i class="fas" :class="collapsed ? 'fa-bars' : 'fa-times'"></i>
     </button>
 
     <!-- Sidebar -->
-    <div class="sidebar" :class="{ 'collapsed': collapsed }">
+    <div class="modern-sidebar" :class="{ 'collapsed': collapsed }">
       <div class="sidebar-header">
-        <h5 v-if="!collapsed" class="text-center text-primary">منوی اصلی</h5>
-        <i v-else class="fas fa-home text-primary sidebar-icon-collapsed"></i>
+        <div v-if="!collapsed" class="header-content animate-fade-in">
+          <div class="sidebar-logo">
+            <i class="fas fa-graduation-cap"></i>
+          </div>
+          <h5 class="header-title">منوی اصلی</h5>
+          <p class="header-subtitle">سامانه آموزش آنلاین</p>
+        </div>
+        <div v-else class="header-collapsed">
+          <i class="fas fa-home sidebar-icon-collapsed"></i>
+        </div>
       </div>
 
       <nav class="sidebar-nav">
@@ -17,103 +25,146 @@
           <!-- Common menu items -->
           <li class="nav-item">
             <router-link
-                class="nav-link"
+                class="modern-nav-link"
                 :to="{ name: 'Dashboard' }"
                 active-class="active"
                 :title="collapsed ? 'داشبورد' : ''"
             >
-              <i class="fas fa-tachometer-alt"></i>
+              <div class="nav-icon">
+                <i class="fas fa-tachometer-alt"></i>
+              </div>
               <span v-if="!collapsed" class="nav-text">داشبورد</span>
+              <div v-if="!collapsed" class="nav-arrow">
+                <i class="fas fa-chevron-left"></i>
+              </div>
             </router-link>
           </li>
 
           <li class="nav-item">
             <router-link
-                class="nav-link"
+                class="modern-nav-link"
                 :to="{ name: 'Courses' }"
                 active-class="active"
                 :title="collapsed ? 'دوره‌ها' : ''"
             >
-              <i class="fas fa-book"></i>
+              <div class="nav-icon">
+                <i class="fas fa-book"></i>
+              </div>
               <span v-if="!collapsed" class="nav-text">دوره‌ها</span>
+              <div v-if="!collapsed" class="nav-arrow">
+                <i class="fas fa-chevron-left"></i>
+              </div>
             </router-link>
           </li>
 
           <!-- Teacher-specific menu items -->
           <template v-if="isTeacher">
             <li class="nav-divider" v-if="!collapsed">
-              <span>مدیریت تدریس</span>
+              <span>
+                <i class="fas fa-chalkboard-teacher me-2"></i>
+                مدیریت تدریس
+              </span>
             </li>
 
             <li class="nav-item">
               <router-link
-                  class="nav-link"
+                  class="modern-nav-link"
                   :to="{ name: 'TeachingCourses' }"
                   active-class="active"
                   :title="collapsed ? 'دوره‌های تدریس' : ''"
               >
-                <i class="fas fa-chalkboard-teacher"></i>
+                <div class="nav-icon">
+                  <i class="fas fa-chalkboard-teacher"></i>
+                </div>
                 <span v-if="!collapsed" class="nav-text">دوره‌های تدریس</span>
+                <div v-if="!collapsed" class="nav-arrow">
+                  <i class="fas fa-chevron-left"></i>
+                </div>
               </router-link>
             </li>
 
             <li class="nav-item">
               <router-link
-                  class="nav-link"
+                  class="modern-nav-link"
                   :to="{ name: 'PendingAssignments' }"
                   active-class="active"
                   :title="collapsed ? 'تکالیف در حال بررسی' : ''"
               >
-                <i class="fas fa-tasks"></i>
+                <div class="nav-icon">
+                  <i class="fas fa-tasks"></i>
+                </div>
                 <span v-if="!collapsed" class="nav-text">تکالیف در حال بررسی</span>
+                <div v-if="!collapsed" class="nav-badge modern-badge modern-badge-warning">
+                  <span>3</span>
+                </div>
               </router-link>
             </li>
 
             <li class="nav-item">
               <router-link
-                  class="nav-link"
+                  class="modern-nav-link"
                   :to="{ name: 'StudentActivities' }"
                   active-class="active"
                   :title="collapsed ? 'فعالیت دانش‌آموزان' : ''"
               >
-                <i class="fas fa-user-graduate"></i>
+                <div class="nav-icon">
+                  <i class="fas fa-user-graduate"></i>
+                </div>
                 <span v-if="!collapsed" class="nav-text">فعالیت دانش‌آموزان</span>
+                <div v-if="!collapsed" class="nav-arrow">
+                  <i class="fas fa-chevron-left"></i>
+                </div>
               </router-link>
             </li>
 
             <li class="nav-item">
               <router-link
-                  class="nav-link"
+                  class="modern-nav-link"
                   :to="{ name: 'PerformanceAnalysis' }"
                   active-class="active"
                   :title="collapsed ? 'تحلیل عملکرد' : ''"
               >
-                <i class="fas fa-chart-line"></i>
+                <div class="nav-icon">
+                  <i class="fas fa-chart-line"></i>
+                </div>
                 <span v-if="!collapsed" class="nav-text">تحلیل عملکرد</span>
+                <div v-if="!collapsed" class="nav-arrow">
+                  <i class="fas fa-chevron-left"></i>
+                </div>
               </router-link>
             </li>
 
             <li class="nav-item">
               <router-link
-                  class="nav-link"
+                  class="modern-nav-link"
                   :to="{ name: 'TeacherExams' }"
                   active-class="active"
                   :title="collapsed ? 'آزمون‌های من' : ''"
               >
-                <i class="fas fa-clipboard-check"></i>
+                <div class="nav-icon">
+                  <i class="fas fa-clipboard-check"></i>
+                </div>
                 <span v-if="!collapsed" class="nav-text">آزمون‌های من</span>
+                <div v-if="!collapsed" class="nav-arrow">
+                  <i class="fas fa-chevron-left"></i>
+                </div>
               </router-link>
             </li>
 
             <li class="nav-item">
               <router-link
-                  class="nav-link"
+                  class="modern-nav-link"
                   :to="{ name: 'QuestionBank' }"
                   active-class="active"
                   :title="collapsed ? 'بانک سوالات' : ''"
               >
-                <i class="fas fa-question-circle"></i>
+                <div class="nav-icon">
+                  <i class="fas fa-question-circle"></i>
+                </div>
                 <span v-if="!collapsed" class="nav-text">بانک سوالات</span>
+                <div v-if="!collapsed" class="nav-arrow">
+                  <i class="fas fa-chevron-left"></i>
+                </div>
               </router-link>
             </li>
           </template>
@@ -121,60 +172,86 @@
           <!-- Student-specific menu items -->
           <template v-if="isStudent">
             <li class="nav-divider" v-if="!collapsed">
-              <span>تحصیل</span>
+              <span>
+                <i class="fas fa-user-graduate me-2"></i>
+                تحصیل
+              </span>
             </li>
 
             <li class="nav-item">
               <router-link
-                  class="nav-link"
+                  class="modern-nav-link"
                   :to="{ name: 'AvailableCourses' }"
                   active-class="active"
                   :title="collapsed ? 'دوره‌های موجود' : ''"
               >
-                <i class="fas fa-search"></i>
+                <div class="nav-icon">
+                  <i class="fas fa-search"></i>
+                </div>
                 <span v-if="!collapsed" class="nav-text">دوره‌های موجود</span>
+                <div v-if="!collapsed" class="nav-badge modern-badge modern-badge-info">
+                  <span>جدید</span>
+                </div>
               </router-link>
             </li>
 
             <li class="nav-item">
               <router-link
-                  class="nav-link"
+                  class="modern-nav-link"
                   :to="{ name: 'StudentAssignments' }"
                   active-class="active"
                   :title="collapsed ? 'تکالیف' : ''"
               >
-                <i class="fas fa-file-alt"></i>
+                <div class="nav-icon">
+                  <i class="fas fa-file-alt"></i>
+                </div>
                 <span v-if="!collapsed" class="nav-text">تکالیف</span>
+                <div v-if="!collapsed" class="nav-arrow">
+                  <i class="fas fa-chevron-left"></i>
+                </div>
               </router-link>
             </li>
           </template>
 
           <!-- Common menu items -->
           <li class="nav-divider" v-if="!collapsed">
-            <span>عمومی</span>
+            <span>
+              <i class="fas fa-cog me-2"></i>
+              عمومی
+            </span>
           </li>
 
           <li class="nav-item">
             <router-link
-                class="nav-link"
+                class="modern-nav-link"
                 :to="{ name: 'Profile' }"
                 active-class="active"
                 :title="collapsed ? 'پروفایل' : ''"
             >
-              <i class="fas fa-user"></i>
+              <div class="nav-icon">
+                <i class="fas fa-user"></i>
+              </div>
               <span v-if="!collapsed" class="nav-text">پروفایل</span>
+              <div v-if="!collapsed" class="nav-arrow">
+                <i class="fas fa-chevron-left"></i>
+              </div>
             </router-link>
           </li>
 
           <li class="nav-item">
             <router-link
-                class="nav-link"
+                class="modern-nav-link"
                 :to="{ name: 'Reports' }"
                 active-class="active"
                 :title="collapsed ? 'گزارش‌ها' : ''"
             >
-              <i class="fas fa-chart-bar"></i>
+              <div class="nav-icon">
+                <i class="fas fa-chart-bar"></i>
+              </div>
               <span v-if="!collapsed" class="nav-text">گزارش‌ها</span>
+              <div v-if="!collapsed" class="nav-arrow">
+                <i class="fas fa-chevron-left"></i>
+              </div>
             </router-link>
           </li>
         </ul>
@@ -182,13 +259,21 @@
 
       <!-- User Info at Bottom -->
       <div class="sidebar-footer" v-if="currentUser">
-        <div class="user-info" :class="{ 'collapsed': collapsed }">
+        <div class="user-info modern-card" :class="{ 'collapsed': collapsed }">
           <div class="user-avatar">
             <i class="fas fa-user"></i>
           </div>
-          <div v-if="!collapsed" class="user-details">
+          <div v-if="!collapsed" class="user-details animate-fade-in">
             <div class="user-name">{{ getUserName() }}</div>
-            <div class="user-role">{{ getUserRole() }}</div>
+            <div class="user-role">
+              <span class="modern-badge modern-badge-primary">{{ getUserRole() }}</span>
+            </div>
+            <div class="user-actions mt-2">
+              <button class="modern-btn modern-btn-outline text-danger" @click="handleLogout" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                <i class="fas fa-sign-out-alt me-1"></i>
+                خروج
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -202,12 +287,14 @@
 <script>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useUser } from '@/composables/useUser.js';
+import { useRouter } from 'vue-router';
 
 export default {
   name: 'Sidebar',
   emits: ['sidebar-collapsed'],
   setup(props, { emit }) {
-    const { isTeacher, isStudent, currentUser } = useUser();
+    const { isTeacher, isStudent, currentUser, logout } = useUser();
+    const router = useRouter();
     const collapsed = ref(false);
     const isMobile = ref(false);
 
@@ -221,11 +308,7 @@ export default {
 
     const toggleSidebar = () => {
       collapsed.value = !collapsed.value;
-
-      // Store preference in localStorage
       localStorage.setItem('sidebarCollapsed', collapsed.value.toString());
-
-      // Emit event to parent
       emit('sidebar-collapsed', collapsed.value);
     };
 
@@ -249,6 +332,15 @@ export default {
       return 'کاربر';
     };
 
+    const handleLogout = async () => {
+      try {
+        await logout();
+        router.push({ name: 'Login' });
+      } catch (error) {
+        console.error('Logout error:', error);
+      }
+    };
+
     // Load preference from localStorage
     onMounted(() => {
       const savedState = localStorage.getItem('sidebarCollapsed');
@@ -258,8 +350,6 @@ export default {
 
       checkMobile();
       window.addEventListener('resize', checkMobile);
-
-      // Emit initial state
       emit('sidebar-collapsed', collapsed.value);
     });
 
@@ -276,176 +366,255 @@ export default {
       toggleSidebar,
       closeSidebar,
       getUserName,
-      getUserRole
+      getUserRole,
+      handleLogout
     };
   }
 }
 </script>
 
 <style scoped>
+/* Sidebar Wrapper */
 .sidebar-wrapper {
   position: relative;
   z-index: 1000;
 }
 
+/* Toggle Button */
 .sidebar-toggle {
   position: fixed;
   top: 70px;
   right: 15px;
   z-index: 1001;
-  background-color: #007bff;
-  color: white;
-  border: none;
+  width: 45px;
+  height: 45px;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
   transition: all 0.3s ease;
+  font-size: 1rem;
 }
 
 .sidebar-toggle:hover {
-  background-color: #0056b3;
   transform: scale(1.1);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
-.sidebar {
-  background-color: #f8f9fa;
-  border-left: 1px solid #dee2e6;
+/* Modern Sidebar */
+.modern-sidebar {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.9));
+  backdrop-filter: blur(15px);
+  border-left: 1px solid rgba(102, 126, 234, 0.1);
   height: calc(100vh - 56px);
   position: fixed;
   top: 56px;
   right: 0;
-  width: 260px;
+  width: 280px;
   overflow-y: auto;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 1000;
   display: flex;
   flex-direction: column;
+  box-shadow: -5px 0 25px rgba(0, 0, 0, 0.1);
 }
 
-.sidebar.collapsed {
-  width: 60px;
+.modern-sidebar.collapsed {
+  width: 70px;
 }
 
+/* Sidebar Header */
 .sidebar-header {
-  padding: 1rem;
-  border-bottom: 1px solid #dee2e6;
-  background-color: #fff;
+  padding: 1.5rem;
   text-align: center;
-  min-height: 60px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  margin-bottom: 1rem;
+}
+
+.sidebar-logo {
+  width: 50px;
+  height: 50px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 0 auto 1rem;
+  font-size: 1.5rem;
+  animation: float 6s ease-in-out infinite;
+}
+
+.header-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.header-subtitle {
+  font-size: 0.8rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.header-collapsed {
+  text-align: center;
 }
 
 .sidebar-icon-collapsed {
   font-size: 1.5rem;
+  color: white;
 }
 
+/* Navigation */
 .sidebar-nav {
   padding: 0.5rem 0;
   flex: 1;
 }
 
 .nav-item {
-  margin-bottom: 2px;
+  margin-bottom: 0.25rem;
 }
 
-.nav-link {
+/* Modern Nav Links */
+.modern-nav-link {
   color: #495057;
-  padding: 0.75rem 1rem;
+  padding: 0.875rem 1.25rem;
   border-radius: 0;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   position: relative;
   text-decoration: none;
+  margin: 0 0.75rem;
+  border-radius: 12px;
+  background: transparent;
 }
 
-.sidebar.collapsed .nav-link {
+.modern-sidebar.collapsed .modern-nav-link {
   justify-content: center;
-  padding: 0.75rem;
+  padding: 0.875rem;
+  margin: 0 0.5rem;
 }
 
-.nav-link i {
-  width: 20px;
-  text-align: center;
+.nav-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-left: 0.75rem;
   font-size: 1.1rem;
+  transition: all 0.3s ease;
 }
 
-.sidebar.collapsed .nav-link i {
+.modern-sidebar.collapsed .nav-icon {
   margin-left: 0;
 }
 
 .nav-text {
+  flex: 1;
   white-space: nowrap;
   overflow: hidden;
   transition: opacity 0.3s ease;
+  font-weight: 500;
 }
 
-.sidebar.collapsed .nav-text {
+.modern-sidebar.collapsed .nav-text {
   opacity: 0;
 }
 
-.nav-link:hover {
-  background-color: #e9ecef;
-  color: #007bff;
+.nav-arrow {
+  opacity: 0.5;
+  transition: all 0.3s ease;
+  font-size: 0.8rem;
+}
+
+.nav-badge {
+  font-size: 0.65rem;
+  padding: 0.2rem 0.4rem;
+  margin-left: auto;
+}
+
+/* Hover and Active States */
+.modern-nav-link:hover {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+  color: #667eea;
+  transform: translateX(-3px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.modern-nav-link:hover .nav-arrow {
+  opacity: 1;
   transform: translateX(-2px);
 }
 
-.nav-link.active {
-  background-color: #007bff;
+.modern-nav-link:hover .nav-icon {
+  transform: scale(1.1);
+  color: #667eea;
+}
+
+.modern-nav-link.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.modern-nav-link.active .nav-icon {
   color: white;
 }
 
-.nav-link.active:hover {
-  background-color: #0056b3;
+.modern-nav-link.active:hover {
+  transform: translateX(-3px) scale(1.02);
 }
 
+/* Nav Dividers */
 .nav-divider {
-  margin: 1rem 0 0.5rem 0;
-  padding: 0 1rem;
+  margin: 1.5rem 0 1rem 0;
+  padding: 0 1.25rem;
 }
 
 .nav-divider span {
   font-size: 0.75rem;
   color: #6c757d;
   text-transform: uppercase;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
 }
 
+/* Sidebar Footer */
 .sidebar-footer {
-  border-top: 1px solid #dee2e6;
-  background-color: #fff;
   padding: 1rem;
+  border-top: 1px solid rgba(102, 126, 234, 0.1);
 }
 
 .user-info {
   display: flex;
   align-items: center;
   transition: all 0.3s ease;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
 }
 
 .user-info.collapsed {
   justify-content: center;
+  padding: 0.75rem;
 }
 
 .user-avatar {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  background-color: #007bff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-left: 0.75rem;
-  font-size: 0.9rem;
+  font-size: 1rem;
+  flex-shrink: 0;
 }
 
 .user-info.collapsed .user-avatar {
@@ -454,19 +623,29 @@ export default {
 
 .user-details {
   flex: 1;
+  min-width: 0;
 }
 
 .user-name {
   font-weight: 600;
   font-size: 0.9rem;
-  color: #495057;
+  color: #333;
+  margin-bottom: 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .user-role {
-  font-size: 0.75rem;
-  color: #6c757d;
+  margin-bottom: 0.5rem;
 }
 
+.user-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Sidebar Overlay */
 .sidebar-overlay {
   position: fixed;
   top: 0;
@@ -475,40 +654,41 @@ export default {
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 999;
+  backdrop-filter: blur(2px);
 }
 
 /* Tooltip for collapsed sidebar */
-.sidebar.collapsed .nav-link {
+.modern-sidebar.collapsed .modern-nav-link {
   position: relative;
 }
 
-.sidebar.collapsed .nav-link[title]:hover::after {
+.modern-sidebar.collapsed .modern-nav-link[title]:hover::after {
   content: attr(title);
   position: absolute;
   right: 100%;
   top: 50%;
   transform: translateY(-50%);
-  background-color: rgba(33, 37, 41, 0.9);
+  background: linear-gradient(135deg, rgba(33, 37, 41, 0.95), rgba(52, 58, 64, 0.95));
   color: white;
   padding: 0.5rem 0.75rem;
-  border-radius: 6px;
+  border-radius: 8px;
   white-space: nowrap;
   font-size: 0.75rem;
   margin-right: 15px;
   z-index: 1002;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(10px);
   animation: tooltipFadeIn 0.2s ease-out;
 }
 
-.sidebar.collapsed .nav-link[title]:hover::before {
+.modern-sidebar.collapsed .modern-nav-link[title]:hover::before {
   content: '';
   position: absolute;
   right: 100%;
   top: 50%;
   transform: translateY(-50%);
   border: 6px solid transparent;
-  border-right-color: rgba(33, 37, 41, 0.9);
+  border-right-color: rgba(33, 37, 41, 0.95);
   margin-right: 9px;
   z-index: 1002;
   animation: tooltipFadeIn 0.2s ease-out;
@@ -527,12 +707,12 @@ export default {
 
 /* Responsive design */
 @media (max-width: 768px) {
-  .sidebar {
-    width: 260px;
+  .modern-sidebar {
+    width: 280px;
     transform: translateX(100%);
   }
 
-  .sidebar:not(.collapsed) {
+  .modern-sidebar:not(.collapsed) {
     transform: translateX(0);
   }
 
@@ -547,26 +727,55 @@ export default {
   }
 }
 
-/* Smooth animations */
-.sidebar * {
-  transition: all 0.3s ease;
-}
-
 /* Custom scrollbar */
-.sidebar::-webkit-scrollbar {
+.modern-sidebar::-webkit-scrollbar {
   width: 4px;
 }
 
-.sidebar::-webkit-scrollbar-track {
-  background: #f1f1f1;
+.modern-sidebar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
 }
 
-.sidebar::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+.modern-sidebar::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.3);
   border-radius: 4px;
 }
 
-.sidebar::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+.modern-sidebar::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.5);
+}
+
+/* Animations */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .modern-sidebar {
+    background: linear-gradient(135deg, rgba(45, 55, 72, 0.95), rgba(45, 55, 72, 0.9));
+    border-left-color: rgba(102, 126, 234, 0.2);
+  }
+
+  .modern-nav-link {
+    color: #e2e8f0;
+  }
+
+  .modern-nav-link:hover {
+    color: #667eea;
+  }
+
+  .nav-divider span {
+    color: #cbd5e0;
+  }
+
+  .user-name {
+    color: #e2e8f0;
+  }
 }
 </style>

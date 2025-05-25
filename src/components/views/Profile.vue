@@ -1,176 +1,189 @@
 <template>
-  <div class="profile-container">
-    <div class="container py-5">
-      <div class="row">
-        <div class="col-lg-4">
-          <div class="card mb-4">
-            <div class="card-body text-center">
-              <div class="profile-avatar">
+  <div class="modern-page-bg" style="min-height: calc(100vh - 56px); padding: 2rem 1rem;">
+    <div class="container-fluid">
+      <div class="row justify-content-center">
+        <div class="col-lg-4 mb-4">
+          <!-- Profile Card -->
+          <div class="modern-card animate-slide-right">
+            <div class="text-center">
+              <div class="modern-logo large success mb-3">
                 <i class="fas fa-user-circle"></i>
               </div>
-              <h5 class="my-3">{{ getUserFullName() }}</h5>
-              <p class="text-muted mb-1">{{ userRoleText }}</p>
-              <p class="text-muted mb-4">{{ user.email }}</p>
+              <h5 class="modern-title">{{ getUserFullName() }}</h5>
+              <p class="modern-subtitle">{{ userRoleText }}</p>
+              <p class="text-muted">{{ user.email }}</p>
             </div>
           </div>
 
-          <div class="card mb-4">
-            <div class="card-body">
-              <div class="profile-stats">
-                <div class="stat-item">
-                  <div class="stat-value">{{ stats.totalCourses }}</div>
-                  <div class="stat-label">دوره‌ها</div>
-                </div>
-                <div class="stat-item">
-                  <div class="stat-value">{{ stats.completedCourses }}</div>
-                  <div class="stat-label">تکمیل شده</div>
-                </div>
-                <div class="stat-item">
-                  <div class="stat-value">{{ stats.averageProgress }}%</div>
-                  <div class="stat-label">پیشرفت</div>
-                </div>
+          <!-- Stats Card -->
+          <div class="modern-card animate-slide-right" style="animation-delay: 0.1s;">
+            <h6 class="text-center mb-3">
+              <i class="fas fa-chart-bar text-primary me-2"></i>
+              آمار کلی
+            </h6>
+            <div class="row text-center">
+              <div class="col-4">
+                <div class="modern-stat-value text-primary">{{ stats.totalCourses }}</div>
+                <div class="modern-stat-label">دوره‌ها</div>
+              </div>
+              <div class="col-4">
+                <div class="modern-stat-value text-success">{{ stats.completedCourses }}</div>
+                <div class="modern-stat-label">تکمیل شده</div>
+              </div>
+              <div class="col-4">
+                <div class="modern-stat-value text-warning">{{ stats.averageProgress }}%</div>
+                <div class="modern-stat-label">پیشرفت</div>
               </div>
             </div>
           </div>
         </div>
 
         <div class="col-lg-8">
-          <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-              <h5 class="mb-0">اطلاعات شخصی</h5>
-              <button class="btn btn-sm btn-primary" @click="editMode = !editMode">
-                <i class="fas fa-edit me-1"></i> {{ editMode ? 'انصراف' : 'ویرایش' }}
+          <!-- Personal Information Card -->
+          <div class="modern-card animate-slide-up">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h5 class="modern-title mb-0">
+                <i class="fas fa-user-edit text-primary me-2"></i>
+                اطلاعات شخصی
+              </h5>
+              <button class="modern-btn modern-btn-primary" @click="editMode = !editMode">
+                <i class="fas fa-edit me-1"></i>
+                {{ editMode ? 'انصراف' : 'ویرایش' }}
               </button>
             </div>
-            <div class="card-body">
-              <form v-if="editMode" @submit.prevent="updateProfile">
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label for="firstName" class="form-label">نام</label>
-                    <input type="text" class="form-control" id="firstName" v-model="formData.firstName">
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label for="lastName" class="form-label">نام خانوادگی</label>
-                    <input type="text" class="form-control" id="lastName" v-model="formData.lastName">
-                  </div>
-                </div>
 
-                <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label for="email" class="form-label">ایمیل</label>
-                    <input type="email" class="form-control" id="email" v-model="formData.email">
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label for="phoneNumber" class="form-label">شماره تلفن</label>
-                    <input type="text" class="form-control" id="phoneNumber" v-model="formData.phoneNumber">
-                  </div>
+            <!-- Edit Form -->
+            <form v-if="editMode" @submit.prevent="updateProfile">
+              <div class="row">
+                <div class="col-md-6 modern-form-group">
+                  <label for="firstName" class="modern-form-label">نام</label>
+                  <input type="text" class="modern-form-control" id="firstName" v-model="formData.firstName">
                 </div>
-
-                <div class="row" v-if="!isTeacher">
-                  <div class="col-md-6 mb-3">
-                    <label for="studentId" class="form-label">شماره دانش‌آموزی</label>
-                    <input type="text" class="form-control" id="studentId" v-model="formData.studentId">
-                  </div>
-                  <div class="col-md-6 mb-3">
-                    <label for="age" class="form-label">سن</label>
-                    <input type="number" class="form-control" id="age" v-model="formData.age">
-                  </div>
+                <div class="col-md-6 modern-form-group">
+                  <label for="lastName" class="modern-form-label">نام خانوادگی</label>
+                  <input type="text" class="modern-form-control" id="lastName" v-model="formData.lastName">
                 </div>
+              </div>
 
-                <div class="d-flex justify-content-between mt-3">
-                  <button type="button" class="btn btn-secondary" @click="editMode = false">انصراف</button>
-                  <button type="submit" class="btn btn-primary" :disabled="isSubmitting">
-                    <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    ذخیره تغییرات
-                  </button>
+              <div class="row">
+                <div class="col-md-6 modern-form-group">
+                  <label for="email" class="modern-form-label">ایمیل</label>
+                  <input type="email" class="modern-form-control" id="email" v-model="formData.email">
                 </div>
-              </form>
-
-              <div v-else class="profile-info">
-                <div class="row mb-3">
-                  <div class="col-sm-3">
-                    <span class="info-label">نام و نام خانوادگی</span>
-                  </div>
-                  <div class="col-sm-9">
-                    <span class="info-value">{{ getUserFullName() }}</span>
-                  </div>
+                <div class="col-md-6 modern-form-group">
+                  <label for="phoneNumber" class="modern-form-label">شماره تلفن</label>
+                  <input type="text" class="modern-form-control" id="phoneNumber" v-model="formData.phoneNumber">
                 </div>
+              </div>
 
-                <div class="row mb-3">
-                  <div class="col-sm-3">
-                    <span class="info-label">ایمیل</span>
-                  </div>
-                  <div class="col-sm-9">
-                    <span class="info-value">{{ user.email }}</span>
-                  </div>
+              <div class="row" v-if="!isTeacher">
+                <div class="col-md-6 modern-form-group">
+                  <label for="studentId" class="modern-form-label">شماره دانش‌آموزی</label>
+                  <input type="text" class="modern-form-control" id="studentId" v-model="formData.studentId">
                 </div>
-
-                <div class="row mb-3">
-                  <div class="col-sm-3">
-                    <span class="info-label">نام کاربری</span>
-                  </div>
-                  <div class="col-sm-9">
-                    <span class="info-value">{{ user.username }}</span>
-                  </div>
+                <div class="col-md-6 modern-form-group">
+                  <label for="age" class="modern-form-label">سن</label>
+                  <input type="number" class="modern-form-control" id="age" v-model="formData.age">
                 </div>
+              </div>
 
-                <div class="row mb-3">
-                  <div class="col-sm-3">
-                    <span class="info-label">شماره تلفن</span>
-                  </div>
-                  <div class="col-sm-9">
-                    <span class="info-value">{{ user.phoneNumber || '---' }}</span>
-                  </div>
+              <div class="d-flex justify-content-between">
+                <button type="button" class="modern-btn modern-btn-secondary" @click="editMode = false">
+                  انصراف
+                </button>
+                <button type="submit" class="modern-btn modern-btn-success" :disabled="isSubmitting">
+                  <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  ذخیره تغییرات
+                </button>
+              </div>
+            </form>
+
+            <!-- View Mode -->
+            <div v-else class="profile-info">
+              <div class="row mb-3">
+                <div class="col-sm-4">
+                  <span class="modern-form-label">نام و نام خانوادگی</span>
                 </div>
-
-                <div v-if="!isTeacher" class="row mb-3">
-                  <div class="col-sm-3">
-                    <span class="info-label">شماره دانش‌آموزی</span>
-                  </div>
-                  <div class="col-sm-9">
-                    <span class="info-value">{{ user.studentId || '---' }}</span>
-                  </div>
+                <div class="col-sm-8">
+                  <span class="info-value">{{ getUserFullName() }}</span>
                 </div>
+              </div>
 
-                <div v-if="!isTeacher" class="row mb-3">
-                  <div class="col-sm-3">
-                    <span class="info-label">سن</span>
-                  </div>
-                  <div class="col-sm-9">
-                    <span class="info-value">{{ user.age || '---' }}</span>
-                  </div>
+              <div class="row mb-3">
+                <div class="col-sm-4">
+                  <span class="modern-form-label">ایمیل</span>
+                </div>
+                <div class="col-sm-8">
+                  <span class="info-value">{{ user.email }}</span>
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-sm-4">
+                  <span class="modern-form-label">نام کاربری</span>
+                </div>
+                <div class="col-sm-8">
+                  <span class="info-value">{{ user.username }}</span>
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-sm-4">
+                  <span class="modern-form-label">شماره تلفن</span>
+                </div>
+                <div class="col-sm-8">
+                  <span class="info-value">{{ user.phoneNumber || '---' }}</span>
+                </div>
+              </div>
+
+              <div v-if="!isTeacher" class="row mb-3">
+                <div class="col-sm-4">
+                  <span class="modern-form-label">شماره دانش‌آموزی</span>
+                </div>
+                <div class="col-sm-8">
+                  <span class="info-value">{{ user.studentId || '---' }}</span>
+                </div>
+              </div>
+
+              <div v-if="!isTeacher" class="row mb-3">
+                <div class="col-sm-4">
+                  <span class="modern-form-label">سن</span>
+                </div>
+                <div class="col-sm-8">
+                  <span class="info-value">{{ user.age || '---' }}</span>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="card mb-4">
-            <div class="card-header">
-              <h5 class="mb-0">تغییر رمز عبور</h5>
-            </div>
-            <div class="card-body">
-              <form @submit.prevent="changePassword">
-                <div class="mb-3">
-                  <label for="currentPassword" class="form-label">رمز عبور فعلی</label>
-                  <input type="password" class="form-control" id="currentPassword" v-model="passwordData.currentPassword" required>
-                </div>
+          <!-- Change Password Card -->
+          <div class="modern-card animate-slide-up" style="animation-delay: 0.2s;">
+            <h5 class="modern-title mb-4">
+              <i class="fas fa-key text-warning me-2"></i>
+              تغییر رمز عبور
+            </h5>
 
-                <div class="mb-3">
-                  <label for="newPassword" class="form-label">رمز عبور جدید</label>
-                  <input type="password" class="form-control" id="newPassword" v-model="passwordData.newPassword" required>
-                </div>
+            <form @submit.prevent="changePassword">
+              <div class="modern-form-group">
+                <label for="currentPassword" class="modern-form-label">رمز عبور فعلی</label>
+                <input type="password" class="modern-form-control" id="currentPassword" v-model="passwordData.currentPassword" required>
+              </div>
 
-                <div class="mb-3">
-                  <label for="confirmPassword" class="form-label">تکرار رمز عبور جدید</label>
-                  <input type="password" class="form-control" id="confirmPassword" v-model="passwordData.confirmPassword" required>
-                </div>
+              <div class="modern-form-group">
+                <label for="newPassword" class="modern-form-label">رمز عبور جدید</label>
+                <input type="password" class="modern-form-control" id="newPassword" v-model="passwordData.newPassword" required>
+              </div>
 
-                <button type="submit" class="btn btn-primary w-100" :disabled="isPasswordSubmitting">
-                  <span v-if="isPasswordSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  تغییر رمز عبور
-                </button>
-              </form>
-            </div>
+              <div class="modern-form-group">
+                <label for="confirmPassword" class="modern-form-label">تکرار رمز عبور جدید</label>
+                <input type="password" class="modern-form-control" id="confirmPassword" v-model="passwordData.confirmPassword" required>
+              </div>
+
+              <button type="submit" class="modern-btn modern-btn-warning w-100" :disabled="isPasswordSubmitting">
+                <span v-if="isPasswordSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                تغییر رمز عبور
+              </button>
+            </form>
           </div>
         </div>
       </div>
@@ -236,10 +249,7 @@ export default {
   methods: {
     async fetchUserData() {
       try {
-        // دریافت اطلاعات کاربر فعلی
         this.user = this.$store.getters.currentUser;
-
-        // پر کردن فرم با داده‌های کاربر
         this.formData = {
           firstName: this.user.firstName || '',
           lastName: this.user.lastName || '',
@@ -257,7 +267,6 @@ export default {
     async fetchUserStats() {
       if (this.isStudent) {
         try {
-          // دریافت آمار کاربر (فقط برای دانش‌آموزان)
           const response = await axios.get('/progress/stats');
           this.stats = response.data;
         } catch (error) {
@@ -265,9 +274,7 @@ export default {
         }
       } else if (this.isTeacher) {
         try {
-          // دریافت آمار استاد
           const coursesResponse = await axios.get('/courses/teaching');
-
           this.stats = {
             totalCourses: coursesResponse.data.length,
             completedCourses: 0,
@@ -290,20 +297,14 @@ export default {
       this.startSubmitting();
 
       try {
-        // ارسال اطلاعات به‌روز شده به سرور
         const response = await axios.put('/user/profile', this.formData);
-
-        // به‌روزرسانی اطلاعات کاربر در استور
         const updatedUser = {
           ...this.user,
           ...this.formData
         };
         this.$store.commit('update_user', updatedUser);
         this.user = updatedUser;
-
-        // خروج از حالت ویرایش
         this.editMode = false;
-
         this.finishSubmitting('پروفایل شما با موفقیت به‌روزرسانی شد.');
       } catch (error) {
         console.error('Error updating profile:', error);
@@ -312,7 +313,6 @@ export default {
     },
 
     async changePassword() {
-      // بررسی تطابق رمز عبور جدید با تکرار آن
       if (this.passwordData.newPassword !== this.passwordData.confirmPassword) {
         this.showErrorToast('رمز عبور جدید و تکرار آن مطابقت ندارند.');
         return;
@@ -321,13 +321,11 @@ export default {
       this.isPasswordSubmitting = true;
 
       try {
-        // ارسال درخواست تغییر رمز عبور
         await axios.put('/user/change-password', {
           currentPassword: this.passwordData.currentPassword,
           newPassword: this.passwordData.newPassword
         });
 
-        // پاک کردن فرم
         this.passwordData = {
           currentPassword: '',
           newPassword: '',
@@ -347,54 +345,53 @@ export default {
 </script>
 
 <style scoped>
-.profile-container {
-  min-height: calc(100vh - 56px);
-  background-color: #f8f9fa;
+/* Component specific styles */
+.info-value {
+  color: #2c3e50;
+  font-weight: 500;
 }
 
-.profile-avatar {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  background-color: #f1f1f1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 20px;
+.profile-info .row {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 0.75rem 0;
 }
 
-.profile-avatar i {
-  font-size: 80px;
-  color: #6c757d;
+.profile-info .row:last-child {
+  border-bottom: none;
 }
 
-.profile-stats {
-  display: flex;
-  justify-content: space-between;
+/* Animation delays */
+.animate-slide-right {
+  animation: slideInRight 0.6s ease forwards;
 }
 
-.stat-item {
-  text-align: center;
-  padding: 10px;
+.animate-slide-up {
+  animation: slideInUp 0.6s ease forwards;
 }
 
-.stat-value {
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: #007bff;
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .modern-page-bg {
+    padding: 1rem 0.5rem;
+  }
+
+  .col-lg-4 {
+    margin-bottom: 2rem;
+  }
+
+  .modern-stat-value {
+    font-size: 1.5rem;
+  }
 }
 
-.stat-label {
-  font-size: 0.9rem;
-  color: #6c757d;
-}
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .info-value {
+    color: #e2e8f0;
+  }
 
-.profile-info .info-label {
-  color: #6c757d;
-  font-weight: bold;
-}
-
-.profile-info .info-value {
-  color: #212529;
+  .profile-info .row {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
 }
 </style>
