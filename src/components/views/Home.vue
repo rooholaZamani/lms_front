@@ -1,93 +1,93 @@
 <template>
   <div class="home-page">
     <!-- Hero Section -->
-    <section class="hero-section modern-page-bg">
-      <div class="container">
-        <div class="row align-items-center min-vh-100">
-          <div class="col-lg-6 text-center text-lg-start">
-            <div class="hero-content animate-slide-right">
-              <div class="modern-logo large mb-4" style="margin: 0 auto 2rem; animation-delay: 0.2s;">
-                <i class="fas fa-graduation-cap"></i>
-              </div>
+<!--    <section class="hero-section modern-page-bg">-->
+<!--      <div class="container">-->
+<!--        <div class="row align-items-center min-vh-100">-->
+<!--          <div class="col-lg-6 text-center text-lg-start">-->
+<!--            <div class="hero-content animate-slide-right">-->
+<!--              <div class="modern-logo large mb-4" style="margin: 0 auto 2rem; animation-delay: 0.2s;">-->
+<!--                <i class="fas fa-graduation-cap"></i>-->
+<!--              </div>-->
 
-              <h1 class="hero-title mb-4 animate-slide-up" style="animation-delay: 0.3s;">
-                سامانه آموزش آنلاین
-                <span class="highlight">مدرن و پیشرفته</span>
-              </h1>
+<!--              <h1 class="hero-title mb-4 animate-slide-up" style="animation-delay: 0.3s;">-->
+<!--                سامانه آموزش آنلاین-->
+<!--                <span class="highlight">مدرن و پیشرفته</span>-->
+<!--              </h1>-->
 
-              <p class="hero-subtitle mb-5 animate-slide-up" style="animation-delay: 0.4s;">
-                یادگیری را با بهترین اساتید و جدیدترین روش‌های آموزشی تجربه کنید.
-                دوره‌های متنوع، امکانات پیشرفته و پشتیبانی 24 ساعته در انتظار شماست.
-              </p>
+<!--              <p class="hero-subtitle mb-5 animate-slide-up" style="animation-delay: 0.4s;">-->
+<!--                یادگیری را با بهترین اساتید و جدیدترین روش‌های آموزشی تجربه کنید.-->
+<!--                دوره‌های متنوع، امکانات پیشرفته و پشتیبانی 24 ساعته در انتظار شماست.-->
+<!--              </p>-->
 
-              <div class="hero-actions animate-slide-up" style="animation-delay: 0.5s;">
-                <router-link v-if="!isLoggedIn" :to="{ name: 'Register' }" class="modern-btn modern-btn-success me-3">
-                  <i class="fas fa-user-plus me-2"></i>
-                  شروع یادگیری
-                </router-link>
+<!--              <div class="hero-actions animate-slide-up" style="animation-delay: 0.5s;">-->
+<!--                <router-link v-if="!isLoggedIn" :to="{ name: 'Register' }" class="modern-btn modern-btn-success me-3">-->
+<!--                  <i class="fas fa-user-plus me-2"></i>-->
+<!--                  شروع یادگیری-->
+<!--                </router-link>-->
 
-                <router-link v-if="isLoggedIn" :to="{ name: 'Dashboard' }" class="modern-btn modern-btn-primary me-3">
-                  <i class="fas fa-tachometer-alt me-2"></i>
-                  داشبورد من
-                </router-link>
+<!--                <router-link v-if="isLoggedIn" :to="{ name: 'Dashboard' }" class="modern-btn modern-btn-primary me-3">-->
+<!--                  <i class="fas fa-tachometer-alt me-2"></i>-->
+<!--                  داشبورد من-->
+<!--                </router-link>-->
 
-                <router-link :to="{ name: 'Courses' }" class="modern-btn modern-btn-outline text-white">
-                  <i class="fas fa-book me-2"></i>
-                  مشاهده دوره‌ها
-                </router-link>
-              </div>
+<!--                <router-link :to="{ name: 'Courses' }" class="modern-btn modern-btn-outline text-white">-->
+<!--                  <i class="fas fa-book me-2"></i>-->
+<!--                  مشاهده دوره‌ها-->
+<!--                </router-link>-->
+<!--              </div>-->
 
-              <!-- Stats -->
-              <div class="hero-stats mt-5 animate-fade-in" style="animation-delay: 0.6s;">
-                <div class="row text-center">
-                  <div class="col-4">
-                    <div class="stat-item">
-                      <div class="stat-number">500+</div>
-                      <div class="stat-label">دانش‌آموز</div>
-                    </div>
-                  </div>
-                  <div class="col-4">
-                    <div class="stat-item">
-                      <div class="stat-number">50+</div>
-                      <div class="stat-label">دوره آموزشی</div>
-                    </div>
-                  </div>
-                  <div class="col-4">
-                    <div class="stat-item">
-                      <div class="stat-number">20+</div>
-                      <div class="stat-label">استاد مجرب</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+<!--              &lt;!&ndash; Stats &ndash;&gt;-->
+<!--              <div class="hero-stats mt-5 animate-fade-in" style="animation-delay: 0.6s;">-->
+<!--                <div class="row text-center">-->
+<!--                  <div class="col-4">-->
+<!--                    <div class="stat-item">-->
+<!--                      <div class="stat-number">500+</div>-->
+<!--                      <div class="stat-label">دانش‌آموز</div>-->
+<!--                    </div>-->
+<!--                  </div>-->
+<!--                  <div class="col-4">-->
+<!--                    <div class="stat-item">-->
+<!--                      <div class="stat-number">50+</div>-->
+<!--                      <div class="stat-label">دوره آموزشی</div>-->
+<!--                    </div>-->
+<!--                  </div>-->
+<!--                  <div class="col-4">-->
+<!--                    <div class="stat-item">-->
+<!--                      <div class="stat-number">20+</div>-->
+<!--                      <div class="stat-label">استاد مجرب</div>-->
+<!--                    </div>-->
+<!--                  </div>-->
+<!--                </div>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
 
-          <div class="col-lg-6">
-            <div class="hero-visual animate-slide-left" style="animation-delay: 0.4s;">
-              <div class="floating-elements">
-                <div class="floating-card card-1">
-                  <i class="fas fa-laptop-code"></i>
-                  <span>برنامه‌نویسی</span>
-                </div>
-                <div class="floating-card card-2">
-                  <i class="fas fa-paint-brush"></i>
-                  <span>طراحی UI/UX</span>
-                </div>
-                <div class="floating-card card-3">
-                  <i class="fas fa-chart-line"></i>
-                  <span>تحلیل داده</span>
-                </div>
-                <div class="floating-card card-4">
-                  <i class="fas fa-language"></i>
-                  <span>زبان‌های خارجی</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+<!--          <div class="col-lg-6">-->
+<!--            <div class="hero-visual animate-slide-left" style="animation-delay: 0.4s;">-->
+<!--              <div class="floating-elements">-->
+<!--                <div class="floating-card card-1">-->
+<!--                  <i class="fas fa-laptop-code"></i>-->
+<!--                  <span>برنامه‌نویسی</span>-->
+<!--                </div>-->
+<!--                <div class="floating-card card-2">-->
+<!--                  <i class="fas fa-paint-brush"></i>-->
+<!--                  <span>طراحی UI/UX</span>-->
+<!--                </div>-->
+<!--                <div class="floating-card card-3">-->
+<!--                  <i class="fas fa-chart-line"></i>-->
+<!--                  <span>تحلیل داده</span>-->
+<!--                </div>-->
+<!--                <div class="floating-card card-4">-->
+<!--                  <i class="fas fa-language"></i>-->
+<!--                  <span>زبان‌های خارجی</span>-->
+<!--                </div>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </section>-->
 
     <!-- Features Section -->
     <section class="features-section py-5" style="background: #f8f9fa;">

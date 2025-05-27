@@ -174,7 +174,7 @@ export default {
       if (!currentUser.value) return 'U';
       const firstName = currentUser.value.firstName || '';
       const lastName = currentUser.value.lastName || '';
-      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || 'U';
+      return `${firstName.charAt(0)} ${lastName.charAt(0)}`.toUpperCase() || 'U';
     };
 
     const getUserFullName = () => {
@@ -198,6 +198,7 @@ export default {
         '/profile': 'پروفایل',
         '/students': 'دانش‌آموزان',
         '/reports': 'گزارش‌ها',
+        '/recommander': 'توصیه‌های یادگیری',
         '/settings': 'تنظیمات'
       };
       return titles[route.path] || route.meta?.title || 'صفحه';

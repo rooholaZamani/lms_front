@@ -11,7 +11,7 @@
               </div>
               <h5 class="modern-title">{{ getUserFullName() }}</h5>
               <p class="modern-subtitle">{{ userRoleText }}</p>
-              <p class="text-muted">{{ user.email }}</p>
+              <p class="text-muted">{{ user.studentId || '---' }}</p>
             </div>
           </div>
 

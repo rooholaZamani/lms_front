@@ -1,214 +1,214 @@
 <template>
   <footer class="modern-footer">
-    <div class="footer-main">
-      <div class="container">
-        <div class="row">
-          <!-- Brand Column -->
-          <div class="col-lg-4 col-md-6 mb-4">
-            <div class="footer-brand">
-              <div class="brand-logo">
-                <div class="logo-icon">
-                  <i class="fas fa-graduation-cap"></i>
-                </div>
-                <div class="logo-text">
-                  <h5 class="brand-name">سامانه آموزش آنلاین</h5>
-                  <p class="brand-tagline">آینده یادگیری</p>
-                </div>
-              </div>
+<!--    <div class="footer-main">-->
+<!--      <div class="container">-->
+<!--        <div class="row">-->
+<!--          &lt;!&ndash; Brand Column &ndash;&gt;-->
+<!--          <div class="col-lg-4 col-md-6 mb-4">-->
+<!--            <div class="footer-brand">-->
+<!--              <div class="brand-logo">-->
+<!--                <div class="logo-icon">-->
+<!--                  <i class="fas fa-graduation-cap"></i>-->
+<!--                </div>-->
+<!--                <div class="logo-text">-->
+<!--                  <h5 class="brand-name">سامانه آموزش آنلاین</h5>-->
+<!--                  <p class="brand-tagline">آینده یادگیری</p>-->
+<!--                </div>-->
+<!--              </div>-->
 
-              <p class="footer-description">
-                پلتفرمی نوین برای یادگیری آنلاین با بهترین اساتید و محتوای به‌روز.
-                ما کمک می‌کنیم تا مهارت‌های جدید کسب کنید و آینده‌ای بهتر بسازید.
-              </p>
+<!--              <p class="footer-description">-->
+<!--                پلتفرمی نوین برای یادگیری آنلاین با بهترین اساتید و محتوای به‌روز.-->
+<!--                ما کمک می‌کنیم تا مهارت‌های جدید کسب کنید و آینده‌ای بهتر بسازید.-->
+<!--              </p>-->
 
-              <!-- Social Links -->
-              <div class="social-links">
-                <a href="#" class="social-link" title="تلگرام">
-                  <i class="fab fa-telegram"></i>
-                </a>
-                <a href="#" class="social-link" title="اینستاگرام">
-                  <i class="fab fa-instagram"></i>
-                </a>
-                <a href="#" class="social-link" title="لینکدین">
-                  <i class="fab fa-linkedin"></i>
-                </a>
-                <a href="#" class="social-link" title="توییتر">
-                  <i class="fab fa-twitter"></i>
-                </a>
-                <a href="#" class="social-link" title="یوتیوب">
-                  <i class="fab fa-youtube"></i>
-                </a>
-              </div>
-            </div>
-          </div>
+<!--              &lt;!&ndash; Social Links &ndash;&gt;-->
+<!--              <div class="social-links">-->
+<!--                <a href="#" class="social-link" title="تلگرام">-->
+<!--                  <i class="fab fa-telegram"></i>-->
+<!--                </a>-->
+<!--                <a href="#" class="social-link" title="اینستاگرام">-->
+<!--                  <i class="fab fa-instagram"></i>-->
+<!--                </a>-->
+<!--                <a href="#" class="social-link" title="لینکدین">-->
+<!--                  <i class="fab fa-linkedin"></i>-->
+<!--                </a>-->
+<!--                <a href="#" class="social-link" title="توییتر">-->
+<!--                  <i class="fab fa-twitter"></i>-->
+<!--                </a>-->
+<!--                <a href="#" class="social-link" title="یوتیوب">-->
+<!--                  <i class="fab fa-youtube"></i>-->
+<!--                </a>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
 
-          <!-- Quick Links -->
-          <div class="col-lg-2 col-md-6 mb-4">
-            <div class="footer-section">
-              <h6 class="footer-title">
-                <i class="fas fa-link me-2"></i>
-                دسترسی سریع
-              </h6>
-              <ul class="footer-links">
-                <li>
-                  <router-link to="/" class="footer-link">
-                    <i class="fas fa-home me-2"></i>
-                    صفحه اصلی
-                  </router-link>
-                </li>
-                <li>
-                  <router-link to="/courses" class="footer-link">
-                    <i class="fas fa-book me-2"></i>
-                    دوره‌ها
-                  </router-link>
-                </li>
-                <li>
-                  <router-link to="/about" class="footer-link">
-                    <i class="fas fa-info-circle me-2"></i>
-                    درباره ما
-                  </router-link>
-                </li>
-                <li>
-                  <router-link to="/contact" class="footer-link">
-                    <i class="fas fa-envelope me-2"></i>
-                    تماس با ما
-                  </router-link>
-                </li>
-                <li>
-                  <router-link to="/blog" class="footer-link">
-                    <i class="fas fa-blog me-2"></i>
-                    وبلاگ
-                  </router-link>
-                </li>
-              </ul>
-            </div>
-          </div>
+<!--          &lt;!&ndash; Quick Links &ndash;&gt;-->
+<!--          <div class="col-lg-2 col-md-6 mb-4">-->
+<!--            <div class="footer-section">-->
+<!--              <h6 class="footer-title">-->
+<!--                <i class="fas fa-link me-2"></i>-->
+<!--                دسترسی سریع-->
+<!--              </h6>-->
+<!--              <ul class="footer-links">-->
+<!--                <li>-->
+<!--                  <router-link to="/" class="footer-link">-->
+<!--                    <i class="fas fa-home me-2"></i>-->
+<!--                    صفحه اصلی-->
+<!--                  </router-link>-->
+<!--                </li>-->
+<!--                <li>-->
+<!--                  <router-link to="/courses" class="footer-link">-->
+<!--                    <i class="fas fa-book me-2"></i>-->
+<!--                    دوره‌ها-->
+<!--                  </router-link>-->
+<!--                </li>-->
+<!--                <li>-->
+<!--                  <router-link to="/about" class="footer-link">-->
+<!--                    <i class="fas fa-info-circle me-2"></i>-->
+<!--                    درباره ما-->
+<!--                  </router-link>-->
+<!--                </li>-->
+<!--                <li>-->
+<!--                  <router-link to="/contact" class="footer-link">-->
+<!--                    <i class="fas fa-envelope me-2"></i>-->
+<!--                    تماس با ما-->
+<!--                  </router-link>-->
+<!--                </li>-->
+<!--                <li>-->
+<!--                  <router-link to="/blog" class="footer-link">-->
+<!--                    <i class="fas fa-blog me-2"></i>-->
+<!--                    وبلاگ-->
+<!--                  </router-link>-->
+<!--                </li>-->
+<!--              </ul>-->
+<!--            </div>-->
+<!--          </div>-->
 
-          <!-- Support & Help -->
-          <div class="col-lg-2 col-md-6 mb-4">
-            <div class="footer-section">
-              <h6 class="footer-title">
-                <i class="fas fa-question-circle me-2"></i>
-                راهنمایی
-              </h6>
-              <ul class="footer-links">
-                <li>
-                  <a href="#" class="footer-link">
-                    <i class="fas fa-headset me-2"></i>
-                    پشتیبانی
-                  </a>
-                </li>
-                <li>
-                  <a href="#" class="footer-link">
-                    <i class="fas fa-file-alt me-2"></i>
-                    راهنمای استفاده
-                  </a>
-                </li>
-                <li>
-                  <a href="#" class="footer-link">
-                    <i class="fas fa-shield-alt me-2"></i>
-                    حریم خصوصی
-                  </a>
-                </li>
-                <li>
-                  <a href="#" class="footer-link">
-                    <i class="fas fa-gavel me-2"></i>
-                    قوانین و مقررات
-                  </a>
-                </li>
-                <li>
-                  <a href="#" class="footer-link">
-                    <i class="fas fa-cookie-bite me-2"></i>
-                    سیاست کوکی‌ها
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
+<!--          &lt;!&ndash; Support & Help &ndash;&gt;-->
+<!--          <div class="col-lg-2 col-md-6 mb-4">-->
+<!--            <div class="footer-section">-->
+<!--              <h6 class="footer-title">-->
+<!--                <i class="fas fa-question-circle me-2"></i>-->
+<!--                راهنمایی-->
+<!--              </h6>-->
+<!--              <ul class="footer-links">-->
+<!--                <li>-->
+<!--                  <a href="#" class="footer-link">-->
+<!--                    <i class="fas fa-headset me-2"></i>-->
+<!--                    پشتیبانی-->
+<!--                  </a>-->
+<!--                </li>-->
+<!--                <li>-->
+<!--                  <a href="#" class="footer-link">-->
+<!--                    <i class="fas fa-file-alt me-2"></i>-->
+<!--                    راهنمای استفاده-->
+<!--                  </a>-->
+<!--                </li>-->
+<!--                <li>-->
+<!--                  <a href="#" class="footer-link">-->
+<!--                    <i class="fas fa-shield-alt me-2"></i>-->
+<!--                    حریم خصوصی-->
+<!--                  </a>-->
+<!--                </li>-->
+<!--                <li>-->
+<!--                  <a href="#" class="footer-link">-->
+<!--                    <i class="fas fa-gavel me-2"></i>-->
+<!--                    قوانین و مقررات-->
+<!--                  </a>-->
+<!--                </li>-->
+<!--                <li>-->
+<!--                  <a href="#" class="footer-link">-->
+<!--                    <i class="fas fa-cookie-bite me-2"></i>-->
+<!--                    سیاست کوکی‌ها-->
+<!--                  </a>-->
+<!--                </li>-->
+<!--              </ul>-->
+<!--            </div>-->
+<!--          </div>-->
 
-          <!-- Contact Info -->
-          <div class="col-lg-4 col-md-6 mb-4">
-            <div class="footer-section">
-              <h6 class="footer-title">
-                <i class="fas fa-map-marker-alt me-2"></i>
-                اطلاعات تماس
-              </h6>
+<!--          &lt;!&ndash; Contact Info &ndash;&gt;-->
+<!--          <div class="col-lg-4 col-md-6 mb-4">-->
+<!--            <div class="footer-section">-->
+<!--              <h6 class="footer-title">-->
+<!--                <i class="fas fa-map-marker-alt me-2"></i>-->
+<!--                اطلاعات تماس-->
+<!--              </h6>-->
 
-              <div class="contact-info">
-                <div class="contact-item">
-                  <div class="contact-icon">
-                    <i class="fas fa-map-marker-alt"></i>
-                  </div>
-                  <div class="contact-content">
-                    <span class="contact-label">آدرس:</span>
-                    <span class="contact-value">تهران، خیابان ولیعصر، پلاک ۱۲۳</span>
-                  </div>
-                </div>
+<!--              <div class="contact-info">-->
+<!--                <div class="contact-item">-->
+<!--                  <div class="contact-icon">-->
+<!--                    <i class="fas fa-map-marker-alt"></i>-->
+<!--                  </div>-->
+<!--                  <div class="contact-content">-->
+<!--                    <span class="contact-label">آدرس:</span>-->
+<!--                    <span class="contact-value">تهران، خیابان ولیعصر، پلاک ۱۲۳</span>-->
+<!--                  </div>-->
+<!--                </div>-->
 
-                <div class="contact-item">
-                  <div class="contact-icon">
-                    <i class="fas fa-phone"></i>
-                  </div>
-                  <div class="contact-content">
-                    <span class="contact-label">تلفن:</span>
-                    <span class="contact-value">
-                      <a href="tel:+982188123456">۰۲۱-۸۸۱۲۳۴۵۶</a>
-                    </span>
-                  </div>
-                </div>
+<!--                <div class="contact-item">-->
+<!--                  <div class="contact-icon">-->
+<!--                    <i class="fas fa-phone"></i>-->
+<!--                  </div>-->
+<!--                  <div class="contact-content">-->
+<!--                    <span class="contact-label">تلفن:</span>-->
+<!--                    <span class="contact-value">-->
+<!--                      <a href="tel:+982188123456">۰۲۱-۸۸۱۲۳۴۵۶</a>-->
+<!--                    </span>-->
+<!--                  </div>-->
+<!--                </div>-->
 
-                <div class="contact-item">
-                  <div class="contact-icon">
-                    <i class="fas fa-envelope"></i>
-                  </div>
-                  <div class="contact-content">
-                    <span class="contact-label">ایمیل:</span>
-                    <span class="contact-value">
-                      <a href="mailto:info@example.com">info@example.com</a>
-                    </span>
-                  </div>
-                </div>
+<!--                <div class="contact-item">-->
+<!--                  <div class="contact-icon">-->
+<!--                    <i class="fas fa-envelope"></i>-->
+<!--                  </div>-->
+<!--                  <div class="contact-content">-->
+<!--                    <span class="contact-label">ایمیل:</span>-->
+<!--                    <span class="contact-value">-->
+<!--                      <a href="mailto:info@example.com">info@example.com</a>-->
+<!--                    </span>-->
+<!--                  </div>-->
+<!--                </div>-->
 
-                <div class="contact-item">
-                  <div class="contact-icon">
-                    <i class="fas fa-clock"></i>
-                  </div>
-                  <div class="contact-content">
-                    <span class="contact-label">ساعات کاری:</span>
-                    <span class="contact-value">شنبه تا پنج‌شنبه، ۹ الی ۱۸</span>
-                  </div>
-                </div>
-              </div>
+<!--                <div class="contact-item">-->
+<!--                  <div class="contact-icon">-->
+<!--                    <i class="fas fa-clock"></i>-->
+<!--                  </div>-->
+<!--                  <div class="contact-content">-->
+<!--                    <span class="contact-label">ساعات کاری:</span>-->
+<!--                    <span class="contact-value">شنبه تا پنج‌شنبه، ۹ الی ۱۸</span>-->
+<!--                  </div>-->
+<!--                </div>-->
+<!--              </div>-->
 
-              <!-- Newsletter Signup -->
-              <div class="newsletter-signup">
-                <h6 class="newsletter-title">
-                  <i class="fas fa-bell me-2"></i>
-                  عضویت در خبرنامه
-                </h6>
-                <p class="newsletter-desc">
-                  از آخرین اخبار و دوره‌های جدید مطلع شوید
-                </p>
-                <form @submit.prevent="subscribeNewsletter" class="newsletter-form">
-                  <div class="input-group">
-                    <input
-                        type="email"
-                        class="modern-form-control"
-                        placeholder="ایمیل شما..."
-                        v-model="newsletterEmail"
-                        required>
-                    <button type="submit" class="modern-btn modern-btn-primary" :disabled="isSubscribing">
-                      <span v-if="isSubscribing" class="spinner-border spinner-border-sm" role="status"></span>
-                      <i v-else class="fas fa-paper-plane"></i>
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+<!--              &lt;!&ndash; Newsletter Signup &ndash;&gt;-->
+<!--              <div class="newsletter-signup">-->
+<!--                <h6 class="newsletter-title">-->
+<!--                  <i class="fas fa-bell me-2"></i>-->
+<!--                  عضویت در خبرنامه-->
+<!--                </h6>-->
+<!--                <p class="newsletter-desc">-->
+<!--                  از آخرین اخبار و دوره‌های جدید مطلع شوید-->
+<!--                </p>-->
+<!--                <form @submit.prevent="subscribeNewsletter" class="newsletter-form">-->
+<!--                  <div class="input-group">-->
+<!--                    <input-->
+<!--                        type="email"-->
+<!--                        class="modern-form-control"-->
+<!--                        placeholder="ایمیل شما..."-->
+<!--                        v-model="newsletterEmail"-->
+<!--                        required>-->
+<!--                    <button type="submit" class="modern-btn modern-btn-primary" :disabled="isSubscribing">-->
+<!--                      <span v-if="isSubscribing" class="spinner-border spinner-border-sm" role="status"></span>-->
+<!--                      <i v-else class="fas fa-paper-plane"></i>-->
+<!--                    </button>-->
+<!--                  </div>-->
+<!--                </form>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </div>-->
 
     <!-- Footer Bottom -->
     <div class="footer-bottom">
@@ -223,24 +223,24 @@
             </div>
           </div>
 
-          <div class="col-md-6">
-            <div class="footer-meta">
-              <div class="payment-methods">
-                <span class="payment-label">روش‌های پرداخت:</span>
-                <div class="payment-icons">
-                  <div class="payment-icon" title="کارت‌های بانکی">
-                    <i class="fas fa-credit-card"></i>
-                  </div>
-                  <div class="payment-icon" title="پرداخت اینترنتی">
-                    <i class="fas fa-globe"></i>
-                  </div>
-                  <div class="payment-icon" title="کیف پول دیجیتال">
-                    <i class="fas fa-wallet"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+<!--          <div class="col-md-6">-->
+<!--            <div class="footer-meta">-->
+<!--              <div class="payment-methods">-->
+<!--                <span class="payment-label">روش‌های پرداخت:</span>-->
+<!--                <div class="payment-icons">-->
+<!--                  <div class="payment-icon" title="کارت‌های بانکی">-->
+<!--                    <i class="fas fa-credit-card"></i>-->
+<!--                  </div>-->
+<!--                  <div class="payment-icon" title="پرداخت اینترنتی">-->
+<!--                    <i class="fas fa-globe"></i>-->
+<!--                  </div>-->
+<!--                  <div class="payment-icon" title="کیف پول دیجیتال">-->
+<!--                    <i class="fas fa-wallet"></i>-->
+<!--                  </div>-->
+<!--                </div>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
         </div>
       </div>
     </div>

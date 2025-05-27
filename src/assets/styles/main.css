@@ -1,6 +1,6 @@
 @import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
 @import './variables.css';
-@import './common.css';
+@import './common-pages.css';
 @import './forms.css';
 
 body {

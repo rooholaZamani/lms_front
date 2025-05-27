@@ -211,6 +211,104 @@
                 </div>
               </router-link>
             </li>
+
+
+            <!-- آزمون‌ها - برای هر دو نقش -->
+            <li class="nav-divider" v-if="!collapsed">
+            <span>
+              <i class="fas fa-clipboard-check me-2"></i>
+              آزمون‌ها
+            </span>
+            </li>
+
+            <template v-if="isTeacher">
+              <li class="nav-item">
+                <router-link
+                    class="modern-nav-link"
+                    :to="{ name: 'TeacherExams' }"
+                    active-class="active"
+                    :title="collapsed ? 'آزمون‌های من' : ''"
+                >
+                  <div class="nav-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                  </div>
+                  <span v-if="!collapsed" class="nav-text">آزمون‌های من</span>
+                  <div v-if="!collapsed" class="nav-arrow">
+                    <i class="fas fa-chevron-left"></i>
+                  </div>
+                </router-link>
+              </li>
+
+              <li class="nav-item">
+                <router-link
+                    class="modern-nav-link"
+                    :to="{ name: 'ExamCreator' }"
+                    active-class="active"
+                    :title="collapsed ? 'ایجاد آزمون جدید' : ''"
+                >
+                  <div class="nav-icon">
+                    <i class="fas fa-plus-circle"></i>
+                  </div>
+                  <span v-if="!collapsed" class="nav-text">ایجاد آزمون جدید</span>
+                  <div v-if="!collapsed" class="nav-arrow">
+                    <i class="fas fa-chevron-left"></i>
+                  </div>
+                </router-link>
+              </li>
+
+              <li class="nav-item">
+                <router-link
+                    class="modern-nav-link"
+                    :to="{ name: 'QuestionBank' }"
+                    active-class="active"
+                    :title="collapsed ? 'بانک سوالات' : ''"
+                >
+                  <div class="nav-icon">
+                    <i class="fas fa-question-circle"></i>
+                  </div>
+                  <span v-if="!collapsed" class="nav-text">بانک سوالات</span>
+                  <div v-if="!collapsed" class="nav-arrow">
+                    <i class="fas fa-chevron-left"></i>
+                  </div>
+                </router-link>
+              </li>
+            </template>
+
+            <template v-if="isStudent">
+              <li class="nav-item">
+                <router-link
+                    class="modern-nav-link"
+                    to="/student/exams"
+                    active-class="active"
+                    :title="collapsed ? 'آزمون‌های من' : ''"
+                >
+                  <div class="nav-icon">
+                    <i class="fas fa-clipboard-check"></i>
+                  </div>
+                  <span v-if="!collapsed" class="nav-text">آزمون‌های من</span>
+                  <div v-if="!collapsed" class="nav-arrow">
+                    <i class="fas fa-chevron-left"></i>
+                  </div>
+                </router-link>
+              </li>
+
+              <li class="nav-item">
+                <router-link
+                    class="modern-nav-link"
+                    to="/student/exam-results"
+                    active-class="active"
+                    :title="collapsed ? 'نتایج آزمون‌ها' : ''"
+                >
+                  <div class="nav-icon">
+                    <i class="fas fa-chart-bar"></i>
+                  </div>
+                  <span v-if="!collapsed" class="nav-text">نتایج آزمون‌ها</span>
+                  <div v-if="!collapsed" class="nav-arrow">
+                    <i class="fas fa-chevron-left"></i>
+                  </div>
+                </router-link>
+              </li>
+            </template>
           </template>
 
           <!-- Common menu items -->

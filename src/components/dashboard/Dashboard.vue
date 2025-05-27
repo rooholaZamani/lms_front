@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard">
+  <div class="modern-page-bg">
     <div class="container-fluid px-4 py-3">
       <template v-if="isTeacher">
         <TeacherDashboard :user="user"/>
@@ -34,14 +34,9 @@ export default {
 </script>
 
 <style scoped>
-.dashboard {
-  min-height: calc(100vh - 56px);
-  background-color: #f8f9fa;
-}
-
-/* اطمینان از responsive بودن */
+/* فقط استایل‌های اختصاصی این کامپوننت */
 @media (max-width: 768px) {
-  .dashboard .container-fluid {
+  .container-fluid {
     padding-left: 1rem;
     padding-right: 1rem;
   }
