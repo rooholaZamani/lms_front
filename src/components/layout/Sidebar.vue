@@ -311,6 +311,44 @@
             </template>
           </template>
 
+
+
+
+          <li v-if="isTeacher" class="nav-item">
+            <router-link
+                class="modern-nav-link"
+                :to="{ name: 'Students' }"
+                active-class="active"
+                :title="collapsed ? 'مدیریت دانش‌آموزان' : ''"
+            >
+              <div class="nav-icon">
+                <i class="fas fa-users"></i>
+              </div>
+              <span v-if="!collapsed" class="nav-text">مدیریت دانش‌آموزان</span>
+              <div v-if="!collapsed" class="nav-arrow">
+                <i class="fas fa-chevron-left"></i>
+              </div>
+            </router-link>
+          </li>
+
+          <li v-if="isTeacher" class="nav-item">
+            <router-link
+                class="modern-nav-link"
+                :to="{ name: 'StudentActivities' }"
+                active-class="active"
+                :title="collapsed ? 'فعالیت دانش‌آموزان' : ''"
+            >
+              <div class="nav-icon">
+                <i class="fas fa-user-graduate"></i>
+              </div>
+              <span v-if="!collapsed" class="nav-text">فعالیت دانش‌آموزان</span>
+              <div v-if="!collapsed" class="nav-arrow">
+                <i class="fas fa-chevron-left"></i>
+              </div>
+            </router-link>
+          </li>
+
+
           <!-- Common menu items -->
           <li class="nav-divider" v-if="!collapsed">
             <span>
