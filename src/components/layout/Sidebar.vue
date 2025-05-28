@@ -392,27 +392,6 @@
           </li>
         </ul>
       </nav>
-
-      <!-- User Info at Bottom -->
-<!--      <div class="sidebar-footer" v-if="currentUser">-->
-<!--        <div class="user-info modern-card" :class="{ 'collapsed': collapsed }">-->
-<!--          <div class="user-avatar">-->
-<!--            <i class="fas fa-user"></i>-->
-<!--          </div>-->
-<!--          <div v-if="!collapsed" class="user-details animate-fade-in">-->
-<!--            <div class="user-name">{{ getUserName() }}</div>-->
-<!--            <div class="user-role">-->
-<!--              <span class="modern-badge modern-badge-primary">{{ getUserRole() }}</span>-->
-<!--            </div>-->
-<!--            <div class="user-actions mt-2">-->
-<!--              <button class="modern-btn modern-btn-outline text-danger" @click="handleLogout" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">-->
-<!--                <i class="fas fa-sign-out-alt me-1"></i>-->
-<!--                خروج-->
-<!--              </button>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </div>-->
     </div>
 
     <!-- Overlay for mobile -->
