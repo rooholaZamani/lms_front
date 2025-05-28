@@ -1,133 +1,274 @@
 <template>
   <div class="question-form">
     <form @submit.prevent="saveQuestion">
-      <div class="mb-3">
-        <label for="questionText" class="form-label">متن سوال <span class="text-danger">*</span></label>
-        <textarea class="form-control" id="questionText" v-model="questionData.text" rows="3" required></textarea>
-      </div>
+      <!-- متن سوال -->
+      <div class="form-section">
+        <h6 class="section-title">
+          <i class="fas fa-question-circle me-2"></i>
+          متن سوال
+        </h6>
 
-      <div class="mb-3">
-        <label for="questionType" class="form-label">نوع سوال <span class="text-danger">*</span></label>
-        <select class="form-select" id="questionType" v-model="questionData.type" required @change="handleTypeChange">
-          <option value="MULTIPLE_CHOICE">چند گزینه‌ای</option>
-          <option value="TRUE_FALSE">درست/نادرست</option>
-          <option value="SHORT_ANSWER">پاسخ کوتاه</option>
-          <option value="ESSAY">تشریحی</option>
-          <!-- اضافه کردن انواع جدید -->
-          <option value="FILL_IN_THE_BLANKS">جای خالی</option>
-          <option value="MATCHING">تطبیقی</option>
-          <option value="CATEGORIZATION">دسته‌بندی</option>
-        </select>
+        <div class="modern-form-group">
+          <label for="questionText" class="modern-form-label">متن سوال <span class="text-danger">*</span></label>
+          <textarea
+              class="modern-form-control"
+              id="questionText"
+              v-model="questionData.text"
+              rows="3"
+              placeholder="متن سوال خود را وارد کنید..."
+              required
+          ></textarea>
+        </div>
+
+        <div class="modern-form-group">
+          <label for="questionType" class="modern-form-label">نوع سوال <span class="text-danger">*</span></label>
+          <select
+              class="modern-form-control"
+              id="questionType"
+              v-model="questionData.type"
+              required
+              @change="handleTypeChange"
+          >
+            <option value="MULTIPLE_CHOICE">چند گزینه‌ای</option>
+            <option value="TRUE_FALSE">درست/نادرست</option>
+            <option value="SHORT_ANSWER">پاسخ کوتاه</option>
+            <option value="ESSAY">تشریحی</option>
+          </select>
+        </div>
       </div>
 
       <!-- گزینه‌های سوال چند گزینه‌ای -->
-      <div v-if="questionData.type === 'MULTIPLE_CHOICE'" class="mb-3">
-        <label class="form-label">گزینه‌ها <span class="text-danger">*</span></label>
-        <div v-for="(option, index) in questionData.options" :key="index" class="option-input-group mb-2">
-          <div class="input-group">
-            <div class="input-group-text">
-              <input class="form-check-input" type="radio"
-                     :name="'correctOption'"
-                     :value="index"
-                     :checked="Number(questionData.correctOption) === index"
-                     @change="questionData.correctOption = index">
-            </div>
-            <input type="text" class="form-control" v-model="questionData.options[index]"
-                   :placeholder="`گزینه ${index + 1}`" required>
-            <button type="button" class="btn btn-outline-danger" @click="removeOption(index)">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-        </div>
+      <div v-if="questionData.type === 'MULTIPLE_CHOICE'" class="form-section">
+        <h6 class="section-title">
+          <i class="fas fa-list me-2"></i>
+          گزینه‌ها
+        </h6>
 
-        <button type="button" class="btn btn-outline-primary btn-sm mt-2" @click="addOption"
-                :disabled="questionData.options.length >= 6">
-          <i class="fas fa-plus"></i> افزودن گزینه
-        </button>
+        <div class="modern-form-group">
+          <label class="modern-form-label">گزینه‌ها <span class="text-danger">*</span></label>
+          <div class="options-container">
+            <div v-for="(option, index) in questionData.options" :key="index" class="option-input-group">
+              <div class="option-input">
+                <div class="correct-selector">
+                  <input
+                      class="form-check-input"
+                      type="radio"
+                      :name="'correctOption'"
+                      :value="index"
+                      :checked="Number(questionData.correctOption) === index"
+                      @change="questionData.correctOption = index"
+                  >
+                  <label class="option-label">{{ String.fromCharCode(65 + index) }}</label>
+                </div>
+                <input
+                    type="text"
+                    class="modern-form-control"
+                    v-model="questionData.options[index]"
+                    :placeholder="`گزینه ${String.fromCharCode(65 + index)}`"
+                    required
+                >
+                <button
+                    type="button"
+                    class="remove-option-btn"
+                    @click="removeOption(index)"
+                    :disabled="questionData.options.length <= 2"
+                >
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button
+              type="button"
+              class="modern-btn modern-btn-outline"
+              @click="addOption"
+              :disabled="questionData.options.length >= 6"
+          >
+            <i class="fas fa-plus me-1"></i> افزودن گزینه
+          </button>
+        </div>
       </div>
 
       <!-- گزینه‌های سوال درست/نادرست -->
-      <div v-else-if="questionData.type === 'TRUE_FALSE'" class="mb-3">
-        <label class="form-label">پاسخ صحیح <span class="text-danger">*</span></label>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" id="trueFalseTrue"
-                 value="true" v-model="questionData.correctOption">
-          <label class="form-check-label" for="trueFalseTrue">درست</label>
-        </div>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" id="trueFalseFalse"
-                 value="false" v-model="questionData.correctOption">
-          <label class="form-check-label" for="trueFalseFalse">نادرست</label>
+      <div v-else-if="questionData.type === 'TRUE_FALSE'" class="form-section">
+        <h6 class="section-title">
+          <i class="fas fa-check-circle me-2"></i>
+          پاسخ صحیح
+        </h6>
+
+        <div class="modern-form-group">
+          <label class="modern-form-label">پاسخ صحیح <span class="text-danger">*</span></label>
+          <div class="true-false-options">
+            <div class="form-check-option">
+              <input
+                  class="form-check-input"
+                  type="radio"
+                  id="trueFalseTrue"
+                  value="true"
+                  v-model="questionData.correctOption"
+              >
+              <label class="form-check-label" for="trueFalseTrue">
+                <i class="fas fa-check me-2 text-success"></i>
+                درست
+              </label>
+            </div>
+            <div class="form-check-option">
+              <input
+                  class="form-check-input"
+                  type="radio"
+                  id="trueFalseFalse"
+                  value="false"
+                  v-model="questionData.correctOption"
+              >
+              <label class="form-check-label" for="trueFalseFalse">
+                <i class="fas fa-times me-2 text-danger"></i>
+                نادرست
+              </label>
+            </div>
+          </div>
         </div>
       </div>
 
       <!-- گزینه‌های سوال پاسخ کوتاه -->
-      <div v-else-if="questionData.type === 'SHORT_ANSWER'" class="mb-3">
-        <label for="shortAnswerCorrect" class="form-label">پاسخ صحیح <span class="text-danger">*</span></label>
-        <input type="text" class="form-control" id="shortAnswerCorrect"
-               v-model="questionData.correctOption" required>
+      <div v-else-if="questionData.type === 'SHORT_ANSWER'" class="form-section">
+        <h6 class="section-title">
+          <i class="fas fa-edit me-2"></i>
+          پاسخ صحیح
+        </h6>
+
+        <div class="modern-form-group">
+          <label for="shortAnswerCorrect" class="modern-form-label">پاسخ صحیح <span class="text-danger">*</span></label>
+          <input
+              type="text"
+              class="modern-form-control"
+              id="shortAnswerCorrect"
+              v-model="questionData.correctOption"
+              placeholder="پاسخ صحیح را وارد کنید..."
+              required
+          >
+        </div>
       </div>
 
       <!-- گزینه‌های سوال تشریحی -->
-      <div v-else-if="questionData.type === 'ESSAY'" class="mb-3">
-        <label for="essayMaxScore" class="form-label">حداکثر نمره <span class="text-danger">*</span></label>
-        <input type="number" class="form-control" id="essayMaxScore"
-               v-model="questionData.maxScore" min="1" max="100" required>
-      </div>
+      <div v-else-if="questionData.type === 'ESSAY'" class="form-section">
+        <h6 class="section-title">
+          <i class="fas fa-file-alt me-2"></i>
+          تنظیمات سوال تشریحی
+        </h6>
 
-      <div class="mb-3">
-        <label for="questionExplanation" class="form-label">توضیحات تکمیلی (اختیاری)</label>
-        <textarea class="form-control" id="questionExplanation"
-                  v-model="questionData.explanation" rows="2"></textarea>
-        <div class="form-text">این توضیحات پس از آزمون به دانش‌آموز نمایش داده خواهد شد.</div>
-      </div>
-
-      <div class="mb-3">
-        <label for="questionPoints" class="form-label">امتیاز سوال <span class="text-danger">*</span></label>
-        <input type="number" class="form-control" id="questionPoints"
-               v-model="questionData.points" min="1" max="100" required>
-      </div>
-
-      <div class="text-end">
-        <button type="button" class="btn btn-secondary me-2" @click="$emit('cancel')">انصراف</button>
-        <button type="submit" class="btn btn-primary" :disabled="isSubmitting">
-          <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-          {{ isEditing ? 'ذخیره تغییرات' : 'افزودن سوال' }}
-        </button>
-      </div>
-      <!-- اضافه کردن فیلدهای جدید -->
-      <div class="row">
-        <div class="col-md-6">
-          <div class="mb-3">
-            <label for="questionHint" class="form-label">راهنمایی (اختیاری)</label>
-            <input type="text" class="form-control" id="questionHint" v-model="questionData.hint">
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="mb-3">
-            <label for="questionTimeLimit" class="form-label">محدودیت زمانی (ثانیه) (اختیاری)</label>
-            <input type="number" class="form-control" id="questionTimeLimit" v-model="questionData.timeLimit" min="0">
-          </div>
+        <div class="modern-form-group">
+          <label for="essayMaxScore" class="modern-form-label">حداکثر نمره <span class="text-danger">*</span></label>
+          <input
+              type="number"
+              class="modern-form-control"
+              id="essayMaxScore"
+              v-model="questionData.maxScore"
+              min="1"
+              max="100"
+              placeholder="حداکثر نمره قابل کسب..."
+              required
+          >
         </div>
       </div>
 
-      <div class="row">
-        <div class="col-md-6">
-          <div class="mb-3">
-            <label for="questionDifficulty" class="form-label">سطح دشواری (1-5)</label>
-            <input type="number" class="form-control" id="questionDifficulty" v-model="questionData.difficulty" min="1" max="5" step="0.5">
+      <!-- تنظیمات اضافی -->
+      <div class="form-section">
+        <h6 class="section-title">
+          <i class="fas fa-cogs me-2"></i>
+          تنظیمات اضافی
+        </h6>
+
+        <div class="row">
+          <div class="col-md-6 modern-form-group">
+            <label for="questionPoints" class="modern-form-label">امتیاز سوال <span class="text-danger">*</span></label>
+            <input
+                type="number"
+                class="modern-form-control"
+                id="questionPoints"
+                v-model="questionData.points"
+                min="1"
+                max="100"
+                placeholder="امتیاز سوال..."
+                required
+            >
+          </div>
+          <div class="col-md-6 modern-form-group">
+            <label for="questionTimeLimit" class="modern-form-label">محدودیت زمانی (ثانیه)</label>
+            <input
+                type="number"
+                class="modern-form-control"
+                id="questionTimeLimit"
+                v-model="questionData.timeLimit"
+                min="0"
+                placeholder="زمان پاسخ‌دهی..."
+            >
           </div>
         </div>
-        <div class="col-md-6">
-          <div class="mb-3">
-            <div class="form-check mt-4">
-              <input class="form-check-input" type="checkbox" id="isRequired" v-model="questionData.isRequired">
+
+        <div class="row">
+          <div class="col-md-6 modern-form-group">
+            <label for="questionDifficulty" class="modern-form-label">سطح دشواری (۱-۵)</label>
+            <select class="modern-form-control" id="questionDifficulty" v-model="questionData.difficulty">
+              <option value="">انتخاب کنید</option>
+              <option value="1">۱ - بسیار آسان</option>
+              <option value="2">۲ - آسان</option>
+              <option value="3">۳ - متوسط</option>
+              <option value="4">۴ - سخت</option>
+              <option value="5">۵ - بسیار سخت</option>
+            </select>
+          </div>
+          <div class="col-md-6 modern-form-group">
+            <div class="form-check" style="margin-top: 2rem;">
+              <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="isRequired"
+                  v-model="questionData.isRequired"
+              >
               <label class="form-check-label" for="isRequired">
+                <i class="fas fa-asterisk me-1 text-danger"></i>
                 سوال اجباری
               </label>
             </div>
           </div>
         </div>
+
+        <div class="modern-form-group">
+          <label for="questionHint" class="modern-form-label">راهنمایی (اختیاری)</label>
+          <input
+              type="text"
+              class="modern-form-control"
+              id="questionHint"
+              v-model="questionData.hint"
+              placeholder="راهنمایی برای دانش‌آموزان..."
+          >
+        </div>
+
+        <div class="modern-form-group">
+          <label for="questionExplanation" class="modern-form-label">توضیحات تکمیلی (اختیاری)</label>
+          <textarea
+              class="modern-form-control"
+              id="questionExplanation"
+              v-model="questionData.explanation"
+              rows="3"
+              placeholder="توضیحات بیشتر درباره سوال..."
+          ></textarea>
+          <div class="form-text">این توضیحات پس از آزمون به دانش‌آموز نمایش داده خواهد شد.</div>
+        </div>
+      </div>
+
+      <!-- دکمه‌های عمل -->
+      <div class="form-actions">
+        <button type="button" class="modern-btn modern-btn-secondary" @click="$emit('cancel')">
+          <i class="fas fa-times me-1"></i>
+          انصراف
+        </button>
+        <button type="submit" class="modern-btn modern-btn-success" :disabled="isSubmitting">
+          <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          <i class="fas fa-save me-1"></i>
+          {{ isEditing ? 'ذخیره تغییرات' : 'افزودن سوال' }}
+        </button>
       </div>
     </form>
   </div>
@@ -155,14 +296,11 @@ export default {
   },
   methods: {
     saveQuestion() {
-      // اعتبارسنجی فرم بر اساس نوع سوال
       if (!this.validateQuestion()) {
         return;
       }
 
-      // تبدیل داده‌ها به فرمت مورد نیاز API
       const formattedData = this.formatQuestionData();
-
       this.$emit('save', formattedData);
     },
 
@@ -170,7 +308,6 @@ export default {
       const data = { ...this.questionData };
 
       if (data.type === 'MULTIPLE_CHOICE') {
-        // برای سوال چند گزینه‌ای، از options استفاده کنید
         const validOptions = data.options.filter(opt => opt && opt.trim() !== '');
         data.options = validOptions.map((text, index) => ({
           text: text,
@@ -197,7 +334,6 @@ export default {
           }
         ];
       } else if (data.type === 'SHORT_ANSWER') {
-        // برای SHORT_ANSWER هم نیاز به options است
         data.options = [
           {
             text: data.correctOption,
@@ -208,7 +344,6 @@ export default {
           }
         ];
       } else if (data.type === 'ESSAY') {
-        // برای ESSAY که نیاز به بررسی دستی دارد
         data.options = [
           {
             text: 'Essay Answer',
@@ -220,15 +355,11 @@ export default {
         ];
       }
 
-      // تنظیم questionType به جای type
       data.questionType = data.type;
       delete data.type;
-
-      // حذف فیلدهای اضافی
       delete data.correctOption;
       delete data.maxScore;
 
-      // اطمینان از وجود points
       if (!data.points) {
         data.points = 10;
       }
@@ -250,11 +381,9 @@ export default {
       if (this.questionData.options.length > 2) {
         this.questionData.options.splice(index, 1);
 
-        // اگر گزینه انتخاب شده حذف شد، گزینه اول را به عنوان پاسخ درست انتخاب می‌کنیم
         if (this.questionData.correctOption === index) {
           this.questionData.correctOption = 0;
         } else if (this.questionData.correctOption > index) {
-          // تنظیم مجدد شاخص گزینه درست اگر بعد از گزینه حذف شده باشد
           this.questionData.correctOption--;
         }
       } else {
@@ -263,9 +392,7 @@ export default {
     },
 
     handleTypeChange() {
-      // تنظیم مقادیر پیش‌فرض بر اساس نوع سوال
       if (this.questionData.type === 'MULTIPLE_CHOICE') {
-        // اطمینان از وجود آرایه گزینه‌ها
         if (!this.questionData.options || this.questionData.options.length < 2) {
           this.questionData.options = ['', '', '', ''];
           this.questionData.correctOption = 0;
@@ -281,14 +408,12 @@ export default {
 
     validateQuestion() {
       if (this.questionData.type === 'MULTIPLE_CHOICE') {
-        // حداقل باید دو گزینه با مقدار غیر خالی وجود داشته باشد
         const validOptions = this.questionData.options.filter(opt => opt.trim() !== '');
         if (validOptions.length < 2) {
           this.showErrorToast('حداقل دو گزینه برای سوال چندگزینه‌ای لازم است.');
           return false;
         }
 
-        // اطمینان از این که گزینه درست انتخاب شده و در محدوده قابل قبول است
         if (this.questionData.correctOption === null ||
             this.questionData.correctOption === undefined ||
             this.questionData.correctOption < 0 ||
@@ -297,26 +422,22 @@ export default {
           return false;
         }
       } else if (this.questionData.type === 'TRUE_FALSE') {
-        // اطمینان از این که یک گزینه انتخاب شده است
         if (this.questionData.correctOption !== 'true' && this.questionData.correctOption !== 'false') {
           this.showErrorToast('لطفاً پاسخ درست را انتخاب کنید.');
           return false;
         }
       } else if (this.questionData.type === 'SHORT_ANSWER') {
-        // اطمینان از پر کردن فیلد پاسخ صحیح
         if (!this.questionData.correctOption || this.questionData.correctOption.trim() === '') {
           this.showErrorToast('لطفاً پاسخ صحیح را وارد کنید.');
           return false;
         }
       } else if (this.questionData.type === 'ESSAY') {
-        // اطمینان از وارد کردن نمره
         if (!this.questionData.maxScore || this.questionData.maxScore < 1) {
           this.showErrorToast('لطفاً حداکثر نمره سوال را وارد کنید.');
           return false;
         }
       }
 
-      // بررسی مقدار points
       if (!this.questionData.points || this.questionData.points < 1) {
         this.showErrorToast('لطفاً امتیاز سوال را وارد کنید.');
         return false;
@@ -329,7 +450,148 @@ export default {
 </script>
 
 <style scoped>
+.question-form {
+  max-width: 100%;
+}
+
+.options-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
 .option-input-group {
-  margin-bottom: 10px;
+  width: 100%;
+}
+
+.option-input {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(248, 249, 250, 0.8);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.correct-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.option-label {
+  font-weight: 600;
+  color: #667eea;
+  min-width: 20px;
+  text-align: center;
+  margin: 0;
+}
+
+.option-input input.modern-form-control {
+  flex: 1;
+  margin: 0;
+}
+
+.remove-option-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.remove-option-btn:hover:not(:disabled) {
+  background: rgba(220, 53, 69, 0.2);
+  transform: scale(1.1);
+}
+
+.remove-option-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.true-false-options {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.form-check-option {
+  display: flex;
+  align-items: center;
+  background: rgba(248, 249, 250, 0.8);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+  min-width: 150px;
+}
+
+.form-check-option:hover {
+  background: rgba(102, 126, 234, 0.05);
+  border-color: #667eea;
+}
+
+.form-check-option input[type="radio"] {
+  margin-left: 0.75rem;
+}
+
+.form-check-option label {
+  margin: 0;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.form-text {
+  font-size: 0.85rem;
+  color: #6c757d;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .true-false-options {
+    flex-direction: column;
+  }
+
+  .form-check-option {
+    min-width: auto;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .option-input {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .correct-selector {
+    width: 100%;
+    justify-content: center;
+  }
 }
 </style>
