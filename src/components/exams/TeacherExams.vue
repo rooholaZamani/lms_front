@@ -336,7 +336,7 @@ export default {
 
 .exam-header {
   display: flex;
-  justify-content: between;
+  justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 1rem;
   gap: 1rem;

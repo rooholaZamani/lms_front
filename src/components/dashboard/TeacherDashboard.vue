@@ -295,6 +295,9 @@ export default {
 
     const hideCreateCourseModal = () => {
       showCreateCourse.value = false;
+      document.querySelector('.modal-backdrop')?.remove();
+      document.body.style.overflow = '';
+
     };
 
     const createCourse = async () => {
