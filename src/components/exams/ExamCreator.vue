@@ -1,48 +1,65 @@
 <template>
-  <div class="exam-creator">
-    <div class="container-fluid p-4">
+  <div class="modern-page-bg primary-gradient">
+    <div class="modern-container large animate-slide-up">
       <loading-spinner :loading="loading">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <h2>{{ isEditMode ? 'ویرایش آزمون' : 'ایجاد آزمون جدید' }}</h2>
-          <button class="btn btn-outline-secondary" @click="goBack">
-            <i class="fas fa-arrow-right"></i> بازگشت
-          </button>
+        <!-- Header -->
+        <div class="modern-header">
+          <div class="modern-logo primary">
+            <i class="fas fa-clipboard-list"></i>
+          </div>
+          <h1 class="modern-title">{{ isEditMode ? 'ویرایش آزمون' : 'ایجاد آزمون جدید' }}</h1>
+          <div class="d-flex justify-content-center">
+            <button class="modern-btn modern-btn-outline text-white" @click="goBack">
+              <i class="fas fa-arrow-right me-2"></i>
+              بازگشت
+            </button>
+          </div>
         </div>
 
         <!-- فرم اطلاعات پایه آزمون -->
-        <exam-info-form
-            :exam-data="examData"
-            :available-lessons="availableLessons"
-            :is-submitting="isInfoSubmitting"
-            @save-exam-info="saveExamInfo"
-        />
+        <div class="modern-card animate-fade-in" style="animation-delay: 0.1s;">
+          <exam-info-form
+              :exam-data="examData"
+              :available-lessons="availableLessons"
+              :is-submitting="isInfoSubmitting"
+              @save-exam-info="saveExamInfo"
+          />
+        </div>
 
-        <!-- مدیریت سوالات - فقط زمانی نمایش داده می‌شود که examId داشته باشیم -->
-        <div v-if="examId" class="card">
-          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">سوالات آزمون</h5>
-            <div>
-              <button class="btn btn-light me-2" @click="importFromQuestionBank">
-                <i class="fas fa-database"></i> استفاده از بانک سوالات
+        <!-- مدیریت سوالات -->
+        <div v-if="examId" class="modern-card animate-fade-in" style="animation-delay: 0.2s;">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="modern-title">
+              <i class="fas fa-question-circle text-primary me-2"></i>
+              سوالات آزمون
+            </h5>
+            <div class="d-flex gap-2 flex-wrap">
+              <button class="modern-btn modern-btn-info" @click="importFromQuestionBank">
+                <i class="fas fa-database me-2"></i>
+                استفاده از بانک سوالات
               </button>
-              <button class="btn btn-light" @click="showAddQuestionModal">
-                <i class="fas fa-plus"></i> افزودن سوال
+              <button class="modern-btn modern-btn-success" @click="showAddQuestionModal">
+                <i class="fas fa-plus me-2"></i>
+                افزودن سوال
               </button>
             </div>
           </div>
-          <div class="card-body">
-            <question-list
-                :questions="questions"
-                @add-question="showAddQuestionModal"
-                @edit-question="editQuestion"
-                @delete-question="confirmDeleteQuestion"
-            />
 
-            <div class="text-center mt-4">
-              <button class="btn btn-success btn-lg" @click="finalizeExam" :disabled="questions.length === 0">
-                <i class="fas fa-check"></i> نهایی‌سازی آزمون
-              </button>
-            </div>
+          <question-list
+              :questions="questions"
+              @add-question="showAddQuestionModal"
+              @edit-question="editQuestion"
+              @delete-question="confirmDeleteQuestion"
+          />
+
+          <div class="text-center mt-4">
+            <button
+                class="modern-btn modern-btn-success btn-lg"
+                @click="finalizeExam"
+                :disabled="questions.length === 0">
+              <i class="fas fa-check me-2"></i>
+              نهایی‌سازی آزمون
+            </button>
           </div>
         </div>
       </loading-spinner>
@@ -158,7 +175,6 @@ export default {
       this.isEditMode = false;
       this.loading = false;
 
-      // اگر lessonId از پراپس دریافت شده باشد، آن را تنظیم می‌کنیم
       if (this.lessonId) {
         this.examData.lessonId = this.lessonId;
       }
@@ -174,7 +190,6 @@ export default {
         const response = await axios.get(`/exams/${this.examId}`);
         const examData = response.data;
 
-        // تنظیم داده‌های آزمون
         this.examData = {
           title: examData.title,
           description: examData.description,
@@ -184,9 +199,7 @@ export default {
           shuffleQuestions: examData.shuffleQuestions || false
         };
 
-        // دریافت سوالات
         await this.fetchExamQuestions();
-
         this.loading = false;
         this.finishSubmitting();
       } catch (error) {
@@ -195,19 +208,17 @@ export default {
         this.loading = false;
       }
     },
-    importFromQuestionBank() {
-      // Store the current exam ID in localStorage
-      localStorage.setItem('currentExamId', this.examId);
 
-      // Navigate to the question bank
+    importFromQuestionBank() {
+      localStorage.setItem('currentExamId', this.examId);
       this.$router.push({
         name: 'QuestionBank',
         query: { returnTo: 'ExamCreator', examId: this.examId }
       });
     },
+
     async fetchExamQuestions() {
       try {
-        // دریافت سوالات آزمون - با استفاده از endpoint صحیح
         const response = await axios.get(`/exams/${this.examId}/questions`);
         this.questions = response.data;
       } catch (error) {
@@ -218,7 +229,6 @@ export default {
 
     async fetchLessons() {
       try {
-        // دریافت درس‌های قابل دسترس برای معلم
         const response = await axios.get('/lessons/teaching');
         this.availableLessons = response.data;
       } catch (error) {
@@ -238,10 +248,8 @@ export default {
         let response;
 
         if (this.isEditMode) {
-          // ویرایش آزمون موجود
           response = await axios.put(`/exams/${this.examId}`, this.examData);
         } else {
-          // ایجاد آزمون جدید - اصلاح endpoint مطابق با API
           response = await axios.post(`/exams/lesson/${this.examData.lessonId}`, this.examData);
           this.examId = response.data.id;
           this.isEditMode = true;
@@ -265,7 +273,6 @@ export default {
         correctOption: 0,
         explanation: '',
         points: 10,
-        // اضافه کردن فیلدهای جدید
         hint: '',
         timeLimit: null,
         difficulty: 3.0,
@@ -277,11 +284,8 @@ export default {
     editQuestion(question) {
       this.isEditingQuestion = true;
       this.selectedQuestionId = question.id;
-
-      // کپی اطلاعات سوال
       this.currentQuestion = { ...question };
 
-      // اطمینان از وجود آرایه گزینه‌ها برای سوال چند گزینه‌ای
       if (question.type === 'MULTIPLE_CHOICE' && (!question.options || !Array.isArray(question.options))) {
         this.currentQuestion.options = ['', '', '', ''];
       }
@@ -295,10 +299,9 @@ export default {
       try {
         let response;
 
-        // آماده‌سازی داده‌ها مطابق API
         const questionData = {
           text: this.currentQuestion.text,
-          questionType: this.currentQuestion.type, // استفاده از questionType
+          questionType: this.currentQuestion.type,
           points: this.currentQuestion.points || 10,
           explanation: this.currentQuestion.explanation || '',
           hint: this.currentQuestion.hint || '',
@@ -307,9 +310,7 @@ export default {
           isRequired: this.currentQuestion.isRequired || false
         };
 
-        // تنظیم فیلدهای مخصوص هر نوع سوال
         if (this.currentQuestion.type === 'MULTIPLE_CHOICE') {
-          // برای چند گزینه‌ای از options استفاده کنید
           const options = this.currentQuestion.options.filter(opt => opt && opt.trim() !== '');
           questionData.options = options.map((text, index) => ({
             text: text,
@@ -336,7 +337,6 @@ export default {
             }
           ];
         } else if (this.currentQuestion.type === 'SHORT_ANSWER') {
-          // برای SHORT_ANSWER هم نیاز به options است
           questionData.options = [
             {
               text: this.currentQuestion.correctOption,
@@ -347,7 +347,6 @@ export default {
             }
           ];
         } else if (this.currentQuestion.type === 'ESSAY') {
-          // برای ESSAY که نیاز به بررسی دستی دارد
           questionData.options = [
             {
               text: 'Essay Answer',
@@ -360,27 +359,18 @@ export default {
         }
 
         if (this.isEditingQuestion) {
-          // ویرایش سوال موجود
           response = await axios.put(`/questions/${this.selectedQuestionId}`, questionData);
-
-          // به‌روزرسانی سوال در لیست
           const index = this.questions.findIndex(q => q.id === this.selectedQuestionId);
           if (index !== -1) {
             this.questions[index] = response.data;
           }
-
           this.showSuccessToast('سوال با موفقیت به‌روزرسانی شد.');
         } else {
-          // افزودن سوال جدید - اصلاح endpoint مطابق با API
           response = await axios.post(`/questions/exam/${this.examId}`, questionData);
-
-          // افزودن سوال جدید به لیست
           this.questions.push(response.data);
-
           this.showSuccessToast('سوال جدید با موفقیت افزوده شد.');
         }
 
-        // بستن مودال
         this.$refs.questionModal.hide();
       } catch (error) {
         console.error('Error saving question:', error);
@@ -389,6 +379,7 @@ export default {
         this.isQuestionSubmitting = false;
       }
     },
+
     confirmDeleteQuestion(question) {
       this.selectedQuestion = question;
       this.$refs.deleteConfirmDialog.show();
@@ -401,10 +392,7 @@ export default {
 
       try {
         await axios.delete(`/questions/${this.selectedQuestion.id}`);
-
-        // حذف سوال از لیست
         this.questions = this.questions.filter(q => q.id !== this.selectedQuestion.id);
-
         this.showSuccessToast('سوال با موفقیت حذف شد.');
       } catch (error) {
         console.error('Error deleting question:', error);
@@ -422,10 +410,8 @@ export default {
 
       try {
         await axios.put(`/exams/${this.examId}/finalize`);
-
         this.showSuccessToast('آزمون با موفقیت نهایی شد.');
 
-        // انتقال به صفحه درس
         if (this.examData.lessonId) {
           const lessonResponse = await axios.get(`/lessons/${this.examData.lessonId}`);
           const courseId = lessonResponse.data.course?.id;
@@ -446,3 +432,17 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+/* Responsive */
+@media (max-width: 768px) {
+  .d-flex.gap-2 {
+    flex-direction: column;
+    gap: 0.5rem !important;
+  }
+
+  .modern-btn {
+    width: 100%;
+  }
+}
+</style>

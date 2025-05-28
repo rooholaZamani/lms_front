@@ -1,16 +1,193 @@
+<template>
+  <div class="modern-page-bg primary-gradient">
+    <div class="modern-container large animate-slide-up">
+      <div class="modern-header text-center">
+        <div class="modern-logo large primary mb-4">
+          <i class="fas fa-clipboard-check"></i>
+        </div>
+        <h1 class="modern-title">آزمون‌ها</h1>
+        <p class="modern-subtitle">مدیریت و شرکت در آزمون‌های آموزشی</p>
+      </div>
+
+      <div v-if="error" class="modern-alert modern-alert-danger">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        {{ error }}
+      </div>
+
+      <!-- Teacher Actions -->
+      <div v-if="isTeacher" class="text-center mb-4">
+        <router-link :to="{ name: 'ExamCreator' }" class="modern-btn modern-btn-success">
+          <i class="fas fa-plus me-2"></i>
+          ایجاد آزمون جدید
+        </router-link>
+      </div>
+
+      <loading-spinner :loading="loading">
+        <!-- Filter Section -->
+        <div class="modern-card mb-4 animate-fade-in">
+          <h6 class="section-title">
+            <i class="fas fa-filter me-2"></i>
+            فیلتر و جستجو
+          </h6>
+
+          <div class="row">
+            <div class="col-md-4 modern-form-group">
+              <label class="modern-form-label">جستجو در آزمون‌ها</label>
+              <input
+                  type="text"
+                  class="modern-form-control"
+                  v-model="searchQuery"
+                  placeholder="عنوان آزمون..."
+              >
+            </div>
+            <div class="col-md-3 modern-form-group">
+              <label class="modern-form-label">وضعیت</label>
+              <select class="modern-form-control" v-model="statusFilter">
+                <option value="all">همه وضعیت‌ها</option>
+                <option value="active">فعال</option>
+                <option value="upcoming">در آینده</option>
+                <option value="completed">پایان یافته</option>
+              </select>
+            </div>
+            <div class="col-md-3 modern-form-group">
+              <label class="modern-form-label">مرتب‌سازی</label>
+              <select class="modern-form-control" v-model="sortBy">
+                <option value="date">تاریخ (جدیدترین)</option>
+                <option value="title">عنوان (الفبا)</option>
+                <option value="score">نمره (بیشترین)</option>
+              </select>
+            </div>
+            <div class="col-md-2 modern-form-group">
+              <label class="modern-form-label">&nbsp;</label>
+              <button class="modern-btn modern-btn-secondary w-100" @click="resetFilters">
+                <i class="fas fa-refresh me-1"></i>
+                بازنشانی
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Exams List -->
+        <div v-if="filteredExams.length > 0" class="modern-card animate-slide-up" style="animation-delay: 0.1s;">
+          <h6 class="section-title">
+            <i class="fas fa-list me-2"></i>
+            لیست آزمون‌ها
+          </h6>
+
+          <div class="exams-grid">
+            <div
+                v-for="exam in filteredExams"
+                :key="exam.id"
+                class="exam-card modern-card animate-fade-in"
+            >
+              <div class="exam-header">
+                <div class="exam-title">{{ exam.title }}</div>
+                <span class="modern-badge" :class="getStatusBadgeClass(exam.status)">
+                  {{ getStatusText(exam.status) }}
+                </span>
+              </div>
+
+              <div class="exam-body">
+                <div class="exam-meta">
+                  <div class="meta-item">
+                    <i class="fas fa-book text-primary me-2"></i>
+                    <span>{{ getLessonTitle(exam) }}</span>
+                  </div>
+                  <div class="meta-item">
+                    <i class="fas fa-calendar text-info me-2"></i>
+                    <span>{{ formatDate(exam.createdAt) }}</span>
+                  </div>
+                  <div class="meta-item">
+                    <i class="fas fa-clock text-warning me-2"></i>
+                    <span>{{ exam.duration }} دقیقه</span>
+                  </div>
+                  <div v-if="isTeacher" class="meta-item">
+                    <i class="fas fa-chart-bar text-success me-2"></i>
+                    <span>میانگین: {{ calculateAverageScore(exam) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="exam-footer">
+                <!-- Teacher actions -->
+                <div v-if="isTeacher" class="action-buttons">
+                  <button class="modern-btn modern-btn-primary" @click="editExam(exam.id)">
+                    <i class="fas fa-edit me-1"></i>
+                    ویرایش
+                  </button>
+                  <button class="modern-btn modern-btn-info" @click="viewResults(exam.id)">
+                    <i class="fas fa-chart-bar me-1"></i>
+                    نتایج
+                  </button>
+                </div>
+
+                <!-- Student actions -->
+                <div v-else class="action-buttons">
+                  <button
+                      v-if="!hasCompletedExam(exam)"
+                      class="modern-btn modern-btn-success"
+                      @click="viewExam(exam.id)"
+                  >
+                    <i class="fas fa-pen me-1"></i>
+                    شرکت در آزمون
+                  </button>
+                  <button
+                      v-else
+                      class="modern-btn modern-btn-secondary"
+                      @click="viewResults(exam.id)"
+                  >
+                    <i class="fas fa-eye me-1"></i>
+                    مشاهده نتیجه
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else class="modern-card text-center animate-slide-up" style="animation-delay: 0.2s;">
+          <div class="empty-state">
+            <div class="modern-logo large secondary mb-4">
+              <i class="fas fa-clipboard-check"></i>
+            </div>
+            <h4 class="modern-title">هیچ آزمونی یافت نشد</h4>
+            <p class="modern-subtitle">
+              در حال حاضر هیچ آزمونی برای نمایش وجود ندارد یا هیچ موردی با معیارهای جستجوی شما مطابقت ندارد.
+            </p>
+
+            <div class="mt-4">
+              <router-link v-if="isTeacher" :to="{ name: 'ExamCreator' }" class="modern-btn modern-btn-primary me-3">
+                <i class="fas fa-plus me-1"></i>
+                ایجاد آزمون جدید
+              </router-link>
+              <router-link v-else :to="{ name: 'Courses' }" class="modern-btn modern-btn-primary me-3">
+                <i class="fas fa-book me-1"></i>
+                مشاهده دوره‌ها
+              </router-link>
+              <button class="modern-btn modern-btn-outline" @click="resetFilters">
+                <i class="fas fa-refresh me-1"></i>
+                بازنشانی فیلتر
+              </button>
+            </div>
+          </div>
+        </div>
+      </loading-spinner>
+    </div>
+  </div>
+</template>
+
 <script>
 import { mapGetters } from 'vuex';
 import axios from 'axios';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
-import EmptyState from '@/components/common/EmptyState.vue';
 import { useUser } from '@/composables/useUser.js';
 import { useFormatters } from '@/composables/useFormatters.js';
 
 export default {
   name: 'ExamList',
   components: {
-    LoadingSpinner,
-    EmptyState
+    LoadingSpinner
   },
   setup() {
     const { isTeacher, isStudent } = useUser();
@@ -50,13 +227,7 @@ export default {
 
       // Apply status filter
       if (this.statusFilter !== 'all') {
-        if (this.statusFilter === 'active') {
-          result = result.filter(exam => exam.status === 'active');
-        } else if (this.statusFilter === 'completed') {
-          result = result.filter(exam => exam.status === 'completed');
-        } else if (this.statusFilter === 'upcoming') {
-          result = result.filter(exam => exam.status === 'upcoming');
-        }
+        result = result.filter(exam => exam.status === this.statusFilter);
       }
 
       // Apply sorting
@@ -65,7 +236,6 @@ export default {
       } else if (this.sortBy === 'score') {
         result.sort((a, b) => (b.averageScore || 0) - (a.averageScore || 0));
       } else {
-        // Default: date sorting
         result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       }
 
@@ -89,10 +259,8 @@ export default {
         let response;
 
         if (this.isTeacher) {
-          // For teachers, fetch exams they created
           response = await axios.get('/exams/teaching');
         } else {
-          // For students, fetch exams available to them
           response = await axios.get('/exams/available');
         }
 
@@ -121,13 +289,13 @@ export default {
     getStatusBadgeClass(status) {
       switch (status) {
         case 'active':
-          return 'bg-success';
+          return 'modern-badge-success';
         case 'upcoming':
-          return 'bg-primary';
+          return 'modern-badge-primary';
         case 'completed':
-          return 'bg-secondary';
+          return 'modern-badge-secondary';
         default:
-          return 'bg-info';
+          return 'modern-badge-info';
       }
     },
     getStatusText(status) {
@@ -161,152 +329,127 @@ export default {
 };
 </script>
 
-<template>
-  <div class="exam-list-container">
-    <div class="container-fluid p-4">
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>آزمون‌ها</h2>
-        <div v-if="isTeacher" class="d-flex">
-          <router-link :to="{ name: 'ExamCreator' }" class="btn btn-primary">
-            <i class="fas fa-plus me-1"></i> ایجاد آزمون جدید
-          </router-link>
-        </div>
-      </div>
-
-      <!-- Filter and Search Section -->
-      <div class="card mb-4">
-        <div class="card-body">
-          <div class="row">
-            <div class="col-md-4 mb-3">
-              <div class="input-group">
-                <input
-                    type="text"
-                    class="form-control"
-                    v-model="searchQuery"
-                    placeholder="جستجو در آزمون‌ها..."
-                />
-                <button class="btn btn-outline-secondary" type="button">
-                  <i class="fas fa-search"></i>
-                </button>
-              </div>
-            </div>
-            <div class="col-md-3 mb-3">
-              <select class="form-select" v-model="statusFilter">
-                <option value="all">همه وضعیت‌ها</option>
-                <option value="active">فعال</option>
-                <option value="upcoming">در آینده</option>
-                <option value="completed">پایان یافته</option>
-              </select>
-            </div>
-            <div class="col-md-3 mb-3">
-              <select class="form-select" v-model="sortBy">
-                <option value="date">تاریخ (جدیدترین)</option>
-                <option value="title">عنوان (الفبا)</option>
-                <option value="score">نمره (بیشترین)</option>
-              </select>
-            </div>
-            <div class="col-md-2 mb-3">
-              <button class="btn btn-outline-secondary w-100" @click="resetFilters">
-                <i class="fas fa-sync-alt me-1"></i> بازنشانی
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Exams List -->
-      <loading-spinner :loading="loading">
-        <div v-if="error" class="alert alert-danger">
-          {{ error }}
-        </div>
-
-        <div v-else-if="filteredExams.length > 0" class="card">
-          <div class="table-responsive">
-            <table class="table table-hover">
-              <thead class="table-light">
-              <tr>
-                <th>عنوان آزمون</th>
-                <th>درس مربوطه</th>
-                <th>تاریخ</th>
-                <th>زمان آزمون</th>
-                <th>وضعیت</th>
-                <th v-if="isTeacher">متوسط نمره</th>
-                <th>عملیات</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr v-for="exam in filteredExams" :key="exam.id">
-                <td>{{ exam.title }}</td>
-                <td>{{ getLessonTitle(exam) }}</td>
-                <td>{{ formatDate(exam.createdAt) }}</td>
-                <td>{{ exam.duration }} دقیقه</td>
-                <td>
-                    <span class="badge" :class="getStatusBadgeClass(exam.status)">
-                      {{ getStatusText(exam.status) }}
-                    </span>
-                </td>
-                <td v-if="isTeacher">{{ calculateAverageScore(exam) }}</td>
-                <td>
-                  <div class="d-flex gap-1">
-                    <!-- Teacher actions -->
-                    <template v-if="isTeacher">
-                      <button class="btn btn-sm btn-outline-primary" @click="editExam(exam.id)">
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      <button class="btn btn-sm btn-outline-info" @click="viewResults(exam.id)">
-                        <i class="fas fa-chart-bar"></i>
-                      </button>
-                    </template>
-
-                    <!-- Student actions -->
-                    <template v-else>
-                      <button v-if="!hasCompletedExam(exam)" class="btn btn-sm btn-primary" @click="viewExam(exam.id)">
-                        <i class="fas fa-pen"></i> شرکت در آزمون
-                      </button>
-                      <button v-else class="btn btn-sm btn-info" @click="viewResults(exam.id)">
-                        <i class="fas fa-eye"></i> مشاهده نتیجه
-                      </button>
-                    </template>
-                  </div>
-                </td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <empty-state
-            v-else
-            title="هیچ آزمونی یافت نشد"
-            description="در حال حاضر هیچ آزمونی برای نمایش وجود ندارد."
-            icon="clipboard-check"
-        >
-          <div v-if="isTeacher">
-            <router-link :to="{ name: 'ExamCreator' }" class="btn btn-primary">
-              ایجاد آزمون جدید
-            </router-link>
-          </div>
-          <div v-else>
-            <router-link :to="{ name: 'Courses' }" class="btn btn-primary">
-              مشاهده دوره‌ها
-            </router-link>
-          </div>
-        </empty-state>
-      </loading-spinner>
-    </div>
-  </div>
-</template>
-
 <style scoped>
-.exam-list-container {
-  min-height: calc(100vh - 56px);
+.section-title {
+  color: #333;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+  display: flex;
+  align-items: center;
 }
 
-.badge {
-  padding: 0.5em 0.8em;
+.exams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
 }
 
-.table td {
-  vertical-align: middle;
+.exam-card {
+  transition: all 0.3s ease;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  overflow: hidden;
+}
+
+.exam-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+}
+
+.exam-header {
+  display: flex;
+  justify-content: between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.exam-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  flex: 1;
+  line-height: 1.4;
+}
+
+.exam-body {
+  margin-bottom: 1.5rem;
+}
+
+.exam-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.meta-item i {
+  width: 20px;
+}
+
+.exam-footer {
+  border-top: 1px solid rgba(102, 126, 234, 0.1);
+  padding-top: 1rem;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.action-buttons .modern-btn {
+  flex: 1;
+  min-width: 120px;
+  font-size: 0.85rem;
+  padding: 0.6rem 1rem;
+}
+
+.empty-state {
+  padding: 3rem 2rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .exams-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .action-buttons .modern-btn {
+    min-width: auto;
+  }
+
+  .exam-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .modern-container.large {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .modern-container.large {
+    margin: 0 0.5rem;
+  }
+
+  .empty-state {
+    padding: 2rem 1rem;
+  }
 }
 </style>

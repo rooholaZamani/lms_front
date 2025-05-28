@@ -1,8 +1,9 @@
 <template>
-  <div class="exam-container">
-    <div class="container-fluid p-4">
+  <div class="modern-page-bg info-gradient">
+    <div class="modern-container large animate-slide-up">
       <loading-spinner :loading="loading">
-        <div v-if="error" class="alert alert-danger">
+        <div v-if="error" class="modern-alert modern-alert-danger">
+          <i class="fas fa-exclamation-circle me-2"></i>
           {{ error }}
         </div>
 
@@ -15,80 +16,98 @@
 
           <!-- During Exam -->
           <div v-else-if="!examCompleted" class="exam-active">
-            <div class="exam-header">
-              <h2>{{ exam.title }}</h2>
+            <!-- Header -->
+            <div class="modern-header">
+              <div class="modern-logo info">
+                <i class="fas fa-clipboard-check"></i>
+              </div>
+              <h1 class="modern-title">{{ exam.title }}</h1>
               <div class="exam-timer" :class="{ 'timer-warning': remainingTime <= 300 }">
-                <i class="fas fa-clock"></i>
+                <i class="fas fa-clock me-2"></i>
                 <span>{{ formatTime(remainingTime) }}</span>
               </div>
             </div>
 
-            <div class="progress mb-4">
-              <div class="progress-bar" role="progressbar"
-                   :style="`width: ${((currentQuestionIndex + 1) / exam.questions.length) * 100}%`"
-                   :aria-valuenow="((currentQuestionIndex + 1) / exam.questions.length) * 100"
-                   aria-valuemin="0" aria-valuemax="100">
-                {{ currentQuestionIndex + 1 }} / {{ exam.questions.length }}
+            <!-- Progress Bar -->
+            <div class="modern-card animate-fade-in" style="animation-delay: 0.1s;">
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="fw-bold">پیشرفت آزمون</span>
+                <span class="text-muted">{{ currentQuestionIndex + 1 }} / {{ exam.questions.length }}</span>
+              </div>
+              <div class="progress">
+                <div class="progress-bar bg-info"
+                     :style="`width: ${((currentQuestionIndex + 1) / exam.questions.length) * 100}%`"
+                     role="progressbar">
+                </div>
               </div>
             </div>
 
-            <div class="card">
-              <div class="card-body">
-                <!-- View: Question and Options -->
-                <exam-question
-                    v-if="!showConfirmation"
-                    :question="currentQuestion"
-                    :question-index="currentQuestionIndex"
-                    :total-questions="exam.questions.length"
-                    :answer="answers[currentQuestionIndex]"
-                    @answer-changed="updateAnswer" />
+            <!-- Question Card -->
+            <div class="modern-card animate-fade-in" style="animation-delay: 0.2s;">
+              <!-- Question Content -->
+              <exam-question
+                  v-if="!showConfirmation"
+                  :question="currentQuestion"
+                  :question-index="currentQuestionIndex"
+                  :total-questions="exam.questions.length"
+                  :answer="answers[currentQuestionIndex]"
+                  @answer-changed="updateAnswer" />
 
-                <!-- Navigation Buttons -->
-                <div v-if="!showConfirmation" class="exam-navigation mt-4 d-flex justify-content-between">
-                  <button class="btn btn-secondary"
-                          @click="previousQuestion"
-                          :disabled="currentQuestionIndex === 0">
-                    <i class="fas fa-chevron-right me-1"></i> سوال قبلی
+              <!-- Navigation Buttons -->
+              <div v-if="!showConfirmation" class="exam-navigation mt-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                  <button
+                      class="modern-btn modern-btn-secondary"
+                      @click="previousQuestion"
+                      :disabled="currentQuestionIndex === 0">
+                    <i class="fas fa-chevron-right me-2"></i>
+                    سوال قبلی
                   </button>
 
-                  <div>
-                    <button class="btn btn-outline-primary me-2" @click="markForReview">
-                      <i class="fas fa-bookmark me-1"></i> علامت‌گذاری برای بررسی مجدد
+                  <div class="d-flex gap-2 flex-wrap">
+                    <button class="modern-btn modern-btn-outline" @click="markForReview">
+                      <i class="fas fa-bookmark me-2"></i>
+                      علامت‌گذاری برای بررسی
                     </button>
 
-                    <button v-if="currentQuestionIndex < exam.questions.length - 1"
-                            class="btn btn-primary"
-                            @click="nextQuestion">
-                      سوال بعدی <i class="fas fa-chevron-left ms-1"></i>
+                    <button
+                        v-if="currentQuestionIndex < exam.questions.length - 1"
+                        class="modern-btn modern-btn-primary"
+                        @click="nextQuestion">
+                      سوال بعدی
+                      <i class="fas fa-chevron-left ms-2"></i>
                     </button>
-                    <button v-else
-                            class="btn btn-success"
-                            @click="confirmFinishExam">
-                      پایان آزمون <i class="fas fa-check ms-1"></i>
+
+                    <button
+                        v-else
+                        class="modern-btn modern-btn-success"
+                        @click="confirmFinishExam">
+                      پایان آزمون
+                      <i class="fas fa-check ms-2"></i>
                     </button>
                   </div>
                 </div>
-
-                <!-- View: Confirmation -->
-                <exam-finish-confirmation
-                    v-if="showConfirmation"
-                    :answers="answers"
-                    :total-questions="exam.questions.length"
-                    @cancel="cancelFinishExam"
-                    @finish="finishExam"
-                    @go-to-question="goToQuestion" />
               </div>
+
+              <!-- Confirmation View -->
+              <exam-finish-confirmation
+                  v-if="showConfirmation"
+                  :answers="answers"
+                  :total-questions="exam.questions.length"
+                  @cancel="cancelFinishExam"
+                  @finish="finishExam"
+                  @go-to-question="goToQuestion" />
             </div>
 
             <!-- Question Navigation Bar -->
-            <exam-navigation
-                v-if="!showConfirmation"
-                class="mt-4"
-                :current-question="currentQuestionIndex"
-                :total-questions="exam.questions.length"
-                :answers="answers"
-                :review-questions="questionsForReview"
-                @go-to-question="goToQuestion" />
+            <div v-if="!showConfirmation" class="modern-card animate-fade-in" style="animation-delay: 0.3s;">
+              <exam-navigation
+                  :current-question="currentQuestionIndex"
+                  :total-questions="exam.questions.length"
+                  :answers="answers"
+                  :review-questions="questionsForReview"
+                  @go-to-question="goToQuestion" />
+            </div>
           </div>
 
           <!-- Results -->
@@ -133,10 +152,7 @@ export default {
   },
   setup() {
     const { formatTime } = useFormatters();
-
-    return {
-      formatTime
-    };
+    return { formatTime };
   },
   data() {
     return {
@@ -180,24 +196,19 @@ export default {
     await this.fetchExamData();
   },
   beforeUnmount() {
-    // توقف تایمر در صورت خروج از صفحه
     this.stopTimer();
   },
   methods: {
     async fetchExamData() {
       try {
         this.loading = true;
-
-        // دریافت اطلاعات آزمون
         const response = await axios.get(`/exams/${this.id}`);
         this.exam = response.data;
 
-        // ذخیره شناسه دوره برای بازگشت بعد از آزمون
         if (this.exam.lesson && this.exam.lesson.course) {
           this.courseId = this.exam.lesson.course.id;
         }
 
-        // آماده‌سازی آرایه پاسخ‌ها
         if (this.exam.questions) {
           this.answers = Array(this.exam.questions.length).fill(null);
         }
@@ -211,13 +222,8 @@ export default {
     },
 
     startExam() {
-      // شروع آزمون
       this.examStarted = true;
-
-      // تنظیم زمان باقی‌مانده
-      this.remainingTime = (this.exam.duration || 60) * 60; // تبدیل دقیقه به ثانیه
-
-      // شروع تایمر
+      this.remainingTime = (this.exam.duration || 60) * 60;
       this.startTimer();
     },
 
@@ -226,7 +232,6 @@ export default {
         if (this.remainingTime > 0) {
           this.remainingTime--;
         } else {
-          // پایان زمان آزمون
           this.stopTimer();
           this.finishExam();
         }
@@ -255,8 +260,6 @@ export default {
     goToQuestion(index) {
       if (index >= 0 && index < this.exam.questions.length) {
         this.currentQuestionIndex = index;
-
-        // اگر در صفحه تایید بودیم، برمی‌گردیم به آزمون
         if (this.showConfirmation) {
           this.showConfirmation = false;
         }
@@ -264,18 +267,14 @@ export default {
     },
 
     updateAnswer(questionIndex, answer) {
-      // this.$set(this.answers, questionIndex, answer);
-      this.answers[questionIndex]= answer;
+      this.answers[questionIndex] = answer;
     },
 
     markForReview() {
       const index = this.currentQuestionIndex;
-
       if (this.questionsForReview.includes(index)) {
-        // حذف از لیست بررسی مجدد
         this.questionsForReview = this.questionsForReview.filter(i => i !== index);
       } else {
-        // افزودن به لیست بررسی مجدد
         this.questionsForReview.push(index);
       }
     },
@@ -290,10 +289,8 @@ export default {
 
     async finishExam() {
       try {
-        // توقف تایمر
         this.stopTimer();
 
-        // آماده‌سازی داده‌های ارسالی
         const submissionData = {
           examId: this.id,
           answers: this.answers.map((answer, index) => ({
@@ -302,13 +299,8 @@ export default {
           }))
         };
 
-        // ارسال پاسخ‌ها به سرور
         const response = await axios.post('/exams/submit', submissionData);
-
-        // ذخیره نتیجه
         this.examResult = response.data;
-
-        // تکمیل آزمون
         this.examCompleted = true;
         this.showConfirmation = false;
 
@@ -319,7 +311,6 @@ export default {
     },
 
     backToCourse() {
-      // بازگشت به صفحه دوره
       if (this.courseId) {
         this.$router.push({ name: 'CourseDetail', params: { id: this.courseId } });
       } else {
@@ -331,42 +322,73 @@ export default {
 </script>
 
 <style scoped>
-.exam-container {
-  min-height: calc(100vh - 56px);
-  background-color: #f5f7fa;
-}
-
-.exam-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
 .exam-timer {
-  background-color: #e9ecef;
-  padding: 10px 20px;
-  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
   font-size: 1.2rem;
-  font-weight: bold;
+  font-weight: 700;
+  color: #495057;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
-}
-
-.exam-timer i {
-  margin-left: 10px;
-  color: #6c757d;
+  justify-content: center;
+  transition: all 0.3s ease;
 }
 
 .timer-warning {
-  background-color: #fff3cd;
-  color: #856404;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+  color: white;
   animation: pulse 1.5s infinite;
 }
 
+.progress {
+  height: 8px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+/* Navigation */
+.exam-navigation {
+  padding-top: 2rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .exam-timer {
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .d-flex.justify-content-between {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .d-flex.gap-2 {
+    justify-content: center;
+  }
+
+  .modern-btn {
+    width: 100%;
+  }
+
+  .d-flex.gap-2 .modern-btn {
+    width: auto;
+    flex: 1;
+  }
+}
+
 @keyframes pulse {
-  0% { opacity: 1; }
+  0%, 100% { opacity: 1; }
   50% { opacity: 0.8; }
-  100% { opacity: 1; }
 }
 </style>
