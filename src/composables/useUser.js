@@ -3,6 +3,7 @@
  */
 import { computed } from 'vue'
 import { useStore } from 'vuex'
+import { useRouter } from 'vue-router'
 
 export function useUser() {
     const store = useStore();
@@ -43,7 +44,8 @@ export function useUser() {
      * خروج کاربر
      */
     const logout = async () => {
-        await store.dispatch('logout');
+        await store.dispatch('auth/logout');
+        router.push({ name: 'Login' });
         return true;
     };
 
