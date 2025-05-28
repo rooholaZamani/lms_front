@@ -342,6 +342,7 @@ export default {
   gap: 1rem;
 }
 
+
 .exam-title {
   font-weight: 600;
   color: #333;
