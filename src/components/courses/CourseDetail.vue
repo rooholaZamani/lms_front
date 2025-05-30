@@ -536,6 +536,7 @@ import CourseHeader from '@/components/courses/CourseHeader.vue';
 import LessonList from '@/components/courses/LessonList.vue';
 import StudentsTab from '@/components/courses/StudentsTab.vue';
 import LessonManager from '@/components/courses/LessonManager.vue';
+import CourseChat from '@/components/courses/CourseChat.vue';
 
 export default {
   name: 'CourseDetail',

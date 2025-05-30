@@ -1,122 +1,112 @@
 <template>
-  <div class="modern-page-bg info-gradient">
-    <div class="modern-container large animate-slide-up">
-      <div class="modern-header">
-        <div class="modern-logo info">
-          <i class="fas fa-comments"></i>
+  <div class="course-chat-container">
+    <div class="row">
+      <!-- Sidebar (participants) -->
+      <div class="col-md-3 mb-4">
+        <div class="modern-card animate-slide-right">
+          <h6 class="section-title">
+            <i class="fas fa-users me-2"></i>
+            شرکت‌کنندگان
+          </h6>
+
+          <loading-spinner :loading="loadingParticipants">
+            <div v-if="participants.length > 0" class="participants-list">
+              <div v-for="participant in participants" :key="participant.id" class="participant-item">
+                <div class="participant-avatar">
+                  {{ getInitials(participant.firstName, participant.lastName) }}
+                </div>
+                <div class="participant-info">
+                  <div class="participant-name">{{ getUserFullName(participant) }}</div>
+                  <div class="participant-role">{{ getUserRole(participant) }}</div>
+                </div>
+                <div class="participant-status" :class="{'online': participant.online}"></div>
+              </div>
+            </div>
+            <div v-else class="text-center text-muted py-3">
+              <i class="fas fa-users fa-2x mb-2"></i>
+              <p>هیچ شرکت‌کننده‌ای یافت نشد</p>
+            </div>
+          </loading-spinner>
         </div>
-        <h1 class="modern-title">گفتگوی دوره</h1>
-        <p class="modern-subtitle">{{ course ? course.title : 'در حال بارگذاری...' }}</p>
+
+        <div class="modern-card animate-slide-right" style="animation-delay: 0.1s;">
+          <h6 class="section-title">
+            <i class="fas fa-info-circle me-2"></i>
+            اطلاعات دوره
+          </h6>
+          <div v-if="course" class="course-info">
+            <p class="mb-2"><strong>استاد:</strong> {{ course.teacher ? getUserFullName(course.teacher) : 'نامشخص' }}</p>
+            <p class="mb-0"><strong>دانش‌آموزان:</strong> {{ course.enrolledStudents ? course.enrolledStudents.length : 0 }}</p>
+          </div>
+        </div>
       </div>
 
-      <div class="row">
-        <!-- Sidebar (participants) -->
-        <div class="col-md-3 mb-4">
-          <div class="modern-card animate-slide-right">
-            <h6 class="section-title">
-              <i class="fas fa-users me-2"></i>
-              شرکت‌کنندگان
-            </h6>
-
-            <loading-spinner :loading="loadingParticipants">
-              <div v-if="participants.length > 0" class="participants-list">
-                <div v-for="participant in participants" :key="participant.id" class="participant-item">
-                  <div class="participant-avatar">
-                    {{ getInitials(participant.firstName, participant.lastName) }}
-                  </div>
-                  <div class="participant-info">
-                    <div class="participant-name">{{ getUserFullName(participant) }}</div>
-                    <div class="participant-role">{{ getUserRole(participant) }}</div>
-                  </div>
-                  <div class="participant-status" :class="{'online': participant.online}"></div>
+      <!-- Main Chat Section -->
+      <div class="col-md-9">
+        <div class="modern-card chat-main animate-slide-left">
+          <!-- Messages -->
+          <div class="chat-messages" ref="messagesContainer">
+            <loading-spinner :loading="loading">
+              <div v-if="messages.length === 0" class="empty-chat">
+                <div class="modern-logo large secondary mb-3">
+                  <i class="fas fa-comments"></i>
                 </div>
+                <h5>هنوز پیامی ارسال نشده است</h5>
+                <p class="text-muted">اولین نفری باشید که گفتگو را شروع می‌کند!</p>
               </div>
-              <div v-else class="text-center text-muted py-3">
-                <i class="fas fa-users fa-2x mb-2"></i>
-                <p>هیچ شرکت‌کننده‌ای یافت نشد</p>
+
+              <div v-else class="messages-list">
+                <div v-for="(message, index) in messages" :key="message.id" class="message-wrapper">
+                  <!-- Date separator -->
+                  <div v-if="shouldShowDateSeparator(message, index)" class="date-separator">
+                    <span>{{ formatDateHeader(message.sentAt) }}</span>
+                  </div>
+
+                  <!-- Message -->
+                  <div :class="['message-item', message.sender.id === currentUser.id ? 'message-own' : 'message-other']">
+                    <div class="message-avatar">
+                      {{ getInitials(message.sender.firstName, message.sender.lastName) }}
+                    </div>
+                    <div class="message-content">
+                      <div class="message-header">
+                        <span class="message-sender">{{ getUserFullName(message.sender) }}</span>
+                        <span class="message-time">{{ formatTime(message.sentAt) }}</span>
+                      </div>
+                      <div class="message-text">{{ message.content }}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Load more messages -->
+                <div v-if="hasMoreMessages" class="text-center py-3">
+                  <button class="modern-btn modern-btn-secondary" @click="loadMoreMessages" :disabled="loadingMore">
+                    <span v-if="loadingMore" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    بارگذاری پیام‌های قدیمی‌تر
+                  </button>
+                </div>
               </div>
             </loading-spinner>
           </div>
 
-          <div class="modern-card animate-slide-right" style="animation-delay: 0.1s;">
-            <h6 class="section-title">
-              <i class="fas fa-info-circle me-2"></i>
-              اطلاعات دوره
-            </h6>
-            <div v-if="course" class="course-info">
-              <p class="mb-2"><strong>استاد:</strong> {{ course.teacher ? getUserFullName(course.teacher) : 'نامشخص' }}</p>
-              <p class="mb-0"><strong>دانش‌آموزان:</strong> {{ course.enrolledStudents ? course.enrolledStudents.length : 0 }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Main Chat Section -->
-        <div class="col-md-9">
-          <div class="modern-card chat-main animate-slide-left">
-            <!-- Messages -->
-            <div class="chat-messages" ref="messagesContainer">
-              <loading-spinner :loading="loading">
-                <div v-if="messages.length === 0" class="empty-chat">
-                  <div class="modern-logo large secondary mb-3">
-                    <i class="fas fa-comments"></i>
-                  </div>
-                  <h5>هنوز پیامی ارسال نشده است</h5>
-                  <p class="text-muted">اولین نفری باشید که گفتگو را شروع می‌کند!</p>
+          <!-- Message Input -->
+          <div class="chat-input">
+            <form @submit.prevent="sendMessage" class="input-form">
+              <div class="modern-form-group mb-0">
+                <div class="input-group">
+                  <input
+                      type="text"
+                      class="modern-form-control"
+                      placeholder="پیام خود را بنویسید..."
+                      v-model="newMessage"
+                      :disabled="sending"
+                  >
+                  <button type="submit" class="modern-btn modern-btn-primary" :disabled="!newMessage.trim() || sending">
+                    <span v-if="sending" class="spinner-border spinner-border-sm" role="status"></span>
+                    <i v-else class="fas fa-paper-plane"></i>
+                  </button>
                 </div>
-
-                <div v-else class="messages-list">
-                  <div v-for="(message, index) in messages" :key="message.id" class="message-wrapper">
-                    <!-- Date separator -->
-                    <div v-if="shouldShowDateSeparator(message, index)" class="date-separator">
-                      <span>{{ formatDateHeader(message.sentAt) }}</span>
-                    </div>
-
-                    <!-- Message -->
-                    <div :class="['message-item', message.sender.id === currentUser.id ? 'message-own' : 'message-other']">
-                      <div class="message-avatar">
-                        {{ getInitials(message.sender.firstName, message.sender.lastName) }}
-                      </div>
-                      <div class="message-content">
-                        <div class="message-header">
-                          <span class="message-sender">{{ getUserFullName(message.sender) }}</span>
-                          <span class="message-time">{{ formatTime(message.sentAt) }}</span>
-                        </div>
-                        <div class="message-text">{{ message.content }}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Load more messages -->
-                  <div v-if="hasMoreMessages" class="text-center py-3">
-                    <button class="modern-btn modern-btn-secondary" @click="loadMoreMessages" :disabled="loadingMore">
-                      <span v-if="loadingMore" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                      بارگذاری پیام‌های قدیمی‌تر
-                    </button>
-                  </div>
-                </div>
-              </loading-spinner>
-            </div>
-
-            <!-- Message Input -->
-            <div class="chat-input">
-              <form @submit.prevent="sendMessage" class="input-form">
-                <div class="modern-form-group mb-0">
-                  <div class="input-group">
-                    <input
-                        type="text"
-                        class="modern-form-control"
-                        placeholder="پیام خود را بنویسید..."
-                        v-model="newMessage"
-                        :disabled="sending"
-                    >
-                    <button type="submit" class="modern-btn modern-btn-primary" :disabled="!newMessage.trim() || sending">
-                      <span v-if="sending" class="spinner-border spinner-border-sm" role="status"></span>
-                      <i v-else class="fas fa-paper-plane"></i>
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </div>
+              </div>
+            </form>
           </div>
         </div>
       </div>
@@ -125,7 +115,6 @@
 </template>
 
 <script>
-import axios from 'axios';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
 import { useUser } from '@/composables/useUser.js';
 import { useFormatters } from '@/composables/useFormatters.js';
@@ -182,7 +171,7 @@ export default {
   methods: {
     async fetchCourseData() {
       try {
-        const response = await axios.get(`/courses/${this.courseId}`);
+        const response = await this.$http.get(`/courses/${this.courseId}`);
         this.course = response.data.course;
       } catch (error) {
         console.error('Error fetching course data:', error);
@@ -193,7 +182,7 @@ export default {
     async fetchParticipants() {
       try {
         this.loadingParticipants = true;
-        const response = await axios.get(`/chat/course/${this.courseId}/participants`);
+        const response = await this.$http.get(`/chat/course/${this.courseId}/participants`);
         this.participants = response.data;
       } catch (error) {
         console.error('Error fetching participants:', error);
@@ -206,7 +195,7 @@ export default {
     async fetchMessages() {
       try {
         this.loading = true;
-        const response = await axios.get(`/chat/course/${this.courseId}/messages`, {
+        const response = await this.$http.get(`/chat/course/${this.courseId}/messages`, {
           params: {
             page: 0,
             size: this.pageSize
@@ -236,7 +225,7 @@ export default {
         this.loadingMore = true;
         const nextPage = this.currentPage + 1;
 
-        const response = await axios.get(`/chat/course/${this.courseId}/messages`, {
+        const response = await this.$http.get(`/chat/course/${this.courseId}/messages`, {
           params: {
             page: nextPage,
             size: this.pageSize
@@ -260,7 +249,7 @@ export default {
 
       try {
         this.sending = true;
-        await axios.post(`/chat/course/${this.courseId}/send`, null, {
+        await this.$http.post(`/chat/course/${this.courseId}/send`, null, {
           params: { message: this.newMessage }
         });
 
@@ -291,7 +280,7 @@ export default {
 
     async fetchLatestMessages() {
       try {
-        const response = await axios.get(`/chat/course/${this.courseId}/messages`, {
+        const response = await this.$http.get(`/chat/course/${this.courseId}/messages`, {
           params: {
             page: 0,
             size: 5
@@ -321,7 +310,7 @@ export default {
 
     async markMessagesAsRead() {
       try {
-        await axios.post(`/chat/course/${this.courseId}/mark-read`);
+        await this.$http.post(`/chat/course/${this.courseId}/mark-read`);
       } catch (error) {
         console.error('Error marking messages as read:', error);
       }
@@ -342,7 +331,7 @@ export default {
 
     async checkForNewMessages() {
       try {
-        const unreadResponse = await axios.get(`/chat/course/${this.courseId}/unread`);
+        const unreadResponse = await this.$http.get(`/chat/course/${this.courseId}/unread`);
         const unreadCount = unreadResponse.data.unreadCount;
 
         if (unreadCount > 0) {
@@ -415,6 +404,10 @@ export default {
 </script>
 
 <style scoped>
+.course-chat-container {
+  padding: 1rem;
+}
+
 /* Chat specific styles */
 .chat-main {
   display: flex;
