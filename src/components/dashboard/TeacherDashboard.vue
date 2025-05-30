@@ -61,12 +61,12 @@
 
     <!-- دوره‌های در حال تدریس -->
     <div class="modern-card mb-4">
-      <div class="modern-card-header bg-primary text-white d-flex justify-content-between align-items-center">
+      <div class="modern-card-header bg-gray text-white d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
           <i class="fas fa-chalkboard-teacher me-2"></i>
           دوره‌های من
         </h5>
-        <router-link :to="{ name: 'TeachingCourses' }" class="modern-btn modern-btn-outline text-white btn-sm">
+        <router-link :to="{ name: 'TeachingCourses' }" class="modern-btn modern-btn-outline text-gray btn-sm">
           مشاهده همه
         </router-link>
       </div>
@@ -90,15 +90,15 @@
             <div class="row">
               <div v-for="course in courses.slice(0, 3)" :key="course.id" class="col-md-4 mb-3">
                 <div class="modern-card h-100 course-card">
-                  <div class="modern-card-header bg-primary text-white">
+                  <div class="modern-card-header bg-gray text-white">
                     <h6 class="mb-0">{{ course.title }}</h6>
                   </div>
                   <div class="modern-card-body d-flex flex-column">
-                    <p v-if="course.description" class="text-muted mb-3">
+                    <p v-if="course.description" class="mb-3 text-white">
                       {{ truncateText(course.description, 100) }}
                     </p>
 
-                    <div class="course-stats mb-3 mt-auto">
+                    <div class="course-stats mb-3 mt-auto text-white">
                       <div class="d-flex justify-content-between mb-2">
                         <span>دانش‌آموزان:</span>
                         <span class="fw-bold text-success">

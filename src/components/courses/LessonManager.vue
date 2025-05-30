@@ -93,10 +93,6 @@
       <p class="text-muted mb-4">
         با استفاده از دکمه بالا، اولین درس خود را اضافه کنید
       </p>
-<!--      <button class="modern-btn modern-btn-primary" @click="showAddLessonModal">-->
-<!--        <i class="fas fa-plus me-2"></i>-->
-<!--        افزودن درس جدید-->
-<!--      </button>-->
     </div>
 
     <!-- Lesson Modal -->

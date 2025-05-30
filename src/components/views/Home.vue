@@ -104,7 +104,7 @@
 
         <div class="row">
           <div class="col-md-4 mb-4">
-            <div class="modern-card text-center animate-slide-up" style="animation-delay: 0.2s;">
+            <div class="modern-card text-center animate-slide-up text-gray" style="animation-delay: 0.2s;">
               <div class="feature-icon text-primary mb-3">
                 <i class="fas fa-video fa-3x"></i>
               </div>
@@ -279,8 +279,13 @@
                 همین امروز به جمع هزاران دانش‌آموز موفق ما بپیوندید و مسیر یادگیری خود را شروع کنید.
               </p>
 
+
               <div class="cta-actions">
-                <router-link v-if="!isLoggedIn" :to="{ name: 'Register' }" class="modern-btn modern-btn-outline text-white me-3">
+                <router-link v-if="!isLoggedIn" :to="{ name: 'Login' }" class="modern-btn modern-btn-outline text-gray me-3">
+                  <i class="fas fa-user-plus me-2"></i>
+                  ورود
+                </router-link>
+                <router-link v-if="!isLoggedIn" :to="{ name: 'Register' }" class="modern-btn modern-btn-outline text-gray me-3">
                   <i class="fas fa-user-plus me-2"></i>
                   ثبت نام رایگان
                 </router-link>
@@ -289,6 +294,8 @@
                   <i class="fas fa-search me-2"></i>
                   جستجوی دوره‌ها
                 </router-link>
+
+
               </div>
             </div>
           </div>

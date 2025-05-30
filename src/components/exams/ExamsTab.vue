@@ -1,7 +1,7 @@
 <template>
   <div class="exams-tab">
     <div class="modern-card animate-slide-up">
-      <div class="modern-card-header bg-primary text-white">
+      <div class="modern-card-header bg-accent-500 text-white">
         <h5 class="mb-0">
           <i class="fas fa-clipboard-check me-2"></i>
           آزمون‌های دوره
