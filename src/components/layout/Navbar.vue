@@ -102,13 +102,6 @@
               </transition>
             </div>
           </div>
-
-          <!-- Theme Toggle -->
-          <div class="navbar-item d-none d-lg-block">
-            <button class="icon-button" @click="toggleTheme" :title="isDarkMode ? 'حالت روز' : 'حالت شب'">
-              <i :class="isDarkMode ? 'fas fa-sun' : 'fas fa-moon'"></i>
-            </button>
-          </div>
         </div>
       </div>
     </div>

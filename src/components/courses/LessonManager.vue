@@ -1,110 +1,200 @@
 <template>
-  <div class="lesson-manager">
-    <!-- Header with Add Lesson button always visible -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h4>مدیریت دروس</h4>
-      <button class="btn btn-success" @click="showAddLessonModal">
-        <i class="fas fa-plus me-1"></i> افزودن درس جدید
-      </button>
+  <div class="modern-card lesson-manager animate-slide-up">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h5 class="modern-title mb-0">
+        <i class="fas fa-list-ul text-primary me-2"></i>
+        مدیریت دروس
+      </h5>
+<!--      <button class="modern-btn modern-btn-success" @click="showAddLessonModal">-->
+<!--        <i class="fas fa-plus me-2"></i>-->
+<!--        افزودن درس جدید-->
+<!--      </button>-->
     </div>
 
     <!-- Lessons List -->
     <div v-if="lessons && lessons.length > 0" class="lesson-list">
-      <div v-for="(lesson, index) in lessons" :key="lesson.id" class="lesson-item">
-        <div class="lesson-number">{{ index + 1 }}</div>
+      <div v-for="(lesson, index) in lessons" :key="lesson.id"
+           class="lesson-item animate-slide-up"
+           :style="`animation-delay: ${index * 0.1}s`">
+        <div class="lesson-number">
+          {{ index + 1 }}
+        </div>
+
         <div class="lesson-info">
           <div class="lesson-title">{{ lesson.title }}</div>
+          <div class="lesson-description" v-if="lesson.description">
+            {{ lesson.description }}
+          </div>
           <div class="lesson-meta">
-            <span v-if="lesson.contents">{{ lesson.contents?.length || 0 }} محتوا</span>
-            <span v-if="lesson.hasExam">
-              <i class="fas fa-file-alt ms-2 me-1"></i> آزمون
+            <span v-if="lesson.contents" class="meta-item">
+              <i class="fas fa-file-alt me-1"></i>
+              {{ lesson.contents?.length || 0 }} محتوا
             </span>
-            <span v-if="lesson.hasExercise">
-              <i class="fas fa-tasks ms-2 me-1"></i> تمرین
+            <span v-if="lesson.hasExam" class="meta-item">
+              <i class="fas fa-clipboard-check me-1 text-danger"></i>
+              آزمون
+            </span>
+            <span v-if="lesson.hasExercise" class="meta-item">
+              <i class="fas fa-dumbbell me-1 text-warning"></i>
+              تمرین
+            </span>
+            <span v-if="lesson.hasAssignment" class="meta-item">
+              <i class="fas fa-tasks me-1 text-info"></i>
+              تکلیف
             </span>
           </div>
         </div>
+
         <div class="lesson-actions">
-          <button class="btn btn-sm btn-outline-primary me-1" @click="addContent(lesson)">
-            <i class="fas fa-plus"></i> محتوا
+          <button
+              class="modern-btn modern-btn-primary btn-sm me-1"
+              @click="addContent(lesson)"
+              title="افزودن محتوا">
+            <i class="fas fa-plus"></i>
+            محتوا
           </button>
-          <button class="btn btn-sm btn-outline-warning me-1" @click="addAssignment(lesson)">
-            <i class="fas fa-tasks"></i> تکلیف
+          <button
+              class="modern-btn modern-btn-warning btn-sm me-1"
+              @click="addAssignment(lesson)"
+              title="افزودن تکلیف">
+            <i class="fas fa-tasks"></i>
+            تکلیف
           </button>
-          <button class="btn btn-sm btn-outline-info me-1" @click="addExam(lesson)">
-            <i class="fas fa-file-alt"></i> آزمون
+          <button
+              class="modern-btn modern-btn-danger btn-sm me-1"
+              @click="addExam(lesson)"
+              title="افزودن آزمون">
+            <i class="fas fa-clipboard-check"></i>
+            آزمون
           </button>
-          <button class="btn btn-sm btn-outline-secondary me-1" @click="editLesson(lesson)">
+          <button
+              class="modern-btn modern-btn-secondary btn-sm me-1"
+              @click="editLesson(lesson)"
+              title="ویرایش درس">
             <i class="fas fa-edit"></i>
           </button>
-          <button class="btn btn-sm btn-outline-danger" @click="confirmDeleteLesson(lesson)">
-            <i class="fas fa-trash"></i>
+          <button
+              class="modern-btn modern-btn-outline btn-sm"
+              @click="confirmDeleteLesson(lesson)"
+              title="حذف درس">
+            <i class="fas fa-trash text-danger"></i>
           </button>
         </div>
       </div>
     </div>
-    <empty-state
-        v-else
-        title="هنوز درسی اضافه نشده است"
-        description="با استفاده از دکمه بالا، درس جدید اضافه کنید."
-        icon="book"
-        compact
-    />
+
+    <!-- Empty State -->
+    <div v-else class="text-center py-5">
+      <div class="modern-logo large secondary mb-4">
+        <i class="fas fa-book-open"></i>
+      </div>
+      <h5 class="mb-3">هنوز درسی اضافه نشده است</h5>
+      <p class="text-muted mb-4">
+        با استفاده از دکمه بالا، اولین درس خود را اضافه کنید
+      </p>
+<!--      <button class="modern-btn modern-btn-primary" @click="showAddLessonModal">-->
+<!--        <i class="fas fa-plus me-2"></i>-->
+<!--        افزودن درس جدید-->
+<!--      </button>-->
+    </div>
 
     <!-- Lesson Modal -->
-    <div class="modal fade" id="lessonModalNew" tabindex="-1" aria-labelledby="lessonModalLabel" aria-hidden="true">
+    <div class="modal fade" id="lessonModalNew" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="lessonModalLabel">
+            <h5 class="modal-title">
+              <i class="fas fa-book me-2"></i>
               {{ selectedLesson.id ? 'ویرایش درس' : 'افزودن درس جدید' }}
             </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
             <form @submit.prevent="saveLesson">
-              <div class="mb-3">
-                <label for="lessonTitle" class="form-label">عنوان درس</label>
-                <input type="text" class="form-control" id="lessonTitle" v-model="selectedLesson.title" required>
+              <div class="modern-form-group">
+                <label for="lessonTitle" class="modern-form-label">عنوان درس</label>
+                <input
+                    type="text"
+                    class="modern-form-control"
+                    id="lessonTitle"
+                    v-model="selectedLesson.title"
+                    placeholder="عنوان درس را وارد کنید"
+                    required>
               </div>
-              <div class="mb-3">
-                <label for="lessonDescription" class="form-label">توضیحات درس</label>
-                <textarea class="form-control" id="lessonDescription" v-model="selectedLesson.description" rows="3"></textarea>
+
+              <div class="modern-form-group">
+                <label for="lessonDescription" class="modern-form-label">توضیحات درس</label>
+                <textarea
+                    class="modern-form-control"
+                    id="lessonDescription"
+                    v-model="selectedLesson.description"
+                    rows="3"
+                    placeholder="توضیحات مختصری از درس بنویسید..."></textarea>
               </div>
-              <div class="mb-3">
-                <label for="lessonOrder" class="form-label">ترتیب نمایش</label>
-                <input type="number" class="form-control" id="lessonOrder" v-model="selectedLesson.orderIndex" min="0">
-              </div>
-              <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
-                <button type="submit" class="btn btn-primary" :disabled="isSaving">
-                  <span v-if="isSaving" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                  ذخیره
-                </button>
+
+              <div class="modern-form-group">
+                <label for="lessonOrder" class="modern-form-label">ترتیب نمایش</label>
+                <input
+                    type="number"
+                    class="modern-form-control"
+                    id="lessonOrder"
+                    v-model="selectedLesson.orderIndex"
+                    min="0"
+                    placeholder="0">
               </div>
             </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="modern-btn modern-btn-secondary" data-bs-dismiss="modal">
+              انصراف
+            </button>
+            <button
+                type="button"
+                class="modern-btn modern-btn-success"
+                @click="saveLesson"
+                :disabled="isSaving">
+              <span v-if="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+              <i class="fas fa-save me-1"></i>
+              ذخیره
+            </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Confirmation Dialog Modal -->
-    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="confirmationModalLabel">تأیید حذف</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <h5 class="modal-title text-danger">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              تأیید حذف
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
-            <p>آیا از حذف درس "{{ selectedLesson.title }}" اطمینان دارید؟</p>
-            <p class="text-danger">این عمل قابل بازگشت نیست.</p>
+            <div class="modern-alert modern-alert-warning">
+              <i class="fas fa-exclamation-triangle me-2"></i>
+              آیا از حذف درس "<strong>{{ selectedLesson.title }}</strong>" اطمینان دارید؟
+            </div>
+            <p class="text-muted mb-0">
+              این عمل قابل بازگشت نیست و تمامی محتوای مرتبط با این درس نیز حذف خواهد شد.
+            </p>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
-            <button type="button" class="btn btn-danger" @click="deleteLesson" :disabled="isDeleting">
-              <span v-if="isDeleting" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-              حذف
+            <button type="button" class="modern-btn modern-btn-secondary" data-bs-dismiss="modal">
+              انصراف
+            </button>
+            <button
+                type="button"
+                class="modern-btn modern-btn-danger"
+                @click="deleteLesson"
+                :disabled="isDeleting">
+              <span v-if="isDeleting" class="spinner-border spinner-border-sm me-2"></span>
+              <i class="fas fa-trash me-1"></i>
+              حذف درس
             </button>
           </div>
         </div>
@@ -115,13 +205,9 @@
 
 <script>
 import axios from 'axios';
-import EmptyState from '@/components/common/EmptyState.vue';
 
 export default {
   name: 'LessonManager',
-  components: {
-    EmptyState
-  },
   props: {
     courseId: {
       type: [String, Number],
@@ -147,24 +233,18 @@ export default {
     };
   },
   mounted() {
-    // Initialize Bootstrap modals
     this.initModals();
   },
   methods: {
     initModals() {
-      // بررسی بارگذاری Bootstrap
       if (window.bootstrap) {
         this.lessonModal = new bootstrap.Modal(document.getElementById('lessonModalNew'));
         this.confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
       } else {
-        console.error('Bootstrap is not loaded!');
-        // سعی کنید کتابخانه را بعد از تأخیر بارگذاری کنید
         setTimeout(() => {
           if (window.bootstrap) {
             this.lessonModal = new bootstrap.Modal(document.getElementById('lessonModalNew'));
             this.confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
-          } else {
-            console.error('Bootstrap could not be loaded after delay');
           }
         }, 1000);
       }
@@ -209,7 +289,6 @@ export default {
         let response;
 
         if (this.selectedLesson.id) {
-          // ویرایش درس موجود
           response = await axios.put(`/lessons/${this.selectedLesson.id}`, {
             title: this.selectedLesson.title,
             description: this.selectedLesson.description,
@@ -218,7 +297,6 @@ export default {
 
           this.$emit('lesson-updated', response.data);
         } else {
-          // ایجاد درس جدید
           response = await axios.post(`/lessons/course/${this.courseId}`, {
             title: this.selectedLesson.title,
             description: this.selectedLesson.description,
@@ -228,12 +306,10 @@ export default {
           this.$emit('lesson-added', response.data);
         }
 
-        // نمایش پیام موفقیت
         if (this.$toast) {
           this.$toast.success(this.selectedLesson.id ? 'درس با موفقیت به‌روزرسانی شد' : 'درس جدید با موفقیت ایجاد شد');
         }
 
-        // بستن مودال
         if (this.lessonModal) {
           this.lessonModal.hide();
         } else {
@@ -270,15 +346,12 @@ export default {
       try {
         await axios.delete(`/lessons/${this.selectedLesson.id}`);
 
-        // اطلاع‌رسانی به کامپوننت والد
         this.$emit('lesson-deleted', this.selectedLesson.id);
 
-        // نمایش پیام موفقیت
         if (this.$toast) {
           this.$toast.success('درس با موفقیت حذف شد');
         }
 
-        // بستن مودال
         if (this.confirmationModal) {
           this.confirmationModal.hide();
         } else {
@@ -316,80 +389,157 @@ export default {
 }
 
 .lesson-list {
-  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .lesson-item {
   display: flex;
-  align-items: center;
-  padding: 15px;
-  background-color: #fff;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  align-items: flex-start;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  position: relative;
 }
 
 .lesson-item:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+  border-color: rgba(102, 126, 234, 0.3);
 }
 
 .lesson-number {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #007bff;
-  color: #fff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
   border-radius: 50%;
-  font-weight: bold;
-  margin-left: 15px;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-left: 1rem;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .lesson-info {
   flex-grow: 1;
+  min-width: 0;
 }
 
 .lesson-title {
   font-weight: 600;
-  margin-bottom: 5px;
+  font-size: 1.1rem;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.lesson-description {
+  color: #6c757d;
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
 }
 
 .lesson-meta {
   display: flex;
-  gap: 15px;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.meta-item {
+  font-size: 0.85rem;
   color: #6c757d;
-  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
 }
 
 .lesson-actions {
   display: flex;
-  gap: 5px;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-start;
 }
 
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* Modal enhancements */
+.modal-content {
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+  background: rgba(102, 126, 234, 0.02);
+}
+
+.modal-footer {
+  border-top: 1px solid rgba(102, 126, 234, 0.1);
+  background: rgba(102, 126, 234, 0.02);
+}
+
+/* Responsive */
 @media (max-width: 768px) {
   .lesson-item {
     flex-direction: column;
-    align-items: flex-start;
-    padding: 15px;
+    align-items: stretch;
+    gap: 1rem;
   }
 
   .lesson-number {
-    margin-bottom: 10px;
+    align-self: flex-start;
     margin-left: 0;
+    margin-bottom: 0;
   }
 
   .lesson-info {
     width: 100%;
-    margin-bottom: 15px;
   }
 
   .lesson-actions {
-    width: 100%;
-    overflow-x: auto;
-    padding-bottom: 5px;
+    justify-content: stretch;
+  }
+
+  .btn-sm {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .lesson-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .lesson-item {
+    background: rgba(45, 55, 72, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .lesson-item:hover {
+    border-color: rgba(102, 126, 234, 0.3);
+  }
+
+  .lesson-title {
+    color: #e2e8f0;
+  }
+
+  .lesson-description,
+  .meta-item {
+    color: #cbd5e0;
   }
 }
 </style>

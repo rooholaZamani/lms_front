@@ -1,70 +1,72 @@
 <template>
   <div class="assignment-grading-table">
-    <table class="table table-hover">
-      <thead class="table-light">
-      <tr>
-        <th scope="col">#</th>
-        <th scope="col">عنوان تکلیف</th>
-        <th scope="col">دوره</th>
-        <th scope="col">دانش‌آموز</th>
-        <th scope="col">تاریخ ارسال</th>
-        <th scope="col">وضعیت</th>
-        <th scope="col">عملیات</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr v-for="(assignment, index) in assignments" :key="assignment.id">
-        <td>{{ index + 1 }}</td>
-        <td>
-          <div class="d-flex align-items-center">
-            <div class="assignment-icon me-2">
-              <i :class="getAssignmentIcon(assignment.type)"></i>
+    <div class="modern-table-container">
+      <table class="modern-table table">
+        <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">عنوان تکلیف</th>
+          <th scope="col">دوره</th>
+          <th scope="col">دانش‌آموز</th>
+          <th scope="col">تاریخ ارسال</th>
+          <th scope="col">وضعیت</th>
+          <th scope="col">عملیات</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="(assignment, index) in assignments" :key="assignment.id">
+          <td>{{ index + 1 }}</td>
+          <td>
+            <div class="d-flex align-items-center">
+              <div class="assignment-icon me-2">
+                <i :class="getAssignmentIcon(assignment.type)"></i>
+              </div>
+              <div>
+                {{ assignment.title }}
+                <div class="small text-muted">{{ truncateText(assignment.description, 50) }}</div>
+              </div>
             </div>
-            <div>
-              {{ assignment.title }}
-              <div class="small text-muted">{{ truncateText(assignment.description, 50) }}</div>
+          </td>
+          <td>{{ assignment.course.title }}</td>
+          <td>
+            <div class="d-flex align-items-center">
+              <div class="student-avatar me-2">
+                <span>{{ getInitials(assignment.student.firstName, assignment.student.lastName) }}</span>
+              </div>
+              <div>
+                {{ assignment.student.firstName }} {{ assignment.student.lastName }}
+              </div>
             </div>
-          </div>
-        </td>
-        <td>{{ assignment.course.title }}</td>
-        <td>
-          <div class="d-flex align-items-center">
-            <div class="avatar me-2">
-              <span>{{ getInitials(assignment.student.firstName, assignment.student.lastName) }}</span>
-            </div>
-            <div>
-              {{ assignment.student.firstName }} {{ assignment.student.lastName }}
-            </div>
-          </div>
-        </td>
-        <td>
-          <div>{{ formatDate(assignment.submissionDate) }}</div>
-          <div class="small text-muted">{{ getTimeAgo(assignment.submissionDate) }}</div>
-        </td>
-        <td>
-            <span
-                class="badge"
-                :class="getStatusBadgeClass(assignment.status)">
-              {{ getStatusLabel(assignment.status) }}
-            </span>
-        </td>
-        <td>
-          <button
-              class="btn btn-sm btn-primary"
-              @click="$emit('grade', assignment)"
-              title="نمره‌دهی">
-            <i class="fas fa-check-circle me-1"></i> ارزیابی
-          </button>
-          <button
-              class="btn btn-sm btn-outline-secondary ms-1"
-              @click="previewAssignment(assignment)"
-              title="پیش‌نمایش">
-            <i class="fas fa-eye"></i>
-          </button>
-        </td>
-      </tr>
-      </tbody>
-    </table>
+          </td>
+          <td>
+            <div>{{ formatDate(assignment.submissionDate) }}</div>
+            <div class="small text-muted">{{ getTimeAgo(assignment.submissionDate) }}</div>
+          </td>
+          <td>
+              <span
+                  class="modern-badge"
+                  :class="getStatusBadgeClass(assignment.status)">
+                {{ getStatusLabel(assignment.status) }}
+              </span>
+          </td>
+          <td>
+            <button
+                class="modern-btn modern-btn-primary modern-btn-sm me-1"
+                @click="$emit('grade', assignment)"
+                title="نمره‌دهی">
+              <i class="fas fa-check-circle me-1"></i> ارزیابی
+            </button>
+            <button
+                class="modern-btn modern-btn-outline modern-btn-sm"
+                @click="previewAssignment(assignment)"
+                title="پیش‌نمایش">
+              <i class="fas fa-eye"></i>
+            </button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -108,11 +110,11 @@ export default {
     },
 
     getStatusBadgeClass(status) {
-      if (status === 'pending') return 'bg-warning';
-      if (status === 'reviewed') return 'bg-success';
-      if (status === 'late') return 'bg-danger';
-      if (status === 'resubmit') return 'bg-info';
-      return 'bg-secondary';
+      if (status === 'pending') return 'modern-badge-warning';
+      if (status === 'reviewed') return 'modern-badge-success';
+      if (status === 'late') return 'modern-badge-danger';
+      if (status === 'resubmit') return 'modern-badge-info';
+      return 'modern-badge-secondary';
     },
 
     getStatusLabel(status) {
@@ -143,8 +145,6 @@ export default {
     },
 
     previewAssignment(assignment) {
-      // در اینجا منطق پیش‌نمایش تکلیف پیاده‌سازی می‌شود
-      // برای مثال، می‌توان مودال پیش‌نمایش را نمایش داد
       this.$emit('preview', assignment);
     }
   }
@@ -152,28 +152,28 @@ export default {
 </script>
 
 <style scoped>
-.avatar {
+.student-avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background-color: #e9ecef;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.8rem;
   font-weight: bold;
-  color: #495057;
+  color: white;
 }
 
 .assignment-icon {
   width: 32px;
   height: 32px;
-  border-radius: 4px;
-  background-color: #e9ecef;
+  border-radius: 8px;
+  background: rgba(102, 126, 234, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1rem;
-  color: #495057;
+  color: #667eea;
 }
 </style>

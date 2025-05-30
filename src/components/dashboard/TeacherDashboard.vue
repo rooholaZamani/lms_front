@@ -6,7 +6,7 @@
         <i class="fas fa-chalkboard-teacher"></i>
       </div>
       <h2 class="modern-title">داشبورد معلم</h2>
-      <p class="modern-subtitle">خوش آمدید {{ getUserName() }}</p>
+      <p class="modern-subtitle"> خوش آمدید  {{ getUserName() }} </p>
 
       <div class="header-actions mt-3">
         <button class="modern-btn modern-btn-success me-2" @click="showCreateCourseModal">

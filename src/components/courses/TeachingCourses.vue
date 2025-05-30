@@ -1,105 +1,125 @@
 <template>
-  <div class="teaching-courses-container">
-    <div class="container-fluid p-4">
+  <div class="modern-page-bg" style="min-height: calc(100vh - 56px); padding: 2rem 1rem;">
+    <div class="container-fluid">
+      <!-- Header -->
       <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>دوره‌های تدریس من</h2>
+        <div>
+          <h2 class="text-white mb-2">
+            <i class="fas fa-chalkboard-teacher me-3"></i>
+            دوره‌های تدریس من
+          </h2>
+          <p class="text-white-50 mb-0">مدیریت و نظارت بر دوره‌های آموزشی شما</p>
+        </div>
 
-        <button class="btn btn-primary" @click="showCreateCourseModal">
-          <i class="fas fa-plus me-1"></i> ایجاد دوره جدید
+        <button class="modern-btn modern-btn-success" @click="showCreateCourseModal">
+          <i class="fas fa-plus me-2"></i>
+          ایجاد دوره جدید
         </button>
       </div>
 
       <loading-spinner :loading="loading">
+        <!-- Stats Cards -->
         <div class="row mb-4">
-          <div class="col-lg-3 col-md-6 mb-4">
-            <div class="stats-card">
-              <div class="stats-icon">
+          <div class="col-lg-3 col-md-6 mb-3">
+            <div class="modern-stat-card animate-slide-up">
+              <div class="modern-stat-icon text-primary">
                 <i class="fas fa-chalkboard-teacher"></i>
               </div>
-              <div class="stats-value">{{ coursesStats.totalCourses }}</div>
-              <div class="stats-label">کل دوره‌ها</div>
+              <div class="modern-stat-value">{{ coursesStats.totalCourses }}</div>
+              <div class="modern-stat-label">کل دوره‌ها</div>
             </div>
           </div>
 
-          <div class="col-lg-3 col-md-6 mb-4">
-            <div class="stats-card">
-              <div class="stats-icon">
+          <div class="col-lg-3 col-md-6 mb-3">
+            <div class="modern-stat-card animate-slide-up" style="animation-delay: 0.1s;">
+              <div class="modern-stat-icon text-success">
                 <i class="fas fa-users"></i>
               </div>
-              <div class="stats-value">{{ coursesStats.totalStudents }}</div>
-              <div class="stats-label">کل دانش‌آموزان</div>
+              <div class="modern-stat-value">{{ coursesStats.totalStudents }}</div>
+              <div class="modern-stat-label">کل دانش‌آموزان</div>
             </div>
           </div>
 
-          <div class="col-lg-3 col-md-6 mb-4">
-            <div class="stats-card">
-              <div class="stats-icon">
+          <div class="col-lg-3 col-md-6 mb-3">
+            <div class="modern-stat-card animate-slide-up" style="animation-delay: 0.2s;">
+              <div class="modern-stat-icon text-warning">
                 <i class="fas fa-book"></i>
               </div>
-              <div class="stats-value">{{ coursesStats.totalLessons }}</div>
-              <div class="stats-label">کل دروس</div>
+              <div class="modern-stat-value">{{ coursesStats.totalLessons }}</div>
+              <div class="modern-stat-label">کل دروس</div>
             </div>
           </div>
 
-          <div class="col-lg-3 col-md-6 mb-4">
-            <div class="stats-card">
-              <div class="stats-icon">
+          <div class="col-lg-3 col-md-6 mb-3">
+            <div class="modern-stat-card animate-slide-up" style="animation-delay: 0.3s;">
+              <div class="modern-stat-icon text-info">
                 <i class="fas fa-chart-line"></i>
               </div>
-              <div class="stats-value">{{ coursesStats.averageProgress }}%</div>
-              <div class="stats-label">میانگین پیشرفت</div>
+              <div class="modern-stat-value">{{ coursesStats.averageProgress }}%</div>
+              <div class="modern-stat-label">میانگین پیشرفت</div>
             </div>
           </div>
         </div>
 
-        <div class="course-filters mb-4">
+        <!-- Filters -->
+        <div class="modern-card mb-4 animate-slide-up" style="animation-delay: 0.4s;">
           <div class="row g-3">
             <div class="col-md-4">
-              <input
-                  type="text"
-                  class="form-control"
-                  v-model="searchQuery"
-                  placeholder="جستجو در دوره‌ها..."
-                  @input="filterCourses"
-              >
-            </div>
-
-            <div class="col-md-3">
-              <select v-model="sortBy" class="form-select" @change="sortCourses">
-                <option value="title">مرتب‌سازی بر اساس: نام</option>
-                <option value="students">مرتب‌سازی بر اساس: تعداد دانش‌آموزان</option>
-                <option value="date">مرتب‌سازی بر اساس: تاریخ</option>
-                <option value="progress">مرتب‌سازی بر اساس: پیشرفت</option>
-              </select>
-            </div>
-
-            <div class="col-md-3">
-              <div class="form-check form-switch mt-2">
+              <div class="modern-form-group">
+                <label class="modern-form-label">جستجو در دوره‌ها</label>
                 <input
-                    class="form-check-input"
-                    type="checkbox"
-                    id="activeCoursesOnly"
-                    v-model="activeCoursesOnly"
-                    @change="filterCourses"
+                    type="text"
+                    class="modern-form-control"
+                    v-model="searchQuery"
+                    placeholder="نام دوره را وارد کنید..."
+                    @input="filterCourses"
                 >
-                <label class="form-check-label" for="activeCoursesOnly">فقط دوره‌های فعال</label>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="modern-form-group">
+                <label class="modern-form-label">مرتب‌سازی بر اساس</label>
+                <select v-model="sortBy" class="modern-form-control" @change="sortCourses">
+                  <option value="title">نام دوره</option>
+                  <option value="students">تعداد دانش‌آموزان</option>
+                  <option value="date">تاریخ ایجاد</option>
+                  <option value="progress">میزان پیشرفت</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="modern-form-group">
+                <label class="modern-form-label">فیلتر وضعیت</label>
+                <div class="form-check form-switch mt-2">
+                  <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="activeCoursesOnly"
+                      v-model="activeCoursesOnly"
+                      @change="filterCourses"
+                  >
+                  <label class="form-check-label" for="activeCoursesOnly">فقط دوره‌های فعال</label>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div v-if="filteredCourses.length > 0">
-          <div class="table-responsive">
-            <table class="table table-hover teaching-courses-table">
-              <thead class="table-light">
+        <!-- Courses Table -->
+        <div v-if="filteredCourses.length > 0" class="modern-card animate-slide-up" style="animation-delay: 0.5s;">
+          <div class="modern-table-container">
+            <table class="modern-table table">
+              <thead>
               <tr>
-                <th scope="col">#</th>
-                <th scope="col">نام دوره</th>
-                <th scope="col">دانش‌آموزان</th>
-                <th scope="col">دروس</th>
-                <th scope="col">میانگین پیشرفت</th>
-                <th scope="col">وضعیت</th>
-                <th scope="col">عملیات</th>
+                <th><i class="fas fa-hashtag me-1"></i> #</th>
+                <th><i class="fas fa-book me-1"></i> نام دوره</th>
+                <th><i class="fas fa-users me-1"></i> دانش‌آموزان</th>
+                <th><i class="fas fa-list me-1"></i> دروس</th>
+                <th><i class="fas fa-chart-line me-1"></i> پیشرفت</th>
+                <th><i class="fas fa-info-circle me-1"></i> وضعیت</th>
+                <th><i class="fas fa-cogs me-1"></i> عملیات</th>
               </tr>
               </thead>
               <tbody>
@@ -107,30 +127,33 @@
                 <td>{{ index + 1 }}</td>
                 <td>
                   <div class="d-flex align-items-center">
-                    <div class="course-image me-2">
-                      <img :src="getCourseImage(course)" :alt="course.title">
+                    <div class="course-avatar me-3">
+                      {{ getCourseInitials(course.title) }}
                     </div>
                     <div>
-                      <div class="course-title">{{ course.title }}</div>
-                      <div class="course-description">{{ truncateText(course.description, 60) }}</div>
+                      <div class="fw-bold">{{ course.title }}</div>
+                      <small class="text-muted">{{ truncateText(course.description, 60) }}</small>
                     </div>
                   </div>
                 </td>
                 <td>
                   <div class="d-flex align-items-center">
-                    <span class="badge bg-primary me-1">{{ getStudentCount(course) }}</span>
-                    <div class="students-trend" v-if="course.studentsTrend !== 0">
+                    <span class="modern-badge modern-badge-primary">{{ getStudentCount(course) }}</span>
+                    <div v-if="course.studentsTrend !== 0" class="students-trend ms-2">
                       <i
                           class="fas"
                           :class="getStudentsTrendIcon(course.studentsTrend)"
-                          :style="`color: ${getStudentsTrendColor(course.studentsTrend)}`"></i>
-                      <span>{{ Math.abs(course.studentsTrend) }}%</span>
+                          :style="`color: ${getStudentsTrendColor(course.studentsTrend)}`"
+                      ></i>
+                      <span class="small">{{ Math.abs(course.studentsTrend) }}%</span>
                     </div>
                   </div>
                 </td>
-                <td>{{ getLessonCount(course) }}</td>
                 <td>
-                  <div class="progress">
+                  <span class="modern-badge modern-badge-secondary">{{ getLessonCount(course) }}</span>
+                </td>
+                <td>
+                  <div class="progress" style="height: 8px;">
                     <div
                         class="progress-bar"
                         :class="getProgressBarClass(getCourseProgress(course))"
@@ -139,28 +162,27 @@
                         :aria-valuenow="getCourseProgress(course)"
                         aria-valuemin="0"
                         aria-valuemax="100"
-                    >
-                      {{ getCourseProgress(course) }}%
-                    </div>
+                    ></div>
                   </div>
+                  <small class="text-muted">{{ getCourseProgress(course) }}%</small>
                 </td>
                 <td>
-                    <span class="badge" :class="getStatusBadgeClass(course.status)">
-                      {{ getStatusText(course.status) }}
-                    </span>
+                  <span class="modern-badge" :class="getStatusBadgeClass(course.status)">
+                    {{ getStatusText(course.status) }}
+                  </span>
                 </td>
                 <td>
-                  <div class="d-flex">
+                  <div class="d-flex gap-1">
                     <router-link
                         :to="`/courses/${course.id}`"
-                        class="btn btn-sm btn-outline-primary me-1"
+                        class="modern-btn modern-btn-primary btn-sm"
                         title="مشاهده"
                     >
                       <i class="fas fa-eye"></i>
                     </router-link>
 
                     <button
-                        class="btn btn-sm btn-outline-success me-1"
+                        class="modern-btn modern-btn-success btn-sm"
                         @click="navigateToCourseAnalytics(course.id)"
                         title="تحلیل آماری"
                     >
@@ -168,7 +190,7 @@
                     </button>
 
                     <button
-                        class="btn btn-sm btn-outline-secondary"
+                        class="modern-btn modern-btn-secondary btn-sm"
                         @click="navigateToCourseSettings(course.id)"
                         title="تنظیمات"
                     >
@@ -188,45 +210,54 @@
           />
         </div>
 
-        <empty-state
-            v-else
-            title="هیچ دوره‌ای یافت نشد"
-            description="شما هنوز هیچ دوره‌ای برای تدریس ندارید یا نتیجه‌ای با جستجوی شما مطابقت ندارد"
-            icon="chalkboard-teacher"
-        >
-          <button class="btn btn-primary" @click="showCreateCourseModal">
-            ایجاد دوره جدید
-          </button>
-        </empty-state>
+        <!-- Empty State -->
+        <div v-else class="modern-card text-center animate-slide-up" style="animation-delay: 0.5s;">
+          <div class="py-5">
+            <div class="modern-logo large secondary mb-4">
+              <i class="fas fa-chalkboard-teacher"></i>
+            </div>
+            <h4 class="mb-3">هیچ دوره‌ای یافت نشد</h4>
+            <p class="text-muted mb-4">
+              شما هنوز هیچ دوره‌ای برای تدریس ندارید یا نتیجه‌ای با جستجوی شما مطابقت ندارد
+            </p>
+            <button class="modern-btn modern-btn-primary" @click="showCreateCourseModal">
+              <i class="fas fa-plus me-2"></i>
+              ایجاد دوره جدید
+            </button>
+          </div>
+        </div>
       </loading-spinner>
     </div>
 
     <!-- Create Course Modal -->
-    <div class="modal fade" id="createCourseModal" tabindex="-1" aria-labelledby="createCourseModalLabel" aria-hidden="true">
+    <div class="modal fade" id="createCourseModal" tabindex="-1">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="createCourseModalLabel">ایجاد دوره جدید</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <h5 class="modal-title">
+              <i class="fas fa-plus me-2"></i>
+              ایجاد دوره جدید
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
-            <div class="form-group mb-3">
-              <label for="courseTitle" class="form-label">عنوان دوره</label>
+            <div class="modern-form-group">
+              <label for="courseTitle" class="modern-form-label">عنوان دوره</label>
               <input
                   type="text"
                   id="courseTitle"
-                  class="form-control"
+                  class="modern-form-control"
                   v-model="courseForm.title"
                   placeholder="عنوان دوره را وارد کنید"
                   required
               >
             </div>
 
-            <div class="form-group mb-3">
-              <label for="courseDescription" class="form-label">توضیحات دوره</label>
+            <div class="modern-form-group">
+              <label for="courseDescription" class="modern-form-label">توضیحات دوره</label>
               <textarea
                   id="courseDescription"
-                  class="form-control"
+                  class="modern-form-control"
                   v-model="courseForm.description"
                   rows="4"
                   placeholder="توضیحات دوره را وارد کنید"
@@ -234,14 +265,17 @@
             </div>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+            <button type="button" class="modern-btn modern-btn-secondary" data-bs-dismiss="modal">
+              انصراف
+            </button>
             <button
                 type="button"
-                class="btn btn-primary"
+                class="modern-btn modern-btn-success"
                 @click="createCourse"
                 :disabled="creatingCourse"
             >
-              <span v-if="creatingCourse" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+              <span v-if="creatingCourse" class="spinner-border spinner-border-sm me-2"></span>
+              <i class="fas fa-save me-1"></i>
               ایجاد دوره
             </button>
           </div>
@@ -254,7 +288,6 @@
 <script>
 import { mapGetters } from 'vuex';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
-import EmptyState from '@/components/common/EmptyState.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import { useFormatters } from '@/composables/useFormatters.js';
 
@@ -262,16 +295,11 @@ export default {
   name: 'TeachingCourses',
   components: {
     LoadingSpinner,
-    EmptyState,
     Pagination
   },
   setup() {
     const { formatDate, truncateText } = useFormatters();
-
-    return {
-      formatDate,
-      truncateText
-    };
+    return { formatDate, truncateText };
   },
   data() {
     return {
@@ -282,15 +310,11 @@ export default {
       currentPage: 1,
       coursesPerPage: 10,
       creatingCourse: false,
-
       courseForm: {
         title: '',
         description: ''
       },
-
       coursesData: [],
-
-      // آمار کلی دوره‌ها
       coursesStats: {
         totalCourses: 0,
         totalStudents: 0,
@@ -304,7 +328,6 @@ export default {
       teachingCourses: 'courses/getTeachingCourses'
     }),
     filteredCourses() {
-      // فیلتر کردن براساس جستجو
       let filtered = [...this.coursesData];
 
       if (this.searchQuery.trim()) {
@@ -315,23 +338,18 @@ export default {
         });
       }
 
-      // فیلتر بر اساس وضعیت فعال
       if (this.activeCoursesOnly) {
         filtered = filtered.filter(course => course.status === 'active');
       }
 
-      // صفحه‌بندی
       const startIndex = (this.currentPage - 1) * this.coursesPerPage;
       const endIndex = startIndex + this.coursesPerPage;
-
       return filtered.slice(startIndex, endIndex);
     },
     totalPages() {
       if (!this.coursesData.length) return 1;
 
-      // محاسبه تعداد کل صفحات
       let filtered = [...this.coursesData];
-
       if (this.searchQuery.trim()) {
         const query = this.searchQuery.toLowerCase().trim();
         filtered = filtered.filter(course => {
@@ -363,22 +381,18 @@ export default {
       try {
         await this.$store.dispatch('courses/fetchTeachingCourses');
 
-        // دریافت جزئیات هر دوره از API
         const coursesWithDetails = await Promise.all(
             this.teachingCourses.map(async (course) => {
               try {
-                // دریافت جزئیات دوره شامل دانش‌آموزان و دروس
                 const courseDetailResponse = await this.$http.get(`/courses/${course.id}`);
                 const courseDetail = courseDetailResponse.data.course;
 
-                // دریافت آمارهای عملکرد برای این دوره (اختیاری)
                 let courseStats = null;
                 try {
                   const statsResponse = await this.$http.get(`/analytics/teacher/course/${course.id}/performance`);
                   courseStats = statsResponse.data;
                 } catch (statsError) {
                   console.warn(`Could not fetch stats for course ${course.id}:`, statsError);
-                  // در صورت عدم دسترسی به آمار، مقادیر پیش‌فرض قرار می‌دهیم
                   courseStats = {
                     averageProgress: 0,
                     studentGrowth: 0
@@ -387,16 +401,14 @@ export default {
 
                 return {
                   ...course,
-                  // اطلاعات واقعی از API
                   enrolledStudents: courseDetail.enrolledStudents || [],
                   lessons: courseDetail.lessons || [],
-                  status: 'active', // یا از courseDetail.status اگر موجود باشد
+                  status: 'active',
                   progress: courseStats.averageProgress || 0,
                   studentsTrend: courseStats.studentGrowth || 0,
                 };
               } catch (error) {
                 console.error(`Error fetching details for course ${course.id}:`, error);
-                // در صورت خطا، داده‌های پایه را برمی‌گردانیم
                 return {
                   ...course,
                   enrolledStudents: [],
@@ -410,8 +422,6 @@ export default {
         );
 
         this.coursesData = coursesWithDetails;
-
-        // مرتب‌سازی اولیه
         this.sortCourses();
       } catch (error) {
         throw error;
@@ -419,7 +429,6 @@ export default {
     },
 
     calculateStats() {
-      // محاسبه آمارهای کلی براساس داده‌های واقعی
       if (this.coursesData.length === 0) {
         this.coursesStats = {
           totalCourses: 0,
@@ -432,7 +441,6 @@ export default {
 
       const totalCourses = this.coursesData.length;
 
-      // محاسبه تعداد کل دانش‌آموزان (با حذف دانش‌آموزان تکراری)
       const allStudents = new Set();
       this.coursesData.forEach(course => {
         if (course.enrolledStudents) {
@@ -443,13 +451,11 @@ export default {
       });
       const totalStudents = allStudents.size;
 
-      // محاسبه تعداد کل دروس
       let totalLessons = 0;
       this.coursesData.forEach(course => {
         totalLessons += course.lessons ? course.lessons.length : 0;
       });
 
-      // محاسبه میانگین پیشرفت
       let totalProgress = 0;
       this.coursesData.forEach(course => {
         totalProgress += this.getCourseProgress(course);
@@ -464,27 +470,19 @@ export default {
       };
     },
 
-    getCourseImage(course) {
-      // اگر در API تصویری برای دوره موجود است، از آن استفاده کنید
-      if (course.imageUrl) {
-        return course.imageUrl;
-      }
-      // در غیر این صورت تصویر پیش‌فرض
-      return `/api/placeholder/80/60`;
+    getCourseInitials(title) {
+      return title.split(' ').map(word => word.charAt(0)).join('').substring(0, 2).toUpperCase();
     },
 
     getStudentCount(course) {
-      if (!course.enrolledStudents) return 0;
-      return course.enrolledStudents.length;
+      return course.enrolledStudents ? course.enrolledStudents.length : 0;
     },
 
     getLessonCount(course) {
-      if (!course.lessons) return 0;
-      return course.lessons.length;
+      return course.lessons ? course.lessons.length : 0;
     },
 
     getCourseProgress(course) {
-      // اگر از API آمار واقعی داریم، از آن استفاده می‌کنیم
       return course.progress || 0;
     },
 
@@ -509,31 +507,21 @@ export default {
 
     getStatusBadgeClass(status) {
       switch (status) {
-        case 'active':
-          return 'bg-success';
-        case 'draft':
-          return 'bg-secondary';
-        case 'completed':
-          return 'bg-info';
-        case 'pending':
-          return 'bg-warning';
-        default:
-          return 'bg-secondary';
+        case 'active': return 'modern-badge-success';
+        case 'draft': return 'modern-badge-secondary';
+        case 'completed': return 'modern-badge-info';
+        case 'pending': return 'modern-badge-warning';
+        default: return 'modern-badge-secondary';
       }
     },
 
     getStatusText(status) {
       switch (status) {
-        case 'active':
-          return 'فعال';
-        case 'draft':
-          return 'پیش‌نویس';
-        case 'completed':
-          return 'تکمیل شده';
-        case 'pending':
-          return 'در انتظار';
-        default:
-          return 'نامشخص';
+        case 'active': return 'فعال';
+        case 'draft': return 'پیش‌نویس';
+        case 'completed': return 'تکمیل شده';
+        case 'pending': return 'در انتظار';
+        default: return 'نامشخص';
       }
     },
 
@@ -557,9 +545,7 @@ export default {
     },
 
     filterCourses() {
-      // ریست صفحه‌بندی
       this.currentPage = 1;
-      // فیلتر کردن در computed property انجام می‌شود
     },
 
     changePage(page) {
@@ -567,13 +553,11 @@ export default {
     },
 
     showCreateCourseModal() {
-      // ریست فرم
       this.courseForm = {
         title: '',
         description: ''
       };
 
-      // نمایش مودال
       const modal = new bootstrap.Modal(document.getElementById('createCourseModal'));
       modal.show();
     },
@@ -586,7 +570,6 @@ export default {
       this.creatingCourse = true;
 
       try {
-        // ایجاد دوره جدید
         const courseData = {
           title: this.courseForm.title,
           description: this.courseForm.description
@@ -594,7 +577,6 @@ export default {
 
         const newCourse = await this.$store.dispatch('courses/createCourse', courseData);
 
-        // اضافه کردن اطلاعات اضافی (برای دوره جدید که هنوز دانش‌آموزی ندارد)
         const courseWithExtras = {
           ...newCourse,
           status: 'draft',
@@ -604,19 +586,14 @@ export default {
           lessons: []
         };
 
-        // اضافه کردن به لیست دوره‌ها
         this.coursesData.unshift(courseWithExtras);
-
-        // بروزرسانی آمارها
         this.calculateStats();
 
         this.$toast.success('دوره جدید با موفقیت ایجاد شد');
 
-        // بستن مودال
         const modal = bootstrap.Modal.getInstance(document.getElementById('createCourseModal'));
         modal.hide();
 
-        // هدایت به صفحه جزئیات دوره
         this.$router.push(`/courses/${newCourse.id}`);
       } catch (error) {
         console.error('Error creating course:', error);
@@ -627,12 +604,10 @@ export default {
     },
 
     navigateToCourseAnalytics(courseId) {
-      // هدایت به صفحه تحلیل آماری دوره
       this.$router.push(`/analytics?courseId=${courseId}`);
     },
 
     navigateToCourseSettings(courseId) {
-      // هدایت به صفحه تنظیمات دوره
       this.$router.push(`/courses/${courseId}?tab=manage`);
     }
   }
@@ -640,81 +615,43 @@ export default {
 </script>
 
 <style scoped>
-.teaching-courses-container {
-  min-height: calc(100vh - 56px);
-}
-
-.stats-card {
-  background-color: #fff;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  text-align: center;
-  height: 100%;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.stats-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-}
-
-.stats-icon {
-  font-size: 2rem;
-  margin-bottom: 10px;
-  color: #007bff;
-}
-
-.stats-value {
-  font-size: 2rem;
-  font-weight: 700;
-  color: #2c3e50;
-}
-
-.stats-label {
-  color: #6c757d;
+.course-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
   font-size: 0.9rem;
 }
 
-.course-filters {
-  background-color: #f8f9fa;
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-}
-
-.teaching-courses-table {
-  background-color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
-}
-
-.course-image {
-  width: 50px;
-  height: 50px;
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-.course-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.course-title {
-  font-weight: 600;
-  color: #2c3e50;
-}
-
-.course-description {
-  font-size: 0.85rem;
-  color: #6c757d;
-  margin-top: 2px;
-}
-
 .students-trend {
-  font-size: 0.85rem;
-  margin-left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .modern-page-bg {
+    padding: 1rem 0.5rem;
+  }
+
+  .d-flex.gap-1 {
+    flex-direction: column;
+    gap: 0.25rem !important;
+  }
+
+  .btn-sm {
+    width: 100%;
+  }
 }
 </style>

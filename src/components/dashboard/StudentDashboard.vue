@@ -174,56 +174,6 @@
         </div>
       </div>
     </div>
-
-    <!-- توصیه‌های یادگیری -->
-    <div class="modern-card">
-      <div class="modern-card-header bg-primary text-white">
-        <h5 class="mb-0">
-          <i class="fas fa-lightbulb me-2"></i>
-          توصیه‌های یادگیری
-        </h5>
-      </div>
-      <div class="modern-card-body">
-        <div class="row">
-          <div class="col-md-4 mb-3">
-            <div class="recommendation-card">
-              <div class="recommendation-icon">
-                <i class="fas fa-graduation-cap text-primary"></i>
-              </div>
-              <h6>تکمیل دوره‌های پایه</h6>
-              <p class="text-muted">پیشنهاد می‌شود ابتدا دوره‌های پایه را تکمیل کنید.</p>
-              <router-link :to="{ name: 'Courses' }" class="modern-btn modern-btn-primary btn-sm">
-                مشاهده
-              </router-link>
-            </div>
-          </div>
-          <div class="col-md-4 mb-3">
-            <div class="recommendation-card">
-              <div class="recommendation-icon">
-                <i class="fas fa-book-reader text-success"></i>
-              </div>
-              <h6>منابع مطالعاتی</h6>
-              <p class="text-muted">مطالعه منابع اضافی به درک بهتر مفاهیم کمک می‌کند.</p>
-              <button class="modern-btn modern-btn-success btn-sm">
-                مشاهده
-              </button>
-            </div>
-          </div>
-          <div class="col-md-4 mb-3">
-            <div class="recommendation-card">
-              <div class="recommendation-icon">
-                <i class="fas fa-tasks text-warning"></i>
-              </div>
-              <h6>تمرین‌های تکمیلی</h6>
-              <p class="text-muted">برای تقویت مهارت‌ها، این تمرین‌ها را انجام دهید.</p>
-              <button class="modern-btn modern-btn-warning btn-sm">
-                مشاهده
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 

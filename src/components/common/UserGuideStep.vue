@@ -1,5 +1,5 @@
 <template>
-  <div class="user-guide-overlay" ref="overlay">
+  <div class="user-guide-overlay animate-fade-in" ref="overlay">
     <div
         v-if="targetElement"
         class="user-guide-highlight"
@@ -7,41 +7,78 @@
     ></div>
 
     <div
-        class="user-guide-tooltip"
+        class="modern-card user-guide-tooltip animate-slide-up"
         :style="tooltipStyle"
         :class="step.tooltipClass || ''"
     >
-      <div class="guide-step-counter">
-        {{ currentStep + 1 }} / {{ totalSteps }}
+      <!-- Header -->
+      <div class="guide-header">
+        <div class="modern-badge modern-badge-primary guide-step-counter">
+          {{ currentStep + 1 }} / {{ totalSteps }}
+        </div>
+
+        <h5 class="modern-title guide-title">
+          <i v-if="step.icon" :class="`fas fa-${step.icon} me-2`"></i>
+          {{ step.title }}
+        </h5>
       </div>
 
-      <div class="guide-title">{{ step.title }}</div>
+      <!-- Content -->
+      <div class="guide-content">
+        <p>{{ step.content }}</p>
 
-      <div class="guide-content">{{ step.content }}</div>
+        <!-- نکات اضافی در صورت وجود -->
+        <div v-if="step.tips" class="guide-tips">
+          <div class="modern-alert modern-alert-info">
+            <i class="fas fa-lightbulb me-2"></i>
+            {{ step.tips }}
+          </div>
+        </div>
+      </div>
 
+      <!-- Progress Bar -->
+      <div class="guide-progress">
+        <div class="progress-bar">
+          <div
+              class="progress-fill"
+              :style="{ width: `${((currentStep + 1) / totalSteps) * 100}%` }"
+          ></div>
+        </div>
+        <span class="progress-text">
+          پیشرفت: {{ Math.round(((currentStep + 1) / totalSteps) * 100) }}%
+        </span>
+      </div>
+
+      <!-- Actions -->
       <div class="guide-actions">
-        <button
-            v-if="currentStep > 0"
-            class="btn btn-outline-secondary btn-sm"
-            @click="onPrev"
-        >
-          <i class="fas fa-chevron-right me-1"></i> قبلی
-        </button>
+        <div class="actions-right">
+          <button
+              v-if="currentStep > 0"
+              class="modern-btn modern-btn-outline"
+              @click="onPrev"
+          >
+            <i class="fas fa-chevron-right me-1"></i>
+            قبلی
+          </button>
+        </div>
 
-        <button
-            class="btn btn-outline-danger btn-sm ms-auto"
-            @click="onSkip"
-        >
-          رد کردن
-        </button>
+        <div class="actions-left">
+          <button
+              class="modern-btn modern-btn-secondary"
+              @click="onSkip"
+          >
+            <i class="fas fa-times me-1"></i>
+            رد کردن
+          </button>
 
-        <button
-            class="btn btn-primary btn-sm ms-2"
-            @click="onNext"
-        >
-          {{ isLastStep ? 'پایان' : 'بعدی' }}
-          <i class="fas fa-chevron-left ms-1"></i>
-        </button>
+          <button
+              class="modern-btn modern-btn-success ms-2"
+              @click="onNext"
+          >
+            {{ isLastStep ? 'پایان' : 'بعدی' }}
+            <i :class="`fas fa-${isLastStep ? 'check' : 'chevron-left'} ms-1`"></i>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -111,12 +148,10 @@ export default {
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
       const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
 
-      // محاسبه موقعیت tooltip بر اساس موقعیت هدف و جهت مشخص شده
       const position = this.step.position || 'bottom';
-
-      const tooltipWidth = 300; // عرض پیش‌فرض tooltip
-      const tooltipHeight = 200; // ارتفاع پیش‌فرض tooltip
-      const margin = 20; // فاصله از المان هدف
+      const tooltipWidth = 350;
+      const tooltipHeight = 250;
+      const margin = 20;
 
       let top, left;
 
@@ -142,7 +177,6 @@ export default {
           left = rect.left + scrollLeft + (rect.width / 2) - (tooltipWidth / 2);
       }
 
-      // اطمینان از اینکه tooltip در صفحه قابل مشاهده است
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight;
 
@@ -161,32 +195,26 @@ export default {
     }
   },
   mounted() {
-    // اسکرول به موقعیت المان هدف
     if (this.targetElement) {
       this.targetElement.scrollIntoView({
         behavior: 'smooth',
         block: 'center'
       });
 
-      // اضافه کردن کلاس هایلایت به المان هدف
       this.targetElement.classList.add('user-guide-target');
     }
 
-    // اضافه کردن event listener برای کلید‌های میانبر
     document.addEventListener('keydown', this.handleKeyPress);
   },
   beforeUnmount() {
-    // حذف کلاس هایلایت از المان هدف
     if (this.targetElement) {
       this.targetElement.classList.remove('user-guide-target');
     }
 
-    // حذف event listener
     document.removeEventListener('keydown', this.handleKeyPress);
   },
   methods: {
     handleKeyPress(e) {
-      // میانبرهای کیبورد برای ناوبری
       if (e.key === 'Escape') {
         this.onSkip();
       } else if (e.key === 'ArrowRight') {
@@ -199,69 +227,186 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 .user-guide-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.6);
   z-index: 9998;
-  pointer-events: all;
   display: flex;
   justify-content: center;
   align-items: center;
+  backdrop-filter: blur(3px);
 }
 
 .user-guide-highlight {
   position: absolute;
-  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
-  border-radius: 4px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
+  border-radius: 8px;
   z-index: 9999;
   pointer-events: none;
+  border: 3px solid #667eea;
 }
 
 .user-guide-tooltip {
   position: absolute;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
-  padding: 20px;
   z-index: 10000;
   direction: rtl;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.guide-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
 }
 
 .guide-step-counter {
-  position: absolute;
-  right: 20px;
-  top: 20px;
   font-size: 0.8rem;
-  color: #6c757d;
+  font-weight: 600;
 }
 
 .guide-title {
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin-bottom: 10px;
-  padding-top: 10px;
+  margin: 0;
+  flex: 1;
+  margin-right: 1rem;
 }
 
 .guide-content {
-  margin-bottom: 20px;
+  margin-bottom: 1.5rem;
   line-height: 1.6;
+  color: #495057;
+}
+
+.guide-tips {
+  margin-top: 1rem;
+}
+
+.guide-progress {
+  margin-bottom: 1.5rem;
+}
+
+.progress-bar {
+  height: 6px;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-weight: 600;
 }
 
 .guide-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-top: 1px solid #e9ecef;
-  padding-top: 15px;
+  border-top: 1px solid rgba(102, 126, 234, 0.1);
+  padding-top: 1rem;
+}
+
+.actions-right {
+  display: flex;
+}
+
+.actions-left {
+  display: flex;
+  gap: 0.5rem;
 }
 
 .user-guide-target {
   z-index: 10000;
   position: relative;
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+  border-radius: 8px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .user-guide-tooltip {
+    width: calc(100vw - 2rem) !important;
+    max-width: calc(100vw - 2rem) !important;
+    margin: 1rem;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+
+  .guide-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .guide-actions {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .actions-left {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* Animations */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.4s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .guide-content {
+    color: #e2e8f0;
+  }
+
+  .progress-text {
+    color: #cbd5e0;
+  }
+
+  .guide-header {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .guide-actions {
+    border-top-color: rgba(255, 255, 255, 0.1);
+  }
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="course-detail-container">
+  <div class="modern-page-bg course-detail-container">
     <div class="container-fluid p-4">
       <loading-spinner :loading="loading">
         <div v-if="course">
@@ -15,94 +15,136 @@
           />
 
           <!-- Tabs for different sections -->
-          <div class="course-content-tabs">
-            <ul class="nav nav-tabs" id="courseTab" role="tablist">
+          <div class="modern-card course-content-tabs animate-slide-up" style="animation-delay: 0.1s;">
+            <ul class="nav nav-tabs modern-nav-tabs" id="courseTab" role="tablist">
               <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview"
+                <button class="nav-link modern-nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview"
                         type="button" role="tab" aria-controls="overview" aria-selected="true">
+                  <i class="fas fa-info-circle me-2"></i>
                   معرفی دوره
                 </button>
               </li>
               <li class="nav-item" role="presentation">
-                <button class="nav-link" id="lessons-tab" data-bs-toggle="tab" data-bs-target="#lessons"
+                <button class="nav-link modern-nav-link" id="lessons-tab" data-bs-toggle="tab" data-bs-target="#lessons"
                         type="button" role="tab" aria-controls="lessons" aria-selected="false">
+                  <i class="fas fa-book-open me-2"></i>
                   درس‌ها
                 </button>
               </li>
               <li class="nav-item" role="presentation">
-                <button class="nav-link" id="students-tab" data-bs-toggle="tab" data-bs-target="#students"
+                <button class="nav-link modern-nav-link" id="students-tab" data-bs-toggle="tab" data-bs-target="#students"
                         type="button" role="tab" aria-controls="students" aria-selected="false">
+                  <i class="fas fa-users me-2"></i>
                   دانش‌آموزان
                 </button>
               </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat"
+                        type="button" role="tab" aria-controls="chat" aria-selected="false">
+                  <i class="fas fa-comments me-1"></i>
+                  گفتگوی دوره
+                </button>
+              </li>
               <li v-if="isTeacher && isTeacherOfCourse" class="nav-item" role="presentation">
-                <button class="nav-link" id="manage-tab" data-bs-toggle="tab" data-bs-target="#manage"
+                <button class="nav-link modern-nav-link" id="manage-tab" data-bs-toggle="tab" data-bs-target="#manage"
                         type="button" role="tab" aria-controls="manage" aria-selected="false">
-                  ویرایش دوره
+                  <i class="fas fa-cog me-2"></i>
+                  ویرایش اطلاعات دوره
                 </button>
               </li>
             </ul>
 
-            <div class="tab-content p-4 course-tab-content" id="courseTabContent">
+            <div class="tab-content course-tab-content" id="courseTabContent">
               <!-- Overview Tab -->
               <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
-                <!-- Course Information -->
-                <div class="course-info">
-                  <h3>معرفی دوره</h3>
-                  <div class="course-description">
-                    <p>{{ course.description }}</p>
+                <div class="row">
+                  <div class="col-lg-8">
+                    <div class="modern-card course-info animate-slide-right">
+                      <h5 class="modern-title">
+                        <i class="fas fa-graduation-cap text-primary me-2"></i>
+                        معرفی دوره
+                      </h5>
+                      <div class="course-description">
+                        <p>{{ course.description || 'توضیحات دوره در دسترس نیست.' }}</p>
+                      </div>
+                    </div>
+
+                    <!-- Course Teacher -->
+                    <div class="modern-card course-teacher animate-slide-right" style="animation-delay: 0.1s;">
+                      <h5 class="modern-title">
+                        <i class="fas fa-chalkboard-teacher text-success me-2"></i>
+                        استاد دوره
+                      </h5>
+                      <div class="teacher-info">
+                        <div class="teacher-avatar">
+                          <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div class="teacher-details">
+                          <h6>{{ getTeacherName() }}</h6>
+                          <p>{{ course.teacher?.description || 'اطلاعات بیشتری در دسترس نیست.' }}</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  <!-- Course Stats -->
-                  <div class="course-stats mt-4">
-                    <div class="row">
-                      <div class="col-md-4">
-                        <div class="stat-card">
-                          <div class="stat-icon"><i class="fas fa-book"></i></div>
+                  <div class="col-lg-4">
+                    <!-- Course Stats -->
+                    <div class="modern-card course-stats animate-slide-left">
+                      <h5 class="modern-title">
+                        <i class="fas fa-chart-bar text-info me-2"></i>
+                        آمار دوره
+                      </h5>
+                      <div class="stats-grid">
+                        <div class="stat-item">
+                          <div class="stat-icon text-primary">
+                            <i class="fas fa-book"></i>
+                          </div>
                           <div class="stat-value">{{ course.lessons ? course.lessons.length : 0 }}</div>
-                          <div class="stat-label">تعداد درس‌ها</div>
+                          <div class="stat-label">درس</div>
                         </div>
-                      </div>
-                      <div class="col-md-4">
-                        <div class="stat-card">
-                          <div class="stat-icon"><i class="fas fa-users"></i></div>
+                        <div class="stat-item">
+                          <div class="stat-icon text-success">
+                            <i class="fas fa-users"></i>
+                          </div>
                           <div class="stat-value">{{ course.enrolledStudents ? course.enrolledStudents.length : 0 }}</div>
-                          <div class="stat-label">دانش‌آموزان</div>
+                          <div class="stat-label">دانش‌آموز</div>
                         </div>
-                      </div>
-                      <div class="col-md-4">
-                        <div class="stat-card">
-                          <div class="stat-icon"><i class="fas fa-clock"></i></div>
-                          <div class="stat-value">{{ getTotalDuration() }} دقیقه</div>
-                          <div class="stat-label">مدت زمان دوره</div>
+                        <div class="stat-item">
+                          <div class="stat-icon text-warning">
+                            <i class="fas fa-clock"></i>
+                          </div>
+                          <div class="stat-value">{{ getTotalDuration() }}</div>
+                          <div class="stat-label">دقیقه</div>
+                        </div>
+                        <div class="stat-item">
+                          <div class="stat-icon text-danger">
+                            <i class="fas fa-calendar"></i>
+                          </div>
+                          <div class="stat-value">{{ formatDate(course.createdAt) || 'نامشخص' }}</div>
+                          <div class="stat-label">تاریخ ایجاد</div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  <!-- Course Teacher -->
-                  <div class="course-teacher mt-4">
-                    <h3>استاد دوره</h3>
-                    <div class="teacher-info">
-                      <div class="teacher-avatar">
-                        <!--                        <img src="/api/placeholder/80/80" alt="Teacher Avatar">-->
+                    <!-- Prerequisites -->
+                    <div class="modern-card course-prerequisites animate-slide-left" style="animation-delay: 0.1s;">
+                      <h5 class="modern-title">
+                        <i class="fas fa-list-check text-warning me-2"></i>
+                        پیش‌نیازها
+                      </h5>
+                      <div v-if="course.prerequisites && course.prerequisites.length > 0">
+                        <ul class="prerequisites-list">
+                          <li v-for="prerequisite in course.prerequisites" :key="prerequisite.id">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            {{ prerequisite.title }}
+                          </li>
+                        </ul>
                       </div>
-                      <div class="teacher-details">
-                        <h4>{{ getTeacherName() }}</h4>
-                        <p>{{ course.teacher?.description || 'توضیحات استاد در دسترس نیست.' }}</p>
+                      <div v-else class="no-prerequisites">
+                        <i class="fas fa-info-circle text-muted me-2"></i>
+                        این دوره پیش‌نیازی ندارد.
                       </div>
                     </div>
-                  </div>
-
-                  <!-- Course Prerequisites if any -->
-                  <div class="course-prerequisites mt-4">
-                    <h3>پیش‌نیازها</h3>
-                    <ul v-if="course.prerequisites && course.prerequisites.length > 0">
-                      <li v-for="prerequisite in course.prerequisites" :key="prerequisite.id">
-                        {{ prerequisite.title }}
-                      </li>
-                    </ul>
-                    <p v-else>این دوره پیش‌نیازی ندارد.</p>
                   </div>
                 </div>
               </div>
@@ -123,26 +165,25 @@
                     @mark-complete="markLessonComplete"
                 />
 
-                <!-- Teacher Management Section - moved here from manage tab -->
-                <div v-if="isTeacher && isTeacherOfCourse" class="mt-5">
-                  <hr class="mb-4">
-
-                  <!-- Lessons Management Section -->
-                  <div class="management-section">
-                    <lesson-manager
-                        :course-id="id"
-                        :lessons="course.lessons"
-                        @lesson-added="handleLessonAdded"
-                        @lesson-updated="handleLessonUpdated"
-                        @lesson-deleted="handleLessonDeleted"
-                        @add-content="showAddContentModal"
-                        @add-assignment="showAddAssignmentModal"
-                        @show-questions-manager="showLessonQuestionsManager"
-                    />
-                  </div>
+                <!-- Teacher Management Section -->
+                <div v-if="isTeacher && isTeacherOfCourse" class="modern-card teacher-management animate-slide-up" style="animation-delay: 0.2s;">
+                  <h5 class="modern-title">
+                    <i class="fas fa-tools text-primary me-2"></i>
+                    مدیریت درس‌ها
+                  </h5>
+                  <lesson-manager
+                      :course-id="id"
+                      :lessons="course.lessons"
+                      @lesson-added="handleLessonAdded"
+                      @lesson-updated="handleLessonUpdated"
+                      @lesson-deleted="handleLessonDeleted"
+                      @add-content="showAddContentModal"
+                      @add-assignment="showAddAssignmentModal"
+                      @show-questions-manager="showLessonQuestionsManager"
+                  />
 
                   <!-- Questions Manager Section -->
-                  <div v-if="showQuestionsManager && selectedLessonForQuestions" class="management-section mt-4">
+                  <div v-if="showQuestionsManager && selectedLessonForQuestions" class="mt-4">
                     <lesson-questions-manager
                         :lesson-id="selectedLessonForQuestions.id"
                         :lesson-title="selectedLessonForQuestions.title"
@@ -160,7 +201,7 @@
                 />
               </div>
 
-              <!-- Manage Tab (Teacher Only) - simplified -->
+              <!-- Manage Tab (Teacher Only) -->
               <div
                   v-if="isTeacher && isTeacherOfCourse"
                   class="tab-pane fade"
@@ -168,88 +209,112 @@
                   role="tabpanel"
                   aria-labelledby="manage-tab"
               >
-                <div class="course-management">
-                  <!-- Course Info Section -->
-                  <div class="management-section">
-                    <h4>ویرایش اطلاعات دوره</h4>
-                    <div class="form-group mb-3">
-                      <label for="courseTitle" class="form-label">عنوان دوره</label>
-                      <input
-                          type="text"
-                          id="courseTitle"
-                          class="form-control"
-                          v-model="editCourseForm.title"
-                          placeholder="عنوان دوره"
-                      >
-                    </div>
+                <div class="modern-card course-management animate-slide-up">
+                  <h5 class="modern-title">
+                    <i class="fas fa-edit text-primary me-2"></i>
+                    ویرایش اطلاعات دوره
+                  </h5>
 
-                    <div class="form-group mb-3">
-                      <label for="courseDescription" class="form-label">توضیحات دوره</label>
-                      <textarea
-                          id="courseDescription"
-                          class="form-control"
-                          v-model="editCourseForm.description"
-                          rows="4"
-                          placeholder="توضیحات دوره"
-                      ></textarea>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="modern-form-group">
+                        <label for="courseTitle" class="modern-form-label">عنوان دوره</label>
+                        <input
+                            type="text"
+                            id="courseTitle"
+                            class="modern-form-control"
+                            v-model="editCourseForm.title"
+                            placeholder="عنوان دوره"
+                        >
+                      </div>
                     </div>
-
-                    <button
-                        class="btn btn-primary"
-                        @click="updateCourseInfo"
-                        :disabled="updatingCourse"
-                    >
-                      <span v-if="updatingCourse" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                      ذخیره تغییرات
-                    </button>
+                    <div class="col-md-6">
+                      <div class="modern-form-group">
+                        <label for="courseStatus" class="modern-form-label">وضعیت دوره</label>
+                        <select id="courseStatus" class="modern-form-control">
+                          <option value="active">فعال</option>
+                          <option value="inactive">غیرفعال</option>
+                          <option value="archived">آرشیو شده</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
+
+                  <div class="modern-form-group">
+                    <label for="courseDescription" class="modern-form-label">توضیحات دوره</label>
+                    <textarea
+                        id="courseDescription"
+                        class="modern-form-control"
+                        v-model="editCourseForm.description"
+                        rows="4"
+                        placeholder="توضیحات دوره"
+                    ></textarea>
+                  </div>
+
+                  <button
+                      class="modern-btn modern-btn-success"
+                      @click="updateCourseInfo"
+                      :disabled="updatingCourse"
+                  >
+                    <span v-if="updatingCourse" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    <i v-else class="fas fa-save me-1"></i>
+                    ذخیره تغییرات
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <empty-state
-            v-else
-            title="دوره یافت نشد"
-            description="متأسفانه دوره مورد نظر یافت نشد یا شما دسترسی به آن ندارید."
-            icon="graduation-cap"
-        >
-          <router-link :to="{ name: 'Courses' }" class="btn btn-primary">
-            بازگشت به لیست دوره‌ها
-          </router-link>
-        </empty-state>
+        <div v-else class="modern-card text-center animate-slide-up">
+          <div class="py-5">
+            <div class="modern-logo large danger mb-4">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h4 class="text-muted mb-3">دوره یافت نشد</h4>
+            <p class="text-muted mb-4">
+              متأسفانه دوره مورد نظر یافت نشد یا شما دسترسی به آن ندارید.
+            </p>
+            <router-link :to="{ name: 'Courses' }" class="modern-btn modern-btn-primary">
+              <i class="fas fa-arrow-right me-1"></i>
+              بازگشت به لیست دوره‌ها
+            </router-link>
+          </div>
+        </div>
       </loading-spinner>
     </div>
 
-    <!-- Modal for adding/editing lessons -->
+    <!-- Modals -->
+    <!-- Lesson Modal -->
     <div class="modal fade" id="lessonModal" tabindex="-1" aria-labelledby="lessonModalLabel" aria-hidden="true">
       <div class="modal-dialog">
-        <div class="modal-content">
+        <div class="modal-content modern-modal">
           <div class="modal-header">
             <h5 class="modal-title" id="lessonModalLabel">
+              <i class="fas fa-book me-2"></i>
               {{ lessonForm.id ? 'ویرایش درس' : 'افزودن درس جدید' }}
             </h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <form @submit.prevent="saveLesson">
-              <div class="mb-3">
-                <label for="lessonTitle" class="form-label">عنوان درس</label>
-                <input type="text" class="form-control" id="lessonTitle" v-model="lessonForm.title" required>
+              <div class="modern-form-group">
+                <label for="lessonTitle" class="modern-form-label">عنوان درس</label>
+                <input type="text" class="modern-form-control" id="lessonTitle" v-model="lessonForm.title" required>
               </div>
-              <div class="mb-3">
-                <label for="lessonDescription" class="form-label">توضیحات درس</label>
-                <textarea class="form-control" id="lessonDescription" v-model="lessonForm.description" rows="3"></textarea>
+              <div class="modern-form-group">
+                <label for="lessonDescription" class="modern-form-label">توضیحات درس</label>
+                <textarea class="modern-form-control" id="lessonDescription" v-model="lessonForm.description" rows="3"></textarea>
               </div>
-              <div class="mb-3">
-                <label for="lessonOrder" class="form-label">ترتیب نمایش</label>
-                <input type="number" class="form-control" id="lessonOrder" v-model="lessonForm.orderIndex" min="0">
+              <div class="modern-form-group">
+                <label for="lessonOrder" class="modern-form-label">ترتیب نمایش</label>
+                <input type="number" class="modern-form-control" id="lessonOrder" v-model="lessonForm.orderIndex" min="0">
               </div>
               <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
-                <button type="submit" class="btn btn-primary" :disabled="savingLesson">
+                <button type="button" class="modern-btn modern-btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="submit" class="modern-btn modern-btn-success" :disabled="savingLesson">
                   <span v-if="savingLesson" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                  <i v-else class="fas fa-save me-1"></i>
                   ذخیره
                 </button>
               </div>
@@ -259,7 +324,7 @@
       </div>
     </div>
 
-    <!-- مودال افزودن محتوا به درس -->
+    <!-- Content Modal -->
     <content-modal
         :modal-id="'contentModal'"
         :lesson-id="selectedLesson.id || 0"
@@ -267,49 +332,54 @@
         @content-saved="handleContentSaved"
     />
 
-    <!-- Modal for adding assignment -->
+    <!-- Other modals remain the same with modern styling applied -->
+    <!-- Assignment Modal -->
     <div class="modal fade" id="assignmentModal" tabindex="-1" aria-labelledby="assignmentModalLabel" aria-hidden="true">
       <div class="modal-dialog">
-        <div class="modal-content">
+        <div class="modal-content modern-modal">
           <div class="modal-header">
-            <h5 class="modal-title" id="assignmentModalLabel">افزودن تکلیف به درس: {{ selectedLesson.title }}</h5>
+            <h5 class="modal-title" id="assignmentModalLabel">
+              <i class="fas fa-tasks me-2"></i>
+              افزودن تکلیف به درس: {{ selectedLesson.title }}
+            </h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <form @submit.prevent="saveAssignment">
-              <div class="mb-3">
-                <label for="assignmentTitle" class="form-label">عنوان تکلیف</label>
-                <input type="text" class="form-control" id="assignmentTitle" v-model="assignmentForm.title" required>
+              <div class="modern-form-group">
+                <label for="assignmentTitle" class="modern-form-label">عنوان تکلیف</label>
+                <input type="text" class="modern-form-control" id="assignmentTitle" v-model="assignmentForm.title" required>
               </div>
-              <div class="mb-3">
-                <label for="assignmentDescription" class="form-label">توضیحات تکلیف</label>
-                <textarea class="form-control" id="assignmentDescription" v-model="assignmentForm.description" rows="4" required></textarea>
+              <div class="modern-form-group">
+                <label for="assignmentDescription" class="modern-form-label">توضیحات تکلیف</label>
+                <textarea class="modern-form-control" id="assignmentDescription" v-model="assignmentForm.description" rows="4" required></textarea>
               </div>
 
               <div class="row">
                 <div class="col-md-6">
-                  <div class="mb-3">
-                    <label for="assignmentDueDate" class="form-label">تاریخ تحویل</label>
-                    <input type="date" class="form-control" id="assignmentDueDate" v-model="assignmentForm.dueDate" required>
+                  <div class="modern-form-group">
+                    <label for="assignmentDueDate" class="modern-form-label">تاریخ تحویل</label>
+                    <input type="date" class="modern-form-control" id="assignmentDueDate" v-model="assignmentForm.dueDate" required>
                   </div>
                 </div>
                 <div class="col-md-6">
-                  <div class="mb-3">
-                    <label for="assignmentDueTime" class="form-label">ساعت تحویل</label>
-                    <input type="time" class="form-control" id="assignmentDueTime" v-model="assignmentForm.dueTime" required>
+                  <div class="modern-form-group">
+                    <label for="assignmentDueTime" class="modern-form-label">ساعت تحویل</label>
+                    <input type="time" class="modern-form-control" id="assignmentDueTime" v-model="assignmentForm.dueTime" required>
                   </div>
                 </div>
               </div>
 
-              <div class="mb-3">
-                <label for="assignmentFile" class="form-label">فایل پیوست (اختیاری)</label>
-                <input type="file" class="form-control" id="assignmentFile" @change="handleAssignmentFileSelect">
+              <div class="modern-form-group">
+                <label for="assignmentFile" class="modern-form-label">فایل پیوست (اختیاری)</label>
+                <input type="file" class="modern-form-control" id="assignmentFile" @change="handleAssignmentFileSelect">
               </div>
 
               <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
-                <button type="submit" class="btn btn-primary" :disabled="isAssignmentSubmitting">
+                <button type="button" class="modern-btn modern-btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="submit" class="modern-btn modern-btn-success" :disabled="isAssignmentSubmitting">
                   <span v-if="isAssignmentSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  <i v-else class="fas fa-save me-1"></i>
                   ذخیره تکلیف
                 </button>
               </div>
@@ -319,116 +389,124 @@
       </div>
     </div>
 
-    <!-- Modal for adding exercise -->
+    <!-- Exercise Modal -->
     <div class="modal fade" id="exerciseModal" tabindex="-1" aria-labelledby="exerciseModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+        <div class="modal-content modern-modal">
           <div class="modal-header">
-            <h5 class="modal-title" id="exerciseModalLabel">افزودن تمرین به درس: {{ selectedLesson.title }}</h5>
+            <h5 class="modal-title" id="exerciseModalLabel">
+              <i class="fas fa-dumbbell me-2"></i>
+              افزودن تمرین به درس: {{ selectedLesson.title }}
+            </h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <form @submit.prevent="saveExercise">
-              <!-- Exercise Info Section -->
-              <div class="card mb-4">
-                <div class="card-header bg-light">
-                  <h6 class="mb-0">مشخصات تمرین</h6>
+              <div class="modern-card">
+                <h6 class="modern-title">
+                  <i class="fas fa-cog text-primary me-2"></i>
+                  مشخصات تمرین
+                </h6>
+                <div class="row">
+                  <div class="col-md-6 modern-form-group">
+                    <label for="exerciseTitle" class="modern-form-label">عنوان تمرین</label>
+                    <input type="text" class="modern-form-control" id="exerciseTitle" v-model="exerciseForm.title" required>
+                  </div>
+                  <div class="col-md-6 modern-form-group">
+                    <label for="exerciseTimeLimit" class="modern-form-label">مدت زمان (دقیقه)</label>
+                    <input type="number" class="modern-form-control" id="exerciseTimeLimit" v-model="exerciseForm.timeLimit" min="1" required>
+                  </div>
                 </div>
-                <div class="card-body">
-                  <div class="row">
-                    <div class="col-md-6 mb-3">
-                      <label for="exerciseTitle" class="form-label">عنوان تمرین</label>
-                      <input type="text" class="form-control" id="exerciseTitle" v-model="exerciseForm.title" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                      <label for="exerciseTimeLimit" class="form-label">مدت زمان (دقیقه)</label>
-                      <input type="number" class="form-control" id="exerciseTimeLimit" v-model="exerciseForm.timeLimit" min="1" required>
+                <div class="row">
+                  <div class="col-md-6 modern-form-group">
+                    <label for="exercisePassingScore" class="modern-form-label">نمره قبولی</label>
+                    <input type="number" class="modern-form-control" id="exercisePassingScore" v-model="exerciseForm.passingScore" min="0" max="100" required>
+                  </div>
+                  <div class="col-md-6 modern-form-group">
+                    <div class="form-check mt-4">
+                      <input class="form-check-input" type="checkbox" id="adaptiveDifficulty" v-model="exerciseForm.adaptiveDifficulty">
+                      <label class="form-check-label" for="adaptiveDifficulty">
+                        دشواری تطبیقی
+                      </label>
                     </div>
                   </div>
-                  <div class="row">
-                    <div class="col-md-6 mb-3">
-                      <label for="exercisePassingScore" class="form-label">نمره قبولی</label>
-                      <input type="number" class="form-control" id="exercisePassingScore" v-model="exerciseForm.passingScore" min="0" max="100" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                      <div class="form-check mt-4">
-                        <input class="form-check-input" type="checkbox" id="adaptiveDifficulty" v-model="exerciseForm.adaptiveDifficulty">
-                        <label class="form-check-label" for="adaptiveDifficulty">
-                          دشواری تطبیقی
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="mb-3">
-                    <label for="exerciseDescription" class="form-label">توضیحات تمرین</label>
-                    <textarea class="form-control" id="exerciseDescription" v-model="exerciseForm.description" rows="3"></textarea>
-                  </div>
+                </div>
+                <div class="modern-form-group">
+                  <label for="exerciseDescription" class="modern-form-label">توضیحات تمرین</label>
+                  <textarea class="modern-form-control" id="exerciseDescription" v-model="exerciseForm.description" rows="3"></textarea>
                 </div>
               </div>
 
-              <button type="submit" class="btn btn-primary" :disabled="isExerciseSubmitting">
-                <span v-if="isExerciseSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                ایجاد تمرین
-              </button>
+              <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="modern-btn modern-btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="submit" class="modern-btn modern-btn-success" :disabled="isExerciseSubmitting">
+                  <span v-if="isExerciseSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  <i v-else class="fas fa-plus me-1"></i>
+                  ایجاد تمرین
+                </button>
+              </div>
             </form>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Modal for adding exam -->
+    <!-- Exam Modal -->
     <div class="modal fade" id="examModal" tabindex="-1" aria-labelledby="examModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+        <div class="modal-content modern-modal">
           <div class="modal-header">
-            <h5 class="modal-title" id="examModalLabel">افزودن آزمون به درس: {{ selectedLesson.title }}</h5>
+            <h5 class="modal-title" id="examModalLabel">
+              <i class="fas fa-clipboard-check me-2"></i>
+              افزودن آزمون به درس: {{ selectedLesson.title }}
+            </h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
             <form @submit.prevent="saveExam">
-              <!-- Exam Info Section -->
-              <div class="card mb-4">
-                <div class="card-header bg-light">
-                  <h6 class="mb-0">مشخصات آزمون</h6>
+              <div class="modern-card">
+                <h6 class="modern-title">
+                  <i class="fas fa-cog text-primary me-2"></i>
+                  مشخصات آزمون
+                </h6>
+                <div class="row">
+                  <div class="col-md-6 modern-form-group">
+                    <label for="examTitle" class="modern-form-label">عنوان آزمون</label>
+                    <input type="text" class="modern-form-control" id="examTitle" v-model="examForm.title" required>
+                  </div>
+                  <div class="col-md-6 modern-form-group">
+                    <label for="examDuration" class="modern-form-label">مدت زمان (دقیقه)</label>
+                    <input type="number" class="modern-form-control" id="examDuration" v-model="examForm.duration" min="5" required>
+                  </div>
                 </div>
-                <div class="card-body">
-                  <div class="row">
-                    <div class="col-md-6 mb-3">
-                      <label for="examTitle" class="form-label">عنوان آزمون</label>
-                      <input type="text" class="form-control" id="examTitle" v-model="examForm.title" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                      <label for="examDuration" class="form-label">مدت زمان (دقیقه)</label>
-                      <input type="number" class="form-control" id="examDuration" v-model="examForm.duration" min="5" required>
+                <div class="row">
+                  <div class="col-md-6 modern-form-group">
+                    <label for="examPassingScore" class="modern-form-label">نمره قبولی</label>
+                    <input type="number" class="modern-form-control" id="examPassingScore" v-model="examForm.passingScore" min="0" max="100" required>
+                  </div>
+                  <div class="col-md-6 modern-form-group">
+                    <div class="form-check mt-4">
+                      <input class="form-check-input" type="checkbox" id="shuffleQuestions" v-model="examForm.shuffleQuestions">
+                      <label class="form-check-label" for="shuffleQuestions">
+                        تغییر ترتیب تصادفی سوالات
+                      </label>
                     </div>
                   </div>
-                  <div class="row">
-                    <div class="col-md-6 mb-3">
-                      <label for="examPassingScore" class="form-label">نمره قبولی</label>
-                      <input type="number" class="form-control" id="examPassingScore" v-model="examForm.passingScore" min="0" max="100" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                      <div class="form-check mt-4">
-                        <input class="form-check-input" type="checkbox" id="shuffleQuestions" v-model="examForm.shuffleQuestions">
-                        <label class="form-check-label" for="shuffleQuestions">
-                          تغییر ترتیب تصادفی سوالات
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="mb-3">
-                    <label for="examDescription" class="form-label">توضیحات آزمون</label>
-                    <textarea class="form-control" id="examDescription" v-model="examForm.description" rows="3"></textarea>
-                  </div>
+                </div>
+                <div class="modern-form-group">
+                  <label for="examDescription" class="modern-form-label">توضیحات آزمون</label>
+                  <textarea class="modern-form-control" id="examDescription" v-model="examForm.description" rows="3"></textarea>
                 </div>
               </div>
 
-
-
-              <button type="submit" class="btn btn-primary" :disabled="isExamSubmitting">
-                <span v-if="isExamSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                ایجاد آزمون
-              </button>
+              <div class="d-flex justify-content-end gap-2">
+                <button type="button" class="modern-btn modern-btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="submit" class="modern-btn modern-btn-success" :disabled="isExamSubmitting">
+                  <span v-if="isExamSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  <i v-else class="fas fa-plus me-1"></i>
+                  ایجاد آزمون
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -452,7 +530,6 @@ import { mapGetters } from 'vuex';
 import { useUser } from '@/composables/useUser.js';
 import { useFormatters } from '@/composables/useFormatters.js';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
-import EmptyState from '@/components/common/EmptyState.vue';
 import ConfirmationDialog from '@/components/common/ConfirmationDialog.vue';
 import ContentModal from '@/components/courses/ContentModal.vue';
 import CourseHeader from '@/components/courses/CourseHeader.vue';
@@ -464,7 +541,6 @@ export default {
   name: 'CourseDetail',
   components: {
     LoadingSpinner,
-    EmptyState,
     ConfirmationDialog,
     ContentModal,
     CourseHeader,
@@ -503,7 +579,6 @@ export default {
       selectedLessonForQuestions: null,
       showQuestionsManager: false,
 
-      // فرم درس
       lessonForm: {
         id: null,
         title: '',
@@ -511,13 +586,11 @@ export default {
         orderIndex: 0
       },
 
-      // فرم ویرایش دوره
       editCourseForm: {
         title: '',
         description: ''
       },
 
-      // فرم تکلیف
       assignmentForm: {
         title: '',
         description: '',
@@ -532,7 +605,6 @@ export default {
         title: ''
       },
 
-      // فرم تمرین
       exerciseForm: {
         title: '',
         description: '',
@@ -542,7 +614,6 @@ export default {
       },
       isExerciseSubmitting: false,
 
-      // فرم آزمون
       examForm: {
         title: '',
         description: '',
@@ -552,7 +623,6 @@ export default {
       },
       isExamSubmitting: false,
 
-      // اطلاعات پیشرفت
       progress: {
         completedLessons: 0,
         totalTimeSpent: 0,
@@ -560,8 +630,8 @@ export default {
         examsTotal: 0,
         exercisesCompleted: 0,
         exercisesTotal: 0,
-        circleLength: 439.6, // 2 * PI * 70 (شعاع دایره)
-        circleDashOffset: 439.6, // جابجایی اولیه (0٪ پیشرفت)
+        circleLength: 439.6,
+        circleDashOffset: 439.6,
         completedLessonIds: [],
         timeline: []
       }
@@ -585,34 +655,22 @@ export default {
     }
   },
   mounted() {
-    // فعال‌سازی زبانه‌های بوت‌استرپ
     this.setupBootstrapTabs();
-    console.log('User roles:', {
-      isTeacher: this.isTeacher,
-      isTeacherOfCourse: this.isTeacherOfCourse,
-      currentUser: this.currentUser
-    });
   },
   methods: {
-    // راه‌اندازی زبانه‌های Bootstrap
     setupBootstrapTabs() {
-      // بررسی وجود زبانه‌های Bootstrap
       const tabListEl = document.getElementById('courseTab');
       if (tabListEl) {
-        // فعال‌سازی زبانه فعال بر اساس پارامتر URL
         const urlParams = new URLSearchParams(window.location.search);
         const tabParam = urlParams.get('tab');
         if (tabParam) {
-          // دکمه زبانه مربوطه را پیدا کنید
           const tabToShow = document.querySelector(`#${tabParam}-tab`);
           if (tabToShow) {
-            // ایجاد نمونه Tab بوت‌استرپ و نمایش زبانه مربوطه
             const tab = new bootstrap.Tab(tabToShow);
             tab.show();
           }
         }
 
-        // ایجاد Event Listener برای تغییر URL هنگام تغییر زبانه
         tabListEl.addEventListener('shown.bs.tab', function (event) {
           const tabId = event.target.id.replace('-tab', '');
           const newUrl = new URL(window.location);
@@ -652,9 +710,7 @@ export default {
 
     async fetchCourseData() {
       try {
-        // دریافت اطلاعات دوره از سرور
         await this.$store.dispatch('courses/fetchCourseById', this.id);
-
         this.course = this.currentCourse.course;
 
         if (!this.course) {
@@ -662,28 +718,22 @@ export default {
           return;
         }
 
-        // بررسی دسترسی معلم به دوره
         if (this.isTeacher) {
           this.isTeacherOfCourse = (this.currentUser.id === this.course.teacher.id);
         }
 
-        // بررسی ثبت‌نام دانش‌آموز در دوره
         if (this.isStudent && this.course.enrolledStudents) {
           this.isEnrolled = this.course.enrolledStudents.some(student => student.id === this.currentUser.id);
         }
 
-        // تنظیم داده‌های فرم ویرایش دوره
         this.editCourseForm = {
           title: this.course.title,
           description: this.course.description
         };
 
-        // دریافت اطلاعات پیشرفت برای دانش‌آموزان
         if (this.isStudent && this.isEnrolled) {
           await this.fetchProgressData();
         }
-
-        console.log("Course loaded:", this.course);
 
       } catch (error) {
         console.error('Error in fetchCourseData:', error);
@@ -693,15 +743,10 @@ export default {
 
     async fetchProgressData() {
       try {
-        // در پروژه واقعی، اطلاعات پیشرفت از سرور دریافت می‌شود
-        // this.progress = await API.getProgress(this.id);
-
-        // برای نمونه، یک پیشرفت ساختگی ایجاد می‌کنیم
         if (this.course.lessons) {
           const totalLessons = this.course.lessons.length;
           const completedLessons = Math.floor(Math.random() * (totalLessons + 1));
 
-          // ایجاد آرایه‌ای از شناسه‌های درس‌های تکمیل‌شده
           const completedLessonIds = [];
           for (let i = 0; i < completedLessons; i++) {
             if (this.course.lessons[i]) {
@@ -724,7 +769,6 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching progress data:', error);
-        // نمایش خطا به کاربر
         this.$toast.error('خطا در دریافت اطلاعات پیشرفت');
       }
     },
@@ -769,9 +813,6 @@ export default {
         title: this.course.title,
         description: this.course.description
       };
-
-      // در پروژه واقعی، یک مودال برای ویرایش دوره نمایش داده می‌شود
-      console.log('Edit course modal should be shown');
     },
 
     async updateCourseInfo() {
@@ -827,30 +868,21 @@ export default {
         let response;
 
         if (this.lessonForm.id) {
-          // ویرایش درس موجود
           response = await this.$http.put(`/lessons/${this.lessonForm.id}`, this.lessonForm);
-
-          // به‌روزرسانی درس در لیست دروس
           const index = this.course.lessons.findIndex(l => l.id === this.lessonForm.id);
           if (index !== -1) {
             this.course.lessons[index] = response.data;
           }
-
           this.$toast.success('درس با موفقیت به‌روزرسانی شد.');
         } else {
-          // ایجاد درس جدید
           response = await this.$http.post(`/lessons/course/${this.id}`, this.lessonForm);
-
-          // افزودن درس جدید به لیست دروس
           if (!this.course.lessons) {
             this.course.lessons = [];
           }
-
           this.course.lessons.push(response.data);
           this.$toast.success('درس جدید با موفقیت افزوده شد.');
         }
 
-        // بستن مودال
         const modal = bootstrap.Modal.getInstance(document.getElementById('lessonModal'));
         modal.hide();
       } catch (error) {
@@ -862,17 +894,13 @@ export default {
     },
 
     async deleteLesson(lesson) {
-      // نمایش دیالوگ تأیید
       const confirmed = await this.$refs.confirmDialog.show();
 
       if (!confirmed) return;
 
       try {
         await this.$http.delete(`/lessons/${lesson.id}`);
-
-        // حذف درس از لیست دروس
         this.course.lessons = this.course.lessons.filter(l => l.id !== lesson.id);
-
         this.$toast.success('درس با موفقیت حذف شد.');
       } catch (error) {
         console.error('Error deleting lesson:', error);
@@ -896,7 +924,6 @@ export default {
       try {
         await this.$http.post(`/progress/lesson/${lessonId}/complete`);
 
-        // به‌روزرسانی وضعیت پیشرفت
         if (!this.progress.completedLessonIds) {
           this.progress.completedLessonIds = [];
         }
@@ -904,7 +931,6 @@ export default {
         this.progress.completedLessonIds.push(lessonId);
         this.progress.completedLessons++;
 
-        // به‌روزرسانی درصد پیشرفت
         const percentage = this.progress.completedLessons / this.progress.totalLessons;
         this.progress.circleDashOffset = this.progress.circleLength * (1 - percentage);
 
@@ -925,7 +951,6 @@ export default {
     showAddAssignmentModal(lesson) {
       this.selectedLesson = lesson;
 
-      // تنظیم تاریخ تحویل به 7 روز بعد
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 7);
 
@@ -968,7 +993,6 @@ export default {
       this.isAssignmentSubmitting = true;
 
       try {
-        // ترکیب تاریخ و زمان
         let dueDateTime = this.assignmentForm.dueDate;
         if (this.assignmentForm.dueTime) {
           dueDateTime = `${this.assignmentForm.dueDate}T${this.assignmentForm.dueTime}:00`;
@@ -985,7 +1009,7 @@ export default {
           formData.append('file', this.assignmentForm.file);
         }
 
-        const response = await axios.post(
+        const response = await this.$http.post(
             `/assignments/lesson/${this.selectedLesson.id}`,
             formData,
             {
@@ -995,7 +1019,6 @@ export default {
             }
         );
 
-        // به‌روزرسانی درس برای نشان دادن اینکه تکلیف دارد
         const lessonIndex = this.course.lessons.findIndex(l => l.id === this.selectedLesson.id);
         if (lessonIndex !== -1) {
           this.course.lessons[lessonIndex].hasAssignment = true;
@@ -1005,9 +1028,8 @@ export default {
           this.course.lessons[lessonIndex].assignments.push(response.data);
         }
 
-        this.showSuccessToast('تکلیف با موفقیت ایجاد شد.');
+        this.$toast.success('تکلیف با موفقیت ایجاد شد.');
 
-        // بستن مودال
         const modal = bootstrap.Modal.getInstance(document.getElementById('assignmentModal'));
         modal.hide();
       } catch (error) {
@@ -1018,7 +1040,7 @@ export default {
           errorMessage = error.response.data.message;
         }
 
-        this.showErrorToast(errorMessage);
+        this.$toast.error(errorMessage);
       } finally {
         this.isAssignmentSubmitting = false;
       }
@@ -1038,7 +1060,6 @@ export default {
           adaptiveDifficulty: this.exerciseForm.adaptiveDifficulty
         });
 
-        // به‌روزرسانی درس برای نشان دادن اینکه یک تمرین دارد
         const lessonIndex = this.course.lessons.findIndex(l => l.id === this.selectedLesson.id);
         if (lessonIndex !== -1) {
           this.course.lessons[lessonIndex]['hasExercise'] = true;
@@ -1051,11 +1072,9 @@ export default {
 
         this.$toast.success('تمرین با موفقیت ایجاد شد.');
 
-        // بستن مودال
         const modal = bootstrap.Modal.getInstance(document.getElementById('exerciseModal'));
         modal.hide();
 
-        // هدایت به صفحه مدیریت تمرین
         this.$router.push(`/exercises/${response.data.id}`);
       } catch (error) {
         console.error('Error creating exercise:', error);
@@ -1080,10 +1099,6 @@ export default {
       modal.show();
     },
 
-    createExamFirst() {
-      this.$toast.info('لطفاً ابتدا آزمون را ایجاد کنید، سپس می‌توانید سوالات را اضافه کنید.');
-    },
-
     async saveExam() {
       if (this.isExamSubmitting) return;
 
@@ -1098,7 +1113,7 @@ export default {
           shuffleQuestions: this.examForm.shuffleQuestions
         };
 
-        const response = await axios.post(
+        const response = await this.$http.post(
             `/exams/lesson/${this.selectedLesson.id}`,
             examData,
             {
@@ -1108,20 +1123,17 @@ export default {
             }
         );
 
-        // به‌روزرسانی درس برای نشان دادن اینکه آزمون دارد
         const lessonIndex = this.course.lessons.findIndex(l => l.id === this.selectedLesson.id);
         if (lessonIndex !== -1) {
           this.course.lessons[lessonIndex].hasExam = true;
           this.course.lessons[lessonIndex].exam = response.data;
         }
 
-        this.showSuccessToast('آزمون با موفقیت ایجاد شد.');
+        this.$toast.success('آزمون با موفقیت ایجاد شد.');
 
-        // بستن مودال
         const modal = bootstrap.Modal.getInstance(document.getElementById('examModal'));
         modal.hide();
 
-        // هدایت به صفحه ایجاد سوالات آزمون
         this.$router.push({
           name: 'ExamCreator',
           params: { id: response.data.id }
@@ -1134,14 +1146,13 @@ export default {
           errorMessage = error.response.data.message;
         }
 
-        this.showErrorToast(errorMessage);
+        this.$toast.error(errorMessage);
       } finally {
         this.isExamSubmitting = false;
       }
     },
 
     viewStudentProgress(student) {
-      // در یک پروژه واقعی، به صفحه پیشرفت دانش‌آموز هدایت می‌شود
       this.$router.push({
         name: 'StudentProgress',
         params: {courseId: this.id, studentId: student.id}
@@ -1150,23 +1161,20 @@ export default {
 
     async handleContentSaved(contentData) {
       try {
-        // به‌روزرسانی لیست درس‌ها با دریافت مجدد از سرور
         await this.fetchCourseData();
 
-        // یا اگر می‌خواهید فقط درس مربوطه را به‌روزرسانی کنید:
-        const updatedLessonResponse = await axios.get(`/lessons/${this.selectedLesson.id}`);
+        const updatedLessonResponse = await this.$http.get(`/lessons/${this.selectedLesson.id}`);
         const updatedLesson = updatedLessonResponse.data;
 
-        // پیدا کردن ایندکس درس و به‌روزرسانی آن
         const lessonIndex = this.course.lessons.findIndex(l => l.id === this.selectedLesson.id);
         if (lessonIndex !== -1) {
           this.course.lessons[lessonIndex] = updatedLesson;
         }
 
-        this.showSuccessToast('محتوای درس با موفقیت اضافه شد.');
+        this.$toast.success('محتوای درس با موفقیت اضافه شد.');
       } catch (error) {
         console.error('Error updating lesson data:', error);
-        this.showErrorToast('خطا در به‌روزرسانی اطلاعات درس.');
+        this.$toast.error('خطا در به‌روزرسانی اطلاعات درس.');
       }
     }
   }
@@ -1176,67 +1184,101 @@ export default {
 <style scoped>
 .course-detail-container {
   min-height: calc(100vh - 56px);
+  padding: 2rem 1rem;
 }
 
-.course-header {
-  margin-bottom: 2rem;
+/* Modern Tabs */
+.modern-nav-tabs {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px 12px 0 0;
+  border: none;
+  padding: 0.5rem;
+}
+
+.modern-nav-tabs .nav-link {
+  border: none;
+  border-radius: 8px;
+  padding: 1rem 1.5rem;
+  margin: 0 0.25rem;
+  transition: all 0.3s ease;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.modern-nav-tabs .nav-link:hover {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+}
+
+.modern-nav-tabs .nav-link.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
 .course-tab-content {
-  background-color: #fff;
-  border: 1px solid #dee2e6;
+  padding: 2rem;
+  border-radius: 0 0 12px 12px;
   border-top: none;
-  border-radius: 0 0 0.25rem 0.25rem;
 }
 
+/* Course Info Sections */
 .course-info {
   margin-bottom: 2rem;
 }
 
 .course-description {
   line-height: 1.6;
-  margin-top: 1rem;
+  color: #495057;
+  background: rgba(248, 249, 250, 0.8);
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-/* Course Stats */
-.stat-card {
-  background-color: #f8f9fa;
-  border-radius: 10px;
-  padding: 20px;
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1rem;
+}
+
+.stat-item {
+  background: rgba(248, 249, 250, 0.8);
+  border-radius: 12px;
+  padding: 1.5rem;
   text-align: center;
-  height: 100%;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  transition: transform 0.3s;
+  transition: transform 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-.stat-card:hover {
+.stat-item:hover {
   transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
 }
 
 .stat-icon {
   font-size: 2rem;
-  color: #007bff;
-  margin-bottom: 10px;
+  margin-bottom: 0.5rem;
 }
 
 .stat-value {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  margin-bottom: 5px;
+  margin-bottom: 0.25rem;
+  color: #2c3e50;
 }
 
 .stat-label {
   color: #6c757d;
   font-size: 0.9rem;
+  font-weight: 500;
 }
 
 /* Teacher Info */
 .course-teacher {
-  background-color: #f8f9fa;
-  border-radius: 10px;
-  padding: 20px;
-  margin-top: 2rem;
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.05) 0%, rgba(46, 204, 113, 0.05) 100%);
+  border: 1px solid rgba(40, 167, 69, 0.1);
 }
 
 .teacher-info {
@@ -1249,37 +1291,98 @@ export default {
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  overflow: hidden;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
   margin-left: 1rem;
+  box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
 }
 
-.teacher-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.teacher-details h4 {
+.teacher-details h6 {
   font-size: 1.2rem;
   margin-bottom: 0.5rem;
+  color: #2c3e50;
+  font-weight: 600;
 }
 
 .teacher-details p {
   color: #6c757d;
   margin-bottom: 0;
+  line-height: 1.5;
+}
+
+/* Prerequisites */
+.prerequisites-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.prerequisites-list li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.prerequisites-list li:last-child {
+  border-bottom: none;
+}
+
+.no-prerequisites {
+  background: rgba(248, 249, 250, 0.8);
+  padding: 1rem;
+  border-radius: 8px;
+  color: #6c757d;
+  text-align: center;
 }
 
 /* Course Management */
-.course-management {
+.course-management,
+.teacher-management {
   margin-top: 1rem;
 }
 
-.management-section {
-  margin-bottom: 2rem;
+/* Modern Modal */
+.modern-modal {
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
 }
 
-/* Responsive adjustments */
+.modern-modal .modal-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px 16px 0 0;
+  border-bottom: none;
+  padding: 1.5rem;
+}
+
+.modern-modal .modal-title {
+  font-weight: 600;
+}
+
+.modern-modal .btn-close {
+  filter: invert(1);
+}
+
+.modern-modal .modal-body {
+  padding: 2rem;
+}
+
+/* Form styling */
+.form-check-input:checked {
+  background-color: #667eea;
+  border-color: #667eea;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
+  .course-detail-container {
+    padding: 1rem 0.5rem;
+  }
+
   .teacher-info {
     flex-direction: column;
     text-align: center;
@@ -1288,6 +1391,86 @@ export default {
   .teacher-avatar {
     margin-left: 0;
     margin-bottom: 1rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .modern-nav-tabs .nav-link {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .course-tab-content {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-item {
+    padding: 1rem;
+  }
+
+  .modern-modal .modal-body {
+    padding: 1rem;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .modern-nav-tabs {
+    background: rgba(45, 55, 72, 0.9);
+  }
+
+  .modern-nav-tabs .nav-link {
+    color: #cbd5e0;
+  }
+
+  .modern-nav-tabs .nav-link:hover {
+    background: rgba(102, 126, 234, 0.2);
+    color: #90cdf4;
+  }
+
+  .course-description {
+    background: rgba(45, 55, 72, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+  }
+
+  .stat-item {
+    background: rgba(45, 55, 72, 0.8);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .stat-value {
+    color: #e2e8f0;
+  }
+
+  .teacher-details h6 {
+    color: #e2e8f0;
+  }
+
+  .teacher-details p {
+    color: #cbd5e0;
+  }
+
+  .no-prerequisites {
+    background: rgba(45, 55, 72, 0.8);
+    color: #cbd5e0;
+  }
+
+  .modern-modal {
+    background: #2d3748;
+  }
+
+  .modern-modal .modal-body {
+    background: #2d3748;
+    color: #e2e8f0;
   }
 }
 </style>
