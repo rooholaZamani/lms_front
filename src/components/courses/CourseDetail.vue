@@ -680,7 +680,17 @@ export default {
         });
       }
     },
+    cleanupModal() {
+      // Remove any remaining backdrop
+      document.querySelector('.modal-backdrop')?.remove();
 
+      // Reset body styles
+      document.body.style.overflow = '';
+      document.body.classList.remove('modal-open');
+
+      // Remove modal-open class from html
+      document.documentElement.classList.remove('modal-open');
+    },
     showLessonQuestionsManager(lesson) {
       this.selectedLessonForQuestions = lesson;
       this.showQuestionsManager = true;

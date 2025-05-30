@@ -22,7 +22,7 @@
           :style="`animation-delay: ${index * 0.1}s`"
       >
         <!-- Lesson Header -->
-        <div class="lesson-header" @click="$emit('toggle-lesson', index)">
+        <div class="lesson-header" @click="toggleLesson(index)">
           <div class="lesson-info">
             <div class="lesson-number">
               {{ lesson.orderIndex + 1 || index + 1 }}
@@ -53,10 +53,10 @@
 
             <!-- Content Indicators -->
             <div class="content-indicators">
-              <span v-if="lesson.contents && lesson.contents.length > 0"
+              <span v-if="lessonContents[lesson.id] && lessonContents[lesson.id].length > 0"
                     class="modern-badge modern-badge-info me-1">
                 <i class="fas fa-file-alt me-1"></i>
-                {{ lesson.contents.length }}
+                {{ lessonContents[lesson.id].length }}
               </span>
               <span v-if="lesson.hasExam || (lesson.exams && lesson.exams.length > 0)"
                     class="modern-badge modern-badge-danger me-1">
@@ -83,15 +83,23 @@
 
         <!-- Expanded Content -->
         <div v-if="lesson.expanded" class="lesson-content animate-fade-in">
+          <!-- Loading Content -->
+          <div v-if="loadingContent[lesson.id]" class="text-center py-3">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">در حال بارگذاری...</span>
+            </div>
+            <p class="mt-2 text-muted">در حال بارگذاری محتوا...</p>
+          </div>
+
           <!-- Lesson Contents -->
-          <div v-if="lesson.contents && lesson.contents.length > 0" class="lesson-section">
+          <div v-else-if="lessonContents[lesson.id] && lessonContents[lesson.id].length > 0" class="lesson-section">
             <h6 class="section-title">
               <i class="fas fa-play-circle text-primary me-2"></i>
               محتوای درس
             </h6>
             <div class="content-grid">
               <div
-                  v-for="content in lesson.contents"
+                  v-for="content in lessonContents[lesson.id]"
                   :key="content.id"
                   class="content-item"
               >
@@ -109,12 +117,24 @@
                   <span class="content-type">{{ getContentTypeText(content.type) }}</span>
                 </div>
                 <div class="content-actions">
-                  <button v-if="isEnrolled" class="modern-btn modern-btn-primary btn-sm">
+                  <button
+                      v-if="isEnrolled || isTeacherOfCourse"
+                      class="modern-btn modern-btn-primary btn-sm"
+                      @click="viewContent(content)"
+                  >
                     <i class="fas fa-eye me-1"></i>
                     مشاهده
                   </button>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- No Content Message -->
+          <div v-else class="lesson-section">
+            <div class="modern-alert modern-alert-info">
+              <i class="fas fa-info-circle me-2"></i>
+              هنوز محتوایی برای این درس اضافه نشده است.
             </div>
           </div>
 
@@ -239,14 +259,68 @@
               علامت‌گذاری به عنوان تکمیل شده
             </button>
           </div>
+        </div>
+      </div>
+    </div>
 
-          <!-- Empty Content Message -->
-          <div v-if="(!lesson.contents || lesson.contents.length === 0) && !lesson.hasExam && !lesson.hasExercise && !lesson.hasAssignment"
-               class="empty-lesson-content">
-            <div class="modern-alert modern-alert-info">
-              <i class="fas fa-info-circle me-2"></i>
-              هنوز محتوایی برای این درس اضافه نشده است.
+    <!-- Content Viewer Modal -->
+    <div class="modal fade" id="contentViewerModal" tabindex="-1">
+      <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i :class="getContentIcon(selectedContent?.type)" class="me-2"></i>
+              {{ selectedContent?.title }}
+            </h5>
+            <button type="button" class="btn-close" @click="closeContentModal"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Text Content -->
+            <div v-if="selectedContent?.type === 'TEXT'" class="text-content">
+              <div class="content-text" v-html="formatTextContent(selectedContent.textContent)"></div>
             </div>
+
+            <!-- Video Content -->
+            <div v-else-if="selectedContent?.type === 'VIDEO'" class="video-content">
+              <div class="ratio ratio-16x9">
+                <video controls class="video-player">
+                  <source :src="getContentUrl(selectedContent)" type="video/mp4">
+                  مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
+                </video>
+              </div>
+            </div>
+
+            <!-- PDF Content -->
+            <div v-else-if="selectedContent?.type === 'PDF'" class="pdf-content">
+              <div class="d-flex justify-content-center mb-3">
+                <button class="modern-btn modern-btn-primary" @click="downloadContent(selectedContent)">
+                  <i class="fas fa-download me-1"></i>
+                  دانلود PDF
+                </button>
+              </div>
+              <div class="pdf-viewer">
+                <iframe
+                    :src="getContentUrl(selectedContent)"
+                    width="100%"
+                    height="600px"
+                    style="border: none;">
+                </iframe>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="modern-btn modern-btn-secondary" @click="closeContentModal">
+              بستن
+            </button>
+            <button
+                v-if="selectedContent?.type !== 'TEXT'"
+                type="button"
+                class="modern-btn modern-btn-primary"
+                @click="downloadContent(selectedContent)"
+            >
+              <i class="fas fa-download me-1"></i>
+              دانلود
+            </button>
           </div>
         </div>
       </div>
@@ -255,6 +329,8 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   name: 'LessonList',
   props: {
@@ -288,13 +364,179 @@ export default {
     'add-assignment',
     'mark-complete'
   ],
+  data() {
+    return {
+      lessonContents: {},
+      loadingContent: {},
+      selectedContent: null,
+      contentModal: null
+    };
+  },
+  watch: {
+    lessons: {
+      handler(newLessons) {
+        // وقتی درس‌ها expand می‌شوند، محتوای آن‌ها را fetch کن
+        newLessons.forEach(lesson => {
+          if (lesson.expanded && !this.lessonContents[lesson.id] && !this.loadingContent[lesson.id]) {
+            this.fetchLessonContent(lesson.id);
+          }
+        });
+      },
+      deep: true,
+      immediate: true
+    }
+  },
+  mounted() {
+    this.initModal();
+  },
+  beforeUnmount() {
+    // Cleanup when component is destroyed
+    this.cleanupModal();
+    if (this.contentModal) {
+      this.contentModal.dispose();
+    }
+  },
   methods: {
+    initModal() {
+      if (window.bootstrap) {
+        this.contentModal = new bootstrap.Modal(document.getElementById('contentViewerModal'));
+      }
+    },
+
+    async fetchLessonContent(lessonId) {
+      if (this.lessonContents[lessonId] || this.loadingContent[lessonId]) {
+        return;
+      }
+
+      this.loadingContent[lessonId] = true;
+
+      try {
+        const response = await axios.get(`/content/lesson/${lessonId}`);
+        this.lessonContents[lessonId] = response.data;
+        console.log(`Content loaded for lesson ${lessonId}:`, response.data);
+      } catch (error) {
+        console.error(`Error fetching content for lesson ${lessonId}:`, error);
+        this.lessonContents[lessonId] = [];
+
+        if (this.$toast) {
+          this.$toast.error('خطا در دریافت محتوای درس');
+        }
+      } finally {
+        this.loadingContent[lessonId] = false;
+      }
+    },
+
     getContentTypeText(type) {
       switch (type) {
         case 'TEXT': return 'متن';
         case 'VIDEO': return 'ویدیو';
         case 'PDF': return 'فایل PDF';
         default: return 'فایل';
+      }
+    },
+
+    getContentIcon(type) {
+      switch (type) {
+        case 'TEXT': return 'fas fa-align-left text-info';
+        case 'VIDEO': return 'fas fa-play-circle text-primary';
+        case 'PDF': return 'fas fa-file-pdf text-danger';
+        default: return 'fas fa-file text-secondary';
+      }
+    },
+
+    viewContent(content) {
+      this.selectedContent = content;
+
+      // Mark content as viewed
+      this.markContentViewed(content.id);
+
+      if (!this.contentModal) {
+        this.initModal();
+      }
+
+      if (this.contentModal) {
+        this.contentModal.show();
+      }
+    },
+
+    closeContentModal() {
+      if (this.contentModal) {
+        this.contentModal.hide();
+      }
+
+      // Manual cleanup
+      this.cleanupModal();
+    },
+
+    cleanupModal() {
+      // Remove backdrop
+      document.querySelector('.modal-backdrop')?.remove();
+
+      // Reset body overflow
+      document.body.style.overflow = '';
+      document.body.classList.remove('modal-open');
+
+      // Clear selected content
+      this.selectedContent = null;
+    },
+
+    async markContentViewed(contentId) {
+      try {
+        await axios.post(`/progress/content/${contentId}/view`);
+      } catch (error) {
+        console.error('Error marking content as viewed:', error);
+      }
+    },
+
+    getContentUrl(content) {
+      if (content.type === 'TEXT') {
+        return null;
+      }
+      return `/api/content/files/${content.fileId}`;
+    },
+
+    formatTextContent(text) {
+      if (!text) return '';
+
+      // Convert line breaks to <br> tags and preserve formatting
+      return text.replace(/\n/g, '<br>');
+    },
+
+    downloadContent(content) {
+      if (content.type === 'TEXT') {
+        // Create and download text file
+        const blob = new Blob([content.textContent], { type: 'text/plain;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${content.title}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+      } else {
+        // Download file content
+        const link = document.createElement('a');
+        link.href = this.getContentUrl(content);
+        link.download = content.title;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    },
+
+    toggleLesson(index) {
+      // Emit event to parent component to handle lesson expansion
+      this.$emit('toggle-lesson', index);
+
+      // Also trigger content fetch if lesson is being expanded
+      const lesson = this.lessons[index];
+      if (!lesson.expanded) {
+        this.$nextTick(() => {
+          if (lesson.expanded) {
+            this.fetchLessonContent(lesson.id);
+          }
+        });
       }
     }
   }
@@ -554,14 +796,43 @@ export default {
   border-top: 1px solid rgba(102, 126, 234, 0.1);
 }
 
-.empty-lesson-content {
-  text-align: center;
-  padding: 2rem;
-}
-
 .btn-sm {
   padding: 0.375rem 0.75rem;
   font-size: 0.8rem;
+}
+
+/* Content Viewer Modal */
+.text-content {
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  line-height: 1.6;
+}
+
+.content-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.video-content {
+  text-align: center;
+}
+
+.video-player {
+  width: 100%;
+  height: 100%;
+  background: #000;
+  border-radius: 8px;
+}
+
+.pdf-content {
+  text-align: center;
+}
+
+.pdf-viewer {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 /* Responsive Design */
