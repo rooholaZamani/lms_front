@@ -38,10 +38,10 @@
                   دانش‌آموزان
                 </button>
               </li>
-              <li class="nav-item" role="presentation">
+              <li v-if="isEnrolled || isTeacherOfCourse" class="nav-item" role="presentation">
                 <button class="nav-link" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat"
                         type="button" role="tab" aria-controls="chat" aria-selected="false">
-                  <i class="fas fa-comments me-1"></i>
+                  <i class="fas fa-comments me-2"></i>
                   گفتگوی دوره
                 </button>
               </li>

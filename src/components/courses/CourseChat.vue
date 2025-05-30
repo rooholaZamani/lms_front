@@ -137,7 +137,7 @@ export default {
   },
   props: {
     courseId: {
-      type: String,
+      type: [String, Number],
       required: true
     }
   },
