@@ -56,7 +56,7 @@
                 <span>شما در این دوره ثبت‌نام کرده‌اید</span>
               </div>
               <button class="modern-btn modern-btn-outline w-100 mt-2" @click="$emit('view-progress')">
-                <i class="fas fa-chart-line me-1"></i> مشاهده پیشرفت
+                <i class="fas fa-chart-line me-1" ></i> مشاهده پیشرفت
               </button>
             </div>
             <div class="enrollment-status" v-else>

@@ -12,6 +12,7 @@
               @edit-course="showEditCourseModal"
               @add-lesson="showAddLessonModal"
               @enroll-course="enrollInCourse"
+              @view-progress="viewStudentOwnProgress"
           />
 
           <!-- Tabs for different sections -->
@@ -522,6 +523,60 @@
         icon="trash"
     />
   </div>
+  <!-- Progress Modal -->
+  <div class="modal fade" id="progressModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fas fa-chart-line me-2"></i>
+            پیشرفت دوره
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div v-if="loadingProgress" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2">در حال بارگذاری پیشرفت...</p>
+          </div>
+          <div v-else class="progress-stats">
+            <!-- Overall Progress Circle -->
+            <div class="text-center mb-4">
+              <div class="progress-circle" :style="`--progress: ${overallProgress}%`">
+                <span class="progress-text">{{ overallProgress }}%</span>
+                <span class="progress-label">پیشرفت کلی</span>
+              </div>
+            </div>
+
+            <!-- Progress Bars -->
+            <div class="progress-categories">
+              <div v-for="category in progressData" :key="category.name" class="category-item mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h6 class="mb-0">
+                    <i :class="category.icon" class="me-2"></i>
+                    {{ category.name }}
+                  </h6>
+                  <span class="text-muted">{{ category.completed }}/{{ category.total }}</span>
+                </div>
+                <div class="progress mb-2" style="height: 20px;">
+                  <div class="progress-bar"
+                       :class="category.colorClass"
+                       :style="`width: ${category.percentage}%`"
+                       role="progressbar">
+                    {{ category.percentage }}%
+                  </div>
+                </div>
+                <small class="text-muted">{{ category.description }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -579,6 +634,9 @@ export default {
       isTeacherOfCourse: true,
       selectedLessonForQuestions: null,
       showQuestionsManager: false,
+      loadingProgress: false,
+      progressData: [],
+      overallProgress: 0,
 
       lessonForm: {
         id: null,
@@ -680,6 +738,99 @@ export default {
         });
       }
     },
+    viewStudentOwnProgress() {
+      if (this.isStudent && this.isEnrolled) {
+        this.showProgressModal();
+      }
+    },
+
+    async showProgressModal() {
+      this.loadingProgress = true;
+
+      const modal = new bootstrap.Modal(document.getElementById('progressModal'));
+      modal.show();
+
+      try {
+        await this.fetchProgressData();
+      } catch (error) {
+        console.error('Error fetching progress:', error);
+        this.$toast.error('خطا در بارگذاری اطلاعات پیشرفت');
+      } finally {
+        this.loadingProgress = false;
+      }
+    },
+
+    async fetchProgressData() {
+      const response = await this.$http.get(`/progress/${this.id}`);
+      const progressInfo = response.data;
+
+      // Calculate progress categories
+      const totalLessons = this.course.lessons?.length || 0;
+      const completedLessons = this.progress.completedLessonIds?.length || 0;
+
+      // Count assignments and exams
+      let totalAssignments = 0;
+      let completedAssignments = 0;
+      let totalExams = 0;
+      let completedExams = 0;
+      let totalContent = 0;
+      let viewedContent = 0;
+
+      this.course.lessons?.forEach(lesson => {
+        if (lesson.assignments?.length) totalAssignments += lesson.assignments.length;
+        if (lesson.hasExam || lesson.exam) totalExams++;
+        if (lesson.contents?.length) totalContent += lesson.contents.length;
+      });
+
+      // Mock completed data - replace with actual API data
+      completedAssignments = Math.floor(totalAssignments * 0.6);
+      completedExams = Math.floor(totalExams * 0.4);
+      viewedContent = Math.floor(totalContent * 0.8);
+
+      this.progressData = [
+        {
+          name: 'درس‌ها',
+          icon: 'fas fa-book-open text-primary',
+          completed: completedLessons,
+          total: totalLessons,
+          percentage: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0,
+          colorClass: 'bg-primary',
+          description: 'درس‌های تکمیل شده'
+        },
+        {
+          name: 'محتواها',
+          icon: 'fas fa-file-alt text-info',
+          completed: viewedContent,
+          total: totalContent,
+          percentage: totalContent > 0 ? Math.round((viewedContent / totalContent) * 100) : 0,
+          colorClass: 'bg-info',
+          description: 'محتواهای مشاهده شده'
+        },
+        {
+          name: 'تکالیف',
+          icon: 'fas fa-tasks text-warning',
+          completed: completedAssignments,
+          total: totalAssignments,
+          percentage: totalAssignments > 0 ? Math.round((completedAssignments / totalAssignments) * 100) : 0,
+          colorClass: 'bg-warning',
+          description: 'تکالیف ارسال شده'
+        },
+        {
+          name: 'آزمون‌ها',
+          icon: 'fas fa-clipboard-check text-danger',
+          completed: completedExams,
+          total: totalExams,
+          percentage: totalExams > 0 ? Math.round((completedExams / totalExams) * 100) : 0,
+          colorClass: 'bg-danger',
+          description: 'آزمون‌های شرکت کرده'
+        }
+      ];
+
+      // Calculate overall progress
+      const totalItems = totalLessons + totalContent + totalAssignments + totalExams;
+      const completedItems = completedLessons + viewedContent + completedAssignments + completedExams;
+      this.overallProgress = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+    },
     cleanupModal() {
       // Remove any remaining backdrop
       document.querySelector('.modal-backdrop')?.remove();
@@ -749,38 +900,6 @@ export default {
       } catch (error) {
         console.error('Error in fetchCourseData:', error);
         throw error;
-      }
-    },
-
-    async fetchProgressData() {
-      try {
-        if (this.course.lessons) {
-          const totalLessons = this.course.lessons.length;
-          const completedLessons = Math.floor(Math.random() * (totalLessons + 1));
-
-          const completedLessonIds = [];
-          for (let i = 0; i < completedLessons; i++) {
-            if (this.course.lessons[i]) {
-              completedLessonIds.push(this.course.lessons[i].id);
-            }
-          }
-
-          this.progress = {
-            completedLessons,
-            totalLessons,
-            completedLessonIds,
-            totalTimeSpent: Math.floor(Math.random() * 1000),
-            examsPassed: Math.floor(Math.random() * 3),
-            examsTotal: Math.floor(Math.random() * 5),
-            exercisesCompleted: Math.floor(Math.random() * 4),
-            exercisesTotal: Math.floor(Math.random() * 6),
-            circleLength: 439.6,
-            circleDashOffset: 439.6 * (1 - (completedLessons / totalLessons))
-          };
-        }
-      } catch (error) {
-        console.error('Error fetching progress data:', error);
-        this.$toast.error('خطا در دریافت اطلاعات پیشرفت');
       }
     },
 
@@ -1245,6 +1364,63 @@ export default {
   padding: 1.5rem;
   border-radius: 8px;
   border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+
+.progress-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: conic-gradient(#007bff 0deg, #007bff calc(var(--progress) * 3.6deg), #e9ecef calc(var(--progress) * 3.6deg));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  position: relative;
+}
+
+.progress-circle::before {
+  content: '';
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: white;
+}
+
+.progress-text {
+  position: relative;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+  z-index: 1;
+}
+
+.progress-label {
+  position: relative;
+  font-size: 0.8rem;
+  color: #666;
+  z-index: 1;
+}
+
+.category-item {
+  background: rgba(248, 249, 250, 0.8);
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #dee2e6;
+}
+
+.progress {
+  border-radius: 10px;
+}
+
+.progress-bar {
+  border-radius: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Stats Grid */

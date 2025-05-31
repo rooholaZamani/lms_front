@@ -375,9 +375,14 @@ export default {
   watch: {
     lessons: {
       handler(newLessons) {
-        // وقتی درس‌ها expand می‌شوند، محتوای آن‌ها را fetch کن
+        // Fetch content for all lessons when lessons change
+        if (newLessons.length > 0) {
+          this.fetchAllLessonsContent();
+        }
+
+        // Still fetch detailed content when expanded
         newLessons.forEach(lesson => {
-          if (lesson.expanded && !this.lessonContents[lesson.id] && !this.loadingContent[lesson.id]) {
+          if (lesson.expanded && !this.loadingContent[lesson.id]) {
             this.fetchLessonContent(lesson.id);
           }
         });
@@ -388,6 +393,7 @@ export default {
   },
   mounted() {
     this.initModal();
+    this.fetchAllLessonsContent();
   },
   beforeUnmount() {
     // Cleanup when component is destroyed
@@ -401,6 +407,20 @@ export default {
       if (window.bootstrap) {
         this.contentModal = new bootstrap.Modal(document.getElementById('contentViewerModal'));
       }
+    },
+    async fetchAllLessonsContent() {
+      // Fetch basic content info for all lessons without expanding them
+      const contentPromises = this.lessons.map(async (lesson) => {
+        try {
+          const response = await axios.get(`/content/lesson/${lesson.id}`);
+          this.lessonContents[lesson.id] = response.data;
+        } catch (error) {
+          console.error(`Error fetching content for lesson ${lesson.id}:`, error);
+          this.lessonContents[lesson.id] = [];
+        }
+      });
+
+      await Promise.all(contentPromises);
     },
 
     async fetchLessonContent(lessonId) {
@@ -425,7 +445,6 @@ export default {
         this.loadingContent[lessonId] = false;
       }
     },
-
     getContentTypeText(type) {
       switch (type) {
         case 'TEXT': return 'متن';
