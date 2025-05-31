@@ -394,6 +394,11 @@ export default {
   mounted() {
     this.initModal();
     this.fetchAllLessonsContent();
+
+    // Add modal hidden event listener
+    document.getElementById('contentViewerModal')?.addEventListener('hidden.bs.modal', () => {
+      this.cleanupModal();
+    });
   },
   beforeUnmount() {
     // Cleanup when component is destroyed
@@ -481,6 +486,7 @@ export default {
     closeContentModal() {
       if (this.contentModal) {
         this.contentModal.hide();
+        this.cleanupModal();
       }
 
       // Manual cleanup
@@ -494,7 +500,7 @@ export default {
       // Reset body overflow
       document.body.style.overflow = '';
       document.body.classList.remove('modal-open');
-
+      document.documentElement.classList.remove('modal-open');
       // Clear selected content
       this.selectedContent = null;
     },
@@ -506,7 +512,13 @@ export default {
         console.error('Error marking content as viewed:', error);
       }
     },
-
+    beforeUnmount() {
+      // Cleanup when component is destroyed
+      this.cleanupModal();
+      if (this.contentModal) {
+        this.contentModal.dispose();
+      }
+    },
     getContentUrl(content) {
       if (content.type === 'TEXT') {
         return null;
