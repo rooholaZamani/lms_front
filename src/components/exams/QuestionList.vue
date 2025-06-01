@@ -1,11 +1,11 @@
 <template>
   <div class="question-list">
-    <div v-if="questions.length === 0" class="empty-state">
+    <div v-if="questions.length === 0" class="settings-grid empty-state">
       <div class="modern-logo large secondary mb-4">
         <i class="fas fa-question-circle"></i>
       </div>
-      <h4 class="text-muted mb-3">هنوز سوالی برای این آزمون تعریف نشده است</h4>
-      <p class="text-muted mb-4">برای شروع، اولین سوال خود را اضافه کنید</p>
+      <h4 class="setting-title mb-3 text-warning">هنوز سوالی برای این آزمون تعریف نشده است</h4>
+      <p class="text-info mb-4">برای شروع، اولین سوال خود را اضافه کنید</p>
       <button class="modern-btn modern-btn-primary" @click="$emit('add-question')">
         <i class="fas fa-plus me-1"></i> افزودن سوال جدید
       </button>
