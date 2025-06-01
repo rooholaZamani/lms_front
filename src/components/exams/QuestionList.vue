@@ -145,7 +145,6 @@
             </div>
           </div>
 
-
           <!-- نمایش توضیحات اضافی -->
           <div v-if="question.explanation" class="explanation-section">
             <h6 class="section-subtitle">
