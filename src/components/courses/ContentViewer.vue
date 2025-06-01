@@ -47,7 +47,7 @@
                     @click="toggleFullscreen"
                     :title="isFullscreen ? 'خروج از تمام صفحه' : 'نمایش تمام صفحه'"
                 >
-                  <i class="fas" :class="isFullscreen ? 'fa-compress' : 'fa-expand'" class="me-1"></i>
+                  <i class="fas me-1" :class="isFullscreen ? 'fa-compress' : 'fa-expand'"></i>
                   {{ isFullscreen ? 'خروج از تمام صفحه' : 'تمام صفحه' }}
                 </button>
               </div>
