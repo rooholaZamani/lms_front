@@ -225,6 +225,28 @@ const routes = [
       showSidebar: true
     }
   },
+  {
+    path: '/question-bank',
+    name: 'QuestionBank',
+    component: () => import(/* webpackChunkName: "question-bank" */ '../components/exams/QuestionBank.vue'),
+    meta: {
+      title: 'بانک سوالات',
+      requiresAuth: true,
+      requiresTeacher: true,
+      showSidebar: true
+    }
+  },
+  {
+    path: '/content/:contentId/view',
+    name: 'ContentViewer',
+    component: () => import(/* webpackChunkName: "content-viewer" */ '../components/courses/ContentViewer.vue'),
+    props: true,
+    meta: {
+      title: 'مشاهده محتوا',
+      requiresAuth: true,
+      hideSidebar: true // Hide sidebar for full-page content viewing
+    }
+  },
   // Student routes
   {
     path: '/student/assignments',

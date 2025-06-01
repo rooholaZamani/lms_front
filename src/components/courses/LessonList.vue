@@ -462,12 +462,14 @@ export default {
     },
 
     viewContent(content) {
-      this.selectedContent = content;
       this.markContentViewed(content.id);
-      this.showContentModal = true; // Manual show
 
-      // Prevent body scroll
-      document.body.style.overflow = 'hidden';
+      // Navigate to full-page content viewer
+      this.$router.push({
+        name: 'ContentViewer',
+        params: { contentId: content.id },
+        query: { lessonId: this.$route.params.id }
+      });
     },
 
     closeContentModal() {
@@ -947,23 +949,25 @@ export default {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  width: 100vw;
+  height: 100vh;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1050;
+  z-index: 9999;
   backdrop-filter: blur(2px);
-  padding: 1rem; /* Add padding to overlay */
+  padding: 1rem;
+  overflow-y: auto; /* Add this */
 }
 
 .custom-modal-dialog {
   width: 90%;
-  max-width: 1000px; /* Reduce max width */
-  max-height: 85vh; /* Reduce max height */
+  max-width: 1000px;
+  max-height: 90vh; /* Change from 85vh to 90vh */
   display: flex;
   flex-direction: column;
+  margin: auto; /* Add this */
 }
 
 .custom-modal-content {
@@ -972,7 +976,7 @@ export default {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
-  max-height: 85vh;
+  max-height: 90vh; /* Add this */
   overflow: hidden;
 }
 
@@ -1091,4 +1095,6 @@ export default {
     width: 100%;
   }
 }
+
+
 </style>
