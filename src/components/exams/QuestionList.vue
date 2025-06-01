@@ -105,6 +105,46 @@
             </div>
           </div>
 
+          <!-- Matching Questions Display -->
+          <div v-else-if="question.type === 'MATCHING'" class="matching-display">
+            <h6 class="section-subtitle">جفت‌های تطبیق:</h6>
+            <div class="matching-pairs-list">
+              <div v-for="(pair, index) in question.matchingPairs" :key="index" class="matching-pair-item">
+                <span class="left-item">{{ pair.leftItem }}</span>
+                <i class="fas fa-arrow-left mx-2"></i>
+                <span class="right-item">{{ pair.rightItem }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Categorization Questions Display -->
+          <div v-else-if="question.type === 'CATEGORIZATION'" class="categorization-display">
+            <h6 class="section-subtitle">دسته‌ها و آیتم‌ها:</h6>
+            <div class="categories-preview">
+              <div class="categories-list">
+                <strong>دسته‌ها:</strong> {{ question.categories ? question.categories.join(', ') : 'نامشخص' }}
+              </div>
+              <div class="items-list">
+                <strong>آیتم‌ها:</strong>
+                <span v-for="(item, index) in question.categorizationItems" :key="index">
+        {{ item.text }}{{ index < question.categorizationItems.length - 1 ? ', ' : '' }}
+      </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fill in the Blanks Display -->
+          <div v-else-if="question.type === 'FILL_IN_THE_BLANKS'" class="fill-blanks-display">
+            <h6 class="section-subtitle">الگو:</h6>
+            <div class="template-text">{{ question.template || question.text }}</div>
+            <div v-if="question.blankAnswers" class="blank-answers">
+              <strong>پاسخ‌ها:</strong>
+              <span v-for="(blank, index) in question.blankAnswers" :key="index" class="blank-answer">
+      {{ blank.correctAnswer }}{{ index < question.blankAnswers.length - 1 ? ', ' : '' }}
+    </span>
+            </div>
+          </div>
+
           <!-- نمایش توضیحات اضافی -->
           <div v-if="question.explanation" class="explanation-section">
             <h6 class="section-subtitle">
@@ -160,6 +200,12 @@ export default {
           return 'modern-badge-info';
         case 'ESSAY':
           return 'modern-badge-warning';
+        case 'FILL_IN_THE_BLANKS':
+          return 'modern-badge-warning';
+        case 'MATCHING':
+          return 'modern-badge-danger';
+        case 'CATEGORIZATION':
+          return 'modern-badge-dark';
         default:
           return 'modern-badge-secondary';
       }
@@ -175,6 +221,12 @@ export default {
           return 'پاسخ کوتاه';
         case 'ESSAY':
           return 'تشریحی';
+        case 'FILL_IN_THE_BLANKS':
+          return 'پر کردن جاهای خالی';
+        case 'MATCHING':
+          return 'تطبیق';
+        case 'CATEGORIZATION':
+          return 'دسته‌بندی';
         default:
           return 'نامشخص';
       }

@@ -155,6 +155,81 @@
             </div>
           </div>
 
+          <!-- Matching Questions -->
+          <div v-else-if="question.type === 'MATCHING'" class="matching-section mt-4">
+            <h6 class="section-title">
+              <i class="fas fa-arrows-alt-h me-2"></i>
+              آیتم‌ها را با هم تطبیق دهید
+            </h6>
+            <div class="matching-container">
+              <div class="matching-columns">
+                <div class="left-column">
+                  <h6>ستون اول</h6>
+                  <div v-for="(pair, index) in question.matchingPairs" :key="'left-' + index"
+                       class="matching-item left-item">
+                    {{ pair.leftItem }}
+                  </div>
+                </div>
+                <div class="right-column">
+                  <h6>ستون دوم</h6>
+                  <div v-for="(pair, index) in getShuffledRightItems()" :key="'right-' + index"
+                       class="matching-item right-item"
+                       @click="selectRightItem(pair, index)"
+                       :class="{ selected: isRightItemSelected(pair) }">
+                    {{ pair.rightItem }}
+                  </div>
+                </div>
+              </div>
+              <div class="matching-answers">
+                <div v-for="(pair, index) in question.matchingPairs" :key="'answer-' + index"
+                     class="matching-answer-row">
+                  <span class="left-text">{{ pair.leftItem }}</span>
+                  <i class="fas fa-arrow-left mx-2"></i>
+                  <select v-model="selectedAnswer[pair.leftItem]" class="modern-form-control matching-select">
+                    <option value="">انتخاب کنید</option>
+                    <option v-for="rightItem in getAllRightItems()" :key="rightItem.rightItem" :value="rightItem.rightItem">
+                      {{ rightItem.rightItem }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Categorization Questions -->
+          <div v-else-if="question.type === 'CATEGORIZATION'" class="categorization-section mt-4">
+            <h6 class="section-title">
+              <i class="fas fa-layer-group me-2"></i>
+              آیتم‌ها را در دسته‌های مناسب قرار دهید
+            </h6>
+            <div class="categorization-container">
+              <div class="categories-display">
+                <div v-for="category in question.categories" :key="category" class="category-box">
+                  <h6 class="category-title">{{ category }}</h6>
+                  <div class="category-items">
+                    <div v-for="item in getItemsInCategory(category)" :key="item"
+                         class="categorized-item">
+                      {{ item }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="items-to-categorize">
+                <h6>آیتم‌ها:</h6>
+                <div v-for="item in question.categorizationItems" :key="item.text"
+                     class="categorization-answer-row">
+                  <span class="item-text">{{ item.text }}</span>
+                  <select v-model="selectedAnswer[item.text]" class="modern-form-control category-select">
+                    <option value="">انتخاب دسته</option>
+                    <option v-for="category in question.categories" :key="category" :value="category">
+                      {{ category }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Progress Indicator -->
           <div class="question-progress mt-4">
             <div class="progress-info">
@@ -226,13 +301,17 @@ export default {
       }
 
       switch (this.question.type) {
+        case 'FILL_IN_THE_BLANKS':
+          return Array(this.getBlankCount()).fill('');
+        case 'MATCHING':
+          return {};
+        case 'CATEGORIZATION':
+          return {};
         case 'MULTIPLE_CHOICE':
         case 'TRUE_FALSE':
         case 'ESSAY':
         case 'SHORT_ANSWER':
           return null;
-        case 'FILL_IN_THE_BLANKS':
-          return Array(this.getBlankCount()).fill('');
         default:
           return null;
       }
@@ -240,11 +319,34 @@ export default {
 
     getBlankCount() {
       if (this.question.type !== 'FILL_IN_THE_BLANKS') return 0;
-
-      // Count the number of {} in the template or text
       const text = this.question.template || this.question.text || '';
       const matches = text.match(/\{\}/g);
       return matches ? matches.length : 0;
+    },
+
+    getShuffledRightItems() {
+      if (!this.question.matchingPairs) return [];
+      const items = this.question.matchingPairs.map(pair => ({ rightItem: pair.rightItem }));
+      return this.shuffleArray([...items]);
+    },
+
+    getAllRightItems() {
+      if (!this.question.matchingPairs) return [];
+      return this.question.matchingPairs.map(pair => ({ rightItem: pair.rightItem }));
+    },
+
+    getItemsInCategory(category) {
+      if (!this.selectedAnswer || typeof this.selectedAnswer !== 'object') return [];
+      return Object.keys(this.selectedAnswer).filter(key => this.selectedAnswer[key] === category);
+    },
+
+    shuffleArray(array) {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
     }
   }
 }
