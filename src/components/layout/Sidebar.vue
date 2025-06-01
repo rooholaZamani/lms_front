@@ -374,7 +374,7 @@
             </router-link>
           </li>
 
-          <li class="nav-item">
+          <li v-if="isTeacher" class="nav-item">
             <router-link
                 class="modern-nav-link"
                 :to="{ name: 'Reports' }"

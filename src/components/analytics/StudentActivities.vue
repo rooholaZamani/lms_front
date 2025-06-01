@@ -61,10 +61,10 @@
             </div>
             <div class="modern-stat-value">{{ stats.totalStudents }}</div>
             <div class="modern-stat-label">کل دانش‌آموزان</div>
-            <div class="modern-stat-change" v-if="stats.studentsChange">
-              <i :class="getChangeIcon(stats.studentsChange)" class="me-1"></i>
-              {{ Math.abs(stats.studentsChange) }}% از هفته قبل
-            </div>
+<!--            <div class="modern-stat-change" v-if="stats.studentsChange">-->
+<!--              <i :class="getChangeIcon(stats.studentsChange)" class="me-1"></i>-->
+<!--              {{ Math.abs(stats.studentsChange) }}% از هفته قبل-->
+<!--            </div>-->
           </div>
         </div>
         <div class="col-md-3 mb-3">

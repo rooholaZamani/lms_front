@@ -15,7 +15,7 @@
             <i class="fas fa-list text-warning me-2"></i>
             لیست تکالیف در انتظار بررسی
           </h5>
-          <button class="modern-btn modern-btn-outline text-white" @click="refreshData">
+          <button class="modern-btn modern-btn-outline text-gray" @click="refreshData">
             <i class="fas fa-sync-alt me-1"></i> بروزرسانی
           </button>
         </div>
