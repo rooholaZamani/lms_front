@@ -24,7 +24,7 @@
           </div>
 
           <div class="dropdown">
-            <button class="modern-btn modern-btn-outline text-white dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <button class="modern-btn modern-btn-outline text-gray dropdown-toggle" type="button" data-bs-toggle="dropdown">
               <i class="fas fa-filter me-1"></i> فیلتر دوره
             </button>
             <ul class="dropdown-menu dropdown-menu-end">

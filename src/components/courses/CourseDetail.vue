@@ -180,6 +180,7 @@
                       @lesson-deleted="handleLessonDeleted"
                       @add-content="showAddContentModal"
                       @add-assignment="showAddAssignmentModal"
+                      @add-exam="showAddExamModal"
                       @show-questions-manager="showLessonQuestionsManager"
                   />
 

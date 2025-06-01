@@ -194,7 +194,8 @@ export default {
     async fetchExams() {
       try {
         this.loading = true;
-        this.exams = this.generateMockExams();
+        const response = await axios.get('/exams/teaching');
+        this.exams = response.data;
         this.sortExams();
         this.loading = false;
       } catch (error) {
@@ -202,34 +203,6 @@ export default {
         this.error = 'خطا در دریافت لیست آزمون‌ها';
         this.loading = false;
       }
-    },
-
-    generateMockExams() {
-      return Array.from({ length: 8 }, (_, i) => {
-        const id = i + 1;
-        const statuses = ['DRAFT', 'FINALIZED'];
-        const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-
-        return {
-          id,
-          title: `آزمون ${id}: ${['مبانی برنامه‌نویسی', 'ریاضیات مهندسی', 'هوش مصنوعی', 'پایگاه داده'][i % 4]}`,
-          description: `توضیحات آزمون شماره ${id}`,
-          lessonId: Math.floor(Math.random() * 5) + 1,
-          lesson: {
-            id: Math.floor(Math.random() * 5) + 1,
-            title: `درس ${Math.floor(Math.random() * 5) + 1}`
-          },
-          createdAt: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000).toISOString(),
-          status: randomStatus,
-          duration: 60,
-          passingScore: 70,
-          submissions: Array.from({ length: Math.floor(Math.random() * 20) }, (_, j) => ({
-            id: j + 1,
-            score: Math.floor(Math.random() * 100),
-            studentId: j + 1
-          }))
-        };
-      });
     },
 
     getLessonTitle(exam) {

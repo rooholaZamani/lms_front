@@ -13,7 +13,7 @@
 
         <div class="d-flex gap-2">
           <div class="dropdown">
-            <button class="modern-btn modern-btn-outline text-white dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <button class="modern-btn modern-btn-outline text-gray dropdown-toggle" type="button" data-bs-toggle="dropdown">
               <i class="fas fa-filter me-1"></i> دوره
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
@@ -26,7 +26,7 @@
             </ul>
           </div>
           <div class="dropdown">
-            <button class="modern-btn modern-btn-outline text-white dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <button class="modern-btn modern-btn-outline text-gray dropdown-toggle" type="button" data-bs-toggle="dropdown">
               <i class="fas fa-calendar me-1"></i> {{ selectedPeriodText }}
             </button>
             <ul class="dropdown-menu dropdown-menu-end">

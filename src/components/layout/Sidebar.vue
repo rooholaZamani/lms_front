@@ -40,7 +40,7 @@
             </router-link>
           </li>
 
-          <li class="nav-item">
+          <li v-if="isStudent" class="nav-item">
             <router-link
                 class="modern-nav-link"
                 :to="{ name: 'Courses' }"
@@ -71,12 +71,12 @@
                   class="modern-nav-link"
                   :to="{ name: 'TeachingCourses' }"
                   active-class="active"
-                  :title="collapsed ? 'دوره‌های تدریس' : ''"
+                  :title="collapsed ? 'دوره‌های در حال تدریس' : ''"
               >
                 <div class="nav-icon">
                   <i class="fas fa-chalkboard-teacher"></i>
                 </div>
-                <span v-if="!collapsed" class="nav-text">دوره‌های تدریس</span>
+                <span v-if="!collapsed" class="nav-text">دوره‌های در حال تدریس</span>
                 <div v-if="!collapsed" class="nav-arrow">
                   <i class="fas fa-chevron-left"></i>
                 </div>
@@ -96,23 +96,6 @@
                 <span v-if="!collapsed" class="nav-text">تکالیف در حال بررسی</span>
                 <div v-if="!collapsed" class="nav-badge modern-badge modern-badge-warning">
                   <span>3</span>
-                </div>
-              </router-link>
-            </li>
-
-            <li class="nav-item">
-              <router-link
-                  class="modern-nav-link"
-                  :to="{ name: 'StudentActivities' }"
-                  active-class="active"
-                  :title="collapsed ? 'فعالیت دانش‌آموزان' : ''"
-              >
-                <div class="nav-icon">
-                  <i class="fas fa-user-graduate"></i>
-                </div>
-                <span v-if="!collapsed" class="nav-text">فعالیت دانش‌آموزان</span>
-                <div v-if="!collapsed" class="nav-arrow">
-                  <i class="fas fa-chevron-left"></i>
                 </div>
               </router-link>
             </li>

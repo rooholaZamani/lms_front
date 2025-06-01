@@ -117,7 +117,7 @@
 <!--              <i class="fas fa-chalkboard-teacher"></i>-->
 <!--            </div>-->
 <!--            <div class="item-content">-->
-<!--              <span class="item-title">دوره‌های تدریس</span>-->
+<!--              <span class="item-title">دوره‌های در حال تدریس</span>-->
 <!--              <small class="item-subtitle">مدیریت دوره‌های شما</small>-->
 <!--            </div>-->
 <!--            <div class="item-arrow">-->

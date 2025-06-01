@@ -24,7 +24,7 @@
           </div>
 
           <div class="dropdown">
-            <button class="modern-btn modern-btn-outline text-white dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <button class="modern-btn modern-btn-outline text-gray dropdown-toggle" type="button" data-bs-toggle="dropdown">
               <i class="fas fa-sort me-1"></i> مرتب‌سازی
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
@@ -103,8 +103,8 @@
             <div class="modern-logo large secondary mb-4">
               <i class="fas fa-graduation-cap"></i>
             </div>
-            <h4 class="text-muted mb-3">هیچ دوره‌ای یافت نشد</h4>
-            <p class="text-muted mb-4">
+            <h4 class="text-warning mb-3">هیچ دوره‌ای یافت نشد</h4>
+            <p class="text-info mb-4">
               شما در هیچ دوره‌ای ثبت‌نام نکرده‌اید یا نتیجه‌ای با جستجوی شما مطابقت ندارد
             </p>
             <div class="d-flex justify-content-center gap-2">

@@ -6,7 +6,7 @@
         <div>
           <h2 class="text-white mb-2">
             <i class="fas fa-chalkboard-teacher me-3"></i>
-            دوره‌های تدریس من
+            دوره‌های در حال تدریس من
           </h2>
           <p class="text-white-50 mb-0">مدیریت و نظارت بر دوره‌های آموزشی شما</p>
         </div>
@@ -216,7 +216,7 @@
             <div class="modern-logo large secondary mb-4">
               <i class="fas fa-chalkboard-teacher"></i>
             </div>
-            <h4 class="mb-3">هیچ دوره‌ای یافت نشد</h4>
+            <h4 class="text-warning mb-3">هیچ دوره‌ای یافت نشد</h4>
             <p class="text-muted mb-4">
               شما هنوز هیچ دوره‌ای برای تدریس ندارید یا نتیجه‌ای با جستجوی شما مطابقت ندارد
             </p>
@@ -371,7 +371,7 @@ export default {
       this.calculateStats();
     } catch (error) {
       console.error('Error fetching teaching courses:', error);
-      this.$toast.error('خطا در دریافت لیست دوره‌های تدریس');
+      this.$toast.error('خطا در دریافت لیست دوره‌های در حال تدریس');
     } finally {
       this.loading = false;
     }

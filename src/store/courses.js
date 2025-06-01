@@ -44,7 +44,7 @@ export default {
                 state.courses.splice(index, 1, updatedCourse)
             }
 
-            // به‌روزرسانی در لیست دوره‌های تدریس
+            // به‌روزرسانی در لیست دوره‌های در حال تدریس
             const teachingIndex = state.teachingCourses.findIndex(c => c.id === updatedCourse.id)
             if (teachingIndex !== -1) {
                 state.teachingCourses.splice(teachingIndex, 1, updatedCourse)
@@ -110,7 +110,7 @@ export default {
                 console.log("fetchTeachingCourses: "+response.data)
                 return response.data
             } catch (error) {
-                commit('setError', error.response?.data?.message || 'خطا در دریافت دوره‌های تدریس')
+                commit('setError', error.response?.data?.message || 'خطا در دریافت دوره‌های در حال تدریس')
                 commit('setLoading', false)
                 throw error
             }

@@ -97,7 +97,7 @@ const routes = [
     name: 'TeachingCourses',
     component: () => import(/* webpackChunkName: "teaching-courses" */ '../components/courses/TeachingCourses.vue'),
     meta: {
-      title: 'دوره‌های تدریس',
+      title: 'دوره‌های در حال تدریس',
       requiresAuth: true,
       requiresTeacher: true,
       showSidebar: true
