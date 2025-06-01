@@ -389,34 +389,11 @@ export default {
       this.error = null;
 
       try {
-        // شبیه‌سازی دریافت محتوا - در پروژه واقعی از API استفاده کنید
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Fetch actual content from API
+        const response = await axios.get(`/content/${this.contentId}`);
+        this.content = response.data;
 
-        // محتوای نمونه بر اساس contentId
-        const mockContent = {
-          1: {
-            id: 1,
-            title: 'مقدمه‌ای بر برنامه‌نویسی',
-            type: 'TEXT',
-            textContent: 'برنامه‌نویسی یکی از مهارت‌های مهم قرن بیست و یکم محسوب می‌شود. در این درس با مفاهیم پایه‌ای برنامه‌نویسی آشنا خواهید شد.\n\nبرنامه‌نویسی به معنای نوشتن مجموعه‌ای از دستورات برای کامپیوتر است تا کاری خاص را انجام دهد. این دستورات با استفاده از زبان‌های برنامه‌نویسی مختلف نوشته می‌شوند.\n\nزبان‌های برنامه‌نویسی مختلفی وجود دارند که هر کدام برای کاربردهای خاصی طراحی شده‌اند. برخی از محبوب‌ترین زبان‌های برنامه‌نویسی عبارتند از:\n\n• Python: زبانی ساده و قدرتمند\n• JavaScript: زبان وب\n• Java: زبان شیءگرا و چندمنظوره\n• C++: زبان سیستمی و بازی‌سازی'
-          },
-          2: {
-            id: 2,
-            title: 'ویدیو آموزشی برنامه‌نویسی',
-            type: 'VIDEO',
-            fileUrl: '/sample-video.mp4'
-          },
-          3: {
-            id: 3,
-            title: 'کتاب راهنمای برنامه‌نویسی',
-            type: 'PDF',
-            fileUrl: '/sample-document.pdf'
-          }
-        };
-
-        this.content = mockContent[this.contentId] || mockContent[1];
-
-        // علامت‌گذاری محتوا به عنوان مشاهده شده
+        // Mark content as viewed
         await this.markContentViewed();
 
       } catch (error) {
@@ -429,7 +406,7 @@ export default {
 
     async markContentViewed() {
       try {
-        await axios.post(`/api/progress/content/${this.contentId}/view`);
+        await axios.post(`/progress/content/${this.contentId}/view`);
       } catch (error) {
         console.error('Error marking content as viewed:', error);
       }
@@ -449,7 +426,11 @@ export default {
 
     getContentUrl(content) {
       if (content.type === 'TEXT') return null;
-      return content.fileUrl || `/api/content/files/${content.fileId}`;
+      if (content.fileId) {
+        return `/content/files/${content.fileId}`;
+      }
+      // Fallback to fileUrl if available
+      return content.fileUrl || content.url;
     },
 
     getPdfUrl() {
@@ -643,7 +624,7 @@ export default {
 
     async markContentComplete() {
       try {
-        await axios.post(`/api/progress/content/${this.contentId}/complete`);
+        await axios.post(`/progress/content/${this.contentId}/complete`);
         this.$toast?.success('محتوا به عنوان تکمیل شده علامت‌گذاری شد.');
       } catch (error) {
         console.error('Error marking content complete:', error);
