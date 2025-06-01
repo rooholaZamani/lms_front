@@ -33,6 +33,9 @@
             <option value="TRUE_FALSE">درست/نادرست</option>
             <option value="SHORT_ANSWER">پاسخ کوتاه</option>
             <option value="ESSAY">تشریحی</option>
+            <option value="FILL_IN_THE_BLANKS">پر کردن جاهای خالی</option>
+            <option value="MATCHING">تطبیق</option>
+            <option value="CATEGORIZATION">دسته‌بندی</option>
           </select>
         </div>
       </div>
@@ -169,6 +172,169 @@
               placeholder="حداکثر نمره قابل کسب..."
               required
           >
+        </div>
+      </div>
+      <!-- Fill in the Blanks Section -->
+      <div v-else-if="questionData.type === 'FILL_IN_THE_BLANKS'" class="form-section">
+        <h6 class="section-title">
+          <i class="fas fa-puzzle-piece me-2"></i>
+          پر کردن جاهای خالی
+        </h6>
+
+        <div class="modern-form-group">
+          <label class="modern-form-label">متن با جاهای خالی (از {} استفاده کنید)</label>
+          <textarea
+              class="modern-form-control"
+              v-model="questionData.template"
+              rows="3"
+              placeholder="مثال: پایتخت فرانسه {} و پایتخت آلمان {} است."
+              required
+          ></textarea>
+        </div>
+
+        <div class="modern-form-group">
+          <label class="modern-form-label">پاسخ‌های صحیح</label>
+          <div v-for="(blank, index) in questionData.blankAnswers" :key="index" class="blank-answer-group">
+            <div class="row">
+              <div class="col-md-6">
+                <input
+                    type="text"
+                    class="modern-form-control"
+                    v-model="blank.correctAnswer"
+                    :placeholder="`پاسخ جای خالی ${index + 1}`"
+                    required
+                >
+              </div>
+              <div class="col-md-4">
+                <input
+                    type="text"
+                    class="modern-form-control"
+                    v-model="blank.acceptableAnswers"
+                    placeholder="پاسخ‌های قابل قبول (با کاما جدا کنید)"
+                >
+              </div>
+              <div class="col-md-2">
+                <button type="button" class="modern-btn modern-btn-danger" @click="removeBlank(index)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="modern-btn modern-btn-outline" @click="addBlank">
+            <i class="fas fa-plus me-1"></i> افزودن جای خالی
+          </button>
+        </div>
+      </div>
+
+      <!-- Matching Section -->
+      <div v-else-if="questionData.type === 'MATCHING'" class="form-section">
+        <h6 class="section-title">
+          <i class="fas fa-arrows-alt-h me-2"></i>
+          تطبیق آیتم‌ها
+        </h6>
+
+        <div class="modern-form-group">
+          <label class="modern-form-label">جفت‌های تطبیق</label>
+          <div v-for="(pair, index) in questionData.matchingPairs" :key="index" class="matching-pair-group">
+            <div class="row">
+              <div class="col-md-5">
+                <input
+                    type="text"
+                    class="modern-form-control"
+                    v-model="pair.leftItem"
+                    placeholder="آیتم سمت چپ"
+                    required
+                >
+              </div>
+              <div class="col-md-5">
+                <input
+                    type="text"
+                    class="modern-form-control"
+                    v-model="pair.rightItem"
+                    placeholder="آیتم سمت راست"
+                    required
+                >
+              </div>
+              <div class="col-md-2">
+                <button type="button" class="modern-btn modern-btn-danger" @click="removeMatchingPair(index)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="modern-btn modern-btn-outline" @click="addMatchingPair">
+            <i class="fas fa-plus me-1"></i> افزودن جفت
+          </button>
+        </div>
+      </div>
+
+      <!-- Categorization Section -->
+      <div v-else-if="questionData.type === 'CATEGORIZATION'" class="form-section">
+        <h6 class="section-title">
+          <i class="fas fa-layer-group me-2"></i>
+          دسته‌بندی
+        </h6>
+
+        <div class="modern-form-group">
+          <label class="modern-form-label">دسته‌ها</label>
+          <div v-for="(category, index) in questionData.categories" :key="index" class="category-input-group">
+            <div class="row">
+              <div class="col-md-10">
+                <input
+                    type="text"
+                    class="modern-form-control"
+                    v-model="questionData.categories[index]"
+                    :placeholder="`دسته ${index + 1}`"
+                    required
+                >
+              </div>
+              <div class="col-md-2">
+                <button type="button" class="modern-btn modern-btn-danger" @click="removeCategory(index)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="modern-btn modern-btn-outline" @click="addCategory">
+            <i class="fas fa-plus me-1"></i> افزودن دسته
+          </button>
+        </div>
+
+        <div class="modern-form-group">
+          <label class="modern-form-label">آیتم‌های دسته‌بندی</label>
+          <div v-for="(item, index) in questionData.categorizationItems" :key="index" class="categorization-item-group">
+            <div class="row">
+              <div class="col-md-5">
+                <input
+                    type="text"
+                    class="modern-form-control"
+                    v-model="item.text"
+                    placeholder="متن آیتم"
+                    required
+                >
+              </div>
+              <div class="col-md-5">
+                <select
+                    class="modern-form-control"
+                    v-model="item.correctCategory"
+                    required
+                >
+                  <option value="">انتخاب دسته</option>
+                  <option v-for="category in questionData.categories" :key="category" :value="category">
+                    {{ category }}
+                  </option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <button type="button" class="modern-btn modern-btn-danger" @click="removeCategorization Item(index)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="modern-btn modern-btn-outline" @click="addCategorizationItem">
+            <i class="fas fa-plus me-1"></i> افزودن آیتم
+          </button>
         </div>
       </div>
 
@@ -364,7 +530,34 @@ export default {
         data.points = 10;
       }
 
+      if (data.type === 'FILL_IN_THE_BLANKS') {
+        data.blankAnswers = data.blankAnswers.map((blank, index) => ({
+          blankIndex: index,
+          correctAnswer: blank.correctAnswer,
+          acceptableAnswers: blank.acceptableAnswers ? blank.acceptableAnswers.split(',').map(s => s.trim()) : [],
+          caseSensitive: false,
+          points: Math.floor((data.points || 10) / data.blankAnswers.length)
+        }));
+      } else if (data.type === 'MATCHING') {
+        data.matchingPairs = data.matchingPairs.map(pair => ({
+          leftItem: pair.leftItem,
+          rightItem: pair.rightItem,
+          leftItemType: 'TEXT',
+          rightItemType: 'TEXT',
+          points: Math.floor((data.points || 10) / data.matchingPairs.length)
+        }));
+      } else if (data.type === 'CATEGORIZATION') {
+        data.categorizationItems = data.categorizationItems.map(item => ({
+          text: item.text,
+          correctCategory: item.correctCategory,
+          itemType: 'TEXT',
+          points: Math.floor((data.points || 10) / data.categorizationItems.length)
+        }));
+      }
+
       return data;
+    }
+
     },
 
     addOption() {
@@ -404,7 +597,67 @@ export default {
       } else if (this.questionData.type === 'ESSAY') {
         this.questionData.maxScore = 10;
       }
+      if (this.questionData.type === 'FILL_IN_THE_BLANKS') {
+        this.questionData.template = '';
+        this.questionData.blankAnswers = [{ correctAnswer: '', acceptableAnswers: '', blankIndex: 0 }];
+      } else if (this.questionData.type === 'MATCHING') {
+        this.questionData.matchingPairs = [{ leftItem: '', rightItem: '', leftItemType: 'TEXT', rightItemType: 'TEXT' }];
+      } else if (this.questionData.type === 'CATEGORIZATION') {
+        this.questionData.categories = ['دسته ۱', 'دسته ۲'];
+        this.questionData.categorizationItems = [{ text: '', correctCategory: '', itemType: 'TEXT' }];
+      }
+
     },
+    addBlank() {
+      this.questionData.blankAnswers.push({
+        correctAnswer: '',
+        acceptableAnswers: '',
+        blankIndex: this.questionData.blankAnswers.length
+      });
+    },
+
+    removeBlank(index) {
+      if (this.questionData.blankAnswers.length > 1) {
+        this.questionData.blankAnswers.splice(index, 1);
+      }
+    },
+    addMatchingPair() {
+      this.questionData.matchingPairs.push({
+        leftItem: '',
+        rightItem: '',
+        leftItemType: 'TEXT',
+        rightItemType: 'TEXT'
+      });
+    },
+
+    removeMatchingPair(index) {
+      if (this.questionData.matchingPairs.length > 1) {
+        this.questionData.matchingPairs.splice(index, 1);
+      }
+    },
+    addCategory() {
+      this.questionData.categories.push('');
+    },
+
+    removeCategory(index) {
+      if (this.questionData.categories.length > 2) {
+        this.questionData.categories.splice(index, 1);
+      }
+    },
+
+    addCategorizationItem() {
+      this.questionData.categorizationItems.push({
+        text: '',
+        correctCategory: '',
+        itemType: 'TEXT'
+      });
+    },
+    removeCategorizationItem(index) {
+      if (this.questionData.categorizationItems.length > 1) {
+        this.questionData.categorizationItems.splice(index, 1);
+      }
+    },
+
 
     validateQuestion() {
       if (this.questionData.type === 'MULTIPLE_CHOICE') {
