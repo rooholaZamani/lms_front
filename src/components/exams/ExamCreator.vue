@@ -66,20 +66,25 @@
     </div>
 
     <!-- Modal: افزودن/ویرایش سوال -->
-    <base-modal
-        modal-id="questionModal"
-        :title="isEditingQuestion ? 'ویرایش سوال' : 'افزودن سوال جدید'"
-        modal-size="modal-lg"
-        ref="questionModal"
-    >
-      <question-form
-          :question-data="currentQuestion"
-          :is-editing="isEditingQuestion"
-          :is-submitting="isQuestionSubmitting"
-          @save="saveQuestion"
-          @cancel="$refs.questionModal.hide()"
-      />
-    </base-modal>
+    <div class="modal fade" id="questionModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{{ isEditingQuestion ? 'ویرایش سوال' : 'افزودن سوال جدید' }}</h5>
+            <button type="button" class="btn-close" @click="hideQuestionModal"></button>
+          </div>
+          <div class="modal-body">
+            <question-form
+                :question-data="currentQuestion"
+                :is-editing="isEditingQuestion"
+                :is-submitting="isQuestionSubmitting"
+                @save="saveQuestion"
+                @cancel="hideQuestionModal"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Modal: تأیید حذف سوال -->
     <confirmation-dialog
@@ -208,6 +213,12 @@ export default {
         this.loading = false;
       }
     },
+    hideQuestionModal() {
+      const modal = bootstrap.Modal.getInstance(document.getElementById('questionModal'));
+      if (modal) {
+        modal.hide();
+      }
+    },
 
     importFromQuestionBank() {
       localStorage.setItem('currentExamId', this.examId);
@@ -278,7 +289,9 @@ export default {
         difficulty: 3.0,
         isRequired: false
       };
-      this.$refs.questionModal.show();
+
+      const modal = new bootstrap.Modal(document.getElementById('questionModal'));
+      modal.show();
     },
 
     editQuestion(question) {
