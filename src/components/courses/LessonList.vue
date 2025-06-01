@@ -265,67 +265,67 @@
 
     <!-- Content Viewer Modal -->
     <!-- Replace the bootstrap modal with this: -->
-    <div v-if="showContentModal" class="custom-modal-overlay" @click.self="closeContentModal">
-      <div class="custom-modal-dialog">
-        <div class="custom-modal-content">
-          <div class="custom-modal-header">
-            <h5 class="modal-title">
-              <i :class="getContentIcon(selectedContent?.type)" class="me-2"></i>
-              {{ selectedContent?.title }}
-            </h5>
-            <button type="button" class="btn-close" @click="closeContentModal"></button>
-          </div>
-          <div class="custom-modal-body">
-            <!-- Text Content -->
-            <div v-if="selectedContent?.type === 'TEXT'" class="text-content">
-              <div class="content-text" v-html="formatTextContent(selectedContent.textContent)"></div>
-            </div>
+<!--    <div v-if="showContentModal" class="custom-modal-overlay" @click.self="closeContentModal">-->
+<!--      <div class="custom-modal-dialog">-->
+<!--        <div class="custom-modal-content">-->
+<!--          <div class="custom-modal-header">-->
+<!--            <h5 class="modal-title">-->
+<!--              <i :class="getContentIcon(selectedContent?.type)" class="me-2"></i>-->
+<!--              {{ selectedContent?.title }}-->
+<!--            </h5>-->
+<!--            <button type="button" class="btn-close" @click="closeContentModal"></button>-->
+<!--          </div>-->
+<!--          <div class="custom-modal-body">-->
+<!--            &lt;!&ndash; Text Content &ndash;&gt;-->
+<!--            <div v-if="selectedContent?.type === 'TEXT'" class="text-content">-->
+<!--              <div class="content-text" v-html="formatTextContent(selectedContent.textContent)"></div>-->
+<!--            </div>-->
 
-            <!-- Video Content -->
-            <div v-else-if="selectedContent?.type === 'VIDEO'" class="video-content">
-              <div class="ratio ratio-16x9">
-                <video controls class="video-player">
-                  <source :src="getContentUrl(selectedContent)" type="video/mp4">
-                  مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
-                </video>
-              </div>
-            </div>
+<!--            &lt;!&ndash; Video Content &ndash;&gt;-->
+<!--            <div v-else-if="selectedContent?.type === 'VIDEO'" class="video-content">-->
+<!--              <div class="ratio ratio-16x9">-->
+<!--                <video controls class="video-player">-->
+<!--                  <source :src="getContentUrl(selectedContent)" type="video/mp4">-->
+<!--                  مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.-->
+<!--                </video>-->
+<!--              </div>-->
+<!--            </div>-->
 
-            <!-- PDF Content -->
-            <div v-else-if="selectedContent?.type === 'PDF'" class="pdf-content">
-              <div class="d-flex justify-content-center mb-3">
-                <button class="modern-btn modern-btn-primary" @click="downloadContent(selectedContent)">
-                  <i class="fas fa-download me-1"></i>
-                  دانلود PDF
-                </button>
-              </div>
-              <div class="pdf-viewer">
-                <iframe
-                    :src="getContentUrl(selectedContent)"
-                    width="100%"
-                    height="600px"
-                    style="border: none;">
-                </iframe>
-              </div>
-            </div>
-          </div>
-          <div class="custom-modal-footer">
-            <button type="button" class="modern-btn modern-btn-secondary" @click="closeContentModal">
-              بستن
-            </button>
-            <button
-                v-if="selectedContent?.type !== 'TEXT'"
-                type="button"
-                class="modern-btn modern-btn-primary"
-                @click="downloadContent(selectedContent)"
-            >
-              <i class="fas fa-download me-1"></i>
-              دانلود
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+<!--            &lt;!&ndash; PDF Content &ndash;&gt;-->
+<!--            <div v-else-if="selectedContent?.type === 'PDF'" class="pdf-content">-->
+<!--              <div class="d-flex justify-content-center mb-3">-->
+<!--                <button class="modern-btn modern-btn-primary" @click="downloadContent(selectedContent)">-->
+<!--                  <i class="fas fa-download me-1"></i>-->
+<!--                  دانلود PDF-->
+<!--                </button>-->
+<!--              </div>-->
+<!--              <div class="pdf-viewer">-->
+<!--                <iframe-->
+<!--                    :src="getContentUrl(selectedContent)"-->
+<!--                    width="100%"-->
+<!--                    height="600px"-->
+<!--                    style="border: none;">-->
+<!--                </iframe>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--          <div class="custom-modal-footer">-->
+<!--            <button type="button" class="modern-btn modern-btn-secondary" @click="closeContentModal">-->
+<!--              بستن-->
+<!--            </button>-->
+<!--            <button-->
+<!--                v-if="selectedContent?.type !== 'TEXT'"-->
+<!--                type="button"-->
+<!--                class="modern-btn modern-btn-primary"-->
+<!--                @click="downloadContent(selectedContent)"-->
+<!--            >-->
+<!--              <i class="fas fa-download me-1"></i>-->
+<!--              دانلود-->
+<!--            </button>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </div>-->
   </div>
 </template>
 
@@ -396,16 +396,11 @@ export default {
   mounted() {
     this.fetchAllLessonsContent();
   },
-  beforeUnmount() {
-    // Cleanup when component is destroyed
-    this.closeContentModal();
-  },
+  // beforeUnmount() {
+  //   // Cleanup when component is destroyed
+  //   this.closeContentModal();
+  // },
   methods: {
-    initModal() {
-      if (window.bootstrap) {
-        this.contentModal = new bootstrap.Modal(document.getElementById('contentViewerModal'));
-      }
-    },
     async fetchAllLessonsContent() {
       // Fetch basic content info for all lessons without expanding them
       const contentPromises = this.lessons.map(async (lesson) => {
@@ -452,14 +447,6 @@ export default {
       }
     },
 
-    getContentIcon(type) {
-      switch (type) {
-        case 'TEXT': return 'fas fa-align-left text-info';
-        case 'VIDEO': return 'fas fa-play-circle text-primary';
-        case 'PDF': return 'fas fa-file-pdf text-danger';
-        default: return 'fas fa-file text-secondary';
-      }
-    },
 
     viewContent(content) {
       this.markContentViewed(content.id);
@@ -472,91 +459,11 @@ export default {
       });
     },
 
-    closeContentModal() {
-      console.log('Closing modal manually');
-      this.showContentModal = false;
-
-      // Immediate cleanup
-      this.selectedContent = null;
-      document.body.style.overflow = '';
-
-      // Force remove any bootstrap elements
-      setTimeout(() => {
-        document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-        document.body.classList.remove('modal-open');
-        document.documentElement.classList.remove('modal-open');
-      }, 50);
-    },
-
-    cleanupModal() {
-      console.log('Starting aggressive cleanup');
-
-      // Remove all modal-related elements
-      document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
-      document.querySelectorAll('.modal.show').forEach(el => {
-        el.classList.remove('show');
-        el.style.display = 'none';
-      });
-
-      // Reset all body styles
-      document.body.removeAttribute('style');
-      document.body.className = document.body.className.replace(/modal-open/g, '');
-      document.documentElement.className = document.documentElement.className.replace(/modal-open/g, '');
-
-      // Clear selected content
-      this.selectedContent = null;
-
-      console.log('Aggressive cleanup completed');
-    },
-
     async markContentViewed(contentId) {
       try {
         await axios.post(`/progress/content/${contentId}/view`);
       } catch (error) {
         console.error('Error marking content as viewed:', error);
-      }
-    },
-    beforeUnmount() {
-      // Cleanup when component is destroyed
-      this.cleanupModal();
-      if (this.contentModal) {
-        this.contentModal.dispose();
-      }
-    },
-    getContentUrl(content) {
-      if (content.type === 'TEXT') {
-        return null;
-      }
-      return `/api/content/files/${content.fileId}`;
-    },
-
-    formatTextContent(text) {
-      if (!text) return '';
-
-      // Convert line breaks to <br> tags and preserve formatting
-      return text.replace(/\n/g, '<br>');
-    },
-
-    downloadContent(content) {
-      if (content.type === 'TEXT') {
-        // Create and download text file
-        const blob = new Blob([content.textContent], { type: 'text/plain;charset=utf-8' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `${content.title}.txt`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-      } else {
-        // Download file content
-        const link = document.createElement('a');
-        link.href = this.getContentUrl(content);
-        link.download = content.title;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
       }
     },
 
@@ -944,157 +851,4 @@ export default {
     color: #cbd5e0;
   }
 }
-/* Custom Modal Styles */
-.custom-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  backdrop-filter: blur(2px);
-  padding: 1rem;
-  overflow-y: auto; /* Add this */
-}
-
-.custom-modal-dialog {
-  width: 90%;
-  max-width: 1000px;
-  max-height: 90vh; /* Change from 85vh to 90vh */
-  display: flex;
-  flex-direction: column;
-  margin: auto; /* Add this */
-}
-
-.custom-modal-content {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  display: flex;
-  flex-direction: column;
-  max-height: 90vh; /* Add this */
-  overflow: hidden;
-}
-
-.custom-modal-header {
-  padding: 1rem 1.5rem; /* Reduce padding */
-  border-bottom: 1px solid #dee2e6;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 12px 12px 0 0;
-  flex-shrink: 0;
-}
-
-.custom-modal-header .modal-title {
-  margin: 0;
-  font-weight: 600;
-  font-size: 1.1rem; /* Smaller title */
-}
-
-.custom-modal-header .btn-close {
-  filter: invert(1);
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: rgba(255,255,255,0.2);
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.custom-modal-body {
-  padding: 1.5rem; /* Reduce padding */
-  overflow-y: auto;
-  flex: 1;
-  min-height: 0; /* Important for flex scrolling */
-}
-
-.custom-modal-footer {
-  padding: 1rem 1.5rem; /* Reduce padding */
-  border-top: 1px solid #dee2e6;
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-  background: rgba(248, 249, 250, 0.5);
-  border-radius: 0 0 12px 12px;
-  flex-shrink: 0;
-}
-
-/* Content specific adjustments */
-.text-content {
-  padding: 1rem; /* Reduce padding */
-  background: #f8f9fa;
-  border-radius: 8px;
-  line-height: 1.6;
-  max-height: 400px; /* Add max height for text */
-  overflow-y: auto;
-}
-
-.pdf-viewer {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
-  height: 500px; /* Fixed height for PDF */
-}
-
-.pdf-viewer iframe {
-  width: 100%;
-  height: 100%;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .custom-modal-overlay {
-    padding: 0.5rem;
-  }
-
-  .custom-modal-dialog {
-    width: 95%;
-    max-height: 90vh;
-  }
-
-  .custom-modal-header,
-  .custom-modal-body,
-  .custom-modal-footer {
-    padding: 0.75rem;
-  }
-
-  .pdf-viewer {
-    height: 400px; /* Smaller height on mobile */
-  }
-
-  .text-content {
-    max-height: 300px;
-    padding: 0.75rem;
-  }
-}
-
-@media (max-width: 576px) {
-  .custom-modal-dialog {
-    width: 98%;
-  }
-
-  .custom-modal-body {
-    padding: 1rem;
-  }
-
-  .custom-modal-footer {
-    flex-direction: column;
-  }
-
-  .custom-modal-footer .modern-btn {
-    width: 100%;
-  }
-}
-
-
 </style>

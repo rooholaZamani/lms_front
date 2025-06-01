@@ -336,7 +336,7 @@
 
     <!-- Other modals remain the same with modern styling applied -->
     <!-- Assignment Modal -->
-    <div class="tab-pane fade" id="assignmentModal" tabindex="-1" aria-labelledby="assignmentModalLabel" aria-hidden="true">
+    <div class="modal fade" id="assignmentModal" tabindex="-1" aria-labelledby="assignmentModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content modern-modal">
           <div class="modal-header">
