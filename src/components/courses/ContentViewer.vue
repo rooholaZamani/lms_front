@@ -259,35 +259,92 @@ export default {
     };
   },
   async created() {
-    await this.loadContent();
-    this.startProgressTracking();
     await this.fetchContentData();
 
   },
-  beforeUnmount() {
-    this.stopProgressTracking();
-    if (this.isFullscreen) {
-      this.exitFullscreen();
-    }
-  },
   methods: {
-    async loadContent() {
-      this.loading = true;
-      this.error = null;
+    async initializePdfViewer() {
+      if (this.content?.type !== 'PDF') return;
 
+      console.log('Initializing PDF viewer...');
+      this.pdfLoading = true;
+
+      // Check browser support first
+      this.checkPdfSupport();
+
+      if (this.pdfSupported) {
+        await this.loadPdfWithAuth();
+      } else {
+        this.pdfLoading = false;
+        console.log('PDF viewer not supported, using fallback');
+      }
+    },
+    async loadPdfWithAuth() {
       try {
-        // Fetch actual content from API
-        const response = await axios.get(`/content/${this.contentId}`);
-        this.content = response.data;
+        if (!this.fileId) {
+          console.error('No file ID available for PDF');
+          this.pdfSupported = false;
+          this.pdfLoading = false;
+          return;
+        }
 
-        // Mark content as viewed
-        await this.markContentViewed();
+        console.log('Loading PDF with file ID:', this.fileId);
+
+        // Get authentication token
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.error('No authentication token');
+          this.pdfSupported = false;
+          this.pdfLoading = false;
+          return;
+        }
+
+        // Fetch PDF with proper authentication
+        const response = await fetch(`/api/content/files/${this.fileId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Basic ${token}`,
+            'Accept': 'application/pdf,*/*'
+          }
+        });
+
+        console.log('PDF fetch response:', response.status, response.statusText);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        // Verify content type
+        const contentType = response.headers.get('content-type');
+        console.log('PDF content type:', contentType);
+
+        if (!contentType || !contentType.includes('application/pdf')) {
+          console.warn('Response is not a PDF, content-type:', contentType);
+          this.pdfSupported = false;
+          this.pdfLoading = false;
+          return;
+        }
+
+        // Create blob and URL
+        const blob = await response.blob();
+        this.pdfBlob = blob;
+        this.pdfUrl = URL.createObjectURL(blob);
+
+        console.log('PDF loaded successfully:', {
+          size: blob.size,
+          url: this.pdfUrl
+        });
+
+        this.pdfLoading = false;
 
       } catch (error) {
-        console.error('Error loading content:', error);
-        this.error = 'خطا در بارگذاری محتوا. لطفاً دوباره تلاش کنید.';
-      } finally {
-        this.loading = false;
+        console.error('Error loading PDF:', error);
+        this.pdfSupported = false;
+        this.pdfLoading = false;
+
+        if (this.$toast) {
+          this.$toast.error('خطا در بارگذاری فایل PDF: ' + error.message);
+        }
       }
     },
     async fetchContentData() {
@@ -300,6 +357,8 @@ export default {
       try {
         this.loading = true;
         this.error = null;
+
+        console.log('Fetching content:', this.contentId);
 
         // Fetch content details
         const response = await this.$http.get(`/content/${this.contentId}`);
@@ -321,83 +380,157 @@ export default {
         this.loading = false;
       }
     },
-    initializePdfViewer() {
-      if (this.content.type === 'PDF' && this.content.file?.id) {
-        this.pdfLoading = true;
-        this.pdfUrl = this.pdfViewerUrl;
 
-        // Check if browser supports PDF viewing
-        this.checkPdfSupport();
+    async loadContent() {
+      this.loading = true;
+      this.error = null;
+
+      try {
+        // Fetch actual content from API
+        const response = await axios.get(`/content/${this.contentId}`);
+        this.content = response.data;
+
+        // Mark content as viewed
+        await this.markContentViewed();
+
+      } catch (error) {
+        console.error('Error loading content:', error);
+        this.error = 'خطا در بارگذاری محتوا. لطفاً دوباره تلاش کنید.';
+      } finally {
+        this.loading = false;
+      }
+    },
+    async markContentViewed() {
+      try {
+        if (this.contentId) {
+          await this.$http.post(`/progress/content/${this.contentId}/view`);
+        }
+      } catch (error) {
+        console.error('Error marking content as viewed:', error);
       }
     },
     checkPdfSupport() {
       const userAgent = navigator.userAgent.toLowerCase();
       const isIE = userAgent.includes('msie') || userAgent.includes('trident');
-      const isOldSafari = userAgent.includes('safari') && !userAgent.includes('chrome') &&
-          parseFloat(userAgent.substring(userAgent.indexOf('version/') + 8)) < 10;
 
-      // Disable PDF viewer for browsers with poor PDF support
-      if (isIE || isOldSafari) {
+      if (isIE) {
+        console.log('Internet Explorer detected, disabling PDF viewer');
         this.pdfSupported = false;
+        return;
       }
 
-      // For mobile devices, you might want to disable iframe PDF viewing
+      // Mobile devices often have issues with PDF in iframe
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
       if (isMobile) {
+        console.log('Mobile device detected, using download fallback');
         this.pdfSupported = false;
+        return;
       }
+
+      console.log('Browser supports PDF viewing');
+      this.pdfSupported = true;
     },
     handlePdfLoad() {
+      console.log('PDF iframe loaded successfully');
       this.pdfLoading = false;
-      console.log('PDF loaded successfully');
     },
 
     // Handle PDF load error
-    handlePdfError() {
-      console.warn('PDF failed to load in iframe, showing fallback');
+    handlePdfError(event) {
+      console.warn('PDF iframe failed to load:', event);
       this.pdfSupported = false;
       this.pdfLoading = false;
     },
     async downloadContent() {
       try {
-        if (!this.content?.file?.id) {
-          this.$toast?.error('فایل برای دانلود موجود نیست');
+        if (!this.fileId) {
+          if (this.$toast) {
+            this.$toast.error('فایل برای دانلود موجود نیست');
+          }
           return;
         }
 
-        // Create download link
-        const downloadUrl = `/api/content/files/${this.content.file.id}`;
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = this.content.file.originalFilename || this.content.title;
-        link.target = '_blank';
+        console.log('Starting download for file ID:', this.fileId);
 
-        // Trigger download
+        // If we already have the PDF blob, use it
+        if (this.pdfBlob && this.content.type === 'PDF') {
+          const url = URL.createObjectURL(this.pdfBlob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = (this.content.title || 'document') + '.pdf';
+
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          URL.revokeObjectURL(url);
+
+          if (this.$toast) {
+            this.$toast.success('دانلود فایل شروع شد');
+          }
+          return;
+        }
+
+        // Otherwise, fetch the file with authentication
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/content/files/${this.fileId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Basic ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+
+        // Determine file extension
+        const contentType = response.headers.get('content-type');
+        let extension = '';
+        if (contentType) {
+          if (contentType.includes('pdf')) extension = '.pdf';
+          else if (contentType.includes('video')) extension = '.mp4';
+          else if (contentType.includes('image')) extension = '.jpg';
+        }
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = (this.content.title || 'download') + extension;
+
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
 
-        this.$toast?.success('دانلود فایل شروع شد');
+        URL.revokeObjectURL(url);
+
+        if (this.$toast) {
+          this.$toast.success('دانلود فایل شروع شد');
+        }
+
       } catch (error) {
         console.error('Error downloading file:', error);
-        this.$toast?.error('خطا در دانلود فایل');
+        if (this.$toast) {
+          this.$toast.error('خطا در دانلود فایل: ' + error.message);
+        }
       }
     },
 
-
-    async markContentViewed() {
-      try {
-        await axios.post(`/progress/content/${this.contentId}/view`);
-      } catch (error) {
-        console.error('Error marking content as viewed:', error);
+    cleanup() {
+      if (this.pdfUrl && this.pdfUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(this.pdfUrl);
+        console.log('PDF blob URL cleaned up');
       }
     },
 
     goBack() {
-      if (this.lessonId) {
+      const lessonId = this.$route.query.lessonId;
+      if (lessonId) {
         this.$router.push({
           name: 'CourseDetail',
-          params: { id: this.lessonId },
+          params: { id: lessonId },
           query: { tab: 'lessons' }
         });
       } else {
@@ -605,33 +738,27 @@ export default {
 
   },
   computed: {
-
+    fileId() {
+      // Get file ID from multiple possible locations
+      return this.content?.fileId || this.content?.file?.id;
+    },
     pdfViewerUrl() {
-      console.log("pdfViewerUrl() {")
-      if (this.content?.fileId) {
-        console.log(" if (this.content?.fileId)");
-        return `/api/content/files/${this.content.fileId}`;
-      } else if (this.content?.file?.id) {
-        console.log("else if (this.content?.file?.id) {");
-        return `/api/content/files/${this.content.file.id}`;
+      if (this.fileId) {
+        return `/api/content/files/${this.fileId}`;
       }
       return null;
     }
   },
   async mounted() {
-    try {
-      if (!this.content) {
-        await this.fetchContentData();
-      }
-
-      // Initialize PDF viewer if content is PDF
-      if (this.content?.type === 'PDF') {
-        this.initializePdfViewer();
-      }
-    } catch (error) {
-      console.error('Error in mounted:', error);
+    // Initialize PDF viewer if content is PDF
+    if (this.content?.type === 'PDF') {
+      await this.initializePdfViewer();
     }
+  },
+  beforeUnmount() {
+    this.cleanup();
   }
+
 };
 </script>
 

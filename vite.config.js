@@ -22,7 +22,8 @@ export default defineConfig({
       BASE_URL: JSON.stringify('/'),
       VUE_APP_API_URL: JSON.stringify(process.env.VUE_APP_API_URL || '/api')
       // سایر متغیرهای محیطی که در پروژه استفاده می‌کنید را اینجا اضافه کنید
-    },
+    }
+  },
     server: {
       proxy: {
         '/api': {
@@ -30,6 +31,6 @@ export default defineConfig({
           changeOrigin: true
         }
       }
-    }
+
   }
 })
