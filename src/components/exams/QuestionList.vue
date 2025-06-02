@@ -18,7 +18,7 @@
             <span class="number-badge">{{ index + 1 }}</span>
           </div>
           <div class="question-title-area">
-            <h6 class="question-text">{{ question.text }}</h6>
+            <h6 class="question-text text-white">{{ question.text }}</h6>
             <div class="question-meta">
               <span class="modern-badge" :class="getQuestionTypeBadgeClass(question.type)">
                 {{ getQuestionTypeText(question.type) }}

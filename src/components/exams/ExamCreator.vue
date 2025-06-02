@@ -274,7 +274,6 @@ export default {
         this.isInfoSubmitting = false;
       }
     },
-
     showAddQuestionModal() {
       this.isEditingQuestion = false;
       this.currentQuestion = {
@@ -303,7 +302,8 @@ export default {
         this.currentQuestion.options = ['', '', '', ''];
       }
 
-      this.$refs.questionModal.show();
+      const modal = new bootstrap.Modal(document.getElementById('questionModal'));
+      modal.show();
     },
 
     async saveQuestion() {
@@ -384,7 +384,7 @@ export default {
           this.showSuccessToast('سوال جدید با موفقیت افزوده شد.');
         }
 
-        this.$refs.questionModal.hide();
+        this.hideQuestionModal();
       } catch (error) {
         console.error('Error saving question:', error);
         this.showErrorToast(error.response?.data?.message || 'مشکلی در ذخیره سوال رخ داد. لطفاً دوباره تلاش کنید.');

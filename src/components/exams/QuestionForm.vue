@@ -461,6 +461,45 @@ export default {
     }
   },
   methods: {
+    validateQuestion() {
+      if (this.questionData.type === 'MULTIPLE_CHOICE') {
+        const validOptions = this.questionData.options.filter(opt => opt.trim() !== '');
+        if (validOptions.length < 2) {
+          this.showErrorToast('حداقل دو گزینه برای سوال چندگزینه‌ای لازم است.');
+          return false;
+        }
+
+        if (this.questionData.correctOption === null ||
+            this.questionData.correctOption === undefined ||
+            this.questionData.correctOption < 0 ||
+            this.questionData.correctOption >= this.questionData.options.length) {
+          this.showErrorToast('لطفاً پاسخ درست را انتخاب کنید.');
+          return false;
+        }
+      } else if (this.questionData.type === 'TRUE_FALSE') {
+        if (this.questionData.correctOption !== 'true' && this.questionData.correctOption !== 'false') {
+          this.showErrorToast('لطفاً پاسخ درست را انتخاب کنید.');
+          return false;
+        }
+      } else if (this.questionData.type === 'SHORT_ANSWER') {
+        if (!this.questionData.correctOption || this.questionData.correctOption.trim() === '') {
+          this.showErrorToast('لطفاً پاسخ صحیح را وارد کنید.');
+          return false;
+        }
+      } else if (this.questionData.type === 'ESSAY') {
+        if (!this.questionData.maxScore || this.questionData.maxScore < 1) {
+          this.showErrorToast('لطفاً حداکثر نمره سوال را وارد کنید.');
+          return false;
+        }
+      }
+
+      if (!this.questionData.points || this.questionData.points < 1) {
+        this.showErrorToast('لطفاً امتیاز سوال را وارد کنید.');
+        return false;
+      }
+
+      return true;
+    },
     saveQuestion() {
       if (!this.validateQuestion()) {
         return;
@@ -657,48 +696,6 @@ export default {
         this.questionData.categorizationItems.splice(index, 1);
       }
     },
-
-
-    validateQuestion() {
-      if (this.questionData.type === 'MULTIPLE_CHOICE') {
-        const validOptions = this.questionData.options.filter(opt => opt.trim() !== '');
-        if (validOptions.length < 2) {
-          this.showErrorToast('حداقل دو گزینه برای سوال چندگزینه‌ای لازم است.');
-          return false;
-        }
-
-        if (this.questionData.correctOption === null ||
-            this.questionData.correctOption === undefined ||
-            this.questionData.correctOption < 0 ||
-            this.questionData.correctOption >= this.questionData.options.length) {
-          this.showErrorToast('لطفاً پاسخ درست را انتخاب کنید.');
-          return false;
-        }
-      } else if (this.questionData.type === 'TRUE_FALSE') {
-        if (this.questionData.correctOption !== 'true' && this.questionData.correctOption !== 'false') {
-          this.showErrorToast('لطفاً پاسخ درست را انتخاب کنید.');
-          return false;
-        }
-      } else if (this.questionData.type === 'SHORT_ANSWER') {
-        if (!this.questionData.correctOption || this.questionData.correctOption.trim() === '') {
-          this.showErrorToast('لطفاً پاسخ صحیح را وارد کنید.');
-          return false;
-        }
-      } else if (this.questionData.type === 'ESSAY') {
-        if (!this.questionData.maxScore || this.questionData.maxScore < 1) {
-          this.showErrorToast('لطفاً حداکثر نمره سوال را وارد کنید.');
-          return false;
-        }
-      }
-
-      if (!this.questionData.points || this.questionData.points < 1) {
-        this.showErrorToast('لطفاً امتیاز سوال را وارد کنید.');
-        return false;
-      }
-
-      return true;
-    }
-
 }
 </script>
 

@@ -177,7 +177,7 @@
                   <i class="fas fa-clock me-2"></i>
                   آزمون هنوز آماده نشده است
                 </div>
-                <button v-if="isTeacher && isTeacherOfCourse" class="modern-btn modern-btn-secondary">
+                <button v-if="isTeacher && isTeacherOfCourse" class="modern-btn modern-btn-secondary" @click="manageExam(lesson)">
                   <i class="fas fa-cog me-1"></i>
                   مدیریت
                 </button>
@@ -338,7 +338,7 @@ export default {
       },
       deep: true,
       immediate: true
-    }
+    },
   },
   mounted() {
     this.fetchAllLessonsContent();
@@ -411,6 +411,39 @@ export default {
         case 'VIDEO': return 'ویدیو';
         case 'PDF': return 'فایل PDF';
         default: return 'فایل';
+      }
+    },
+    async manageExam(lesson) {
+      try {
+        if (lesson.exam && lesson.exam.id) {
+          // Check exam status to determine action
+          if (lesson.exam.status === 'DRAFT') {
+            // Navigate to exam editor
+            this.$router.push({
+              name: 'ExamEditor',
+              params: { id: lesson.exam.id }
+            });
+          } else if (lesson.exam.status === 'FINALIZED') {
+            // Navigate to exam results
+            this.$router.push({
+              name: 'ExamResults',
+              params: { id: lesson.exam.id }
+            });
+          }
+        } else if (lesson.hasExam) {
+          // Fetch exam details first
+          const response = await axios.get(`/exams/lesson/${lesson.id}`);
+          if (response.data && response.data.id) {
+            this.manageExam({ ...lesson, exam: response.data });
+          } else {
+            this.$toast?.error('آزمون یافت نشد');
+          }
+        } else {
+          this.$toast?.error('این درس آزمون ندارد');
+        }
+      } catch (error) {
+        console.error('Error managing exam:', error);
+        this.$toast?.error('خطا در دسترسی به آزمون');
       }
     },
 
