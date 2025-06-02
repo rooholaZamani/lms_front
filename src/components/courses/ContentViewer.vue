@@ -1,208 +1,328 @@
 <template>
-  <div class="content-viewer modern-page-bg info-gradient">
+  <div class="modern-page-bg info-gradient">
     <div class="modern-container large animate-slide-up">
-      <!-- Loading State -->
-      <div v-if="loading" class="loading-container">
-        <div class="modern-card text-center">
-          <div class="py-5">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">در حال بارگذاری...</span>
-            </div>
-            <p class="mt-3 text-muted">در حال بارگذاری محتوا...</p>
-          </div>
+      <!-- Header -->
+      <div class="modern-header">
+        <div class="modern-logo info">
+          <i :class="getContentIcon(content?.type)"></i>
         </div>
+        <h1 class="modern-title">{{ content?.title || 'مشاهده محتوا' }}</h1>
+        <p class="modern-subtitle">{{ getContentTypeText(content?.type) }}</p>
       </div>
 
-      <!-- Error State -->
-      <div v-else-if="error" class="error-container">
-        <div class="modern-card text-center">
-          <div class="py-5">
-            <div class="modern-logo large danger mb-4">
-              <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <h4 class="text-danger mb-3">خطا در بارگذاری محتوا</h4>
-            <p class="text-muted mb-4">{{ error }}</p>
-            <button class="modern-btn modern-btn-primary" @click="fetchContentData">
-              <i class="fas fa-refresh me-2"></i>
+      <!-- Content Card -->
+      <div class="modern-card animate-fade-in" style="animation-delay: 0.1s;">
+        <loading-spinner :loading="loading">
+          <!-- Error State -->
+          <div v-if="error" class="modern-alert modern-alert-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            خطا در بارگذاری محتوا. لطفاً دوباره تلاش کنید.
+            <button class="modern-btn modern-btn-primary mt-3" @click="loadContent">
+              <i class="fas fa-redo me-2"></i>
               تلاش مجدد
             </button>
           </div>
-        </div>
+
+          <!-- Content Display -->
+          <div v-else-if="content" class="content-display">
+            <!-- Content Header Actions -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <button class="modern-btn modern-btn-secondary" @click="goBack">
+                <i class="fas fa-arrow-right me-2"></i>
+                بازگشت به درس
+              </button>
+
+              <div class="content-actions">
+                <button
+                    v-if="content?.type !== 'TEXT'"
+                    class="modern-btn modern-btn-outline me-2"
+                    @click="downloadContent"
+                    title="دانلود محتوا"
+                >
+                  <i class="fas fa-download me-1"></i>
+                  دانلود
+                </button>
+                <button
+                    class="modern-btn modern-btn-outline"
+                    @click="toggleFullscreen"
+                    :title="isFullscreen ? 'خروج از تمام صفحه' : 'نمایش تمام صفحه'"
+                >
+                  <i class="fas me-1" :class="isFullscreen ? 'fa-compress' : 'fa-expand'"></i>
+                  {{ isFullscreen ? 'خروج از تمام صفحه' : 'تمام صفحه' }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Text Content -->
+            <div v-if="content.type === 'TEXT'" class="text-content-section">
+              <div class="form-section">
+                <h6 class="section-title">
+                  <i class="fas fa-align-left text-info me-2"></i>
+                  محتوای متنی
+                </h6>
+                <div class="text-content-container">
+                  <div class="content-text" v-html="formatTextContent(content.textContent)"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Video Content -->
+            <div v-else-if="content.type === 'VIDEO'" class="video-content-section">
+              <div class="form-section">
+                <h6 class="section-title">
+                  <i class="fas fa-play-circle text-primary me-2"></i>
+                  محتوای ویدیویی
+                </h6>
+                <div class="video-container">
+                  <div class="ratio ratio-16x9">
+                    <video
+                        ref="videoPlayer"
+                        controls
+                        class="video-player"
+                        @loadedmetadata="onVideoLoaded"
+                        @timeupdate="onVideoTimeUpdate"
+                        @ended="onVideoEnded"
+                        :poster="content.posterUrl"
+                    >
+                      <source :src="getContentUrl(content)" type="video/mp4">
+                      <p class="video-error">
+                        مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
+                        <br>
+                        لطفاً مرورگر خود را به‌روزرسانی کنید یا از مرورگر دیگری استفاده کنید.
+                      </p>
+                    </video>
+
+                    <!-- Loading overlay -->
+                    <div v-if="videoLoading" class="video-loading-overlay">
+                      <div class="loading-content">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <p class="mt-2 mb-0">در حال بارگذاری ویدیو...</p>
+                      </div>
+                    </div>
+
+                    <!-- Error overlay -->
+                    <div v-if="videoError" class="video-error-overlay">
+                      <div class="error-content">
+                        <i class="fas fa-exclamation-triangle text-warning mb-2"></i>
+                        <h6>خطا در بارگذاری ویدیو</h6>
+                        <p class="mb-3">متأسفانه نتوانستیم ویدیو را بارگذاری کنیم</p>
+                        <button class="modern-btn modern-btn-primary btn-sm" @click="retryVideo">
+                          <i class="fas fa-redo me-1"></i>
+                          تلاش مجدد
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Video Controls -->
+                  <div class="video-controls mt-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div class="video-info">
+                        <small class="text-muted">
+                          <i class="fas fa-clock me-1"></i>
+                          مدت زمان: <span id="videoDuration">{{ formatTime(videoDuration) }}</span>
+                        </small>
+                        <small class="text-muted ms-3">
+                          <i class="fas fa-play me-1"></i>
+                          زمان فعلی: {{ formatTime(currentTime) }}
+                        </small>
+                      </div>
+                      <div class="playback-controls">
+                        <label class="modern-form-label me-2">سرعت پخش:</label>
+                        <select
+                            v-model="playbackSpeed"
+                            @change="changePlaybackSpeed"
+                            class="modern-form-control speed-select"
+                        >
+                          <option value="0.5">۰.۵x</option>
+                          <option value="0.75">۰.۷۵x</option>
+                          <option value="1">۱x</option>
+                          <option value="1.25">۱.۲۵x</option>
+                          <option value="1.5">۱.۵x</option>
+                          <option value="2">۲x</option>
+                        </select>
+                        <button
+                            class="modern-btn modern-btn-secondary btn-sm ms-2"
+                            @click="toggleVideoFullscreen"
+                            title="تمام صفحه ویدیو">
+                          <i class="fas fa-expand"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- PDF Content -->
+            <div v-else-if="content.type === 'PDF'" class="pdf-content-section">
+              <div class="form-section">
+                <h6 class="section-title">
+                  <i class="fas fa-file-pdf text-danger me-2"></i>
+                  سند PDF
+                </h6>
+                <div class="pdf-container">
+                  <!-- PDF Toolbar -->
+                  <div class="pdf-toolbar">
+                    <div class="pdf-controls">
+                      <button
+                          @click="previousPage"
+                          :disabled="currentPage <= 1"
+                          class="modern-btn modern-btn-secondary btn-sm"
+                      >
+                        <i class="fas fa-chevron-right me-1"></i>
+                        صفحه قبل
+                      </button>
+                      <span class="page-info mx-3">
+                        صفحه {{ currentPage }} از {{ totalPages || '؟' }}
+                      </span>
+                      <button
+                          @click="nextPage"
+                          :disabled="currentPage >= totalPages"
+                          class="modern-btn modern-btn-secondary btn-sm"
+                      >
+                        صفحه بعد
+                        <i class="fas fa-chevron-left ms-1"></i>
+                      </button>
+                    </div>
+
+                    <div class="zoom-controls">
+                      <button @click="zoomOut" class="modern-btn modern-btn-outline btn-sm">
+                        <i class="fas fa-search-minus"></i>
+                      </button>
+                      <span class="zoom-info mx-2">{{ Math.round(zoomLevel * 100) }}%</span>
+                      <button @click="zoomIn" class="modern-btn modern-btn-outline btn-sm">
+                        <i class="fas fa-search-plus"></i>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- PDF Viewer -->
+                  <div class="pdf-viewer">
+                    <iframe
+                        :src="getPdfUrl()"
+                        class="pdf-frame"
+                        @load="onPdfLoaded"
+                        frameborder="0"
+                    >
+                      <p class="text-center p-4">
+                        مرورگر شما از نمایش PDF پشتیبانی نمی‌کند.
+                        <button class="modern-btn modern-btn-primary" @click="downloadContent">
+                          <i class="fas fa-download me-1"></i>
+                          دانلود فایل
+                        </button>
+                      </p>
+                    </iframe>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Progress Section -->
+            <div class="progress-section mt-4">
+              <div class="form-section">
+                <h6 class="section-title">
+                  <i class="fas fa-chart-line text-success me-2"></i>
+                  پیشرفت مطالعه
+                </h6>
+                <div class="progress-info-card">
+                  <div class="row">
+                    <div class="col-md-8">
+                      <div class="progress-details">
+                        <h6>وضعیت مطالعه شما</h6>
+                        <div class="progress modern-progress mb-2">
+                          <div
+                              class="progress-bar bg-success"
+                              role="progressbar"
+                              :style="`width: ${progressPercentage}%`"
+                              :aria-valuenow="progressPercentage"
+                              aria-valuemin="0"
+                              aria-valuemax="100"
+                          >
+                            {{ Math.round(progressPercentage) }}%
+                          </div>
+                        </div>
+                        <small class="text-muted">
+                          <i class="fas fa-clock me-1"></i>
+                          زمان مطالعه: {{ formatStudyTime(totalViewTime) }}
+                        </small>
+                      </div>
+                    </div>
+                    <div class="col-md-4 text-center">
+                      <div class="progress-circle" :style="`--progress: ${progressPercentage}`">
+                        <div class="progress-circle-inner">
+                          <span class="progress-text">{{ Math.round(progressPercentage) }}%</span>
+                          <span class="progress-label">تکمیل شده</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Content Completion -->
+            <div class="content-completion mt-4" v-if="progressPercentage >= 80">
+              <div class="modern-alert modern-alert-success">
+                <i class="fas fa-check-circle me-2"></i>
+                تبریک! شما این محتوا را با موفقیت مطالعه کردید.
+                <button class="modern-btn modern-btn-success ms-3" @click="markContentComplete">
+                  <i class="fas fa-trophy me-1"></i>
+                  تأیید تکمیل
+                </button>
+              </div>
+            </div>
+          </div>
+        </loading-spinner>
       </div>
 
-      <!-- Content Display -->
-      <div v-else-if="content" class="content-container">
-        <!-- Back Button -->
-        <div class="content-navigation mb-4">
-          <button class="modern-btn modern-btn-secondary" @click="goBack">
-            <i class="fas fa-arrow-right me-2"></i>
-            بازگشت
+      <!-- Related Content -->
+      <div v-if="content && !loading" class="modern-card animate-fade-in" style="animation-delay: 0.2s;">
+        <h6 class="section-title">
+          <i class="fas fa-link text-info me-2"></i>
+          عملیات مرتبط
+        </h6>
+        <div class="related-actions">
+          <button class="modern-btn modern-btn-outline me-2" @click="goBack">
+            <i class="fas fa-arrow-right me-1"></i>
+            بازگشت به درس
+          </button>
+          <button
+              v-if="content?.type !== 'TEXT'"
+              class="modern-btn modern-btn-info me-2"
+              @click="downloadContent"
+          >
+            <i class="fas fa-download me-1"></i>
+            دانلود محتوا
+          </button>
+          <button class="modern-btn modern-btn-secondary" @click="shareContent">
+            <i class="fas fa-share me-1"></i>
+            اشتراک‌گذاری
           </button>
         </div>
-
-        <!-- Text Content -->
-        <div v-if="content.type === 'TEXT'" class="text-content modern-card">
-          <div class="content-header">
-            <h2 class="content-title">{{ content.title }}</h2>
-          </div>
-          <div class="content-body">
-            <div class="text-content-area">
-              <div class="content-text">{{ content.textContent }}</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Video Content -->
-        <div v-else-if="content.type === 'VIDEO'" class="video-content modern-card">
-          <div class="content-header">
-            <h2 class="content-title">{{ content.title }}</h2>
-            <div class="content-actions">
-              <button class="modern-btn modern-btn-primary" @click="downloadContent">
-                <i class="fas fa-download me-1"></i>
-                دانلود ویدیو
-              </button>
-            </div>
-          </div>
-          <div class="content-body">
-            <div class="video-container">
-              <video
-                  v-if="content.file?.id"
-                  controls
-                  class="video-player"
-                  :poster="content.thumbnailUrl"
-                  preload="metadata">
-                <source :src="`/api/content/files/${content.file.id}`" type="video/mp4">
-                <source :src="`/api/content/files/${content.file.id}`" type="video/webm">
-                <source :src="`/api/content/files/${content.file.id}`" type="video/ogg">
-                مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
-              </video>
-              <div v-else class="video-error">
-                <i class="fas fa-video text-muted"></i>
-                <p>ویدیو در دسترس نیست</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- PDF Content -->
-        <div v-else-if="content.type === 'PDF'" class="pdf-content modern-card">
-          <div class="content-header">
-            <h2 class="content-title">{{ content.title }}</h2>
-            <div class="content-actions">
-              <button class="modern-btn modern-btn-primary" @click="downloadContent">
-                <i class="fas fa-download me-1"></i>
-                دانلود فایل
-              </button>
-            </div>
-          </div>
-
-          <!-- Debug Info (remove in production) -->
-          <div v-if="$route.query.debug" class="debug-info">
-            <details>
-              <summary>اطلاعات دیباگ</summary>
-              <pre>{{ JSON.stringify({
-                fileId: content.fileId || content.file?.id,
-                fileUrl: content.fileUrl,
-                pdfUrl: pdfUrl,
-                pdfSupported: pdfSupported,
-                pdfLoading: pdfLoading,
-                pdfViewerUrl: pdfViewerUrl
-              }, null, 2) }}</pre>
-            </details>
-          </div>
-
-          <!-- PDF Viewer Container -->
-          <div class="pdf-viewer-container">
-            <!-- Loading state -->
-            <div v-if="pdfLoading" class="pdf-loading">
-              <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">در حال بارگذاری...</span>
-              </div>
-              <p class="mt-2">در حال بارگذاری فایل PDF...</p>
-              <p class="text-muted small">در صورت طولانی شدن، دکمه دانلود را امتحان کنید</p>
-            </div>
-
-            <!-- PDF Iframe -->
-            <iframe
-                v-else-if="pdfSupported && pdfUrl"
-                :src="pdfUrl"
-                class="pdf-viewer"
-                frameborder="0"
-                @error="handlePdfError"
-                @load="handlePdfLoad"
-                title="PDF Viewer">
-            </iframe>
-
-            <!-- Fallback content -->
-            <div v-else class="pdf-fallback">
-              <div class="fallback-content">
-                <div class="fallback-icon">
-                  <i class="fas fa-file-pdf text-danger"></i>
-                </div>
-                <h5>نمایش PDF در مرورگر امکان‌پذیر نیست</h5>
-                <p class="text-muted mb-4">
-          <span v-if="!pdfSupported">
-            مرورگر شما از نمایش PDF در صفحه پشتیبانی نمی‌کند.
-          </span>
-                  <span v-else>
-            خطا در بارگذاری فایل PDF.
-          </span>
-                  <br>
-                  لطفاً فایل را دانلود کنید.
-                </p>
-                <button class="modern-btn modern-btn-primary mb-2" @click="downloadContent">
-                  <i class="fas fa-download me-1"></i>
-                  دانلود فایل PDF
-                </button>
-                <br>
-                <button class="modern-btn modern-btn-outline btn-sm" @click="initializePdfViewer">
-                  <i class="fas fa-refresh me-1"></i>
-                  تلاش مجدد
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Unknown Content Type -->
-        <div v-else class="unknown-content modern-card">
-          <div class="content-header">
-            <h2 class="content-title">{{ content.title }}</h2>
-            <div class="content-actions">
-              <button
-                  v-if="content.file?.id"
-                  class="modern-btn modern-btn-primary"
-                  @click="downloadContent">
-                <i class="fas fa-download me-1"></i>
-                دانلود فایل
-              </button>
-            </div>
-          </div>
-          <div class="content-body">
-            <div class="unknown-content-area">
-              <div class="unknown-content-icon">
-                <i class="fas fa-file text-muted"></i>
-              </div>
-              <h5>نوع محتوای ناشناخته</h5>
-              <p class="text-muted">
-                این نوع محتوا قابل نمایش نیست. می‌توانید آن را دانلود کنید.
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
+    </div>
 
-      <!-- No Content -->
-      <div v-else class="no-content">
-        <div class="modern-card text-center">
-          <div class="py-5">
-            <div class="modern-logo large secondary mb-4">
-              <i class="fas fa-file-alt"></i>
-            </div>
-            <h4 class="text-muted mb-3">محتوایی یافت نشد</h4>
-            <p class="text-muted">محتوای مورد نظر موجود نیست.</p>
-          </div>
+    <!-- Progress Overlay (when showing) -->
+    <div v-if="showProgress" class="progress-overlay">
+      <div class="progress-container">
+        <div class="progress-circle-large">
+          <svg viewBox="0 0 36 36" class="circular-chart">
+            <path class="circle-bg"
+                  d="M18 2.0845
+                a 15.9155 15.9155 0 0 1 0 31.831
+                a 15.9155 15.9155 0 0 1 0 -31.831"
+            />
+            <path class="circle"
+                  :stroke-dasharray="`${progressPercentage}, 100`"
+                  d="M18 2.0845
+                a 15.9155 15.9155 0 0 1 0 31.831
+                a 15.9155 15.9155 0 0 1 0 -31.831"
+            />
+          </svg>
+          <div class="percentage">{{ Math.round(progressPercentage) }}%</div>
         </div>
+        <p class="progress-text">پیشرفت مطالعه</p>
       </div>
     </div>
   </div>
