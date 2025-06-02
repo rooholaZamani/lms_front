@@ -19,23 +19,28 @@
               گزینه‌ها را انتخاب کنید
             </h6>
             <div class="options-container">
-              <div v-for="(option, index) in question.options" :key="index" class="option-item">
+              <div v-for="(answer, index) in question.answers" :key="answer.id" class="option-item">
                 <div class="form-check">
                   <input class="form-check-input"
                          type="radio"
                          :id="`option-${questionIndex}-${index}`"
                          :name="`question-${questionIndex}`"
-                         :value="option.id || index"
+                         :value="answer.id"
                          v-model="selectedAnswer">
                   <label class="form-check-label" :for="`option-${questionIndex}-${index}`">
                     <div class="option-content">
                       <div class="option-marker">{{ String.fromCharCode(65 + index) }}</div>
-                      <div class="option-text">{{ option.text || option }}</div>
+                      <div class="option-text">{{ answer.text }}</div>
                     </div>
                   </label>
                 </div>
               </div>
             </div>
+          </div>
+          <!-- DEBUG: Add this temporarily to see the data structure -->
+          <div v-if="question.questionType === 'MULTIPLE_CHOICE'" style="background: yellow; padding: 10px; margin: 10px 0;">
+            <strong>DEBUG:</strong>
+            <pre>{{ JSON.stringify(question, null, 2) }}</pre>
           </div>
 
           <!-- True/False Questions -->
@@ -45,39 +50,21 @@
               یکی از گزینه‌های زیر را انتخاب کنید
             </h6>
             <div class="true-false-container">
-              <div class="option-item">
+              <div v-for="(answer, index) in question.answers" :key="answer.id"
+                   class="option-item" :class="{ 'selected': selectedAnswer == answer.id }">
                 <div class="form-check">
                   <input class="form-check-input"
                          type="radio"
-                         :id="`option-${questionIndex}-true`"
+                         :id="`option-${questionIndex}-${answer.id}`"
                          :name="`question-${questionIndex}`"
-                         value="true"
+                         :value="answer.id"
                          v-model="selectedAnswer">
-                  <label class="form-check-label" :for="`option-${questionIndex}-true`">
-                    <div class="option-content true-option">
+                  <label class="form-check-label" :for="`option-${questionIndex}-${answer.id}`">
+                    <div class="option-content" :class="answer.text === 'True' ? 'true-option' : 'false-option'">
                       <div class="option-icon">
-                        <i class="fas fa-check"></i>
+                        <i :class="answer.text === 'True' ? 'fas fa-check' : 'fas fa-times'"></i>
                       </div>
-                      <div class="option-text">درست</div>
-                    </div>
-                  </label>
-                </div>
-              </div>
-
-              <div class="option-item">
-                <div class="form-check">
-                  <input class="form-check-input"
-                         type="radio"
-                         :id="`option-${questionIndex}-false`"
-                         :name="`question-${questionIndex}`"
-                         value="false"
-                         v-model="selectedAnswer">
-                  <label class="form-check-label" :for="`option-${questionIndex}-false`">
-                    <div class="option-content false-option">
-                      <div class="option-icon">
-                        <i class="fas fa-times"></i>
-                      </div>
-                      <div class="option-text">نادرست</div>
+                      <div class="option-text">{{ answer.text === 'True' ? 'درست' : 'نادرست' }}</div>
                     </div>
                   </label>
                 </div>
@@ -669,5 +656,42 @@ export default {
   .option-item {
     break-inside: avoid;
   }
+}
+/* Selected state for True/False */
+.option-item.selected {
+  border-color: #667eea !important;
+  background: rgba(102, 126, 234, 0.1) !important;
+  transform: translateY(-2px);
+}
+
+.option-item.selected .option-content {
+  color: #667eea;
+  font-weight: 600;
+}
+
+/* Make radio buttons visible for debugging */
+.form-check-input {
+  display: block !important;
+  margin-left: 0.75rem;
+}
+.form-check-input {
+  display: block !important;
+  margin-left: 0.75rem;
+  position: relative !important;
+}
+
+/* Selected state styling */
+.option-item.selected {
+  border-color: #667eea !important;
+  background: rgba(102, 126, 234, 0.1) !important;
+}
+
+.form-check-input:checked + .form-check-label {
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.form-check-input:checked + .form-check-label .option-text {
+  color: #667eea;
+  font-weight: 600;
 }
 </style>
