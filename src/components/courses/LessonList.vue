@@ -150,23 +150,33 @@
               </div>
               <div class="assessment-details">
                 <h6>آزمون درس</h6>
-                <p class="text-muted">ارزیابی نهایی یادگیری شما</p>
+                <p class="text-gray">ارزیابی نهایی یادگیری شما</p>
                 <div class="assessment-meta">
-                  <span class="meta-badge">
+                  <span class="meta-badge bg-white">
                     <i class="fas fa-clock me-1"></i>
                     ۳۰ دقیقه
                   </span>
-                  <span class="meta-badge">
+                  <span class="meta-badge bg-white">
                     <i class="fas fa-question-circle me-1"></i>
                     ۱۰ سوال
                   </span>
                 </div>
               </div>
               <div class="assessment-actions">
-                <button v-if="isEnrolled && !isTeacher" class="modern-btn modern-btn-danger">
+                <button
+                    v-if="isEnrolled && !isTeacher && lesson.exam && lesson.exam.status === 'FINALIZED'"
+                    class="modern-btn modern-btn-danger"
+                    @click="startExam(lesson)"
+                >
                   <i class="fas fa-pen me-1"></i>
                   شرکت در آزمون
                 </button>
+                <!-- Show message for draft exams -->
+                <div v-else-if="!isTeacher"
+                     class="modern-alert modern-alert-warning">
+                  <i class="fas fa-clock me-2"></i>
+                  آزمون هنوز آماده نشده است
+                </div>
                 <button v-if="isTeacher && isTeacherOfCourse" class="modern-btn modern-btn-secondary">
                   <i class="fas fa-cog me-1"></i>
                   مدیریت
@@ -263,69 +273,6 @@
       </div>
     </div>
 
-    <!-- Content Viewer Modal -->
-    <!-- Replace the bootstrap modal with this: -->
-<!--    <div v-if="showContentModal" class="custom-modal-overlay" @click.self="closeContentModal">-->
-<!--      <div class="custom-modal-dialog">-->
-<!--        <div class="custom-modal-content">-->
-<!--          <div class="custom-modal-header">-->
-<!--            <h5 class="modal-title">-->
-<!--              <i :class="getContentIcon(selectedContent?.type)" class="me-2"></i>-->
-<!--              {{ selectedContent?.title }}-->
-<!--            </h5>-->
-<!--            <button type="button" class="btn-close" @click="closeContentModal"></button>-->
-<!--          </div>-->
-<!--          <div class="custom-modal-body">-->
-<!--            &lt;!&ndash; Text Content &ndash;&gt;-->
-<!--            <div v-if="selectedContent?.type === 'TEXT'" class="text-content">-->
-<!--              <div class="content-text" v-html="formatTextContent(selectedContent.textContent)"></div>-->
-<!--            </div>-->
-
-<!--            &lt;!&ndash; Video Content &ndash;&gt;-->
-<!--            <div v-else-if="selectedContent?.type === 'VIDEO'" class="video-content">-->
-<!--              <div class="ratio ratio-16x9">-->
-<!--                <video controls class="video-player">-->
-<!--                  <source :src="getContentUrl(selectedContent)" type="video/mp4">-->
-<!--                  مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.-->
-<!--                </video>-->
-<!--              </div>-->
-<!--            </div>-->
-
-<!--            &lt;!&ndash; PDF Content &ndash;&gt;-->
-<!--            <div v-else-if="selectedContent?.type === 'PDF'" class="pdf-content">-->
-<!--              <div class="d-flex justify-content-center mb-3">-->
-<!--                <button class="modern-btn modern-btn-primary" @click="downloadContent(selectedContent)">-->
-<!--                  <i class="fas fa-download me-1"></i>-->
-<!--                  دانلود PDF-->
-<!--                </button>-->
-<!--              </div>-->
-<!--              <div class="pdf-viewer">-->
-<!--                <iframe-->
-<!--                    :src="getContentUrl(selectedContent)"-->
-<!--                    width="100%"-->
-<!--                    height="600px"-->
-<!--                    style="border: none;">-->
-<!--                </iframe>-->
-<!--              </div>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--          <div class="custom-modal-footer">-->
-<!--            <button type="button" class="modern-btn modern-btn-secondary" @click="closeContentModal">-->
-<!--              بستن-->
-<!--            </button>-->
-<!--            <button-->
-<!--                v-if="selectedContent?.type !== 'TEXT'"-->
-<!--                type="button"-->
-<!--                class="modern-btn modern-btn-primary"-->
-<!--                @click="downloadContent(selectedContent)"-->
-<!--            >-->
-<!--              <i class="fas fa-download me-1"></i>-->
-<!--              دانلود-->
-<!--            </button>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </div>-->
-<!--    </div>-->
   </div>
 </template>
 
@@ -414,6 +361,26 @@ export default {
       });
 
       await Promise.all(contentPromises);
+    },
+    async startExam(lesson) {
+      try {
+        if (lesson.exam && lesson.exam.id) {
+          this.$router.push({ name: 'Exam', params: { id: lesson.exam.id } });
+        } else if (lesson.hasExam) {
+          // Fetch exam details from lesson
+          const response = await axios.get(`/exams/lesson/${lesson.id}`);
+          if (response.data && response.data.id) {
+            this.$router.push({ name: 'Exam', params: { id: response.data.id } });
+          } else {
+            this.$toast?.error('آزمون یافت نشد');
+          }
+        } else {
+          this.$toast?.error('این درس آزمون ندارد');
+        }
+      } catch (error) {
+        console.error('Error fetching exam:', error);
+        this.$toast?.error('خطا در دسترسی به آزمون');
+      }
     },
 
     async fetchLessonContent(lessonId) {

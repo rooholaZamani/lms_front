@@ -203,6 +203,13 @@ export default {
       try {
         this.loading = true;
         const response = await axios.get(`/exams/${this.id}`);
+
+
+        console.log('Exam API Response:', response.data);
+        console.log('Questions in exam:', response.data.questions);
+        console.log('Exam status:', response.data.status);
+
+
         this.exam = response.data;
 
         if (this.exam.lesson && this.exam.lesson.course) {
