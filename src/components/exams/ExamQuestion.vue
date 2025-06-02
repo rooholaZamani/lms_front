@@ -13,7 +13,7 @@
           <div class="question-text">{{ question.text }}</div>
 
           <!-- Multiple Choice Questions -->
-          <div v-if="question.type === 'MULTIPLE_CHOICE'" class="options-section mt-4">
+          <div v-if="question.questionType === 'MULTIPLE_CHOICE'" class="options-section mt-4">
             <h6 class="section-title">
               <i class="fas fa-list-ul me-2"></i>
               گزینه‌ها را انتخاب کنید
@@ -25,12 +25,12 @@
                          type="radio"
                          :id="`option-${questionIndex}-${index}`"
                          :name="`question-${questionIndex}`"
-                         :value="index"
+                         :value="option.id || index"
                          v-model="selectedAnswer">
                   <label class="form-check-label" :for="`option-${questionIndex}-${index}`">
                     <div class="option-content">
                       <div class="option-marker">{{ String.fromCharCode(65 + index) }}</div>
-                      <div class="option-text">{{ option }}</div>
+                      <div class="option-text">{{ option.text || option }}</div>
                     </div>
                   </label>
                 </div>
@@ -39,7 +39,7 @@
           </div>
 
           <!-- True/False Questions -->
-          <div v-else-if="question.type === 'TRUE_FALSE'" class="options-section mt-4">
+          <div v-else-if="question.questionType === 'TRUE_FALSE'" class="options-section mt-4">
             <h6 class="section-title">
               <i class="fas fa-check-double me-2"></i>
               یکی از گزینه‌های زیر را انتخاب کنید
@@ -86,7 +86,7 @@
           </div>
 
           <!-- Essay Questions -->
-          <div v-else-if="question.type === 'ESSAY'" class="essay-section mt-4">
+          <div v-else-if="question.questionType === 'ESSAY'" class="essay-section mt-4">
             <h6 class="section-title">
               <i class="fas fa-edit me-2"></i>
               پاسخ خود را بنویسید
@@ -108,7 +108,7 @@
           </div>
 
           <!-- Short Answer Questions -->
-          <div v-else-if="question.type === 'SHORT_ANSWER'" class="short-answer-section mt-4">
+          <div v-else-if="question.questionType === 'SHORT_ANSWER'" class="short-answer-section mt-4">
             <h6 class="section-title">
               <i class="fas fa-pencil-alt me-2"></i>
               پاسخ کوتاه
@@ -130,7 +130,7 @@
           </div>
 
           <!-- Fill in the Blanks Questions -->
-          <div v-else-if="question.type === 'FILL_IN_THE_BLANKS'" class="fill-blanks-section mt-4">
+          <div v-else-if="question.questionType === 'FILL_IN_THE_BLANKS'" class="fill-blanks-section mt-4">
             <h6 class="section-title">
               <i class="fas fa-puzzle-piece me-2"></i>
               جاهای خالی را پر کنید
@@ -156,7 +156,7 @@
           </div>
 
           <!-- Matching Questions -->
-          <div v-else-if="question.type === 'MATCHING'" class="matching-section mt-4">
+          <div v-else-if="question.questionType === 'MATCHING'" class="matching-section mt-4">
             <h6 class="section-title">
               <i class="fas fa-arrows-alt-h me-2"></i>
               آیتم‌ها را با هم تطبیق دهید
@@ -197,7 +197,7 @@
           </div>
 
           <!-- Categorization Questions -->
-          <div v-else-if="question.type === 'CATEGORIZATION'" class="categorization-section mt-4">
+          <div v-else-if="question.questionType === 'CATEGORIZATION'" class="categorization-section mt-4">
             <h6 class="section-title">
               <i class="fas fa-layer-group me-2"></i>
               آیتم‌ها را در دسته‌های مناسب قرار دهید
@@ -300,7 +300,7 @@ export default {
         return this.answer;
       }
 
-      switch (this.question.type) {
+      switch (this.question.questionType) {
         case 'FILL_IN_THE_BLANKS':
           return Array(this.getBlankCount()).fill('');
         case 'MATCHING':
@@ -318,7 +318,7 @@ export default {
     },
 
     getBlankCount() {
-      if (this.question.type !== 'FILL_IN_THE_BLANKS') return 0;
+      if (this.question.questionType !== 'FILL_IN_THE_BLANKS') return 0;
       const text = this.question.template || this.question.text || '';
       const matches = text.match(/\{\}/g);
       return matches ? matches.length : 0;

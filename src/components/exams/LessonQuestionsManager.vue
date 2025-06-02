@@ -422,7 +422,7 @@ export default {
 
       this.currentQuestion = { ...question };
 
-      if (question.type === 'MULTIPLE_CHOICE' || question.questionType === 'MULTIPLE_CHOICE') {
+      if (question.questionType === 'MULTIPLE_CHOICE' || question.questionType === 'MULTIPLE_CHOICE') {
         if (question.answers && Array.isArray(question.answers)) {
           this.currentQuestion.options = question.answers.map(a => a.text);
           const correctIndex = question.answers.findIndex(a => a.correct);
@@ -434,8 +434,8 @@ export default {
         }
       }
 
-      if (question.questionType && !question.type) {
-        this.currentQuestion.type = question.questionType;
+      if (question.questionType && !question.questionType) {
+        this.currentquestion.questionType = question.questionType;
       }
 
       this.$refs.questionModal.show();
@@ -447,25 +447,25 @@ export default {
       try {
         const questionData = {
           text: this.currentQuestion.text,
-          type: this.currentQuestion.type,
+          type: this.currentquestion.questionType,
           points: this.currentQuestion.points || 10,
           explanation: this.currentQuestion.explanation
         };
 
-        if (this.currentQuestion.type === 'MULTIPLE_CHOICE') {
+        if (this.currentquestion.questionType === 'MULTIPLE_CHOICE') {
           const options = this.currentQuestion.options;
           questionData.answers = options.map((text, index) => ({
             text,
             correct: index === parseInt(this.currentQuestion.correctOption)
           }));
-        } else if (this.currentQuestion.type === 'TRUE_FALSE') {
+        } else if (this.currentquestion.questionType === 'TRUE_FALSE') {
           questionData.answers = [
             { text: 'درست', correct: this.currentQuestion.correctOption === 'true' },
             { text: 'نادرست', correct: this.currentQuestion.correctOption === 'false' }
           ];
-        } else if (this.currentQuestion.type === 'SHORT_ANSWER') {
+        } else if (this.currentquestion.questionType === 'SHORT_ANSWER') {
           questionData.correctOption = this.currentQuestion.correctOption;
-        } else if (this.currentQuestion.type === 'ESSAY') {
+        } else if (this.currentquestion.questionType === 'ESSAY') {
           questionData.maxScore = this.currentQuestion.maxScore || 10;
         }
 

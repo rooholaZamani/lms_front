@@ -20,8 +20,8 @@
           <div class="question-title-area">
             <h6 class="question-text text-white">{{ question.text }}</h6>
             <div class="question-meta">
-              <span class="modern-badge" :class="getQuestionTypeBadgeClass(question.type)">
-                {{ getQuestionTypeText(question.type) }}
+              <span class="modern-badge" :class="getQuestionTypeBadgeClass(question.questionType)">
+                {{ getQuestionTypeText(question.questionType) }}
               </span>
               <span v-if="question.points" class="modern-badge modern-badge-info">
                 {{ question.points }} امتیاز
@@ -49,7 +49,7 @@
 
         <div class="question-content">
           <!-- نمایش گزینه‌ها برای سوال چند گزینه‌ای -->
-          <div v-if="question.type === 'MULTIPLE_CHOICE' && question.options" class="options-section">
+          <div v-if="question.questionType === 'MULTIPLE_CHOICE' && question.options" class="options-section">
             <h6 class="section-subtitle">گزینه‌ها:</h6>
             <div class="options-list">
               <div v-for="(option, optIndex) in question.options" :key="optIndex" class="option-item">
@@ -67,7 +67,7 @@
           </div>
 
           <!-- نمایش پاسخ درست/نادرست -->
-          <div v-else-if="question.type === 'TRUE_FALSE'" class="options-section">
+          <div v-else-if="question.questionType === 'TRUE_FALSE'" class="options-section">
             <h6 class="section-subtitle">پاسخ صحیح:</h6>
             <div class="true-false-options">
               <div class="option-item" :class="{ 'selected': question.correctOption === 'true' }">
@@ -86,7 +86,7 @@
           </div>
 
           <!-- نمایش پاسخ کوتاه -->
-          <div v-else-if="question.type === 'SHORT_ANSWER'" class="answer-section">
+          <div v-else-if="question.questionType === 'SHORT_ANSWER'" class="answer-section">
             <h6 class="section-subtitle">پاسخ صحیح:</h6>
             <div class="answer-display">
               <i class="fas fa-quote-left me-2 text-primary"></i>
@@ -95,7 +95,7 @@
           </div>
 
           <!-- نمایش اطلاعات سوال تشریحی -->
-          <div v-else-if="question.type === 'ESSAY'" class="essay-section">
+          <div v-else-if="question.questionType === 'ESSAY'" class="essay-section">
             <div class="essay-info">
               <i class="fas fa-edit text-warning me-2"></i>
               <span>سوال تشریحی - نیاز به بررسی دستی استاد</span>
@@ -106,7 +106,7 @@
           </div>
 
           <!-- Matching Questions Display -->
-          <div v-else-if="question.type === 'MATCHING'" class="matching-display">
+          <div v-else-if="question.questionType === 'MATCHING'" class="matching-display">
             <h6 class="section-subtitle">جفت‌های تطبیق:</h6>
             <div class="matching-pairs-list">
               <div v-for="(pair, index) in question.matchingPairs" :key="index" class="matching-pair-item">
@@ -118,7 +118,7 @@
           </div>
 
           <!-- Categorization Questions Display -->
-          <div v-else-if="question.type === 'CATEGORIZATION'" class="categorization-display">
+          <div v-else-if="question.questionType === 'CATEGORIZATION'" class="categorization-display">
             <h6 class="section-subtitle">دسته‌ها و آیتم‌ها:</h6>
             <div class="categories-preview">
               <div class="categories-list">
@@ -134,7 +134,7 @@
           </div>
 
           <!-- Fill in the Blanks Display -->
-          <div v-else-if="question.type === 'FILL_IN_THE_BLANKS'" class="fill-blanks-display">
+          <div v-else-if="question.questionType === 'FILL_IN_THE_BLANKS'" class="fill-blanks-display">
             <h6 class="section-subtitle">الگو:</h6>
             <div class="template-text">{{ question.template || question.text }}</div>
             <div v-if="question.blankAnswers" class="blank-answers">

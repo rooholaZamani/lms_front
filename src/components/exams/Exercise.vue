@@ -288,7 +288,7 @@
                 <div class="question-text">{{ currentQuestion.text }}</div>
 
                 <!-- Multiple Choice -->
-                <div v-if="currentQuestion.type === 'MULTIPLE_CHOICE'" class="options-container mt-4">
+                <div v-if="currentquestion.questionType === 'MULTIPLE_CHOICE'" class="options-container mt-4">
                   <div v-for="(option, index) in currentQuestion.answers" :key="index" class="option-item">
                     <div class="form-check">
                       <input class="form-check-input" type="radio"
@@ -304,7 +304,7 @@
                 </div>
 
                 <!-- True/False -->
-                <div v-else-if="currentQuestion.type === 'TRUE_FALSE'" class="options-container mt-4">
+                <div v-else-if="currentquestion.questionType === 'TRUE_FALSE'" class="options-container mt-4">
                   <div class="option-item">
                     <div class="form-check">
                       <input class="form-check-input" type="radio"
@@ -328,7 +328,7 @@
                 </div>
 
                 <!-- Short Answer -->
-                <div v-else-if="currentQuestion.type === 'SHORT_ANSWER'" class="mt-4">
+                <div v-else-if="currentquestion.questionType === 'SHORT_ANSWER'" class="mt-4">
                   <div class="modern-form-group">
                     <label for="short-answer" class="modern-form-label">پاسخ کوتاه:</label>
                     <input type="text" class="modern-form-control"

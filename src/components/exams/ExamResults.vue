@@ -115,7 +115,7 @@
 
                 <div class="question-content">
                   <!-- Multiple Choice -->
-                  <div v-if="question.type === 'MULTIPLE_CHOICE'" class="answer-section">
+                  <div v-if="question.questionType === 'MULTIPLE_CHOICE'" class="answer-section">
                     <div class="answer-item">
                       <div class="answer-label">پاسخ شما:</div>
                       <div class="answer-value user-answer">
@@ -131,7 +131,7 @@
                   </div>
 
                   <!-- True/False -->
-                  <div v-else-if="question.type === 'TRUE_FALSE'" class="answer-section">
+                  <div v-else-if="question.questionType === 'TRUE_FALSE'" class="answer-section">
                     <div class="answer-item">
                       <div class="answer-label">پاسخ شما:</div>
                       <div class="answer-value user-answer">
@@ -147,7 +147,7 @@
                   </div>
 
                   <!-- Essay -->
-                  <div v-else-if="question.type === 'ESSAY'" class="answer-section">
+                  <div v-else-if="question.questionType === 'ESSAY'" class="answer-section">
                     <div class="answer-item">
                       <div class="answer-label">پاسخ شما:</div>
                       <div class="answer-content">
@@ -165,7 +165,7 @@
                   </div>
 
                   <!-- Short Answer -->
-                  <div v-else-if="question.type === 'SHORT_ANSWER'" class="answer-section">
+                  <div v-else-if="question.questionType === 'SHORT_ANSWER'" class="answer-section">
                     <div class="answer-item">
                       <div class="answer-label">پاسخ شما:</div>
                       <div class="answer-value user-answer">
@@ -237,7 +237,7 @@ export default {
     },
 
     getAnswerText(question, optionIndex) {
-      if (question.type !== 'MULTIPLE_CHOICE' || !question.options || !question.options[optionIndex]) {
+      if (question.questionType !== 'MULTIPLE_CHOICE' || !question.options || !question.options[optionIndex]) {
         return 'نامشخص';
       }
       return question.options[optionIndex];

@@ -298,7 +298,7 @@ export default {
       this.selectedQuestionId = question.id;
       this.currentQuestion = { ...question };
 
-      if (question.type === 'MULTIPLE_CHOICE' && (!question.options || !Array.isArray(question.options))) {
+      if (question.questionType === 'MULTIPLE_CHOICE' && (!question.options || !Array.isArray(question.options))) {
         this.currentQuestion.options = ['', '', '', ''];
       }
 
@@ -314,7 +314,7 @@ export default {
 
         const questionData = {
           text: this.currentQuestion.text,
-          questionType: this.currentQuestion.type,
+          questionType: this.currentquestion.questionType,
           points: this.currentQuestion.points || 10,
           explanation: this.currentQuestion.explanation || '',
           hint: this.currentQuestion.hint || '',
@@ -323,7 +323,7 @@ export default {
           isRequired: this.currentQuestion.isRequired || false
         };
 
-        if (this.currentQuestion.type === 'MULTIPLE_CHOICE') {
+        if (this.currentquestion.questionType === 'MULTIPLE_CHOICE') {
           const options = this.currentQuestion.options.filter(opt => opt && opt.trim() !== '');
           questionData.options = options.map((text, index) => ({
             text: text,
@@ -332,7 +332,7 @@ export default {
             points: index === parseInt(this.currentQuestion.correctOption) ? questionData.points : 0,
             orderIndex: index
           }));
-        } else if (this.currentQuestion.type === 'TRUE_FALSE') {
+        } else if (this.currentquestion.questionType === 'TRUE_FALSE') {
           questionData.options = [
             {
               text: 'True',
@@ -349,7 +349,7 @@ export default {
               orderIndex: 1
             }
           ];
-        } else if (this.currentQuestion.type === 'SHORT_ANSWER') {
+        } else if (this.currentquestion.questionType === 'SHORT_ANSWER') {
           questionData.options = [
             {
               text: this.currentQuestion.correctOption,
@@ -359,7 +359,7 @@ export default {
               orderIndex: 0
             }
           ];
-        } else if (this.currentQuestion.type === 'ESSAY') {
+        } else if (this.currentquestion.questionType === 'ESSAY') {
           questionData.options = [
             {
               text: 'Essay Answer',

@@ -84,8 +84,8 @@
                   <span class="number-badge">{{ (currentPage - 1) * itemsPerPage + index + 1 }}</span>
                 </div>
                 <div class="question-type">
-                  <span class="modern-badge" :class="getQuestionTypeBadgeClass(question.type)">
-                    {{ getQuestionTypeText(question.type) }}
+                  <span class="modern-badge" :class="getQuestionTypeBadgeClass(question.questionType)">
+                    {{ getQuestionTypeText(question.questionType) }}
                   </span>
                 </div>
               </div>
@@ -182,15 +182,15 @@
         <div class="question-view-header">
           <h5>{{ selectedQuestion.text }}</h5>
           <div class="question-view-meta">
-            <span class="modern-badge" :class="getQuestionTypeBadgeClass(selectedQuestion.type)">
-              {{ getQuestionTypeText(selectedQuestion.type) }}
+            <span class="modern-badge" :class="getQuestionTypeBadgeClass(selectedquestion.questionType)">
+              {{ getQuestionTypeText(selectedquestion.questionType) }}
             </span>
             <span class="modern-badge modern-badge-info">{{ selectedQuestion.points || 10 }} امتیاز</span>
           </div>
         </div>
 
         <!-- نمایش گزینه‌ها -->
-        <div v-if="selectedQuestion.type === 'MULTIPLE_CHOICE' && selectedQuestion.options" class="options-display">
+        <div v-if="selectedquestion.questionType === 'MULTIPLE_CHOICE' && selectedQuestion.options" class="options-display">
           <h6>گزینه‌ها:</h6>
           <div v-for="(option, optIndex) in selectedQuestion.options" :key="optIndex" class="option-display-item">
             <span class="option-letter">{{ String.fromCharCode(65 + optIndex) }}</span>
@@ -204,19 +204,19 @@
         </div>
 
         <!-- سایر انواع سوال -->
-        <div v-else-if="selectedQuestion.type === 'TRUE_FALSE'" class="answer-display">
+        <div v-else-if="selectedquestion.questionType === 'TRUE_FALSE'" class="answer-display">
           <h6>پاسخ صحیح:</h6>
           <span class="modern-badge modern-badge-success">
             {{ selectedQuestion.correctOption === 'true' ? 'درست' : 'نادرست' }}
           </span>
         </div>
 
-        <div v-else-if="selectedQuestion.type === 'SHORT_ANSWER'" class="answer-display">
+        <div v-else-if="selectedquestion.questionType === 'SHORT_ANSWER'" class="answer-display">
           <h6>پاسخ صحیح:</h6>
           <div class="answer-text">{{ selectedQuestion.correctOption }}</div>
         </div>
 
-        <div v-else-if="selectedQuestion.type === 'ESSAY'" class="essay-display">
+        <div v-else-if="selectedquestion.questionType === 'ESSAY'" class="essay-display">
           <div class="essay-info">
             <i class="fas fa-edit text-warning me-2"></i>
             سوال تشریحی - نیاز به بررسی استاد
@@ -351,7 +351,7 @@ export default {
       }
 
       if (this.typeFilter !== 'all') {
-        result = result.filter(question => question.type === this.typeFilter);
+        result = result.filter(question => question.questionType === this.typeFilter);
       }
 
       if (this.lessonFilter !== 'all') {
@@ -488,7 +488,7 @@ export default {
       this.selectedQuestion = question;
       this.currentQuestion = { ...question };
 
-      if (question.type === 'MULTIPLE_CHOICE' && (!question.options || !Array.isArray(question.options))) {
+      if (question.questionType === 'MULTIPLE_CHOICE' && (!question.options || !Array.isArray(question.options))) {
         this.currentQuestion.options = ['', '', '', ''];
         this.currentQuestion.correctOption = 0;
       }
