@@ -164,7 +164,7 @@
               </div>
               <div class="assessment-actions">
                 <button
-                    v-if="isEnrolled && !isTeacher && lesson.exam && lesson.exam.status === 'FINALIZED'"
+                    v-if="isEnrolled && !isTeacher && lessonExams[lesson.id] && lessonExams[lesson.id].status === 'FINALIZED'"
                     class="modern-btn modern-btn-danger"
                     @click="startExam(lesson)"
                 >
@@ -172,7 +172,7 @@
                   شرکت در آزمون
                 </button>
                 <!-- Show message for draft exams -->
-                <div v-else-if="!isTeacher"
+                <div v-else-if="!isTeacher && lesson.hasExam"
                      class="modern-alert modern-alert-warning">
                   <i class="fas fa-clock me-2"></i>
                   آزمون هنوز آماده نشده است
@@ -318,7 +318,8 @@ export default {
       loadingContent: {},
       selectedContent: null,
       contentModal: null,
-      showContentModal: false
+      showContentModal: false,
+      lessonExams: {}
     };
   },
   watch: {
@@ -327,6 +328,7 @@ export default {
         // Fetch content for all lessons when lessons change
         if (newLessons.length > 0) {
           this.fetchAllLessonsContent();
+          this.fetchLessonExams();
         }
 
         // Still fetch detailed content when expanded
@@ -361,6 +363,21 @@ export default {
       });
 
       await Promise.all(contentPromises);
+    },
+    async fetchLessonExams() {
+      const examPromises = this.lessons.map(async (lesson) => {
+        if (lesson.hasExam) {
+          try {
+            const response = await axios.get(`/exams/lesson/${lesson.id}`);
+            this.lessonExams[lesson.id] = response.data;
+          } catch (error) {
+            console.error(`Error fetching exam for lesson ${lesson.id}:`, error);
+            this.lessonExams[lesson.id] = null;
+          }
+        }
+      });
+
+      await Promise.all(examPromises);
     },
     async startExam(lesson) {
       try {

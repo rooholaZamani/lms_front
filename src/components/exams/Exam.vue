@@ -306,7 +306,7 @@ export default {
           }))
         };
 
-        const response = await axios.post('/exams/submit', submissionData);
+        const response = await axios.post(`/exams/${this.id}/submit`, submissionData);
         this.examResult = response.data;
         this.examCompleted = true;
         this.showConfirmation = false;
