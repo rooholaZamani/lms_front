@@ -5,1364 +5,752 @@
         <div class="modern-logo primary">
           <i class="fas fa-user-graduate"></i>
         </div>
-        <h1 class="modern-title">فعالیت دانش‌آموزان</h1>
-        <p class="modern-subtitle">پیگیری و مشاهده فعالیت‌های دانش‌آموزان در دوره‌های شما</p>
+        <h1 class="modern-title">Student Activity Analysis</h1>
+        <p class="modern-subtitle">Detailed analytics and progress tracking for individual students</p>
       </div>
 
-      <!-- Filters and Controls -->
-      <div class="modern-card mb-4 animate-slide-up" style="animation-delay: 0.1s;">
-        <div class="row align-items-center">
-          <div class="col-md-4 modern-form-group">
-            <label for="courseSelect" class="modern-form-label">انتخاب دوره:</label>
-            <select class="modern-form-control" id="courseSelect" v-model="selectedCourse" @change="fetchData">
-              <option value="">همه دوره‌ها</option>
-              <option v-for="course in courses" :key="course.id" :value="course.id">
-                {{ course.title }}
-              </option>
-            </select>
-          </div>
-          <div class="col-md-3 modern-form-group">
-            <label for="activityFilter" class="modern-form-label">نوع فعالیت:</label>
-            <select class="modern-form-control" id="activityFilter" v-model="activityFilter" @change="applyFilters">
-              <option value="">همه فعالیت‌ها</option>
-              <option value="exam">آزمون‌ها</option>
-              <option value="assignment">تکالیف</option>
-              <option value="lesson">دروس</option>
-              <option value="participation">مشارکت</option>
-            </select>
-          </div>
-          <div class="col-md-3 modern-form-group">
-            <label for="statusFilter" class="modern-form-label">وضعیت:</label>
-            <select class="modern-form-control" id="statusFilter" v-model="statusFilter" @change="applyFilters">
-              <option value="">همه وضعیت‌ها</option>
-              <option value="active">فعال</option>
-              <option value="inactive">غیرفعال</option>
-              <option value="struggling">نیاز به کمک</option>
-              <option value="excellent">عالی</option>
-            </select>
-          </div>
-          <div class="col-md-2 d-flex gap-2 align-items-end">
-            <button class="modern-btn modern-btn-outline text-white" @click="refreshData">
-              <i class="fas fa-sync-alt"></i>
-            </button>
-            <button class="modern-btn modern-btn-secondary" @click="exportData">
-              <i class="fas fa-download"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Statistics Cards -->
-      <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-          <div class="modern-stat-card animate-slide-up" style="animation-delay: 0.2s;">
-            <div class="modern-stat-icon text-primary">
-              <i class="fas fa-users"></i>
-            </div>
-            <div class="modern-stat-value">{{ stats.totalStudents }}</div>
-            <div class="modern-stat-label">کل دانش‌آموزان</div>
-<!--            <div class="modern-stat-change" v-if="stats.studentsChange">-->
-<!--              <i :class="getChangeIcon(stats.studentsChange)" class="me-1"></i>-->
-<!--              {{ Math.abs(stats.studentsChange) }}% از هفته قبل-->
-<!--            </div>-->
-          </div>
-        </div>
-        <div class="col-md-3 mb-3">
-          <div class="modern-stat-card animate-slide-up" style="animation-delay: 0.3s;">
-            <div class="modern-stat-icon text-success">
-              <i class="fas fa-user-check"></i>
-            </div>
-            <div class="modern-stat-value">{{ stats.activeStudents }}</div>
-            <div class="modern-stat-label">دانش‌آموزان فعال</div>
-            <div class="modern-stat-subtitle">{{ activePercentage }}% از کل</div>
-          </div>
-        </div>
-        <div class="col-md-3 mb-3">
-          <div class="modern-stat-card animate-slide-up" style="animation-delay: 0.4s;">
-            <div class="modern-stat-icon text-info">
-              <i class="fas fa-chart-line"></i>
-            </div>
-            <div class="modern-stat-value">{{ stats.averageProgress }}%</div>
-            <div class="modern-stat-label">میانگین پیشرفت</div>
-            <div class="modern-stat-change" v-if="stats.progressChange">
-              <i :class="getChangeIcon(stats.progressChange)" class="me-1"></i>
-              {{ Math.abs(stats.progressChange) }}%
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3 mb-3">
-          <div class="modern-stat-card animate-slide-up" style="animation-delay: 0.5s;">
-            <div class="modern-stat-icon text-warning">
-              <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <div class="modern-stat-value">{{ stats.strugglingStudents }}</div>
-            <div class="modern-stat-label">نیازمند کمک</div>
-            <div class="modern-stat-subtitle">{{ strugglingPercentage }}% از کل</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Activity Analysis -->
-      <div class="row mb-4">
-        <div class="col-md-8">
-          <div class="modern-card animate-slide-up" style="animation-delay: 0.6s;">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <h5 class="modern-title mb-0">
-                <i class="fas fa-chart-area text-primary me-2"></i>
-                تحلیل فعالیت‌ها
-              </h5>
-              <div class="chart-controls">
-                <button class="modern-btn modern-btn-sm"
-                        :class="chartView === 'daily' ? 'modern-btn-primary' : 'modern-btn-secondary'"
-                        @click="chartView = 'daily'; updateChart()">
-                  روزانه
-                </button>
-                <button class="modern-btn modern-btn-sm"
-                        :class="chartView === 'weekly' ? 'modern-btn-primary' : 'modern-btn-secondary'"
-                        @click="chartView = 'weekly'; updateChart()">
-                  هفتگی
-                </button>
-                <button class="modern-btn modern-btn-sm"
-                        :class="chartView === 'monthly' ? 'modern-btn-primary' : 'modern-btn-secondary'"
-                        @click="chartView = 'monthly'; updateChart()">
-                  ماهانه
-                </button>
-              </div>
-            </div>
-            <div class="chart-container">
-              <canvas ref="activityChart" width="400" height="200"></canvas>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="modern-card animate-slide-up" style="animation-delay: 0.7s;">
-            <h5 class="modern-title mb-4">
-              <i class="fas fa-trophy text-warning me-2"></i>
-              عملکرد برتر
-            </h5>
-            <div v-if="topStudents.length === 0" class="text-center py-4">
-              <div class="modern-logo large secondary mb-3">
-                <i class="fas fa-trophy"></i>
-              </div>
-              <p class="text-muted">اطلاعاتی موجود نیست</p>
-            </div>
-            <div v-else>
-              <div v-for="(student, index) in topStudents" :key="student.userId"
-                   class="top-student-item d-flex align-items-center mb-3">
-                <div class="student-rank me-3">
-                  <span class="rank-badge" :class="getRankClass(index)">{{ index + 1 }}</span>
-                </div>
-                <div class="student-info flex-grow-1">
-                  <div class="student-name fw-bold">{{ student.name }}</div>
-                  <div class="student-score text-muted">
-                    نمره: {{ student.score }} | پیشرفت: {{ student.progress }}%
-                  </div>
-                </div>
-                <div class="student-actions">
-                  <button class="modern-btn modern-btn-primary modern-btn-sm"
-                          @click="viewStudentDetails(student)"
-                          title="جزئیات">
-                    <i class="fas fa-eye"></i>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-
-      <!-- Main Students Table -->
-      <div class="modern-card animate-slide-up" style="animation-delay: 0.8s;">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-          <h5 class="modern-title mb-0">
-            <i class="fas fa-list text-primary me-2"></i>
-            لیست دانش‌آموزان و فعالیت‌ها
+      <!-- Student Selection -->
+      <div class="modern-card animate-fade-in mb-4">
+        <div class="modern-card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-user-friends me-2"></i>
+            Select Student
           </h5>
-          <div class="d-flex gap-2">
-            <div class="search-container">
-              <input type="text" class="modern-form-control"
-                     placeholder="جستجو..."
-                     v-model="searchQuery"
-                     @input="applyFilters">
-              <i class="fas fa-search search-icon"></i>
+        </div>
+        <div class="modern-card-body">
+          <div class="row">
+            <div class="col-md-6 modern-form-group">
+              <label class="modern-form-label">Course</label>
+              <select class="modern-form-control" v-model="selectedCourseId" @change="fetchStudentsForCourse">
+                <option value="">Select a course</option>
+                <option v-for="course in teachingCourses" :key="course.id" :value="course.id">
+                  {{ course.title }}
+                </option>
+              </select>
             </div>
-            <div class="dropdown">
-              <button class="modern-btn modern-btn-secondary dropdown-toggle"
-                      type="button" data-bs-toggle="dropdown">
-                <i class="fas fa-sort me-1"></i> مرتب‌سازی
-              </button>
-              <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="#" @click.prevent="sortBy('name')">نام</a></li>
-                <li><a class="dropdown-item" href="#" @click.prevent="sortBy('progress')">پیشرفت</a></li>
-                <li><a class="dropdown-item" href="#" @click.prevent="sortBy('lastActivity')">آخرین فعالیت</a></li>
-                <li><a class="dropdown-item" href="#" @click.prevent="sortBy('score')">نمره</a></li>
-              </ul>
+            <div class="col-md-6 modern-form-group">
+              <label class="modern-form-label">Student</label>
+              <select class="modern-form-control" v-model="selectedStudentId" @change="fetchStudentAnalytics" :disabled="!selectedCourseId">
+                <option value="">Select a student</option>
+                <option v-for="student in courseStudents" :key="student.studentId" :value="student.studentId">
+                  {{ student.studentName }}
+                </option>
+              </select>
             </div>
           </div>
         </div>
-
-        <loading-spinner :loading="loading">
-          <div v-if="filteredStudents.length === 0" class="text-center py-5">
-            <div class="modern-logo large secondary mb-4">
-              <i class="fas fa-user-graduate"></i>
-            </div>
-            <h5>{{ searchQuery ? 'نتیجه‌ای یافت نشد' : 'دانش‌آموزی یافت نشد' }}</h5>
-            <p class="text-muted">
-              {{ searchQuery ? 'جستجوی شما نتیجه‌ای نداشت' : 'در حال حاضر دانش‌آموزی در دوره‌های شما ثبت‌نام نکرده است' }}
-            </p>
-            <button v-if="searchQuery" class="modern-btn modern-btn-primary" @click="clearFilters">
-              <i class="fas fa-times me-1"></i> پاک کردن فیلتر
-            </button>
-          </div>
-
-          <div v-else class="modern-table-container">
-            <table class="modern-table table">
-              <thead>
-              <tr>
-                <th>
-                  <input type="checkbox" v-model="selectAll" @change="toggleSelectAll" class="form-check-input">
-                </th>
-                <th><i class="fas fa-user me-1"></i> دانش‌آموز</th>
-                <th><i class="fas fa-book me-1"></i> دوره</th>
-                <th><i class="fas fa-chart-line me-1"></i> پیشرفت</th>
-                <th><i class="fas fa-clipboard-check me-1"></i> آزمون‌ها</th>
-                <th><i class="fas fa-file-alt me-1"></i> تکالیف</th>
-                <th><i class="fas fa-clock me-1"></i> آخرین فعالیت</th>
-                <th><i class="fas fa-signal me-1"></i> وضعیت</th>
-                <th><i class="fas fa-cogs me-1"></i> عملیات</th>
-              </tr>
-              </thead>
-              <tbody>
-              <tr v-for="student in paginatedStudents" :key="student.id" class="student-row">
-                <td>
-                  <input type="checkbox" v-model="selectedStudents" :value="student.id" class="form-check-input">
-                </td>
-                <td>
-                  <div class="d-flex align-items-center">
-                    <div class="student-avatar me-3">
-                      <span>{{ getInitials(student) }}</span>
-                    </div>
-                    <div>
-                      <div class="fw-bold">{{ getStudentName(student) }}</div>
-                      <small class="text-muted">{{ student.email || student.username }}</small>
-                    </div>
-                  </div>
-                </td>
-                <td>
-                  <span class="modern-badge modern-badge-info">
-                    {{ getCourseTitle(student.course) }}
-                  </span>
-                </td>
-                <td>
-                  <div class="progress-container">
-                    <div class="progress mb-1" style="height: 8px;">
-                      <div class="progress-bar"
-                           :class="getProgressClass(student.progress)"
-                           :style="`width: ${student.progress || 0}%`">
-                      </div>
-                    </div>
-                    <small class="text-muted">{{ student.progress || 0 }}%</small>
-                  </div>
-                </td>
-                <td>
-                  <div class="activity-stats">
-                    <span class="stat-item">
-                      <i class="fas fa-check-circle text-success me-1"></i>
-                      {{ student.examsPassed || 0 }}
-                    </span>
-                    <span class="stat-item">
-                      <i class="fas fa-times-circle text-danger me-1"></i>
-                      {{ student.examsFailed || 0 }}
-                    </span>
-                  </div>
-                </td>
-                <td>
-                  <div class="activity-stats">
-                    <span class="stat-item">
-                      <i class="fas fa-paper-plane text-primary me-1"></i>
-                      {{ student.assignmentsSubmitted || 0 }}
-                    </span>
-                    <span class="stat-item">
-                      <i class="fas fa-clock text-warning me-1"></i>
-                      {{ student.assignmentsPending || 0 }}
-                    </span>
-                  </div>
-                </td>
-                <td>
-                  <div>{{ formatDate(student.lastActivity) }}</div>
-                  <small class="text-muted">{{ getTimeAgo(student.lastActivity) }}</small>
-                </td>
-                <td>
-                  <span class="modern-badge" :class="getStatusBadge(student.status)">
-                    <i :class="getStatusIcon(student.status)" class="me-1"></i>
-                    {{ getStatusText(student.status) }}
-                  </span>
-                </td>
-                <td>
-                  <div class="d-flex gap-1">
-                    <button class="modern-btn modern-btn-primary modern-btn-sm"
-                            @click="viewStudentProgress(student)"
-                            title="مشاهده پیشرفت">
-                      <i class="fas fa-chart-line"></i>
-                    </button>
-                    <button class="modern-btn modern-btn-info modern-btn-sm"
-                            @click="sendMessage(student)"
-                            title="ارسال پیام">
-                      <i class="fas fa-envelope"></i>
-                    </button>
-                    <div class="dropdown">
-                      <button class="modern-btn modern-btn-secondary modern-btn-sm dropdown-toggle"
-                              type="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-ellipsis-v"></i>
-                      </button>
-                      <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="#" @click="viewExamHistory(student)">
-                          <i class="fas fa-clipboard-check me-2"></i> تاریخچه آزمون‌ها
-                        </a></li>
-                        <li><a class="dropdown-item" href="#" @click="viewAssignmentHistory(student)">
-                          <i class="fas fa-file-alt me-2"></i> تاریخچه تکالیف
-                        </a></li>
-                        <li><a class="dropdown-item" href="#" @click="viewDetailedAnalytics(student)">
-                          <i class="fas fa-analytics me-2"></i> تحلیل تفصیلی
-                        </a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" @click="exportStudentReport(student)">
-                          <i class="fas fa-download me-2"></i> دانلود گزارش
-                        </a></li>
-                      </ul>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <!-- Pagination -->
-          <div v-if="totalPages > 1" class="d-flex justify-content-between align-items-center mt-4">
-            <div class="pagination-info">
-              نمایش {{ (currentPage - 1) * itemsPerPage + 1 }} تا
-              {{ Math.min(currentPage * itemsPerPage, filteredStudents.length) }} از
-              {{ filteredStudents.length }} دانش‌آموز
-            </div>
-            <nav>
-              <ul class="pagination">
-                <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                  <button class="page-link" @click="changePage(currentPage - 1)" :disabled="currentPage === 1">
-                    قبلی
-                  </button>
-                </li>
-                <li v-for="page in visiblePages" :key="page" class="page-item"
-                    :class="{ active: page === currentPage }">
-                  <button class="page-link" @click="changePage(page)">{{ page }}</button>
-                </li>
-                <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                  <button class="page-link" @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">
-                    بعدی
-                  </button>
-                </li>
-              </ul>
-            </nav>
-          </div>
-
-          <!-- Bulk Actions -->
-          <div v-if="selectedStudents.length > 0" class="bulk-actions mt-4">
-            <div class="d-flex align-items-center gap-3">
-              <span class="text-muted">{{ selectedStudents.length }} دانش‌آموز انتخاب شده:</span>
-              <button class="modern-btn modern-btn-primary modern-btn-sm" @click="sendBulkMessage">
-                <i class="fas fa-envelope me-1"></i> ارسال پیام گروهی
-              </button>
-              <button class="modern-btn modern-btn-secondary modern-btn-sm" @click="exportSelectedStudents">
-                <i class="fas fa-download me-1"></i> دانلود گزارش انتخاب شده‌ها
-              </button>
-              <button class="modern-btn modern-btn-outline modern-btn-sm" @click="clearSelection">
-                <i class="fas fa-times me-1"></i> لغو انتخاب
-              </button>
-            </div>
-          </div>
-        </loading-spinner>
       </div>
 
-      <!-- Student Details Modal -->
-      <div class="modal fade" id="studentDetailsModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-xl">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title">
-                <i class="fas fa-user me-2"></i>
-                جزئیات دانش‌آموز: {{ selectedStudentDetail?.name }}
+      <loading-spinner :loading="loading">
+        <div v-if="selectedStudent && studentAnalytics" class="analytics-content">
+          <!-- Student Overview -->
+          <div class="modern-card animate-fade-in mb-4" style="animation-delay: 0.1s;">
+            <div class="modern-card-header bg-success text-white">
+              <h5 class="mb-0">
+                <i class="fas fa-chart-line me-2"></i>
+                {{ selectedStudent.studentName }} - Overview
               </h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body" v-if="selectedStudentDetail">
+            <div class="modern-card-body">
               <div class="row">
-                <div class="col-md-8">
-                  <!-- Activity Timeline -->
-                  <h6 class="mb-3">
-                    <i class="fas fa-history me-2"></i>
-                    تایم‌لاین فعالیت‌ها
-                  </h6>
-                  <div class="timeline">
-                    <div v-for="activity in studentActivities" :key="activity.id" class="timeline-item">
-                      <div class="timeline-marker" :class="getTimelineMarkerClass(activity.type)">
-                        <i :class="getActivityIcon(activity.type)"></i>
-                      </div>
-                      <div class="timeline-content">
-                        <div class="timeline-title">{{ activity.title }}</div>
-                        <div class="timeline-description">{{ activity.description }}</div>
-                        <div class="timeline-meta">
-                          <span class="timeline-date">{{ formatDate(activity.date) }}</span>
-                          <span v-if="activity.score" class="timeline-score">نمره: {{ activity.score }}</span>
+                <div class="col-lg-8">
+                  <div class="row">
+                    <div class="col-md-3 mb-3">
+                      <div class="modern-stat-card">
+                        <div class="modern-stat-icon text-primary">
+                          <i class="fas fa-percentage"></i>
                         </div>
+                        <div class="modern-stat-value">{{ studentAnalytics.completionPercentage || 0 }}%</div>
+                        <div class="modern-stat-label">Course Completion</div>
+                      </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                      <div class="modern-stat-card">
+                        <div class="modern-stat-icon text-success">
+                          <i class="fas fa-clipboard-check"></i>
+                        </div>
+                        <div class="modern-stat-value">{{ studentAnalytics.examsTaken || 0 }}</div>
+                        <div class="modern-stat-label">Exams Taken</div>
+                      </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                      <div class="modern-stat-card">
+                        <div class="modern-stat-icon text-warning">
+                          <i class="fas fa-star"></i>
+                        </div>
+                        <div class="modern-stat-value">{{ studentAnalytics.averageExamScore || 0 }}</div>
+                        <div class="modern-stat-label">Avg Exam Score</div>
+                      </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                      <div class="modern-stat-card">
+                        <div class="modern-stat-icon text-info">
+                          <i class="fas fa-dumbbell"></i>
+                        </div>
+                        <div class="modern-stat-value">{{ studentAnalytics.exercisesTaken || 0 }}</div>
+                        <div class="modern-stat-label">Exercises Done</div>
                       </div>
                     </div>
                   </div>
                 </div>
-                <div class="col-md-4">
-                  <!-- Student Stats -->
-                  <h6 class="mb-3">
-                    <i class="fas fa-chart-pie me-2"></i>
-                    آمار عملکرد
-                  </h6>
-                  <div class="student-stats-container">
-                    <div class="stat-circle">
-                      <div class="circle-progress" :data-progress="selectedStudentDetail.progress">
-                        <span class="progress-text">{{ selectedStudentDetail.progress }}%</span>
-                        <span class="progress-label">پیشرفت کلی</span>
-                      </div>
-                    </div>
-                    <div class="stats-grid mt-4">
-                      <div class="stat-item">
-                        <div class="stat-value">{{ selectedStudentDetail.examsPassed || 0 }}</div>
-                        <div class="stat-label">آزمون قبول</div>
-                      </div>
-                      <div class="stat-item">
-                        <div class="stat-value">{{ selectedStudentDetail.assignmentsSubmitted || 0 }}</div>
-                        <div class="stat-label">تکلیف ارسالی</div>
-                      </div>
-                      <div class="stat-item">
-                        <div class="stat-value">{{ selectedStudentDetail.averageScore || 0 }}</div>
-                        <div class="stat-label">میانگین نمره</div>
-                      </div>
-                      <div class="stat-item">
-                        <div class="stat-value">{{ selectedStudentDetail.participationRate || 0 }}%</div>
-                        <div class="stat-label">نرخ مشارکت</div>
+                <div class="col-lg-4">
+                  <div class="progress-circle-container">
+                    <div class="progress-circle" :class="getProgressClass(studentAnalytics.completionPercentage)">
+                      <div class="progress-text">
+                        <div class="progress-number">{{ studentAnalytics.completionPercentage || 0 }}%</div>
+                        <div class="progress-label">Complete</div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-            <div class="modal-footer">
-              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
-              <button type="button" class="btn btn-primary" @click="exportStudentReport(selectedStudentDetail)">
-                <i class="fas fa-download me-1"></i>
-                دانلود گزارش کامل
-              </button>
+          </div>
+
+          <!-- Performance Charts -->
+          <div class="row">
+            <div class="col-lg-6 mb-4">
+              <div class="modern-card animate-fade-in" style="animation-delay: 0.2s;">
+                <div class="modern-card-header bg-info text-white">
+                  <h6 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Exam Performance Trend
+                  </h6>
+                </div>
+                <div class="modern-card-body">
+                  <div class="chart-container">
+                    <LineChart
+                        :width="500"
+                        :height="300"
+                        :data="examPerformanceData"
+                        :margin="{ top: 20, right: 30, left: 20, bottom: 5 }"
+                    >
+                      <XAxis dataKey="examName" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line type="monotone" dataKey="score" stroke="#667eea" strokeWidth="3" dot={{ fill: '#667eea', strokeWidth: 2, r: 6 }} />
+                      <Line type="monotone" dataKey="classAverage" stroke="#ffc107" strokeWidth="2" strokeDasharray="5 5" />
+                    </LineChart>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+              <div class="modern-card animate-fade-in" style="animation-delay: 0.3s;">
+                <div class="modern-card-header bg-warning text-white">
+                  <h6 class="mb-0">
+                    <i class="fas fa-pie-chart me-2"></i>
+                    Activity Distribution
+                  </h6>
+                </div>
+                <div class="modern-card-body">
+                  <div class="chart-container">
+                    <PieChart :width="500" :height="300">
+                      <Pie
+                          :data="activityDistributionData"
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          :label="renderCustomizedLabel"
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="value"
+                      >
+                        <Cell v-for="(entry, index) in activityDistributionData" :key="`cell-${index}`" :fill="getActivityColor(index)" />
+                      </Pie>
+                      <Tooltip />
+                      <Legend />
+                    </PieChart>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detailed Performance -->
+          <div class="modern-card animate-fade-in mb-4" style="animation-delay: 0.4s;">
+            <div class="modern-card-header bg-secondary text-white">
+              <h5 class="mb-0">
+                <i class="fas fa-list-alt me-2"></i>
+                Detailed Performance Analysis
+              </h5>
+            </div>
+            <div class="modern-card-body">
+              <div class="row">
+                <div class="col-lg-6">
+                  <h6 class="section-title">
+                    <i class="fas fa-clock me-2"></i>
+                    Time Analysis
+                  </h6>
+                  <div class="time-analysis">
+                    <div class="time-item">
+                      <div class="time-label">Average Time per Lesson</div>
+                      <div class="time-value">{{ formatTime(studentAnalytics.averageTimePerLesson) }}</div>
+                    </div>
+                    <div class="time-item">
+                      <div class="time-label">Average Time per Exam</div>
+                      <div class="time-value">{{ formatTime(studentAnalytics.averageTimePerExam) }}</div>
+                    </div>
+                    <div class="time-item">
+                      <div class="time-label">Total Study Time</div>
+                      <div class="time-value">{{ formatTime(studentAnalytics.totalStudyTime) }}</div>
+                    </div>
+                    <div class="time-item">
+                      <div class="time-label">Last Activity</div>
+                      <div class="time-value">{{ formatDate(studentAnalytics.lastAccessed) }}</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-6">
+                  <h6 class="section-title">
+                    <i class="fas fa-trophy me-2"></i>
+                    Achievements & Progress
+                  </h6>
+                  <div class="achievements">
+                    <div class="achievement-item" :class="{ 'achieved': studentAnalytics.completedLessons >= studentAnalytics.totalLessons }">
+                      <i class="fas fa-medal"></i>
+                      <span>All Lessons Completed</span>
+                    </div>
+                    <div class="achievement-item" :class="{ 'achieved': studentAnalytics.averageExamScore >= 80 }">
+                      <i class="fas fa-star"></i>
+                      <span>High Performer (80%+ avg)</span>
+                    </div>
+                    <div class="achievement-item" :class="{ 'achieved': studentAnalytics.exercisesTaken >= 5 }">
+                      <i class="fas fa-dumbbell"></i>
+                      <span>Exercise Enthusiast</span>
+                    </div>
+                    <div class="achievement-item" :class="{ 'achieved': studentAnalytics.streak >= 7 }">
+                      <i class="fas fa-fire"></i>
+                      <span>7-Day Streak</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Learning Progress Timeline -->
+          <div class="modern-card animate-fade-in mb-4" style="animation-delay: 0.5s;">
+            <div class="modern-card-header bg-primary text-white">
+              <h5 class="mb-0">
+                <i class="fas fa-timeline me-2"></i>
+                Learning Progress Timeline
+              </h5>
+            </div>
+            <div class="modern-card-body">
+              <div class="chart-container">
+                <AreaChart
+                    :width="800"
+                    :height="400"
+                    :data="progressTimelineData"
+                    :margin="{ top: 20, right: 30, left: 20, bottom: 5 }"
+                >
+                  <defs>
+                    <linearGradient id="progressGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#667eea" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#667eea" stopOpacity={0.1}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Area
+                      type="monotone"
+                      dataKey="completionPercentage"
+                      stroke="#667eea"
+                      fillOpacity={1}
+                      fill="url(#progressGradient)"
+                  />
+                </AreaChart>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="modern-card animate-fade-in" style="animation-delay: 0.6s;">
+            <div class="modern-card-header bg-info text-white">
+              <h5 class="mb-0">
+                <i class="fas fa-history me-2"></i>
+                Recent Activity
+              </h5>
+            </div>
+            <div class="modern-card-body">
+              <div class="activity-timeline">
+                <div v-for="(activity, index) in recentActivities" :key="index" class="activity-item">
+                  <div class="activity-icon" :class="getActivityIconClass(activity.type)">
+                    <i :class="getActivityIcon(activity.type)"></i>
+                  </div>
+                  <div class="activity-content">
+                    <div class="activity-title">{{ activity.description }}</div>
+                    <div class="activity-time">{{ formatRelativeTime(activity.timestamp) }}</div>
+                  </div>
+                  <div class="activity-score" v-if="activity.score">
+                    <span class="modern-badge modern-badge-success">{{ activity.score }}%</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+
+        <!-- Empty State -->
+        <div v-else-if="!loading" class="empty-state">
+          <div class="modern-logo large secondary mb-4">
+            <i class="fas fa-user-graduate"></i>
+          </div>
+          <h4 class="text-muted mb-3">Select a Student</h4>
+          <p class="text-muted mb-4">
+            Choose a course and student to view detailed activity analysis and progress tracking.
+          </p>
+        </div>
+      </loading-spinner>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
-import { useFormatters } from '@/composables/useFormatters.js';
-import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
 import axios from 'axios';
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
+import { LineChart, Line, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell, AreaChart, Area } from 'recharts';
+import { useFormatters } from '@/composables/useFormatters.js';
+import formMixin from '@/mixins/formMixin.js';
 
 export default {
   name: 'StudentActivities',
   components: {
-    LoadingSpinner
+    LoadingSpinner,
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    Tooltip,
+    Legend,
+    PieChart,
+    Pie,
+    Cell,
+    AreaChart,
+    Area
   },
+  mixins: [formMixin],
   setup() {
-    const { formatDate } = useFormatters();
-
-    // State
-    const loading = ref(true);
-    const selectedCourse = ref('');
-    const activityFilter = ref('');
-    const statusFilter = ref('');
-    const searchQuery = ref('');
-    const sortField = ref('name');
-    const sortDirection = ref('asc');
-    const currentPage = ref(1);
-    const itemsPerPage = ref(10);
-    const selectAll = ref(false);
-    const selectedStudents = ref([]);
-    const chartView = ref('weekly');
-
-    // Data
-    const courses = ref([]);
-    const students = ref([]);
-    const topStudents = ref([]);
-    const selectedStudentDetail = ref(null);
-    const studentActivities = ref([]);
-    const activityChart = ref(null);
-
-    const stats = ref({
-      totalStudents: 0,
-      activeStudents: 0,
-      averageProgress: 0,
-      strugglingStudents: 0,
-      studentsChange: 0,
-      progressChange: 0
-    });
-
-    // Computed
-    const filteredStudents = computed(() => {
-      let filtered = [...students.value];
-
-      // Apply filters
-      if (searchQuery.value) {
-        const query = searchQuery.value.toLowerCase();
-        filtered = filtered.filter(student =>
-            getStudentName(student).toLowerCase().includes(query) ||
-            (student.email && student.email.toLowerCase().includes(query)) ||
-            (student.username && student.username.toLowerCase().includes(query))
-        );
-      }
-
-      if (activityFilter.value) {
-        // Filter by activity type logic here
-      }
-
-      if (statusFilter.value) {
-        filtered = filtered.filter(student => student.status === statusFilter.value);
-      }
-
-      // Apply sorting
-      filtered.sort((a, b) => {
-        let aVal = a[sortField.value];
-        let bVal = b[sortField.value];
-
-        if (sortField.value === 'name') {
-          aVal = getStudentName(a);
-          bVal = getStudentName(b);
-        }
-
-        if (typeof aVal === 'string') {
-          return sortDirection.value === 'asc'
-              ? aVal.localeCompare(bVal)
-              : bVal.localeCompare(aVal);
-        }
-
-        return sortDirection.value === 'asc' ? aVal - bVal : bVal - aVal;
-      });
-
-      return filtered;
-    });
-
-    const paginatedStudents = computed(() => {
-      const start = (currentPage.value - 1) * itemsPerPage.value;
-      const end = start + itemsPerPage.value;
-      return filteredStudents.value.slice(start, end);
-    });
-
-    const totalPages = computed(() => {
-      return Math.ceil(filteredStudents.value.length / itemsPerPage.value);
-    });
-
-    const visiblePages = computed(() => {
-      const pages = [];
-      const start = Math.max(1, currentPage.value - 2);
-      const end = Math.min(totalPages.value, currentPage.value + 2);
-
-      for (let i = start; i <= end; i++) {
-        pages.push(i);
-      }
-
-      return pages;
-    });
-
-    const activePercentage = computed(() => {
-      return stats.value.totalStudents > 0
-          ? Math.round((stats.value.activeStudents / stats.value.totalStudents) * 100)
-          : 0;
-    });
-
-    const strugglingPercentage = computed(() => {
-      return stats.value.totalStudents > 0
-          ? Math.round((stats.value.strugglingStudents / stats.value.totalStudents) * 100)
-          : 0;
-    });
-
-    // Methods
-    const fetchData = async () => {
-      loading.value = true;
-      try {
-        await fetchCourses();
-        await fetchStudentActivities();
-        await fetchTopPerformers();
-        calculateStats();
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        window.showError?.(error);
-      } finally {
-        loading.value = false;
-      }
+    const { formatDate, formatTime } = useFormatters();
+    return { formatDate, formatTime };
+  },
+  data() {
+    return {
+      loading: false,
+      teachingCourses: [],
+      courseStudents: [],
+      selectedCourseId: '',
+      selectedStudentId: '',
+      selectedStudent: null,
+      studentAnalytics: null,
+      examPerformanceData: [],
+      activityDistributionData: [],
+      progressTimelineData: [],
+      recentActivities: []
     };
-
-    const fetchCourses = async () => {
+  },
+  async created() {
+    await this.fetchTeachingCourses();
+  },
+  methods: {
+    async fetchTeachingCourses() {
       try {
         const response = await axios.get('/courses/teaching');
-        courses.value = response.data || [];
+        this.teachingCourses = response.data;
       } catch (error) {
-        console.error('Error fetching courses:', error);
+        console.error('Error fetching teaching courses:', error);
+        this.showErrorToast('Error loading courses');
       }
-    };
+    },
 
-    const fetchStudentActivities = async () => {
-      try {
-        const allStudents = [];
-
-        if (selectedCourse.value) {
-          // Fetch for specific course
-          const [participationRes, performanceRes] = await Promise.all([
-            axios.get(`/analytics/teacher/course/${selectedCourse.value}/participation`),
-            axios.get(`/analytics/teacher/course/${selectedCourse.value}/performance`)
-          ]);
-
-          const courseRes = await axios.get(`/courses/${selectedCourse.value}`);
-          const courseData = courseRes.data.course;
-
-          const participationData = participationRes.data || [];
-
-          participationData.forEach(student => {
-            allStudents.push({
-              ...student,
-              course: courseData,
-              examsPassed: Math.floor(Math.random() * 5),
-              examsFailed: Math.floor(Math.random() * 3),
-              assignmentsSubmitted: Math.floor(Math.random() * 8),
-              assignmentsPending: Math.floor(Math.random() * 2)
-            });
-          });
-        } else {
-          // Fetch for all courses
-          for (const course of courses.value) {
-            try {
-              const participationRes = await axios.get(`/analytics/teacher/course/${course.id}/participation`);
-              const participationData = participationRes.data || [];
-
-              participationData.forEach(student => {
-                allStudents.push({
-                  ...student,
-                  course: course,
-                  examsPassed: Math.floor(Math.random() * 5),
-                  examsFailed: Math.floor(Math.random() * 3),
-                  assignmentsSubmitted: Math.floor(Math.random() * 8),
-                  assignmentsPending: Math.floor(Math.random() * 2)
-                });
-              });
-            } catch (error) {
-              console.error(`Error fetching participation for course ${course.id}:`, error);
-            }
-          }
-        }
-
-        students.value = allStudents;
-      } catch (error) {
-        console.error('Error fetching student activities:', error);
-      }
-    };
-
-    const fetchTopPerformers = async () => {
-      if (selectedCourse.value) {
-        try {
-          const response = await axios.get(`/analytics/course/${selectedCourse.value}/top-performers`);
-          topStudents.value = response.data?.topByScore?.slice(0, 5) || [];
-        } catch (error) {
-          console.error('Error fetching top performers:', error);
-        }
-      }
-    };
-
-    const calculateStats = () => {
-      stats.value.totalStudents = students.value.length;
-      stats.value.activeStudents = students.value.filter(s => s.status === 'active').length;
-      stats.value.strugglingStudents = students.value.filter(s => s.status === 'struggling').length;
-
-      const totalProgress = students.value.reduce((sum, s) => sum + (s.progress || 0), 0);
-      stats.value.averageProgress = students.value.length > 0
-          ? Math.round(totalProgress / students.value.length)
-          : 0;
-
-      // Mock trend data
-      stats.value.studentsChange = Math.floor(Math.random() * 20) - 10;
-      stats.value.progressChange = Math.floor(Math.random() * 10) - 5;
-    };
-
-    const getStudentName = (student) => {
-      if (!student) return 'نامشخص';
-      return student.firstName && student.lastName
-          ? `${student.firstName} ${student.lastName}`
-          : student.username || student.name || 'نامشخص';
-    };
-
-    const getInitials = (student) => {
-      if (!student) return 'N';
-      const firstName = student.firstName || '';
-      const lastName = student.lastName || '';
-      if (firstName && lastName) {
-        return (firstName.charAt(0) + lastName.charAt(0)).toUpperCase();
-      }
-      return (student.username || student.name || 'U').charAt(0).toUpperCase();
-    };
-
-    const getCourseTitle = (course) => {
-      return course?.title || 'نامشخص';
-    };
-
-    const getProgressClass = (progress) => {
-      const p = progress || 0;
-      if (p >= 75) return 'bg-success';
-      if (p >= 50) return 'bg-info';
-      if (p >= 25) return 'bg-warning';
-      return 'bg-danger';
-    };
-
-    const getStatusBadge = (status) => {
-      const badges = {
-        active: 'modern-badge-success',
-        inactive: 'modern-badge-secondary',
-        struggling: 'modern-badge-warning',
-        excellent: 'modern-badge-primary'
-      };
-      return badges[status] || 'modern-badge-secondary';
-    };
-
-    const getStatusIcon = (status) => {
-      const icons = {
-        active: 'fas fa-check-circle',
-        inactive: 'fas fa-pause-circle',
-        struggling: 'fas fa-exclamation-triangle',
-        excellent: 'fas fa-star'
-      };
-      return icons[status] || 'fas fa-question-circle';
-    };
-
-    const getStatusText = (status) => {
-      const texts = {
-        active: 'فعال',
-        inactive: 'غیرفعال',
-        struggling: 'نیاز به کمک',
-        excellent: 'عالی'
-      };
-      return texts[status] || 'نامشخص';
-    };
-
-    const getChangeIcon = (change) => {
-      if (change > 0) return 'fas fa-arrow-up text-success';
-      if (change < 0) return 'fas fa-arrow-down text-danger';
-      return 'fas fa-minus text-muted';
-    };
-
-    const getRankClass = (index) => {
-      if (index === 0) return 'rank-gold';
-      if (index === 1) return 'rank-silver';
-      if (index === 2) return 'rank-bronze';
-      return 'rank-default';
-    };
-
-    const getTimeAgo = (dateString) => {
-      if (!dateString) return '';
-      const now = new Date();
-      const date = new Date(dateString);
-      const diffTime = Math.abs(now - date);
-      const diffHours = Math.ceil(diffTime / (1000 * 60 * 60));
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      if (diffHours < 24) return `${diffHours} ساعت قبل`;
-      if (diffDays === 1) return 'دیروز';
-      if (diffDays < 7) return `${diffDays} روز قبل`;
-      if (diffDays < 30) return `${Math.floor(diffDays / 7)} هفته قبل`;
-      return `${Math.floor(diffDays / 30)} ماه قبل`;
-    };
-
-    const refreshData = () => {
-      fetchData();
-    };
-
-    const applyFilters = () => {
-      currentPage.value = 1;
-    };
-
-    const clearFilters = () => {
-      searchQuery.value = '';
-      activityFilter.value = '';
-      statusFilter.value = '';
-      currentPage.value = 1;
-    };
-
-    const sortBy = (field) => {
-      if (sortField.value === field) {
-        sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
-      } else {
-        sortField.value = field;
-        sortDirection.value = 'asc';
-      }
-    };
-
-    const changePage = (page) => {
-      if (page >= 1 && page <= totalPages.value) {
-        currentPage.value = page;
-      }
-    };
-
-    const toggleSelectAll = () => {
-      if (selectAll.value) {
-        selectedStudents.value = paginatedStudents.value.map(s => s.id);
-      } else {
-        selectedStudents.value = [];
-      }
-    };
-
-    const clearSelection = () => {
-      selectAll.value = false;
-      selectedStudents.value = [];
-    };
-
-    const viewStudentDetails = async (student) => {
-      selectedStudentDetail.value = student;
-
-      // Fetch student activities
-      try {
-        // Mock activity data - in real app, fetch from API
-        studentActivities.value = [
-          {
-            id: 1,
-            type: 'exam',
-            title: 'آزمون میان‌ترم',
-            description: 'شرکت در آزمون میان‌ترم دوره',
-            date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-            score: 85
-          },
-          {
-            id: 2,
-            type: 'assignment',
-            title: 'تکلیف فصل سوم',
-            description: 'ارسال تکلیف فصل سوم',
-            date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-            score: 92
-          }
-        ];
-      } catch (error) {
-        console.error('Error fetching student activities:', error);
-      }
-
-      const modal = new bootstrap.Modal(document.getElementById('studentDetailsModal'));
-      modal.show();
-    };
-
-    const viewStudentProgress = (student) => {
-      // Navigate to student progress page
-      window.open(`/student-progress/${student.id}`, '_blank');
-    };
-
-    const sendMessage = async (student) => {
-      if (!student.course?.id) {
-        alert('اطلاعات دوره یافت نشد.');
+    async fetchStudentsForCourse() {
+      if (!this.selectedCourseId) {
+        this.courseStudents = [];
         return;
       }
 
-      const message = prompt(`پیام برای ${getStudentName(student)}:`);
-      if (!message) return;
-
       try {
-        await axios.post(`/chat/course/${student.course.id}/send`, null, {
-          params: {
-            message: `@${student.username} ${message}`
-          }
-        });
-        window.toast?.success('پیام ارسال شد');
+        const response = await axios.get(`/analytics/teacher/course/${this.selectedCourseId}/participation`);
+        this.courseStudents = response.data;
       } catch (error) {
-        console.error('Error sending message:', error);
-        window.toast?.error('خطا در ارسال پیام');
+        console.error('Error fetching course students:', error);
+        this.showErrorToast('Error loading students');
       }
-    };
+    },
 
-    const sendBulkMessage = async () => {
-      const message = prompt('پیام گروهی:');
-      if (!message) return;
+    async fetchStudentAnalytics() {
+      if (!this.selectedStudentId || !this.selectedCourseId) return;
 
+      this.loading = true;
       try {
-        // Send message to all selected students
-        const promises = selectedStudents.value.map(async (studentId) => {
-          const student = students.value.find(s => s.id === studentId);
-          if (student?.course?.id) {
-            return axios.post(`/chat/course/${student.course.id}/send`, null, {
-              params: {
-                message: `@${student.username} ${message}`
-              }
-            });
-          }
-        });
+        this.selectedStudent = this.courseStudents.find(s => s.studentId == this.selectedStudentId);
 
-        await Promise.all(promises);
-        window.toast?.success(`پیام به ${selectedStudents.value.length} دانش‌آموز ارسال شد`);
-        clearSelection();
+        // Note: These APIs might need to be created or modified to accept studentId parameter
+        const [performanceResponse, comparisonResponse] = await Promise.all([
+          axios.get(`/analytics/student/${this.selectedStudentId}/performance`),
+          axios.get(`/analytics/course/${this.selectedCourseId}/student-comparison?studentId=${this.selectedStudentId}`)
+        ]);
+
+        this.studentAnalytics = {
+          ...this.selectedStudent,
+          ...performanceResponse.data,
+          ...comparisonResponse.data
+        };
+
+        await this.generateChartData();
+        await this.fetchRecentActivities();
       } catch (error) {
-        console.error('Error sending bulk message:', error);
-        window.toast?.error('خطا در ارسال پیام گروهی');
+        console.error('Error fetching student analytics:', error);
+        this.showErrorToast('Error loading student analytics');
+      } finally {
+        this.loading = false;
       }
-    };
+    },
 
-    const exportData = () => {
-      window.toast?.info('در حال تهیه فایل Excel...');
-      // Simulate export
-      setTimeout(() => {
-        window.toast?.success('فایل Excel دانلود شد');
-      }, 2000);
-    };
+    async generateChartData() {
+      // Generate exam performance data
+      // Note: This might need a new API endpoint to get student's exam history
+      this.examPerformanceData = [
+        { examName: 'Exam 1', score: 85, classAverage: 78 },
+        { examName: 'Exam 2', score: 92, classAverage: 82 },
+        { examName: 'Exam 3', score: 78, classAverage: 75 },
+        { examName: 'Exam 4', score: 88, classAverage: 80 }
+      ];
 
-    const exportSelectedStudents = () => {
-      window.toast?.info(`در حال تهیه گزارش ${selectedStudents.value.length} دانش‌آموز...`);
-      setTimeout(() => {
-        window.toast?.success('گزارش دانلود شد');
-        clearSelection();
-      }, 1500);
-    };
+      // Generate activity distribution data
+      this.activityDistributionData = [
+        { name: 'Lessons Completed', value: this.studentAnalytics.completedLessons || 0 },
+        { name: 'Exams Taken', value: this.studentAnalytics.examsTaken || 0 },
+        { name: 'Exercises Done', value: this.studentAnalytics.exercisesTaken || 0 },
+        { name: 'Content Viewed', value: this.studentAnalytics.viewedContent || 0 }
+      ];
 
-    const exportStudentReport = (student) => {
-      window.toast?.info(`در حال تهیه گزارش ${getStudentName(student)}...`);
-      setTimeout(() => {
-        window.toast?.success('گزارش دانش‌آموز دانلود شد');
-      }, 1500);
-    };
+      // Generate progress timeline data
+      // Note: This would need historical progress data
+      this.progressTimelineData = this.generateProgressTimeline();
+    },
 
-    const viewExamHistory = (student) => {
-      window.toast?.info(`مشاهده تاریخچه آزمون‌های ${getStudentName(student)}`);
-    };
+    generateProgressTimeline() {
+      const timeline = [];
+      const today = new Date();
 
-    const viewAssignmentHistory = (student) => {
-      window.toast?.info(`مشاهده تاریخچه تکالیف ${getStudentName(student)}`);
-    };
+      for (let i = 30; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
 
-    const viewDetailedAnalytics = (student) => {
-      window.toast?.info(`تحلیل تفصیلی ${getStudentName(student)}`);
-    };
+        timeline.push({
+          date: date.toLocaleDateString(),
+          completionPercentage: Math.min(100, (30 - i) * 3 + Math.random() * 10)
+        });
+      }
 
-    const getActivityIcon = (type) => {
-      const icons = {
-        exam: 'fas fa-clipboard-check',
-        assignment: 'fas fa-file-alt',
-        lesson: 'fas fa-play-circle',
-        participation: 'fas fa-comments'
-      };
-      return icons[type] || 'fas fa-circle';
-    };
+      return timeline;
+    },
 
-    const getTimelineMarkerClass = (type) => {
-      const classes = {
-        exam: 'timeline-marker-primary',
-        assignment: 'timeline-marker-warning',
-        lesson: 'timeline-marker-success',
-        participation: 'timeline-marker-info'
-      };
-      return classes[type] || 'timeline-marker-secondary';
-    };
+    async fetchRecentActivities() {
+      // Note: This would need a new API endpoint for student activity history
+      this.recentActivities = [
+        {
+          type: 'LESSON_COMPLETION',
+          description: 'Completed lesson: Variables and Data Types',
+          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+          score: null
+        },
+        {
+          type: 'EXAM_SUBMISSION',
+          description: 'Submitted exam: Python Basics Quiz',
+          timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000),
+          score: 88
+        },
+        {
+          type: 'EXERCISE_COMPLETION',
+          description: 'Completed exercise: Quick Python Practice',
+          timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+          score: 95
+        },
+        {
+          type: 'CONTENT_VIEW',
+          description: 'Viewed content: Introduction to Functions',
+          timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+          score: null
+        }
+      ];
+    },
 
-    const updateChart = () => {
-      // Update chart based on chartView
-      // Implementation depends on chart library
-    };
+    getProgressClass(percentage) {
+      if (percentage >= 90) return 'excellent';
+      if (percentage >= 70) return 'good';
+      if (percentage >= 50) return 'average';
+      return 'poor';
+    },
 
-    onMounted(() => {
-      fetchData();
-    });
+    getActivityColor(index) {
+      const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b'];
+      return colors[index % colors.length];
+    },
 
-    return {
-      // State
-      loading,
-      selectedCourse,
-      activityFilter,
-      statusFilter,
-      searchQuery,
-      currentPage,
-      selectAll,
-      selectedStudents,
-      chartView,
+    getActivityIconClass(type) {
+      switch (type) {
+        case 'LESSON_COMPLETION': return 'activity-lesson';
+        case 'EXAM_SUBMISSION': return 'activity-exam';
+        case 'EXERCISE_COMPLETION': return 'activity-exercise';
+        case 'CONTENT_VIEW': return 'activity-content';
+        default: return 'activity-default';
+      }
+    },
 
-      // Data
-      courses,
-      students,
-      topStudents,
-      selectedStudentDetail,
-      studentActivities,
-      stats,
+    getActivityIcon(type) {
+      switch (type) {
+        case 'LESSON_COMPLETION': return 'fas fa-book-open';
+        case 'EXAM_SUBMISSION': return 'fas fa-clipboard-check';
+        case 'EXERCISE_COMPLETION': return 'fas fa-dumbbell';
+        case 'CONTENT_VIEW': return 'fas fa-eye';
+        default: return 'fas fa-circle';
+      }
+    },
 
-      // Computed
-      filteredStudents,
-      paginatedStudents,
-      totalPages,
-      visiblePages,
-      activePercentage,
-      strugglingPercentage,
-      itemsPerPage,
+    formatRelativeTime(timestamp) {
+      const now = new Date();
+      const diff = now - new Date(timestamp);
+      const hours = Math.floor(diff / (1000 * 60 * 60));
+      const days = Math.floor(hours / 24);
 
-      // Methods
-      fetchData,
-      refreshData,
-      applyFilters,
-      clearFilters,
-      sortBy,
-      changePage,
-      toggleSelectAll,
-      clearSelection,
-      viewStudentDetails,
-      viewStudentProgress,
-      sendMessage,
-      sendBulkMessage,
-      exportData,
-      exportSelectedStudents,
-      exportStudentReport,
-      viewExamHistory,
-      viewAssignmentHistory,
-      viewDetailedAnalytics,
-      updateChart,
+      if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+      if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+      return 'Just now';
+    },
 
-      // Utility methods
-      getStudentName,
-      getInitials,
-      getCourseTitle,
-      getProgressClass,
-      getStatusBadge,
-      getStatusIcon,
-      getStatusText,
-      getChangeIcon,
-      getRankClass,
-      getTimeAgo,
-      getActivityIcon,
-      getTimelineMarkerClass,
-      formatDate
-    };
+    renderCustomizedLabel({ cx, cy, midAngle, innerRadius, outerRadius, percent }) {
+      const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+      const x = cx + radius * Math.cos(-midAngle * Math.PI / 180);
+      const y = cy + radius * Math.sin(-midAngle * Math.PI / 180);
+
+      return (
+          <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central">
+            {`${(percent * 100).toFixed(0)}%`}
+          </text>
+      );
+    }
   }
 }
 </script>
 
 <style scoped>
-.search-container {
-  position: relative;
-}
-
-.search-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #6c757d;
-  pointer-events: none;
-}
-
-.search-container input {
-  padding-left: 2.5rem;
-  min-width: 200px;
-}
-
-.student-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
+.progress-circle-container {
   display: flex;
-  align-items: center;
   justify-content: center;
-  font-size: 0.9rem;
-  font-weight: bold;
-}
-
-.progress-container {
-  min-width: 120px;
-}
-
-.activity-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.stat-item {
-  font-size: 0.8rem;
-  display: flex;
   align-items: center;
+  height: 100%;
 }
 
-.student-row {
-  transition: all 0.2s ease;
-}
-
-.student-row:hover {
-  background: rgba(255, 255, 255, 0.1);
-  transform: translateY(-1px);
-}
-
-.bulk-actions {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.top-student-item {
-  padding: 0.75rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.top-student-item:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-1px);
-}
-
-.rank-badge {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 0.8rem;
-  color: white;
-}
-
-.rank-gold { background: linear-gradient(135deg, #FFD700, #FFA500); }
-.rank-silver { background: linear-gradient(135deg, #C0C0C0, #A0A0A0); }
-.rank-bronze { background: linear-gradient(135deg, #CD7F32, #B8860B); }
-.rank-default { background: linear-gradient(135deg, #667eea, #764ba2); }
-
-.chart-container {
-  height: 300px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 8px;
-  padding: 1rem;
-}
-
-.chart-controls {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.chart-controls .modern-btn-sm {
-  padding: 0.25rem 0.75rem;
-  font-size: 0.8rem;
-}
-
-.modern-stat-change,
-.modern-stat-subtitle {
-  font-size: 0.75rem;
-  margin-top: 0.5rem;
-  opacity: 0.8;
-}
-
-/* Timeline styles */
-.timeline {
-  position: relative;
-  padding-left: 2rem;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.timeline::before {
-  content: '';
-  position: absolute;
-  left: 0.75rem;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: linear-gradient(to bottom, #667eea, #764ba2);
-}
-
-.timeline-item {
-  position: relative;
-  margin-bottom: 1.5rem;
-}
-
-.timeline-marker {
-  position: absolute;
-  left: -2.25rem;
-  top: 0;
-  width: 1.5rem;
-  height: 1.5rem;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 0.7rem;
-}
-
-.timeline-marker-primary { background: #007bff; }
-.timeline-marker-warning { background: #ffc107; }
-.timeline-marker-success { background: #28a745; }
-.timeline-marker-info { background: #17a2b8; }
-.timeline-marker-secondary { background: #6c757d; }
-
-.timeline-content {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.timeline-title {
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-}
-
-.timeline-description {
-  color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 0.5rem;
-}
-
-.timeline-meta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.timeline-score {
-  font-weight: bold;
-  color: #28a745;
-}
-
-/* Student stats */
-.student-stats-container {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 1.5rem;
-  text-align: center;
-}
-
-.stat-circle {
-  margin-bottom: 1.5rem;
-}
-
-.circle-progress {
+.progress-circle {
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: conic-gradient(#667eea 0deg, #667eea var(--progress, 0deg), rgba(255,255,255,0.2) var(--progress, 0deg));
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin: 0 auto;
-  position: relative;
+  border: 8px solid;
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.circle-progress::before {
-  content: '';
-  position: absolute;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
+.progress-circle.excellent {
+  border-color: #27ae60;
+  color: #27ae60;
+}
+
+.progress-circle.good {
+  border-color: #3498db;
+  color: #3498db;
+}
+
+.progress-circle.average {
+  border-color: #f39c12;
+  color: #f39c12;
+}
+
+.progress-circle.poor {
+  border-color: #e74c3c;
+  color: #e74c3c;
 }
 
 .progress-text {
-  position: relative;
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: #333;
-  z-index: 1;
+  text-align: center;
+}
+
+.progress-number {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .progress-label {
-  position: relative;
-  font-size: 0.7rem;
-  color: #666;
-  z-index: 1;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-.stats-grid .stat-item {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  padding: 0.75rem;
-}
-
-.stats-grid .stat-value {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: white;
-}
-
-.stats-grid .stat-label {
   font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
   margin-top: 0.25rem;
 }
 
-/* Pagination */
-.pagination-info {
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 0.9rem;
+.chart-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  overflow-x: auto;
 }
 
-.pagination .page-link {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: white;
-  margin: 0 2px;
-  border-radius: 6px;
+.time-analysis {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.pagination .page-item.active .page-link {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+.time-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.time-label {
+  font-weight: 600;
+  color: #495057;
+}
+
+.time-value {
+  font-weight: 700;
+  color: #667eea;
+}
+
+.achievements {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.achievement-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: rgba(108, 117, 125, 0.1);
+  border-radius: 8px;
+  color: #6c757d;
+  transition: all 0.3s ease;
+}
+
+.achievement-item.achieved {
+  background: rgba(39, 174, 96, 0.1);
+  color: #27ae60;
+  border-left: 4px solid #27ae60;
+}
+
+.achievement-item i {
+  font-size: 1.2rem;
+}
+
+.activity-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: rgba(248, 249, 250, 0.8);
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  transition: all 0.2s ease;
+}
+
+.activity-item:hover {
+  background: rgba(102, 126, 234, 0.05);
   border-color: #667eea;
 }
 
-.pagination .page-link:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.3);
+.activity-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: white;
+  font-size: 1rem;
+}
+
+.activity-icon.activity-lesson {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.activity-icon.activity-exam {
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+}
+
+.activity-icon.activity-exercise {
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+}
+
+.activity-icon.activity-content {
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+}
+
+.activity-icon.activity-default {
+  background: linear-gradient(135deg, #a8edea, #fed6e3);
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-title {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.activity-time {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.activity-score {
+  margin-left: auto;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .d-flex.justify-content-between {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .search-container input {
-    min-width: auto;
-    width: 100%;
-  }
-
   .chart-container {
-    height: 200px;
+    overflow-x: scroll;
   }
 
-  .stats-grid {
-    grid-template-columns: 1fr;
+  .time-item,
+  .activity-item {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
   }
 
-  .timeline {
-    padding-left: 1.5rem;
+  .progress-circle {
+    width: 100px;
+    height: 100px;
   }
 
-  .timeline-marker {
-    left: -1.75rem;
-  }
-
-  .activity-stats {
-    flex-direction: row;
-    gap: 1rem;
+  .progress-number {
+    font-size: 1.5rem;
   }
 }
 </style>

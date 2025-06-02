@@ -261,7 +261,7 @@
               <li class="nav-item">
                 <router-link
                     class="modern-nav-link"
-                    to="/student/exams"
+                    :to="{ name: 'StudentExams' }"
                     active-class="active"
                     :title="collapsed ? 'آزمون‌های من' : ''"
                 >
@@ -278,7 +278,7 @@
               <li class="nav-item">
                 <router-link
                     class="modern-nav-link"
-                    to="/student/exam-results"
+                    :to="{ name: 'StudentExamResults' }"
                     active-class="active"
                     :title="collapsed ? 'نتایج آزمون‌ها' : ''"
                 >

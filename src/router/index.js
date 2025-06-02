@@ -270,6 +270,28 @@ const routes = [
     }
   },
   {
+    path: '/student/exams',
+    name: 'StudentExams',
+    component: () => import(/* webpackChunkName: "exam-list" */ '../components/exams/ExamList.vue'),
+    meta: {
+      title: 'آزمون‌های من',
+      requiresAuth: true,
+      requiresStudent: true,
+      showSidebar: true
+    }
+  },
+  {
+    path: '/student/exam-results',
+    name: 'StudentExamResults',
+    component: () => import(/* webpackChunkName: "student-exams-table" */ '../components/exams/StudentExamResults.vue'),
+    meta: {
+      title: 'نتایج آزمون‌ها',
+      requiresAuth: true,
+      requiresStudent: true,
+      showSidebar: true
+    }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: NotFound,

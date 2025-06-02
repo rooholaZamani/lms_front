@@ -314,7 +314,7 @@ export default {
 
         const questionData = {
           text: this.currentQuestion.text,
-          questionType: this.currentquestion.questionType,
+          questionType: this.currentQuestion.type,  // Fixed: was currentquestion.questionType
           points: this.currentQuestion.points || 10,
           explanation: this.currentQuestion.explanation || '',
           hint: this.currentQuestion.hint || '',
@@ -323,7 +323,7 @@ export default {
           isRequired: this.currentQuestion.isRequired || false
         };
 
-        if (this.currentquestion.questionType === 'MULTIPLE_CHOICE') {
+        if (this.currentQuestion.type === 'MULTIPLE_CHOICE') {  // Fixed: was currentquestion.questionType
           const options = this.currentQuestion.options.filter(opt => opt && opt.trim() !== '');
           questionData.options = options.map((text, index) => ({
             text: text,
@@ -332,7 +332,7 @@ export default {
             points: index === parseInt(this.currentQuestion.correctOption) ? questionData.points : 0,
             orderIndex: index
           }));
-        } else if (this.currentquestion.questionType === 'TRUE_FALSE') {
+        } else if (this.currentQuestion.type === 'TRUE_FALSE') {  // Fixed: was currentquestion.questionType
           questionData.options = [
             {
               text: 'True',
@@ -349,7 +349,7 @@ export default {
               orderIndex: 1
             }
           ];
-        } else if (this.currentquestion.questionType === 'SHORT_ANSWER') {
+        } else if (this.currentQuestion.type === 'SHORT_ANSWER') {  // Fixed: was currentquestion.questionType
           questionData.options = [
             {
               text: this.currentQuestion.correctOption,
@@ -359,7 +359,7 @@ export default {
               orderIndex: 0
             }
           ];
-        } else if (this.currentquestion.questionType === 'ESSAY') {
+        } else if (this.currentQuestion.type === 'ESSAY') {  // Fixed: was currentquestion.questionType
           questionData.options = [
             {
               text: 'Essay Answer',
