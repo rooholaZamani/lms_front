@@ -1,328 +1,208 @@
 <template>
-  <div class="modern-page-bg info-gradient">
+  <div class="content-viewer modern-page-bg info-gradient">
     <div class="modern-container large animate-slide-up">
-      <!-- Header -->
-      <div class="modern-header">
-        <div class="modern-logo info">
-          <i :class="getContentIcon(content?.type)"></i>
+      <!-- Loading State -->
+      <div v-if="loading" class="loading-container">
+        <div class="modern-card text-center">
+          <div class="py-5">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">در حال بارگذاری...</span>
+            </div>
+            <p class="mt-3 text-muted">در حال بارگذاری محتوا...</p>
+          </div>
         </div>
-        <h1 class="modern-title">{{ content?.title || 'مشاهده محتوا' }}</h1>
-        <p class="modern-subtitle">{{ getContentTypeText(content?.type) }}</p>
       </div>
 
-      <!-- Content Card -->
-      <div class="modern-card animate-fade-in" style="animation-delay: 0.1s;">
-        <loading-spinner :loading="loading">
-          <!-- Error State -->
-          <div v-if="error" class="modern-alert modern-alert-danger">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            خطا در بارگذاری محتوا. لطفاً دوباره تلاش کنید.
-            <button class="modern-btn modern-btn-primary mt-3" @click="loadContent">
-              <i class="fas fa-redo me-2"></i>
+      <!-- Error State -->
+      <div v-else-if="error" class="error-container">
+        <div class="modern-card text-center">
+          <div class="py-5">
+            <div class="modern-logo large danger mb-4">
+              <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h4 class="text-danger mb-3">خطا در بارگذاری محتوا</h4>
+            <p class="text-muted mb-4">{{ error }}</p>
+            <button class="modern-btn modern-btn-primary" @click="fetchContentData">
+              <i class="fas fa-refresh me-2"></i>
               تلاش مجدد
             </button>
           </div>
+        </div>
+      </div>
 
-          <!-- Content Display -->
-          <div v-else-if="content" class="content-display">
-            <!-- Content Header Actions -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <button class="modern-btn modern-btn-secondary" @click="goBack">
-                <i class="fas fa-arrow-right me-2"></i>
-                بازگشت به درس
+      <!-- Content Display -->
+      <div v-else-if="content" class="content-container">
+        <!-- Back Button -->
+        <div class="content-navigation mb-4">
+          <button class="modern-btn modern-btn-secondary" @click="goBack">
+            <i class="fas fa-arrow-right me-2"></i>
+            بازگشت
+          </button>
+        </div>
+
+        <!-- Text Content -->
+        <div v-if="content.type === 'TEXT'" class="text-content modern-card">
+          <div class="content-header">
+            <h2 class="content-title">{{ content.title }}</h2>
+          </div>
+          <div class="content-body">
+            <div class="text-content-area">
+              <div class="content-text">{{ content.textContent }}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Video Content -->
+        <div v-else-if="content.type === 'VIDEO'" class="video-content modern-card">
+          <div class="content-header">
+            <h2 class="content-title">{{ content.title }}</h2>
+            <div class="content-actions">
+              <button class="modern-btn modern-btn-primary" @click="downloadContent">
+                <i class="fas fa-download me-1"></i>
+                دانلود ویدیو
               </button>
+            </div>
+          </div>
+          <div class="content-body">
+            <div class="video-container">
+              <video
+                  v-if="content.file?.id"
+                  controls
+                  class="video-player"
+                  :poster="content.thumbnailUrl"
+                  preload="metadata">
+                <source :src="`/api/content/files/${content.file.id}`" type="video/mp4">
+                <source :src="`/api/content/files/${content.file.id}`" type="video/webm">
+                <source :src="`/api/content/files/${content.file.id}`" type="video/ogg">
+                مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
+              </video>
+              <div v-else class="video-error">
+                <i class="fas fa-video text-muted"></i>
+                <p>ویدیو در دسترس نیست</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-              <div class="content-actions">
-                <button
-                    v-if="content?.type !== 'TEXT'"
-                    class="modern-btn modern-btn-outline me-2"
-                    @click="downloadContent"
-                    title="دانلود محتوا"
-                >
+        <!-- PDF Content -->
+        <div v-else-if="content.type === 'PDF'" class="pdf-content modern-card">
+          <div class="content-header">
+            <h2 class="content-title">{{ content.title }}</h2>
+            <div class="content-actions">
+              <button class="modern-btn modern-btn-primary" @click="downloadContent">
+                <i class="fas fa-download me-1"></i>
+                دانلود فایل
+              </button>
+            </div>
+          </div>
+
+          <!-- Debug Info (remove in production) -->
+          <div v-if="$route.query.debug" class="debug-info">
+            <details>
+              <summary>اطلاعات دیباگ</summary>
+              <pre>{{ JSON.stringify({
+                fileId: content.fileId || content.file?.id,
+                fileUrl: content.fileUrl,
+                pdfUrl: pdfUrl,
+                pdfSupported: pdfSupported,
+                pdfLoading: pdfLoading,
+                pdfViewerUrl: pdfViewerUrl
+              }, null, 2) }}</pre>
+            </details>
+          </div>
+
+          <!-- PDF Viewer Container -->
+          <div class="pdf-viewer-container">
+            <!-- Loading state -->
+            <div v-if="pdfLoading" class="pdf-loading">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">در حال بارگذاری...</span>
+              </div>
+              <p class="mt-2">در حال بارگذاری فایل PDF...</p>
+              <p class="text-muted small">در صورت طولانی شدن، دکمه دانلود را امتحان کنید</p>
+            </div>
+
+            <!-- PDF Iframe -->
+            <iframe
+                v-else-if="pdfSupported && pdfUrl"
+                :src="pdfUrl"
+                class="pdf-viewer"
+                frameborder="0"
+                @error="handlePdfError"
+                @load="handlePdfLoad"
+                title="PDF Viewer">
+            </iframe>
+
+            <!-- Fallback content -->
+            <div v-else class="pdf-fallback">
+              <div class="fallback-content">
+                <div class="fallback-icon">
+                  <i class="fas fa-file-pdf text-danger"></i>
+                </div>
+                <h5>نمایش PDF در مرورگر امکان‌پذیر نیست</h5>
+                <p class="text-muted mb-4">
+          <span v-if="!pdfSupported">
+            مرورگر شما از نمایش PDF در صفحه پشتیبانی نمی‌کند.
+          </span>
+                  <span v-else>
+            خطا در بارگذاری فایل PDF.
+          </span>
+                  <br>
+                  لطفاً فایل را دانلود کنید.
+                </p>
+                <button class="modern-btn modern-btn-primary mb-2" @click="downloadContent">
                   <i class="fas fa-download me-1"></i>
-                  دانلود
+                  دانلود فایل PDF
                 </button>
-                <button
-                    class="modern-btn modern-btn-outline"
-                    @click="toggleFullscreen"
-                    :title="isFullscreen ? 'خروج از تمام صفحه' : 'نمایش تمام صفحه'"
-                >
-                  <i class="fas me-1" :class="isFullscreen ? 'fa-compress' : 'fa-expand'"></i>
-                  {{ isFullscreen ? 'خروج از تمام صفحه' : 'تمام صفحه' }}
-                </button>
-              </div>
-            </div>
-
-            <!-- Text Content -->
-            <div v-if="content.type === 'TEXT'" class="text-content-section">
-              <div class="form-section">
-                <h6 class="section-title">
-                  <i class="fas fa-align-left text-info me-2"></i>
-                  محتوای متنی
-                </h6>
-                <div class="text-content-container">
-                  <div class="content-text" v-html="formatTextContent(content.textContent)"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Video Content -->
-            <div v-else-if="content.type === 'VIDEO'" class="video-content-section">
-              <div class="form-section">
-                <h6 class="section-title">
-                  <i class="fas fa-play-circle text-primary me-2"></i>
-                  محتوای ویدیویی
-                </h6>
-                <div class="video-container">
-                  <div class="ratio ratio-16x9">
-                    <video
-                        ref="videoPlayer"
-                        controls
-                        class="video-player"
-                        @loadedmetadata="onVideoLoaded"
-                        @timeupdate="onVideoTimeUpdate"
-                        @ended="onVideoEnded"
-                        :poster="content.posterUrl"
-                    >
-                      <source :src="getContentUrl(content)" type="video/mp4">
-                      <p class="video-error">
-                        مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
-                        <br>
-                        لطفاً مرورگر خود را به‌روزرسانی کنید یا از مرورگر دیگری استفاده کنید.
-                      </p>
-                    </video>
-
-                    <!-- Loading overlay -->
-                    <div v-if="videoLoading" class="video-loading-overlay">
-                      <div class="loading-content">
-                        <div class="spinner-border text-primary" role="status"></div>
-                        <p class="mt-2 mb-0">در حال بارگذاری ویدیو...</p>
-                      </div>
-                    </div>
-
-                    <!-- Error overlay -->
-                    <div v-if="videoError" class="video-error-overlay">
-                      <div class="error-content">
-                        <i class="fas fa-exclamation-triangle text-warning mb-2"></i>
-                        <h6>خطا در بارگذاری ویدیو</h6>
-                        <p class="mb-3">متأسفانه نتوانستیم ویدیو را بارگذاری کنیم</p>
-                        <button class="modern-btn modern-btn-primary btn-sm" @click="retryVideo">
-                          <i class="fas fa-redo me-1"></i>
-                          تلاش مجدد
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Video Controls -->
-                  <div class="video-controls mt-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                      <div class="video-info">
-                        <small class="text-muted">
-                          <i class="fas fa-clock me-1"></i>
-                          مدت زمان: <span id="videoDuration">{{ formatTime(videoDuration) }}</span>
-                        </small>
-                        <small class="text-muted ms-3">
-                          <i class="fas fa-play me-1"></i>
-                          زمان فعلی: {{ formatTime(currentTime) }}
-                        </small>
-                      </div>
-                      <div class="playback-controls">
-                        <label class="modern-form-label me-2">سرعت پخش:</label>
-                        <select
-                            v-model="playbackSpeed"
-                            @change="changePlaybackSpeed"
-                            class="modern-form-control speed-select"
-                        >
-                          <option value="0.5">۰.۵x</option>
-                          <option value="0.75">۰.۷۵x</option>
-                          <option value="1">۱x</option>
-                          <option value="1.25">۱.۲۵x</option>
-                          <option value="1.5">۱.۵x</option>
-                          <option value="2">۲x</option>
-                        </select>
-                        <button
-                            class="modern-btn modern-btn-secondary btn-sm ms-2"
-                            @click="toggleVideoFullscreen"
-                            title="تمام صفحه ویدیو">
-                          <i class="fas fa-expand"></i>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- PDF Content -->
-            <div v-else-if="content.type === 'PDF'" class="pdf-content-section">
-              <div class="form-section">
-                <h6 class="section-title">
-                  <i class="fas fa-file-pdf text-danger me-2"></i>
-                  سند PDF
-                </h6>
-                <div class="pdf-container">
-                  <!-- PDF Toolbar -->
-                  <div class="pdf-toolbar">
-                    <div class="pdf-controls">
-                      <button
-                          @click="previousPage"
-                          :disabled="currentPage <= 1"
-                          class="modern-btn modern-btn-secondary btn-sm"
-                      >
-                        <i class="fas fa-chevron-right me-1"></i>
-                        صفحه قبل
-                      </button>
-                      <span class="page-info mx-3">
-                        صفحه {{ currentPage }} از {{ totalPages || '؟' }}
-                      </span>
-                      <button
-                          @click="nextPage"
-                          :disabled="currentPage >= totalPages"
-                          class="modern-btn modern-btn-secondary btn-sm"
-                      >
-                        صفحه بعد
-                        <i class="fas fa-chevron-left ms-1"></i>
-                      </button>
-                    </div>
-
-                    <div class="zoom-controls">
-                      <button @click="zoomOut" class="modern-btn modern-btn-outline btn-sm">
-                        <i class="fas fa-search-minus"></i>
-                      </button>
-                      <span class="zoom-info mx-2">{{ Math.round(zoomLevel * 100) }}%</span>
-                      <button @click="zoomIn" class="modern-btn modern-btn-outline btn-sm">
-                        <i class="fas fa-search-plus"></i>
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- PDF Viewer -->
-                  <div class="pdf-viewer">
-                    <iframe
-                        :src="getPdfUrl()"
-                        class="pdf-frame"
-                        @load="onPdfLoaded"
-                        frameborder="0"
-                    >
-                      <p class="text-center p-4">
-                        مرورگر شما از نمایش PDF پشتیبانی نمی‌کند.
-                        <button class="modern-btn modern-btn-primary" @click="downloadContent">
-                          <i class="fas fa-download me-1"></i>
-                          دانلود فایل
-                        </button>
-                      </p>
-                    </iframe>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Progress Section -->
-            <div class="progress-section mt-4">
-              <div class="form-section">
-                <h6 class="section-title">
-                  <i class="fas fa-chart-line text-success me-2"></i>
-                  پیشرفت مطالعه
-                </h6>
-                <div class="progress-info-card">
-                  <div class="row">
-                    <div class="col-md-8">
-                      <div class="progress-details">
-                        <h6>وضعیت مطالعه شما</h6>
-                        <div class="progress modern-progress mb-2">
-                          <div
-                              class="progress-bar bg-success"
-                              role="progressbar"
-                              :style="`width: ${progressPercentage}%`"
-                              :aria-valuenow="progressPercentage"
-                              aria-valuemin="0"
-                              aria-valuemax="100"
-                          >
-                            {{ Math.round(progressPercentage) }}%
-                          </div>
-                        </div>
-                        <small class="text-muted">
-                          <i class="fas fa-clock me-1"></i>
-                          زمان مطالعه: {{ formatStudyTime(totalViewTime) }}
-                        </small>
-                      </div>
-                    </div>
-                    <div class="col-md-4 text-center">
-                      <div class="progress-circle" :style="`--progress: ${progressPercentage}`">
-                        <div class="progress-circle-inner">
-                          <span class="progress-text">{{ Math.round(progressPercentage) }}%</span>
-                          <span class="progress-label">تکمیل شده</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Content Completion -->
-            <div class="content-completion mt-4" v-if="progressPercentage >= 80">
-              <div class="modern-alert modern-alert-success">
-                <i class="fas fa-check-circle me-2"></i>
-                تبریک! شما این محتوا را با موفقیت مطالعه کردید.
-                <button class="modern-btn modern-btn-success ms-3" @click="markContentComplete">
-                  <i class="fas fa-trophy me-1"></i>
-                  تأیید تکمیل
+                <br>
+                <button class="modern-btn modern-btn-outline btn-sm" @click="initializePdfViewer">
+                  <i class="fas fa-refresh me-1"></i>
+                  تلاش مجدد
                 </button>
               </div>
             </div>
           </div>
-        </loading-spinner>
-      </div>
+        </div>
 
-      <!-- Related Content -->
-      <div v-if="content && !loading" class="modern-card animate-fade-in" style="animation-delay: 0.2s;">
-        <h6 class="section-title">
-          <i class="fas fa-link text-info me-2"></i>
-          عملیات مرتبط
-        </h6>
-        <div class="related-actions">
-          <button class="modern-btn modern-btn-outline me-2" @click="goBack">
-            <i class="fas fa-arrow-right me-1"></i>
-            بازگشت به درس
-          </button>
-          <button
-              v-if="content?.type !== 'TEXT'"
-              class="modern-btn modern-btn-info me-2"
-              @click="downloadContent"
-          >
-            <i class="fas fa-download me-1"></i>
-            دانلود محتوا
-          </button>
-          <button class="modern-btn modern-btn-secondary" @click="shareContent">
-            <i class="fas fa-share me-1"></i>
-            اشتراک‌گذاری
-          </button>
+        <!-- Unknown Content Type -->
+        <div v-else class="unknown-content modern-card">
+          <div class="content-header">
+            <h2 class="content-title">{{ content.title }}</h2>
+            <div class="content-actions">
+              <button
+                  v-if="content.file?.id"
+                  class="modern-btn modern-btn-primary"
+                  @click="downloadContent">
+                <i class="fas fa-download me-1"></i>
+                دانلود فایل
+              </button>
+            </div>
+          </div>
+          <div class="content-body">
+            <div class="unknown-content-area">
+              <div class="unknown-content-icon">
+                <i class="fas fa-file text-muted"></i>
+              </div>
+              <h5>نوع محتوای ناشناخته</h5>
+              <p class="text-muted">
+                این نوع محتوا قابل نمایش نیست. می‌توانید آن را دانلود کنید.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Progress Overlay (when showing) -->
-    <div v-if="showProgress" class="progress-overlay">
-      <div class="progress-container">
-        <div class="progress-circle-large">
-          <svg viewBox="0 0 36 36" class="circular-chart">
-            <path class="circle-bg"
-                  d="M18 2.0845
-                a 15.9155 15.9155 0 0 1 0 31.831
-                a 15.9155 15.9155 0 0 1 0 -31.831"
-            />
-            <path class="circle"
-                  :stroke-dasharray="`${progressPercentage}, 100`"
-                  d="M18 2.0845
-                a 15.9155 15.9155 0 0 1 0 31.831
-                a 15.9155 15.9155 0 0 1 0 -31.831"
-            />
-          </svg>
-          <div class="percentage">{{ Math.round(progressPercentage) }}%</div>
+      <!-- No Content -->
+      <div v-else class="no-content">
+        <div class="modern-card text-center">
+          <div class="py-5">
+            <div class="modern-logo large secondary mb-4">
+              <i class="fas fa-file-alt"></i>
+            </div>
+            <h4 class="text-muted mb-3">محتوایی یافت نشد</h4>
+            <p class="text-muted">محتوای مورد نظر موجود نیست.</p>
+          </div>
         </div>
-        <p class="progress-text">پیشرفت مطالعه</p>
       </div>
     </div>
   </div>
@@ -370,12 +250,19 @@ export default {
       showProgress: false,
       progressPercentage: 0,
       viewStartTime: null,
-      totalViewTime: 0
+      totalViewTime: 0,
+
+      pdfSupported: true,
+      pdfLoading: false,
+      pdfUrl: null,
+      pdfBlob: null
     };
   },
   async created() {
     await this.loadContent();
     this.startProgressTracking();
+    await this.fetchContentData();
+
   },
   beforeUnmount() {
     this.stopProgressTracking();
@@ -403,6 +290,100 @@ export default {
         this.loading = false;
       }
     },
+    async fetchContentData() {
+      if (!this.contentId) {
+        this.error = 'شناسه محتوا مشخص نشده است';
+        this.loading = false;
+        return;
+      }
+
+      try {
+        this.loading = true;
+        this.error = null;
+
+        // Fetch content details
+        const response = await this.$http.get(`/content/${this.contentId}`);
+        this.content = response.data;
+
+        console.log('Content loaded:', this.content);
+
+        // Mark content as viewed for progress tracking
+        await this.markContentViewed();
+
+      } catch (error) {
+        console.error('Error fetching content:', error);
+        this.error = 'خطا در بارگذاری محتوا. لطفاً دوباره تلاش کنید.';
+
+        if (this.$toast) {
+          this.$toast.error('خطا در بارگذاری محتوا');
+        }
+      } finally {
+        this.loading = false;
+      }
+    },
+    initializePdfViewer() {
+      if (this.content.type === 'PDF' && this.content.file?.id) {
+        this.pdfLoading = true;
+        this.pdfUrl = this.pdfViewerUrl;
+
+        // Check if browser supports PDF viewing
+        this.checkPdfSupport();
+      }
+    },
+    checkPdfSupport() {
+      const userAgent = navigator.userAgent.toLowerCase();
+      const isIE = userAgent.includes('msie') || userAgent.includes('trident');
+      const isOldSafari = userAgent.includes('safari') && !userAgent.includes('chrome') &&
+          parseFloat(userAgent.substring(userAgent.indexOf('version/') + 8)) < 10;
+
+      // Disable PDF viewer for browsers with poor PDF support
+      if (isIE || isOldSafari) {
+        this.pdfSupported = false;
+      }
+
+      // For mobile devices, you might want to disable iframe PDF viewing
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      if (isMobile) {
+        this.pdfSupported = false;
+      }
+    },
+    handlePdfLoad() {
+      this.pdfLoading = false;
+      console.log('PDF loaded successfully');
+    },
+
+    // Handle PDF load error
+    handlePdfError() {
+      console.warn('PDF failed to load in iframe, showing fallback');
+      this.pdfSupported = false;
+      this.pdfLoading = false;
+    },
+    async downloadContent() {
+      try {
+        if (!this.content?.file?.id) {
+          this.$toast?.error('فایل برای دانلود موجود نیست');
+          return;
+        }
+
+        // Create download link
+        const downloadUrl = `/api/content/files/${this.content.file.id}`;
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = this.content.file.originalFilename || this.content.title;
+        link.target = '_blank';
+
+        // Trigger download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        this.$toast?.success('دانلود فایل شروع شد');
+      } catch (error) {
+        console.error('Error downloading file:', error);
+        this.$toast?.error('خطا در دانلود فایل');
+      }
+    },
+
 
     async markContentViewed() {
       try {
@@ -546,18 +527,8 @@ export default {
       }
     },
 
-    zoomIn() {
-      this.zoomLevel = Math.min(this.zoomLevel + 0.25, 3);
-    },
 
-    zoomOut() {
-      this.zoomLevel = Math.max(this.zoomLevel - 0.25, 0.5);
-    },
 
-    onPdfLoaded() {
-      // در پروژه واقعی می‌توانید تعداد صفحات را استخراج کنید
-      this.totalPages = 10; // مقدار نمونه
-    },
 
     // Fullscreen methods
     toggleFullscreen() {
@@ -632,393 +603,471 @@ export default {
       }
     },
 
-    downloadContent() {
-      if (this.content && this.content.type !== 'TEXT') {
-        const link = document.createElement('a');
-        link.href = this.getContentUrl(this.content);
-        link.download = this.content.title;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+  },
+  computed: {
 
-        this.$toast?.success('دانلود آغاز شد');
+    pdfViewerUrl() {
+      console.log("pdfViewerUrl() {")
+      if (this.content?.fileId) {
+        console.log(" if (this.content?.fileId)");
+        return `/api/content/files/${this.content.fileId}`;
+      } else if (this.content?.file?.id) {
+        console.log("else if (this.content?.file?.id) {");
+        return `/api/content/files/${this.content.file.id}`;
       }
-    },
+      return null;
+    }
+  },
+  async mounted() {
+    try {
+      if (!this.content) {
+        await this.fetchContentData();
+      }
 
-    shareContent() {
-      if (navigator.share) {
-        navigator.share({
-          title: this.content?.title,
-          text: `محتوای آموزشی: ${this.content?.title}`,
-          url: window.location.href
-        });
-      } else {
-        // کپی لینک به کلیپ‌بورد
-        navigator.clipboard.writeText(window.location.href);
-        this.$toast?.info('لینک محتوا کپی شد');
+      // Initialize PDF viewer if content is PDF
+      if (this.content?.type === 'PDF') {
+        this.initializePdfViewer();
       }
+    } catch (error) {
+      console.error('Error in mounted:', error);
     }
   }
 };
 </script>
 
 <style scoped>
-/* Content Sections */
-.text-content-section,
-.video-content-section,
-.pdf-content-section {
-  margin-bottom: 2rem;
+.content-viewer {
+  min-height: 100vh;
+  padding: 2rem 1rem;
 }
 
-.text-content-container {
-  background: rgba(248, 249, 250, 0.8);
-  border-radius: 12px;
+.loading-container,
+.error-container,
+.no-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.content-container {
+  max-width: 100%;
+}
+
+.content-navigation {
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* Content Header Styles */
+.content-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px 12px 0 0;
+}
+
+.content-title {
+  color: #333;
+  font-weight: 600;
+  margin: 0;
+  flex: 1;
+  font-size: 1.5rem;
+}
+
+.content-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.content-body {
+  border-radius: 0 0 12px 12px;
+  overflow: hidden;
+}
+
+/* Text Content Styles */
+.text-content {
+  background: white;
+}
+
+.text-content-area {
   padding: 2rem;
-  border: 1px solid rgba(102, 126, 234, 0.1);
-  min-height: 400px;
 }
 
 .content-text {
   line-height: 1.8;
   font-size: 1.1rem;
-  color: #495057;
+  color: #333;
   white-space: pre-wrap;
-  word-break: break-word;
+  word-wrap: break-word;
+  max-width: none;
 }
 
-/* Video Styling */
+/* Video Content Styles */
+.video-content {
+  background: white;
+}
+
 .video-container {
-  background: rgba(0, 0, 0, 0.02);
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid rgba(102, 126, 234, 0.1);
+  position: relative;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
 }
 
 .video-player {
   width: 100%;
-  height: 100%;
-  border-radius: 8px;
+  height: auto;
+  max-height: 70vh;
+  min-height: 400px;
   background: #000;
 }
 
-.video-loading-overlay,
-.video-error-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  z-index: 10;
-}
-
-.loading-content,
-.error-content {
+.video-error {
   text-align: center;
+  color: #6c757d;
   padding: 2rem;
 }
 
-.error-content i {
-  font-size: 2rem;
+.video-error i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  display: block;
 }
 
-.video-controls {
-  padding: 1rem;
-  background: rgba(102, 126, 234, 0.05);
-  border-top: 1px solid rgba(102, 126, 234, 0.1);
-}
-
-.playback-controls {
+/* PDF Content Styles */
+.pdf-content {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.speed-select {
-  width: auto;
-  min-width: 80px;
-}
-
-/* PDF Styling */
-.pdf-container {
-  border: 1px solid rgba(102, 126, 234, 0.1);
-  border-radius: 12px;
-  overflow: hidden;
+  flex-direction: column;
+  height: auto;
+  min-height: calc(100vh - 200px);
   background: white;
 }
 
-.pdf-toolbar {
-  background: rgba(102, 126, 234, 0.05);
-  padding: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
-}
-
-.pdf-controls,
-.zoom-controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.page-info,
-.zoom-info {
-  font-weight: 600;
-  color: #495057;
-  min-width: 120px;
-  text-align: center;
+.pdf-viewer-container {
+  flex: 1;
+  position: relative;
+  background: #f8f9fa;
+  border-radius: 0 0 12px 12px;
+  overflow: hidden;
+  min-height: 600px;
 }
 
 .pdf-viewer {
-  height: 600px;
-  overflow: hidden;
-}
-
-.pdf-frame {
   width: 100%;
   height: 100%;
+  min-height: 600px;
   border: none;
-}
-
-/* Progress Section */
-.progress-section {
-  background: linear-gradient(135deg, rgba(40, 167, 69, 0.05), rgba(46, 204, 113, 0.05));
-  border-radius: 12px;
-}
-
-.progress-info-card {
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 8px;
-  padding: 1.5rem;
-  border: 1px solid rgba(40, 167, 69, 0.1);
-}
-
-.modern-progress {
-  height: 12px;
-  border-radius: 6px;
-  background: rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-.progress-circle {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  background: conic-gradient(
-      #28a745 0deg,
-      #28a745 calc(var(--progress) * 3.6deg),
-      #e9ecef calc(var(--progress) * 3.6deg)
-  );
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  margin: 0 auto;
-}
-
-.progress-circle::before {
-  content: '';
-  position: absolute;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
   background: white;
 }
 
-.progress-circle-inner {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-}
-
-.progress-text {
-  font-size: 1rem;
-  font-weight: bold;
-  color: #28a745;
-  display: block;
-}
-
-.progress-label {
-  font-size: 0.7rem;
-  color: #6c757d;
-  display: block;
-}
-
-/* Progress Overlay */
-.progress-overlay {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
-  padding: 2rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(102, 126, 234, 0.2);
-  z-index: 1000;
-  text-align: center;
-  backdrop-filter: blur(10px);
-}
-
-.progress-circle-large {
-  width: 100px;
-  height: 100px;
-  margin: 0 auto 1rem;
-  position: relative;
-}
-
-.circular-chart {
-  width: 100%;
+.pdf-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: 100%;
+  min-height: 400px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
 }
 
-.circle-bg {
-  fill: none;
-  stroke: #e9ecef;
-  stroke-width: 3.8;
+.fallback-content {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  margin: 2rem;
 }
 
-.circle {
-  fill: none;
-  stroke: #28a745;
-  stroke-width: 3.8;
-  stroke-linecap: round;
-  animation: progress-animation 1s ease-in-out forwards;
+.fallback-icon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  opacity: 0.7;
 }
 
-.percentage {
+.fallback-content h5 {
+  color: #495057;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.fallback-content .text-muted {
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.pdf-loading {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #28a745;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 10;
 }
 
-.progress-text {
-  color: #495057;
-  font-size: 0.9rem;
+.pdf-loading .spinner-border {
+  width: 3rem;
+  height: 3rem;
+}
+
+.pdf-loading p {
   margin: 0;
+  color: #6c757d;
+  font-weight: 500;
 }
 
-/* Related Actions */
-.related-actions {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+/* Unknown Content Styles */
+.unknown-content {
+  background: white;
 }
 
-/* Content Actions */
-.content-actions {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+.unknown-content-area {
+  padding: 3rem 2rem;
+  text-align: center;
 }
 
-/* Responsive */
+.unknown-content-icon {
+  font-size: 4rem;
+  color: #6c757d;
+  margin-bottom: 1.5rem;
+  opacity: 0.7;
+}
+
+.unknown-content-area h5 {
+  color: #495057;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.unknown-content-area .text-muted {
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+/* Error and Loading States */
+.loading-container .spinner-border,
+.error-container .modern-logo {
+  margin-bottom: 1rem;
+}
+
+/* Responsive Design */
 @media (max-width: 768px) {
-  .text-content-container {
-    padding: 1.5rem;
-    font-size: 1rem;
+  .content-viewer {
+    padding: 1rem 0.5rem;
   }
 
-  .d-flex.justify-content-between {
+  .content-header {
     flex-direction: column;
     gap: 1rem;
+    align-items: stretch;
+    padding: 1rem;
   }
 
-  .content-actions,
-  .related-actions {
+  .content-title {
+    font-size: 1.25rem;
+    text-align: center;
+  }
+
+  .content-actions {
     justify-content: center;
   }
 
-  .pdf-toolbar {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .playback-controls {
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .progress-overlay {
-    margin: 1rem;
+  .text-content-area {
     padding: 1.5rem;
   }
 
-  .video-controls {
-    flex-direction: column;
-    gap: 1rem;
+  .content-text {
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  .video-player {
+    min-height: 250px;
+  }
+
+  .pdf-viewer {
+    min-height: 400px;
+  }
+
+  .pdf-viewer-container {
+    min-height: 400px;
+  }
+
+  .fallback-content {
+    margin: 1rem;
+    padding: 2rem 1.5rem;
+  }
+
+  .fallback-icon {
+    font-size: 3rem;
+  }
+
+  .unknown-content-area {
+    padding: 2rem 1.5rem;
+  }
+
+  .unknown-content-icon {
+    font-size: 3rem;
   }
 }
 
 @media (max-width: 576px) {
-  .content-actions .modern-btn,
-  .related-actions .modern-btn {
-    flex: 1;
-    min-width: 0;
+  .content-title {
+    font-size: 1.1rem;
   }
 
-  .pdf-controls,
-  .zoom-controls {
-    justify-content: center;
+  .text-content-area {
+    padding: 1rem;
+  }
+
+  .content-text {
+    font-size: 0.95rem;
+  }
+
+  .video-player {
+    min-height: 200px;
+  }
+
+  .pdf-viewer {
+    min-height: 300px;
+  }
+
+  .pdf-viewer-container {
+    min-height: 300px;
   }
 }
 
-/* Dark mode support */
+/* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
-  .text-content-container {
-    background: rgba(45, 55, 72, 0.8);
-    border-color: rgba(102, 126, 234, 0.2);
+  .content-header {
+    background: rgba(45, 55, 72, 0.9);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .content-title {
+    color: #e2e8f0;
+  }
+
+  .text-content,
+  .video-content,
+  .pdf-content,
+  .unknown-content {
+    background: #2d3748;
+  }
+
+  .text-content-area {
+    background: #2d3748;
   }
 
   .content-text {
     color: #e2e8f0;
   }
 
-  .video-container,
-  .pdf-container {
-    background: rgba(45, 55, 72, 0.8);
-    border-color: rgba(102, 126, 234, 0.2);
-  }
-
-  .progress-info-card {
-    background: rgba(45, 55, 72, 0.8);
-    border-color: rgba(40, 167, 69, 0.2);
-  }
-
-  .progress-circle::before {
+  .pdf-viewer-container {
     background: #2d3748;
   }
 
-  .progress-overlay {
+  .fallback-content {
+    background: #2d3748;
+    color: #e2e8f0;
+  }
+
+  .fallback-content h5 {
+    color: #e2e8f0;
+  }
+
+  .pdf-loading {
     background: rgba(45, 55, 72, 0.95);
-    border-color: rgba(102, 126, 234, 0.3);
+    color: #e2e8f0;
+  }
+
+  .unknown-content-area {
+    background: #2d3748;
+  }
+
+  .unknown-content-area h5 {
+    color: #e2e8f0;
   }
 }
 
-/* Animations */
-@keyframes progress-animation {
-  0% {
-    stroke-dasharray: 0 100;
+/* Print Styles */
+@media print {
+  .content-navigation,
+  .content-actions {
+    display: none;
+  }
+
+  .content-viewer {
+    background: white;
+    padding: 0;
+  }
+
+  .modern-card {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+
+  .content-text {
+    color: black;
   }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.6s ease forwards;
+/* Animation Classes */
+.animate-slide-up {
+  animation: slideInUp 0.6s ease forwards;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Focus and Accessibility */
+.modern-btn:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+.video-player:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .content-header {
+    border-bottom: 2px solid #000;
+  }
+
+  .content-title {
+    color: #000;
+  }
+
+  .content-text {
+    color: #000;
+    font-weight: 500;
+  }
+
+  .fallback-content,
+  .unknown-content-area {
+    border: 2px solid #000;
+  }
 }
 </style>
