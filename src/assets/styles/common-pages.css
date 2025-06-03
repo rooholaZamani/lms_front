@@ -653,4 +653,36 @@
     .modern-logo {
         background: #667eea !important;
     }
+    /* Add to your global CSS */
+    .modern-badge-primary { background: #007bff; color: white; }
+    .modern-badge-success { background: #28a745; color: white; }
+    .modern-badge-warning { background: #ffc107; color: #000; }
+    .modern-badge-danger { background: #dc3545; color: white; }
+    .modern-badge-info { background: #17a2b8; color: white; }
+    .modern-badge-secondary { background: #6c757d; color: white; }
+
+    .animate-slide-up { animation: slideUp 0.6s ease-out; }
+    .animate-slide-right { animation: slideRight 0.6s ease-out; }
+    .animate-slide-left { animation: slideLeft 0.6s ease-out; }
+    .animate-fade-in { animation: fadeIn 0.6s ease-out; }
+
+    @keyframes slideUp {
+        from { transform: translateY(30px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes slideRight {
+        from { transform: translateX(-30px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes slideLeft {
+        from { transform: translateX(30px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
 }

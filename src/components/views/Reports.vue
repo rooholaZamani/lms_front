@@ -626,6 +626,7 @@
 import { useFormatters } from '@/composables/useFormatters.js';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
 import Charts from '@/components/charts/Charts.vue';
+import { Modal } from 'bootstrap';
 import axios from 'axios';
 
 export default {

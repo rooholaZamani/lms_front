@@ -281,6 +281,16 @@ const routes = [
     }
   },
   {
+    path: '/teacher/student-activities',
+    name: 'StudentActivities',
+    component: () => import('../components/analytics/StudentActivities.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresTeacher: true,
+      showSidebar: true
+    }
+  },
+  {
     path: '/student/exam-results',
     name: 'StudentExamResults',
     component: () => import(/* webpackChunkName: "student-exams-table" */ '../components/exams/StudentExamResults.vue'),

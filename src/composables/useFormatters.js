@@ -15,8 +15,9 @@ export function useFormatters() {
             month: '2-digit',
             day: '2-digit'
         }).format(date);
-    };
 
+
+    };
     /**
      * تبدیل سایز فایل به فرمت خوانا
      * @param {number} bytes - حجم فایل به بایت

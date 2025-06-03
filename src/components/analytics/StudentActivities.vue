@@ -447,7 +447,7 @@ import axios from 'axios';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
 import Charts from '@/components/charts/Charts.vue';
 import { useFormatters } from '@/composables/useFormatters.js';
-import formMixin from '@/mixins/formMixin.js';
+
 
 export default {
   name: 'StudentActivities',
@@ -455,7 +455,6 @@ export default {
     LoadingSpinner,
     Charts
   },
-  mixins: [formMixin],
   setup() {
     const { formatDate, formatTime } = useFormatters();
     return { formatDate, formatTime };
@@ -497,7 +496,13 @@ export default {
         this.showErrorToast('خطا در بارگذاری دوره‌ها');
       }
     },
+    showErrorToast(message) {
+      this.$toast?.error(message);
+    },
 
+    showSuccessToast(message) {
+      this.$toast?.success(message);
+    },
     async fetchStudentsForCourse() {
       if (!this.selectedCourseId) {
         this.courseStudents = [];
