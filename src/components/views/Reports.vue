@@ -1021,7 +1021,7 @@ export default {
     },
 
     exportReport() {
-      const modal = new bootstrap.Modal(document.getElementById('exportModal'));
+      const modal = new Modal(document.getElementById('exportModal'));
       modal.show();
     },
 

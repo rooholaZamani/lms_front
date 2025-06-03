@@ -444,7 +444,8 @@
 
 <script>
 import axios from 'axios';
-import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
+// import formMixin from '@/mixins/formMixin.js';
 import Charts from '@/components/charts/Charts.vue';
 import { useFormatters } from '@/composables/useFormatters.js';
 
@@ -523,11 +524,11 @@ export default {
 
       this.loading = true;
       try {
-        this.selectedStudent = this.courseStudents.find(s => s.studentId == this.selectedStudentId);
+        this.selectedStudent = this.courseStudents.find(s => s.studentId === this.selectedStudentId);
 
         // دریافت تحلیل‌های دانش‌آموز
         const [performanceResponse, comparisonResponse] = await Promise.all([
-          axios.get(`/analytics/student/${this.selectedStudentId}/performance`),
+          axios.get(`/analytics/student/${this.selectedStudentId}/course/${this.selectedCourseId}/detailed`),
           axios.get(`/analytics/course/${this.selectedCourseId}/student-comparison?studentId=${this.selectedStudentId}`)
         ]);
 
@@ -615,35 +616,33 @@ export default {
     },
 
     async fetchRecentActivities() {
-      // تولید فعالیت‌های اخیر
-      this.recentActivities = [
-        {
-          type: 'LESSON_COMPLETION',
-          description: 'تکمیل درس: متغیرها و انواع داده',
-          timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-          score: null
-        },
-        {
-          type: 'EXAM_SUBMISSION',
-          description: 'ارسال آزمون: مبانی پایتون',
-          timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000),
-          score: 88
-        },
-        {
-          type: 'EXERCISE_COMPLETION',
-          description: 'تکمیل تمرین: تمرین سریع پایتون',
-          timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-          score: 95
-        },
-        {
-          type: 'CONTENT_VIEW',
-          description: 'مشاهده محتوا: مقدمه‌ای بر توابع',
-          timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-          score: null
-        }
-      ];
+      try {
+        const response = await axios.get(`/analytics/student/${this.selectedStudentId}/activity-timeline`);
+        this.recentActivities = response.data || [];
+      } catch (error) {
+        console.error('Error fetching student activities:', error);
+        // Fallback to mock data if needed
+        this.recentActivities = [];
+      }
     },
-
+    async fetchStudentExamPerformance() {
+      try {
+        const response = await axios.get(`/analytics/student/${this.selectedStudentId}/exam-performance`);
+        return response.data || [];
+      } catch (error) {
+        console.error('Error fetching exam performance:', error);
+        return [];
+      }
+    },
+    async fetchStudentTimeAnalysis() {
+      try {
+        const response = await axios.get(`/analytics/student/${this.selectedStudentId}/time-analysis`);
+        return response.data || [];
+      } catch (error) {
+        console.error('Error fetching time analysis:', error);
+        return [];
+      }
+    },
     getProgressClass(percentage) {
       if (percentage >= 90) return 'excellent';
       if (percentage >= 70) return 'good';
@@ -681,7 +680,6 @@ export default {
       if (hours > 0) return `${hours} ساعت قبل`;
       return 'همین الان';
     },
-
     getRankPercentage() {
       if (!this.studentAnalytics.classRank || !this.studentAnalytics.totalStudents) return 50;
       return ((this.studentAnalytics.classRank - 1) / (this.studentAnalytics.totalStudents - 1)) * 100;
