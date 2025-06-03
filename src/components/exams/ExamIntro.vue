@@ -140,6 +140,12 @@
                 <i class="fas fa-play me-2"></i>
                 شروع آزمون
               </button>
+
+              <button class="modern-btn modern-btn-danger mt-3 w-100" @click="goBackToLesson">
+                <i class="fas fa-play me-2"></i>
+                بازگشت به درس
+              </button>
+
             </div>
           </div>
         </div>
