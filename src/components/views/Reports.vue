@@ -745,6 +745,25 @@ export default {
         this.loading = false;
       }
     },
+    methods: {
+      async fetchStudentTimeAnalysis() {
+        try {
+          const response = await axios.get(`/analytics/student/${studentId}/time-analysis`);
+          return response.data;
+        } catch (error) {
+          console.error('Error fetching time analysis:', error);
+        }
+      },
+
+      async fetchStudentActivityTimeline() {
+        try {
+          const response = await axios.get(`/analytics/student/${studentId}/activity-timeline`);
+          return response.data;
+        } catch (error) {
+          console.error('Error fetching activity timeline:', error);
+        }
+      }
+    },
 
     async fetchCourses() {
       try {

@@ -335,6 +335,39 @@ const routes = [
     }
   },
   {
+    path: '/lessons/:lessonId',
+    name: 'LessonDetail',
+    component: () => import('../components/lessons/LessonDetail.vue'),
+    props: true,
+    meta: {
+      title: 'جزئیات درس',
+      requiresAuth: true,
+      showSidebar: true
+    }
+  },
+  {
+    path: '/assignments/:id',
+    name: 'AssignmentDetail',
+    component: () => import('../components/assignments/AssignmentDetail.vue'),
+    props: true,
+    meta: {
+      title: 'جزئیات تکلیف',
+      requiresAuth: true,
+      showSidebar: true
+    }
+  },
+  {
+    path: '/teacher/analytics',
+    name: 'TeacherAnalytics',
+    component: () => import('../components/analytics/TeacherAnalytics.vue'),
+    meta: {
+      title: 'آنالیتیکس پیشرفته',
+      requiresAuth: true,
+      requiresTeacher: true,
+      showSidebar: true
+    }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: NotFound,

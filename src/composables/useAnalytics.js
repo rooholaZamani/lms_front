@@ -539,6 +539,25 @@ export function useAnalytics() {
         } finally {
             loading.value = false;
         }
+    }
+    const fetchStudentTimeAnalysis = async (studentId) => {
+        try {
+            const response = await axios.get(`/analytics/student/${studentId}/time-analysis`);
+            return response.data;
+        } catch (err) {
+            error.value = 'خطا در دریافت تحلیل زمان دانش‌آموز';
+            throw err;
+        }
+    };
+
+    const fetchStudentActivityTimeline = async (studentId) => {
+        try {
+            const response = await axios.get(`/analytics/student/${studentId}/activity-timeline`);
+            return response.data;
+        } catch (err) {
+            error.value = 'خطا در دریافت جدول زمانی فعالیت';
+            throw err;
+        }
     };
 
     const fetchDailyEngagementStats = async () => {
