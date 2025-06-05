@@ -686,10 +686,10 @@ export default {
       },
 
       systemSummary: {
-        fastestContent: 'آزمون‌ها',
-        slowestContent: 'پروژه‌های گروهی',
-        avgStudyTime: '۳۴.۵ دقیقه',
-        totalHours: '۸۴۵۰ ساعت'
+        fastestContent: 'در حال محاسبه...',
+        slowestContent: 'در حال محاسبه...',
+        avgStudyTime: '0 دقیقه',
+        totalHours: '0 ساعت'
       },
 
       timeAnalysisData: [],
@@ -699,36 +699,36 @@ export default {
       challengingQuestions: [],
 
       difficultyStats: {
-        easy: 25,
-        medium: 40,
-        hard: 25,
-        veryHard: 10
+        easy: 0,
+        medium: 0,
+        hard: 0,
+        veryHard: 0
       },
 
       bestLesson: {
-        title: 'مقدمه‌ای بر برنامه‌نویسی',
-        score: 94
+        title: 'در حال محاسبه...',
+        score: 0
       },
 
       challengingLesson: {
-        title: 'برنامه‌نویسی شیءگرا',
-        score: 68
+        title: 'در حال محاسبه...',
+        score: 0
       },
 
       engagementMetrics: {
-        avgDailyLogins: 156,
-        loginTrend: 12,
-        avgContentViews: 342,
-        viewTrend: 8,
-        avgExamSubmissions: 45,
-        examTrend: -3,
-        avgDiscussions: 78,
-        discussionTrend: 15
+        avgDailyLogins: 0,
+        loginTrend: 0,
+        avgContentViews: 0,
+        viewTrend: 0,
+        avgExamSubmissions: 0,
+        examTrend: 0,
+        avgDiscussions: 0,
+        discussionTrend: 0
       },
 
-      topPerformers: [],
-      strugglingStudents: [],
-      recentActivities: [],
+      topPerformers: [], // حذف داده‌های فیک
+      strugglingStudents: [], // این از API می‌آید
+      recentActivities: [], // حذف داده‌های فیک
 
       exportOptions: {
         format: 'pdf',
@@ -782,6 +782,7 @@ export default {
         this.loading = false;
       }
     },
+
     async fetchCourseSpecificData(courseId) {
       if (!courseId) return;
 
@@ -808,8 +809,8 @@ export default {
         console.error('خطا در دریافت اطلاعات دوره:', error);
         this.$toast?.error('خطا در دریافت اطلاعات دوره');
       }
-
     },
+
     async fetchOverallStats() {
       try {
         const data = await this.fetchSystemOverview();
@@ -824,15 +825,23 @@ export default {
           scoreTrend: data.trends?.scoreTrend || 0
         };
 
-        // بروزرسانی خلاصه سیستم
+        // استفاده از داده‌های واقعی برای خلاصه سیستم
         this.systemSummary = {
-          fastestContent: 'آزمون‌ها',
-          slowestContent: 'پروژه‌های گروهی',
+          fastestContent: 'محاسبه شده از داده‌ها', // این باید از timeAnalysis محاسبه شود
+          slowestContent: 'محاسبه شده از داده‌ها',
           avgStudyTime: `${data.avgTimePerStudent || 0} دقیقه`,
           totalHours: `${data.totalHours || 0} ساعت`
         };
 
-        // بروزرسانی معیارهای مشارکت
+        // محاسبه سریع‌ترین و کندترین محتوا از timeAnalysis
+        const timeAnalysisData = await this.fetchTimeAnalysis();
+        if (timeAnalysisData.length > 0) {
+          const sortedByTime = [...timeAnalysisData].sort((a, b) => a.avgTime - b.avgTime);
+          this.systemSummary.fastestContent = sortedByTime[0]?.contentType || 'نامشخص';
+          this.systemSummary.slowestContent = sortedByTime[sortedByTime.length - 1]?.contentType || 'نامشخص';
+        }
+
+        // بروزرسانی معیارهای مشارکت از API واقعی
         const engagementData = await this.fetchDailyEngagementStats();
         this.engagementMetrics = {
           avgDailyLogins: engagementData.avgDailyLogins || 0,
@@ -862,12 +871,12 @@ export default {
 
         // دریافت تحلیل سختی سوالات
         const difficultyData = await this.fetchQuestionDifficultyAnalysis();
-        this.questionDifficultyData = difficultyData.map(item => ({
-          range: 'General Topic',
+        this.questionDifficultyData = difficultyData.map((item, index) => ({
+          range: item.topic || `موضوع ${index + 1}`,
           count: item.easyQuestions + item.mediumQuestions + item.hardQuestions
         }));
 
-        // محاسبه آمار سختی
+        // محاسبه آمار سختی واقعی
         if (difficultyData.length > 0) {
           const totalQuestions = difficultyData.reduce((sum, item) =>
               sum + item.easyQuestions + item.mediumQuestions + item.hardQuestions, 0);
@@ -877,7 +886,7 @@ export default {
               easy: Math.round(difficultyData.reduce((sum, item) => sum + item.easyQuestions, 0) / totalQuestions * 100),
               medium: Math.round(difficultyData.reduce((sum, item) => sum + item.mediumQuestions, 0) / totalQuestions * 100),
               hard: Math.round(difficultyData.reduce((sum, item) => sum + item.hardQuestions, 0) / totalQuestions * 100),
-              veryHard: 10 // مقدار پیش‌فرض
+              veryHard: Math.round(difficultyData.reduce((sum, item) => sum + (item.hardQuestions * 0.3), 0) / totalQuestions * 100) // تخمین برای خیلی سخت
             };
           }
         }
@@ -885,21 +894,21 @@ export default {
         // دریافت عملکرد درس‌ها
         const lessonData = await this.fetchLessonPerformanceAnalysis();
         this.lessonPerformanceData = lessonData.map(lesson => ({
-          date: '1403/09/01',
+          date: lesson.lesson || 'درس',
           views: Math.floor(lesson.avgTime || 0),
           submissions: Math.floor(lesson.completionRate || 0),
           completions: Math.floor(lesson.avgScore || 0)
         }));
 
-        // پیدا کردن بهترین و ضعیف‌ترین درس
+        // پیدا کردن بهترین و ضعیف‌ترین درس از داده‌های واقعی
         if (lessonData.length > 0) {
           const sortedLessons = [...lessonData].sort((a, b) => (b.avgScore || 0) - (a.avgScore || 0));
           this.bestLesson = {
-            title: sortedLessons[0]?.lesson || 'نامشخص',
+            title: sortedLessons[0]?.lesson || 'درس یافت نشد',
             score: Math.round(sortedLessons[0]?.avgScore || 0)
           };
           this.challengingLesson = {
-            title: sortedLessons[sortedLessons.length - 1]?.lesson || 'نامشخص',
+            title: sortedLessons[sortedLessons.length - 1]?.lesson || 'درس یافت نشد',
             score: Math.round(sortedLessons[sortedLessons.length - 1]?.avgScore || 0)
           };
         }
@@ -921,30 +930,94 @@ export default {
           difficulty: question.difficulty,
           correctRate: 100 - question.difficulty, // تبدیل سختی به نرخ موفقیت
           avgTime: question.avgTime,
-          attempts: question.attempts
+          attempts: question.attempts,
+          topic: question.topic || 'عمومی'
         }));
+
+        // دریافت topPerformers واقعی از همه دوره‌ها
+        const coursesResponse = await axios.get('/courses/teaching');
+        const courses = coursesResponse.data || [];
+
+        let allTopPerformers = [];
+
+        for (const course of courses) {
+          try {
+            const topResponse = await axios.get(`/analytics/course/${course.id}/top-performers`);
+            const courseTopPerformers = topResponse.data.topByScore || [];
+
+            // اضافه کردن اطلاعات دوره به هر performer
+            courseTopPerformers.forEach(performer => {
+              allTopPerformers.push({
+                ...performer,
+                courseName: course.title,
+                courseId: course.id
+              });
+            });
+          } catch (error) {
+            console.warn(`خطا در دریافت top performers دوره ${course.id}:`, error);
+          }
+        }
+
+        // مرتب‌سازی بر اساس نمره و انتخاب 5 نفر برتر
+        this.topPerformers = allTopPerformers
+            .sort((a, b) => (b.score || 0) - (a.score || 0))
+            .slice(0, 5);
+
+        // دریافت struggling students واقعی از همه دوره‌ها
+        let allStrugglingStudents = [];
+
+        for (const course of courses) {
+          try {
+            const strugglingResponse = await axios.get(`/analytics/teacher/course/${course.id}/struggling-students`);
+            const courseStrugglingStudents = strugglingResponse.data || [];
+
+            // اضافه کردن اطلاعات دوره به هر student
+            courseStrugglingStudents.forEach(student => {
+              allStrugglingStudents.push({
+                ...student,
+                courseName: course.title,
+                courseId: course.id
+              });
+            });
+          } catch (error) {
+            console.warn(`خطا در دریافت struggling students دوره ${course.id}:`, error);
+          }
+        }
+
+        // مرتب‌سازی بر اساس پایین‌ترین progress و انتخاب 3 نفر
+        this.strugglingStudents = allStrugglingStudents
+            .sort((a, b) => (a.progress || 0) - (b.progress || 0))
+            .slice(0, 3);
 
       } catch (error) {
         console.error('خطا در دریافت داده‌های تحلیلی:', error);
-      }
-    },
-    methods: {
-      async fetchStudentTimeAnalysis() {
-        try {
-          const response = await axios.get(`/analytics/student/${studentId}/time-analysis`);
-          return response.data;
-        } catch (error) {
-          console.error('Error fetching time analysis:', error);
-        }
-      },
+        this.$toast?.error('خطا در دریافت برخی از داده‌های تحلیلی');
 
-      async fetchStudentActivityTimeline() {
-        try {
-          const response = await axios.get(`/analytics/student/${studentId}/activity-timeline`);
-          return response.data;
-        } catch (error) {
-          console.error('Error fetching activity timeline:', error);
-        }
+        // در صورت خطا، مقادیر پیش‌فرض تنظیم شود
+        this.timeAnalysisData = [];
+        this.questionDifficultyData = [];
+        this.lessonPerformanceData = [];
+        this.engagementTrendsData = [];
+        this.challengingQuestions = [];
+        this.topPerformers = [];
+        this.strugglingStudents = [];
+
+        this.difficultyStats = {
+          easy: 0,
+          medium: 0,
+          hard: 0,
+          veryHard: 0
+        };
+
+        this.bestLesson = {
+          title: 'داده‌ای موجود نیست',
+          score: 0
+        };
+
+        this.challengingLesson = {
+          title: 'داده‌ای موجود نیست',
+          score: 0
+        };
       }
     },
 
@@ -952,37 +1025,57 @@ export default {
       try {
         const response = await axios.get('/courses/teaching');
         this.courses = response.data || [];
+
+        // اگر دوره‌ای وجود نداشت، پیام مناسب نمایش بده
+        if (this.courses.length === 0) {
+          this.$toast?.info('هنوز دوره‌ای ایجاد نکرده‌اید');
+        }
       } catch (error) {
         console.error('خطا در دریافت دوره‌ها:', error);
+        this.courses = [];
+        this.$toast?.error('خطا در دریافت فهرست دوره‌ها');
       }
     },
 
     async fetchRecentActivities() {
       try {
-        // استفاده از API موجود دانش‌آموزان در حال مشکل
-        const strugglingResponse = await axios.get('/analytics/teacher/course/1/struggling-students');
-        const strugglingStudents = strugglingResponse.data || [];
+        // استفاده از آزمون‌های اخیر معلم
+        const examsResponse = await axios.get('/exams/teaching');
+        const teacherExams = examsResponse.data || [];
 
-        // تولید فعالیت‌های شبیه‌سازی شده براساس داده‌های واقعی
-        this.recentActivities = strugglingStudents.slice(0, 5).map((student, index) => ({
-          id: index + 1,
-          type: ['exam', 'lesson', 'assignment'][index % 3],
-          student: {
-            name: student.name || 'نامشخص',
-            email: `${student.name?.replace(' ', '')}@example.com` || 'unknown@example.com'
-          },
-          course: { title: 'دوره عمومی' },
-          details: index % 3 === 0 ? 'آزمون اخیر' : index % 3 === 1 ? 'تکمیل درس' : 'ارسال تکلیف',
-          date: new Date(Date.now() - (index * 2 * 60 * 60 * 1000)).toISOString(),
-          score: index % 3 === 0 ? Math.floor(Math.random() * 40) + 60 : null
-        }));
+        // تبدیل submissions به فعالیت‌های اخیر
+        this.recentActivities = [];
 
-        // دریافت دانش‌آموزان نیازمند کمک
-        this.strugglingStudents = strugglingStudents.slice(0, 3);
+        teacherExams.forEach(exam => {
+          if (exam.submissions && exam.submissions.length > 0) {
+            exam.submissions.slice(0, 3).forEach(submission => {
+              this.recentActivities.push({
+                id: submission.id,
+                type: 'exam',
+                student: {
+                  name: `دانش‌آموز ${submission.studentId}`,
+                  email: `student${submission.studentId}@example.com`
+                },
+                course: {
+                  title: exam.lesson?.course?.title || 'نامشخص'
+                },
+                details: exam.title,
+                date: submission.submittedAt,
+                score: submission.score
+              });
+            });
+          }
+        });
+
+        // مرتب‌سازی بر اساس تاریخ (جدیدترین اول)
+        this.recentActivities.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        // نگه داشتن فقط 10 فعالیت اخیر
+        this.recentActivities = this.recentActivities.slice(0, 10);
 
       } catch (error) {
         console.error('خطا در دریافت فعالیت‌های اخیر:', error);
-        // در صورت خطا، داده‌های پیش‌فرض نگه داشته می‌شوند
+        this.recentActivities = []; // در صورت خطا، آرایه خالی
       }
     },
 
@@ -1000,7 +1093,6 @@ export default {
       await this.fetchRecentActivities();
       this.$toast?.success('فعالیت‌ها بروزرسانی شد');
     },
-
     getTrendIcon(trend) {
       if (trend > 0) return 'fas fa-arrow-up text-success';
       if (trend < 0) return 'fas fa-arrow-down text-danger';

@@ -367,6 +367,18 @@ const routes = [
   //     showSidebar: true
   //   }
   // },
+
+  {
+    path: '/chat/:courseId',
+    name: 'CourseChat',
+    component: () => import(/* webpackChunkName: "chat" */ '../components/courses/CourseChat.vue'),
+    props: true,
+    meta: {
+      title: 'گفتگوی درس',
+      requiresAuth: true,
+      hideSidebar: true  // برای تمرکز بیشتر روی چت
+    }
+  },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',

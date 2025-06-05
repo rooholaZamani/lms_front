@@ -39,13 +39,13 @@
                   دانش‌آموزان
                 </button>
               </li>
-              <li v-if="isEnrolled || isTeacherOfCourse" class="nav-item" role="presentation">
-                <button class="nav-link" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat"
-                        type="button" role="tab" aria-controls="chat" aria-selected="false">
-                  <i class="fas fa-comments me-2"></i>
-                  گفتگوی دوره
-                </button>
-              </li>
+<!--              <li v-if="isEnrolled || isTeacherOfCourse" class="nav-item" role="presentation">-->
+<!--                <button class="nav-link" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat"-->
+<!--                        type="button" role="tab" aria-controls="chat" aria-selected="false">-->
+<!--                  <i class="fas fa-comments me-2"></i>-->
+<!--                  گفتگوی دوره-->
+<!--                </button>-->
+<!--              </li>-->
               <li v-if="isTeacher && isTeacherOfCourse" class="nav-item" role="presentation">
                 <button class="nav-link modern-nav-link" id="manage-tab" data-bs-toggle="tab" data-bs-target="#manage"
                         type="button" role="tab" aria-controls="manage" aria-selected="false">

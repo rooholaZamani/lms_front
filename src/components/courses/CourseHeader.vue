@@ -41,7 +41,41 @@
               <button class="modern-btn modern-btn-primary w-100 mb-2" @click="$emit('add-lesson')">
                 <i class="fas fa-plus me-1"></i> افزودن درس
               </button>
-            </div>
+                  <!-- دکمه چت جدید -->
+                  <button class="modern-btn modern-btn-info w-100 mb-2" @click="openCourseChat">
+                    <i class="fas fa-comments me-1"></i> گفتگوی درس
+                  </button>
+                </div>
+              </div>
+
+              <!-- در بخش Student Actions - بعد از دکمه‌های موجود -->
+              <div v-else-if="!isTeacher" class="action-group">
+                <h6 class="action-group-title">
+                  <i class="fas fa-user-graduate me-2"></i>
+                  وضعیت شما
+                </h6>
+                <div class="enrollment-status" v-if="isEnrolled">
+                  <div class="status-card enrolled">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    <span>شما در این دوره ثبت‌نام کرده‌اید</span>
+                  </div>
+                  <button class="modern-btn modern-btn-outline w-100 mt-2 mb-2" @click="$emit('view-progress')">
+                    <i class="fas fa-chart-line me-1"></i> مشاهده پیشرفت
+                  </button>
+                  <!-- دکمه چت جدید -->
+                  <button class="modern-btn modern-btn-info w-100" @click="openCourseChat">
+                    <i class="fas fa-comments me-1"></i> گفتگوی درس
+                  </button>
+                </div>
+                <div class="enrollment-status" v-else>
+                  <div class="status-card not-enrolled">
+                    <i class="fas fa-info-circle text-warning me-2"></i>
+                    <span>شما هنوز در این دوره ثبت‌نام نکرده‌اید</span>
+                  </div>
+                  <button class="modern-btn modern-btn-primary w-100 mt-2" @click="$emit('enroll-course')">
+                    <i class="fas fa-sign-in-alt me-1"></i> ثبت‌نام در دوره
+                  </button>
+                </div>
           </div>
 
           <!-- Student Actions -->
@@ -117,6 +151,21 @@ export default {
       return this.course.teacher.firstName && this.course.teacher.lastName
           ? `${this.course.teacher.firstName} ${this.course.teacher.lastName}`
           : this.course.teacher.username;
+    },
+    // متد جدید برای باز کردن چت
+    openCourseChat() {
+      if (!this.course || !this.course.id) {
+        this.$toast?.error('شناسه دوره معتبر نیست');
+        return;
+      }
+
+      // باز کردن صفحه چت در تب جدید
+      const chatUrl = this.$router.resolve({
+        name: 'CourseChat',
+        params: { courseId: this.course.id }
+      }).href;
+
+      window.open(chatUrl, '_blank');
     }
   }
 }
