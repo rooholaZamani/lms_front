@@ -63,9 +63,9 @@
                   </div>
 
                   <!-- Message -->
-                  <div :class="['message-item', message.sender.id === currentUser.id ? 'message-own' : 'message-other']">
+                  <div :class="['message-item', message.sender && message.sender.id === currentUser.id ? 'message-own' : 'message-other']">
                     <div class="message-avatar">
-                      {{ getInitials(message.sender.firstName, message.sender.lastName) }}
+                      {{ getInitials(message.sender?.firstName, message.sender?.lastName) }}
                     </div>
                     <div class="message-content">
                       <div class="message-header">
@@ -131,12 +131,11 @@ export default {
     }
   },
   setup() {
-    const { currentUser, getUserFullName } = useUser();
+    const { currentUser } = useUser();
     const { formatDate } = useFormatters();
 
     return {
       currentUser,
-      getUserFullName,
       formatDate
     };
   },
@@ -160,10 +159,23 @@ export default {
     };
   },
   async created() {
-    await this.fetchCourseData();
-    await this.fetchParticipants();
-    await this.fetchMessages();
-    this.startPolling();
+    console.log('CourseChat created with courseId:', this.courseId);
+
+    try {
+      await this.fetchCourseData();
+      await this.fetchParticipants();
+      await this.fetchMessages();
+      this.startPolling();
+
+      console.log('CourseChat initialized successfully', {
+        courseId: this.courseId,
+        participantsCount: this.participants.length,
+        messagesCount: this.messages.length
+      });
+    } catch (error) {
+      console.error('Error initializing CourseChat:', error);
+      this.$toast?.error('خطا در بارگذاری اطلاعات چت');
+    }
   },
   beforeUnmount() {
     this.stopPolling();
@@ -171,11 +183,22 @@ export default {
   methods: {
     async fetchCourseData() {
       try {
+        console.log('Fetching course data for ID:', this.courseId);
         const response = await this.$http.get(`/courses/${this.courseId}`);
-        this.course = response.data.course;
+
+        if (response.data && response.data.course) {
+          this.course = response.data.course;
+        } else if (response.data) {
+          this.course = response.data;
+        } else {
+          throw new Error('Invalid course data structure');
+        }
+
+        console.log('Course data loaded:', this.course);
       } catch (error) {
         console.error('Error fetching course data:', error);
-        this.$toast.error('مشکلی در دریافت اطلاعات دوره رخ داد.');
+        this.$toast?.error('مشکلی در دریافت اطلاعات دوره رخ داد.');
+        throw error;
       }
     },
 
@@ -183,10 +206,21 @@ export default {
       try {
         this.loadingParticipants = true;
         const response = await this.$http.get(`/chat/course/${this.courseId}/participants`);
-        this.participants = response.data;
+
+        if (response.data && Array.isArray(response.data)) {
+          this.participants = response.data.map(participant => ({
+            ...participant,
+            firstName: participant.firstName || 'کاربر',
+            lastName: participant.lastName || participant.username || '',
+            roles: participant.roles || []
+          }));
+        } else {
+          this.participants = [];
+        }
       } catch (error) {
         console.error('Error fetching participants:', error);
-        this.$toast.error('مشکلی در دریافت لیست شرکت‌کنندگان رخ داد.');
+        this.participants = [];
+        this.$toast?.error('مشکلی در دریافت لیست شرکت‌کنندگان رخ داد.');
       } finally {
         this.loadingParticipants = false;
       }
@@ -202,14 +236,23 @@ export default {
           }
         });
 
-        this.messages = response.data.content.reverse();
-        this.hasMoreMessages = !response.data.first;
-        this.currentPage = 0;
+        if (response.data && Array.isArray(response.data)) {
+          this.messages = response.data.reverse();
+          this.hasMoreMessages = response.data.length >= this.pageSize;
+        } else if (response.data && response.data.content && Array.isArray(response.data.content)) {
+          this.messages = response.data.content.reverse();
+          this.hasMoreMessages = !response.data.first;
+        } else {
+          this.messages = [];
+          this.hasMoreMessages = false;
+        }
 
+        this.currentPage = 0;
         this.markMessagesAsRead();
       } catch (error) {
         console.error('Error fetching messages:', error);
-        this.$toast.error('مشکلی در دریافت پیام‌ها رخ داد.');
+        this.messages = [];
+        this.$toast?.error('مشکلی در دریافت پیام‌ها رخ داد.');
       } finally {
         this.loading = false;
         this.$nextTick(() => {
@@ -232,13 +275,21 @@ export default {
           }
         });
 
-        const olderMessages = response.data.content.reverse();
+        let olderMessages = [];
+
+        if (response.data && Array.isArray(response.data)) {
+          olderMessages = response.data.reverse();
+          this.hasMoreMessages = response.data.length >= this.pageSize;
+        } else if (response.data && response.data.content && Array.isArray(response.data.content)) {
+          olderMessages = response.data.content.reverse();
+          this.hasMoreMessages = !response.data.first;
+        }
+
         this.messages = [...olderMessages, ...this.messages];
-        this.hasMoreMessages = !response.data.first;
         this.currentPage = nextPage;
       } catch (error) {
         console.error('Error loading more messages:', error);
-        this.$toast.error('مشکلی در بارگذاری پیام‌های بیشتر رخ داد.');
+        this.$toast?.error('مشکلی در بارگذاری پیام‌های بیشتر رخ داد.');
       } finally {
         this.loadingMore = false;
       }
@@ -272,7 +323,7 @@ export default {
         }, 500);
       } catch (error) {
         console.error('Error sending message:', error);
-        this.$toast.error('مشکلی در ارسال پیام رخ داد.');
+        this.$toast?.error('مشکلی در ارسال پیام رخ داد.');
       } finally {
         this.sending = false;
       }
@@ -287,7 +338,14 @@ export default {
           }
         });
 
-        const latestMessages = response.data.content.reverse();
+        let latestMessages = [];
+
+        if (response.data && Array.isArray(response.data)) {
+          latestMessages = response.data.reverse();
+        } else if (response.data && response.data.content && Array.isArray(response.data.content)) {
+          latestMessages = response.data.content.reverse();
+        }
+
         const tempIds = this.messages
             .filter(msg => typeof msg.id === 'string' && msg.id.startsWith('temp-'))
             .map(msg => msg.id);
@@ -332,7 +390,13 @@ export default {
     async checkForNewMessages() {
       try {
         const unreadResponse = await this.$http.get(`/chat/course/${this.courseId}/unread`);
-        const unreadCount = unreadResponse.data.unreadCount;
+
+        let unreadCount = 0;
+        if (unreadResponse.data && typeof unreadResponse.data === 'object') {
+          unreadCount = unreadResponse.data.unreadCount || unreadResponse.data.count || 0;
+        } else if (typeof unreadResponse.data === 'number') {
+          unreadCount = unreadResponse.data;
+        }
 
         if (unreadCount > 0) {
           await this.fetchLatestMessages();
@@ -355,19 +419,75 @@ export default {
     },
 
     getUserRole(user) {
-      if (!user || !user.roles) return 'کاربر';
+      if (!user) return 'کاربر';
 
-      if (user.roles.some(role => role.name === 'ROLE_TEACHER')) {
-        return 'استاد';
-      } else if (user.roles.some(role => role.name === 'ROLE_STUDENT')) {
-        return 'دانش‌آموز';
+      if (user.roles && Array.isArray(user.roles)) {
+        if (user.roles.some(role =>
+            role.name === 'ROLE_TEACHER' ||
+            role.name === 'TEACHER' ||
+            role === 'TEACHER'
+        )) {
+          return 'استاد';
+        }
+
+        if (user.roles.some(role =>
+            role.name === 'ROLE_STUDENT' ||
+            role.name === 'STUDENT' ||
+            role === 'STUDENT'
+        )) {
+          return 'دانش‌آموز';
+        }
+
+        if (user.roles.some(role =>
+            role.name === 'ROLE_ADMIN' ||
+            role.name === 'ADMIN' ||
+            role === 'ADMIN'
+        )) {
+          return 'مدیر';
+        }
       }
 
       return 'کاربر';
     },
 
+    getUserFullName(user) {
+      if (!user) return 'کاربر ناشناس';
+
+      if (user.firstName && user.lastName) {
+        return `${user.firstName} ${user.lastName}`;
+      }
+
+      if (user.firstName) {
+        return user.firstName;
+      }
+
+      if (user.lastName) {
+        return user.lastName;
+      }
+
+      if (user.username) {
+        return user.username;
+      }
+
+      return 'کاربر ناشناس';
+    },
+
     getInitials(firstName, lastName) {
-      return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
+      let initials = '';
+
+      if (firstName && firstName.trim()) {
+        initials += firstName.trim().charAt(0);
+      }
+
+      if (lastName && lastName.trim()) {
+        initials += lastName.trim().charAt(0);
+      }
+
+      if (!initials) {
+        initials = 'کا';
+      }
+
+      return initials.toUpperCase();
     },
 
     formatTime(timestamp) {
@@ -393,11 +513,17 @@ export default {
 
     shouldShowDateSeparator(message, index) {
       if (index === 0) return true;
+      if (!message || !message.sentAt) return false;
+      if (!this.messages[index - 1] || !this.messages[index - 1].sentAt) return false;
 
-      const currentDate = new Date(message.sentAt).toLocaleDateString('fa-IR');
-      const previousDate = new Date(this.messages[index - 1].sentAt).toLocaleDateString('fa-IR');
-
-      return currentDate !== previousDate;
+      try {
+        const currentDate = new Date(message.sentAt).toLocaleDateString('fa-IR');
+        const previousDate = new Date(this.messages[index - 1].sentAt).toLocaleDateString('fa-IR');
+        return currentDate !== previousDate;
+      } catch (error) {
+        console.error('Error comparing dates:', error);
+        return false;
+      }
     }
   }
 }
@@ -408,7 +534,6 @@ export default {
   padding: 1rem;
 }
 
-/* Chat specific styles */
 .chat-main {
   display: flex;
   flex-direction: column;
@@ -550,7 +675,7 @@ export default {
 .message-sender {
   font-weight: 600;
   font-size: 0.85rem;
-  color: #495057;
+  color: rgba(49, 9, 87, 0.82);
 }
 
 .message-time {
@@ -613,7 +738,6 @@ export default {
   flex: 1;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .chat-main {
     height: 500px;
@@ -628,11 +752,10 @@ export default {
   }
 }
 
-/* Dark mode support */
 @media (prefers-color-scheme: dark) {
   .participant-name,
   .message-sender {
-    color: #e2e8f0;
+    color: #0c264a;
   }
 
   .section-title {
