@@ -302,6 +302,39 @@ const routes = [
     }
   },
   {
+    path: '/question-bank',
+    name: 'QuestionBank',
+    component: () => import(/* webpackChunkName: "question-bank" */ '../components/exams/QuestionBank.vue'),
+    meta: {
+      title: 'بانک سوالات',
+      requiresAuth: true,
+      requiresTeacher: true,
+      showSidebar: true
+    }
+  },
+  {
+    path: '/exercises/:id',
+    name: 'Exercise',
+    component: () => import(/* webpackChunkName: "exercise" */ '../components/exercises/Exercise.vue'),
+    props: true,
+    meta: {
+      title: 'تمرین',
+      requiresAuth: true,
+      hideSidebar: true
+    }
+  },
+  {
+    path: '/chat/:courseId',
+    name: 'CourseChat',
+    component: () => import(/* webpackChunkName: "chat" */ '../components/chat/CourseChat.vue'),
+    props: true,
+    meta: {
+      title: 'چت دوره',
+      requiresAuth: true,
+      showSidebar: true
+    }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: NotFound,

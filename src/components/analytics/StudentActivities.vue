@@ -488,6 +488,35 @@ export default {
     await this.fetchTeachingCourses();
   },
   methods: {
+    async fetchStudentAnalytics() {
+      if (!this.selectedStudentId || !this.selectedCourseId) return;
+
+      this.loading = true;
+      try {
+        this.selectedStudent = this.courseStudents.find(s => s.studentId === this.selectedStudentId);
+
+        // Use the correct API endpoints from documentation
+        const [detailedResponse, timelineResponse] = await Promise.all([
+          axios.get(`/analytics/student/${this.selectedStudentId}/course/${this.selectedCourseId}/detailed`),
+          axios.get(`/analytics/student/${this.selectedStudentId}/activity-timeline`)
+        ]);
+
+        this.studentAnalytics = {
+          ...this.selectedStudent,
+          ...detailedResponse.data
+        };
+
+        this.recentActivities = timelineResponse.data || [];
+
+        await this.generateChartData();
+      } catch (error) {
+        console.error('خطا در دریافت تحلیل‌های دانش‌آموز:', error);
+        this.showErrorToast('خطا در بارگذاری تحلیل‌های دانش‌آموز');
+      } finally {
+        this.loading = false;
+      }
+    },
+
     async fetchTeachingCourses() {
       try {
         const response = await axios.get('/courses/teaching');
@@ -518,36 +547,6 @@ export default {
         this.showErrorToast('خطا در بارگذاری دانش‌آموزان');
       }
     },
-
-    async fetchStudentAnalytics() {
-      if (!this.selectedStudentId || !this.selectedCourseId) return;
-
-      this.loading = true;
-      try {
-        this.selectedStudent = this.courseStudents.find(s => s.studentId === this.selectedStudentId);
-
-        // دریافت تحلیل‌های دانش‌آموز
-        const [performanceResponse, comparisonResponse] = await Promise.all([
-          axios.get(`/analytics/student/${this.selectedStudentId}/course/${this.selectedCourseId}/detailed`),
-          axios.get(`/analytics/course/${this.selectedCourseId}/student-comparison?studentId=${this.selectedStudentId}`)
-        ]);
-
-        this.studentAnalytics = {
-          ...this.selectedStudent,
-          ...performanceResponse.data,
-          ...comparisonResponse.data
-        };
-
-        await this.generateChartData();
-        await this.fetchRecentActivities();
-      } catch (error) {
-        console.error('خطا در دریافت تحلیل‌های دانش‌آموز:', error);
-        this.showErrorToast('خطا در بارگذاری تحلیل‌های دانش‌آموز');
-      } finally {
-        this.loading = false;
-      }
-    },
-
     async generateChartData() {
       // تولید داده‌های نمودار عملکرد آزمون‌ها
       this.examPerformanceData = [

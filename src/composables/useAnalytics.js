@@ -457,6 +457,103 @@ export function useAnalytics() {
     const clearError = () => {
         error.value = null;
     };
+    const fetchSystemOverview = async () => {
+        loading.value = true;
+        error.value = null;
+        try {
+            const response = await axios.get('/analytics/teacher/system-overview');
+            return response.data;
+        } catch (err) {
+            error.value = 'خطا در دریافت نمای کلی سیستم';
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    const fetchTimeAnalysis = async () => {
+        loading.value = true;
+        error.value = null;
+        try {
+            const response = await axios.get('/analytics/teacher/time-analysis');
+            return response.data;
+        } catch (err) {
+            error.value = 'خطا در دریافت تحلیل زمان';
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    const fetchQuestionDifficultyAnalysis = async () => {
+        loading.value = true;
+        error.value = null;
+        try {
+            const response = await axios.get('/analytics/teacher/question-difficulty');
+            return response.data;
+        } catch (err) {
+            error.value = 'خطا در دریافت تحلیل سختی سوالات';
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    const fetchLessonPerformanceAnalysis = async () => {
+        loading.value = true;
+        error.value = null;
+        try {
+            const response = await axios.get('/analytics/teacher/lesson-performance');
+            return response.data;
+        } catch (err) {
+            error.value = 'خطا در دریافت تحلیل عملکرد درس‌ها';
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    const fetchEngagementTrends = async () => {
+        loading.value = true;
+        error.value = null;
+        try {
+            const response = await axios.get('/analytics/teacher/engagement-trends');
+            return response.data;
+        } catch (err) {
+            error.value = 'خطا در دریافت روندهای مشارکت';
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    const fetchChallengingQuestions = async () => {
+        loading.value = true;
+        error.value = null;
+        try {
+            const response = await axios.get('/analytics/teacher/challenging-questions');
+            return response.data;
+        } catch (err) {
+            error.value = 'خطا در دریافت سوالات چالش‌برانگیز';
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    };
+
+    const fetchDailyEngagementStats = async () => {
+        loading.value = true;
+        error.value = null;
+        try {
+            const response = await axios.get('/analytics/teacher/daily-engagement');
+            return response.data;
+        } catch (err) {
+            error.value = 'خطا در دریافت آمار مشارکت روزانه';
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    };
 
     const resetAnalytics = () => {
         studentPerformance.value = {
@@ -548,6 +645,13 @@ export function useAnalytics() {
         getPerformanceLevel,
         generateProgressReport,
         clearError,
-        resetAnalytics
+        resetAnalytics,
+        fetchSystemOverview,
+        fetchTimeAnalysis,
+        fetchQuestionDifficultyAnalysis,
+        fetchLessonPerformanceAnalysis,
+        fetchEngagementTrends,
+        fetchChallengingQuestions,
+        fetchDailyEngagementStats
     };
 }

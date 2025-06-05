@@ -83,7 +83,6 @@
                 <select v-model="sortBy" class="modern-form-control" @change="sortCourses">
                   <option value="title">نام دوره</option>
                   <option value="students">تعداد دانش‌آموزان</option>
-                  <option value="date">تاریخ ایجاد</option>
                   <option value="progress">میزان پیشرفت</option>
                 </select>
               </div>
