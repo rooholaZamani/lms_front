@@ -11,13 +11,13 @@
 
           <loading-spinner :loading="loadingParticipants">
             <div v-if="participants.length > 0" class="participants-list">
-              <div v-for="participant in participants" :key="participant.id" class="participant-item">
-                <div class="participant-avatar">
-                  {{ getInitials(participant.firstName, participant.lastName) }}
+              <div v-for="participant in sortedParticipants" :key="participant.id" class="participant-item">
+                <div class="participant-avatar" :class="getParticipantAvatarClass(participant)">
+                  {{ getInitials(participant.name) }}
                 </div>
                 <div class="participant-info">
-                  <div class="participant-name">{{ getUserFullName(participant) }}</div>
-                  <div class="participant-role">{{ getUserRole(participant) }}</div>
+                  <div class="participant-name">{{ participant.name || 'کاربر ناشناس' }}</div>
+                  <div class="participant-role">{{ getRoleText(participant.role) }}</div>
                 </div>
                 <div class="participant-status" :class="{'online': participant.online}"></div>
               </div>
@@ -35,8 +35,13 @@
             اطلاعات دوره
           </h6>
           <div v-if="course" class="course-info">
-            <p class="mb-2"><strong>استاد:</strong> {{ course.teacher ? getUserFullName(course.teacher) : 'نامشخص' }}</p>
-            <p class="mb-0"><strong>دانش‌آموزان:</strong> {{ course.enrolledStudents ? course.enrolledStudents.length : 0 }}</p>
+            <p class="mb-2"><strong>عنوان:</strong> {{ course.title || 'نامشخص' }}</p>
+            <p class="mb-2"><strong>استاد:</strong> {{ getTeacherName() }}</p>
+            <p class="mb-0"><strong>دانش‌آموزان:</strong> {{ getStudentsCount() }}</p>
+          </div>
+          <div v-else class="text-center text-muted py-3">
+            <i class="fas fa-info-circle fa-2x mb-2"></i>
+            <p>در حال بارگذاری...</p>
           </div>
         </div>
       </div>
@@ -63,13 +68,15 @@
                   </div>
 
                   <!-- Message -->
-                  <div :class="['message-item', message.sender && message.sender.id === currentUser.id ? 'message-own' : 'message-other']">
-                    <div class="message-avatar">
-                      {{ getInitials(message.sender?.firstName, message.sender?.lastName) }}
+                  <div :class="getMessageClasses(message)">
+                    <div class="message-avatar" :class="getMessageAvatarClass(message)">
+                      {{ getInitials(message.senderName) }}
                     </div>
-                    <div class="message-content">
+                    <div class="message-content" :class="getMessageContentClass(message)">
                       <div class="message-header">
-                        <span class="message-sender">{{ getUserFullName(message.sender) }}</span>
+                        <span class="message-sender" :class="getSenderNameClass(message)">
+                          {{ message.senderName || 'کاربر ناشناس' }}
+                        </span>
                         <span class="message-time">{{ formatTime(message.sentAt) }}</span>
                       </div>
                       <div class="message-text">{{ message.content }}</div>
@@ -158,23 +165,29 @@ export default {
       pollingInterval: null
     };
   },
+  computed: {
+    sortedParticipants() {
+      return [...this.participants].sort((a, b) => {
+        if (a.role === 'TEACHER' && b.role !== 'TEACHER') return -1;
+        if (b.role === 'TEACHER' && a.role !== 'TEACHER') return 1;
+        return (a.name || '').localeCompare(b.name || '', 'fa');
+      });
+    }
+  },
   async created() {
     console.log('CourseChat created with courseId:', this.courseId);
+    console.log('Current user:', this.currentUser);
 
     try {
       await this.fetchCourseData();
       await this.fetchParticipants();
       await this.fetchMessages();
       this.startPolling();
-
-      console.log('CourseChat initialized successfully', {
-        courseId: this.courseId,
-        participantsCount: this.participants.length,
-        messagesCount: this.messages.length
-      });
     } catch (error) {
       console.error('Error initializing CourseChat:', error);
-      this.$toast?.error('خطا در بارگذاری اطلاعات چت');
+      if (this.$toast) {
+        this.$toast.error('خطا در بارگذاری اطلاعات چت');
+      }
     }
   },
   beforeUnmount() {
@@ -183,21 +196,17 @@ export default {
   methods: {
     async fetchCourseData() {
       try {
-        console.log('Fetching course data for ID:', this.courseId);
         const response = await this.$http.get(`/courses/${this.courseId}`);
-
         if (response.data && response.data.course) {
           this.course = response.data.course;
         } else if (response.data) {
           this.course = response.data;
-        } else {
-          throw new Error('Invalid course data structure');
         }
-
-        console.log('Course data loaded:', this.course);
       } catch (error) {
         console.error('Error fetching course data:', error);
-        this.$toast?.error('مشکلی در دریافت اطلاعات دوره رخ داد.');
+        if (this.$toast) {
+          this.$toast.error('مشکلی در دریافت اطلاعات دوره رخ داد.');
+        }
         throw error;
       }
     },
@@ -210,9 +219,8 @@ export default {
         if (response.data && Array.isArray(response.data)) {
           this.participants = response.data.map(participant => ({
             ...participant,
-            firstName: participant.firstName || 'کاربر',
-            lastName: participant.lastName || participant.username || '',
-            roles: participant.roles || []
+            name: participant.name || 'کاربر ناشناس',
+            role: participant.role || 'STUDENT'
           }));
         } else {
           this.participants = [];
@@ -220,7 +228,9 @@ export default {
       } catch (error) {
         console.error('Error fetching participants:', error);
         this.participants = [];
-        this.$toast?.error('مشکلی در دریافت لیست شرکت‌کنندگان رخ داد.');
+        if (this.$toast) {
+          this.$toast.error('مشکلی در دریافت لیست شرکت‌کنندگان رخ داد.');
+        }
       } finally {
         this.loadingParticipants = false;
       }
@@ -236,23 +246,24 @@ export default {
           }
         });
 
+        let messages = [];
+
         if (response.data && Array.isArray(response.data)) {
-          this.messages = response.data.reverse();
-          this.hasMoreMessages = response.data.length >= this.pageSize;
+          messages = response.data;
         } else if (response.data && response.data.content && Array.isArray(response.data.content)) {
-          this.messages = response.data.content.reverse();
-          this.hasMoreMessages = !response.data.first;
-        } else {
-          this.messages = [];
-          this.hasMoreMessages = false;
+          messages = response.data.content;
+          this.hasMoreMessages = !response.data.last;
         }
 
+        this.messages = messages.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt));
         this.currentPage = 0;
         this.markMessagesAsRead();
       } catch (error) {
         console.error('Error fetching messages:', error);
         this.messages = [];
-        this.$toast?.error('مشکلی در دریافت پیام‌ها رخ داد.');
+        if (this.$toast) {
+          this.$toast.error('مشکلی در دریافت پیام‌ها رخ داد.');
+        }
       } finally {
         this.loading = false;
         this.$nextTick(() => {
@@ -278,18 +289,20 @@ export default {
         let olderMessages = [];
 
         if (response.data && Array.isArray(response.data)) {
-          olderMessages = response.data.reverse();
+          olderMessages = response.data;
           this.hasMoreMessages = response.data.length >= this.pageSize;
         } else if (response.data && response.data.content && Array.isArray(response.data.content)) {
-          olderMessages = response.data.content.reverse();
-          this.hasMoreMessages = !response.data.first;
+          olderMessages = response.data.content;
+          this.hasMoreMessages = !response.data.last;
         }
 
         this.messages = [...olderMessages, ...this.messages];
         this.currentPage = nextPage;
       } catch (error) {
         console.error('Error loading more messages:', error);
-        this.$toast?.error('مشکلی در بارگذاری پیام‌های بیشتر رخ داد.');
+        if (this.$toast) {
+          this.$toast.error('مشکلی در بارگذاری پیام‌های بیشتر رخ داد.');
+        }
       } finally {
         this.loadingMore = false;
       }
@@ -304,26 +317,16 @@ export default {
           params: { message: this.newMessage }
         });
 
-        const tempMessage = {
-          id: `temp-${Date.now()}`,
-          sender: this.currentUser,
-          content: this.newMessage,
-          sentAt: new Date().toISOString()
-        };
-
-        this.messages.push(tempMessage);
         this.newMessage = '';
-
-        this.$nextTick(() => {
-          this.scrollToBottom();
-        });
 
         setTimeout(() => {
           this.fetchLatestMessages();
         }, 500);
       } catch (error) {
         console.error('Error sending message:', error);
-        this.$toast?.error('مشکلی در ارسال پیام رخ داد.');
+        if (this.$toast) {
+          this.$toast.error('مشکلی در ارسال پیام رخ داد.');
+        }
       } finally {
         this.sending = false;
       }
@@ -341,26 +344,22 @@ export default {
         let latestMessages = [];
 
         if (response.data && Array.isArray(response.data)) {
-          latestMessages = response.data.reverse();
+          latestMessages = response.data;
         } else if (response.data && response.data.content && Array.isArray(response.data.content)) {
-          latestMessages = response.data.content.reverse();
+          latestMessages = response.data.content;
         }
 
-        const tempIds = this.messages
-            .filter(msg => typeof msg.id === 'string' && msg.id.startsWith('temp-'))
-            .map(msg => msg.id);
-
-        if (tempIds.length > 0) {
-          this.messages = this.messages.filter(msg => !tempIds.includes(msg.id));
-
-          for (const msg of latestMessages) {
-            if (!this.messages.some(existing => existing.id === msg.id)) {
-              this.messages.push(msg);
-            }
+        for (const msg of latestMessages) {
+          if (!this.messages.some(existing => existing.id === msg.id)) {
+            this.messages.push(msg);
           }
-
-          this.messages.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt));
         }
+
+        this.messages.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt));
+
+        this.$nextTick(() => {
+          this.scrollToBottom();
+        });
       } catch (error) {
         console.error('Error fetching latest messages:', error);
       }
@@ -390,21 +389,15 @@ export default {
     async checkForNewMessages() {
       try {
         const unreadResponse = await this.$http.get(`/chat/course/${this.courseId}/unread`);
-
         let unreadCount = 0;
+
         if (unreadResponse.data && typeof unreadResponse.data === 'object') {
           unreadCount = unreadResponse.data.unreadCount || unreadResponse.data.count || 0;
-        } else if (typeof unreadResponse.data === 'number') {
-          unreadCount = unreadResponse.data;
         }
 
         if (unreadCount > 0) {
           await this.fetchLatestMessages();
           await this.markMessagesAsRead();
-
-          this.$nextTick(() => {
-            this.scrollToBottom();
-          });
         }
       } catch (error) {
         console.error('Error checking for new messages:', error);
@@ -418,81 +411,106 @@ export default {
       }
     },
 
-    getUserRole(user) {
-      if (!user) return 'کاربر';
-
-      if (user.roles && Array.isArray(user.roles)) {
-        if (user.roles.some(role =>
-            role.name === 'ROLE_TEACHER' ||
-            role.name === 'TEACHER' ||
-            role === 'TEACHER'
-        )) {
-          return 'استاد';
-        }
-
-        if (user.roles.some(role =>
-            role.name === 'ROLE_STUDENT' ||
-            role.name === 'STUDENT' ||
-            role === 'STUDENT'
-        )) {
-          return 'دانش‌آموز';
-        }
-
-        if (user.roles.some(role =>
-            role.name === 'ROLE_ADMIN' ||
-            role.name === 'ADMIN' ||
-            role === 'ADMIN'
-        )) {
-          return 'مدیر';
-        }
-      }
-
-      return 'کاربر';
+    getTeacherName() {
+      const teacher = this.participants.find(p => p.role === 'TEACHER');
+      return teacher ? teacher.name : 'نامشخص';
     },
 
-    getUserFullName(user) {
-      if (!user) return 'کاربر ناشناس';
-
-      if (user.firstName && user.lastName) {
-        return `${user.firstName} ${user.lastName}`;
-      }
-
-      if (user.firstName) {
-        return user.firstName;
-      }
-
-      if (user.lastName) {
-        return user.lastName;
-      }
-
-      if (user.username) {
-        return user.username;
-      }
-
-      return 'کاربر ناشناس';
+    getStudentsCount() {
+      return this.participants.filter(p => p.role === 'STUDENT').length;
     },
 
-    getInitials(firstName, lastName) {
+    getRoleText(role) {
+      switch (role) {
+        case 'TEACHER': return 'استاد';
+        case 'STUDENT': return 'دانش‌آموز';
+        case 'ADMIN': return 'مدیر';
+        default: return 'کاربر';
+      }
+    },
+
+    getInitials(name) {
+      if (!name) return 'کا';
+
+      const parts = name.split(' ');
       let initials = '';
 
-      if (firstName && firstName.trim()) {
-        initials += firstName.trim().charAt(0);
+      for (let i = 0; i < Math.min(2, parts.length); i++) {
+        if (parts[i]) {
+          initials += parts[i].charAt(0);
+        }
       }
 
-      if (lastName && lastName.trim()) {
-        initials += lastName.trim().charAt(0);
+      return initials.toUpperCase() || 'کا';
+    },
+
+    isMessageFromTeacher(message) {
+      const sender = this.participants.find(p => p.id === message.senderId);
+      return sender && sender.role === 'TEACHER';
+    },
+
+    isOwnMessage(message) {
+      return message.senderId === this.currentUser.id;
+    },
+
+    getMessageClasses(message) {
+      const classes = ['message-item'];
+
+      if (this.isOwnMessage(message)) {
+        classes.push('message-own');
+      } else {
+        classes.push('message-other');
       }
 
-      if (!initials) {
-        initials = 'کا';
+      if (this.isMessageFromTeacher(message)) {
+        classes.push('message-teacher');
       }
 
-      return initials.toUpperCase();
+      return classes;
+    },
+
+    getMessageAvatarClass(message) {
+      const classes = [];
+
+      if (this.isMessageFromTeacher(message)) {
+        classes.push('teacher-avatar');
+      }
+
+      return classes.join(' ');
+    },
+
+    getMessageContentClass(message) {
+      const classes = [];
+
+      if (this.isMessageFromTeacher(message)) {
+        classes.push('teacher-message');
+      }
+
+      return classes.join(' ');
+    },
+
+    getSenderNameClass(message) {
+      const classes = ['message-sender'];
+
+      if (this.isMessageFromTeacher(message)) {
+        classes.push('teacher-name');
+      }
+
+      return classes.join(' ');
+    },
+
+    getParticipantAvatarClass(participant) {
+      const classes = [];
+
+      if (participant.role === 'TEACHER') {
+        classes.push('teacher-avatar');
+      }
+
+      return classes.join(' ');
     },
 
     formatTime(timestamp) {
       if (!timestamp) return '';
-
       const date = new Date(timestamp);
       return date.toLocaleTimeString('fa-IR', {
         hour: '2-digit',
@@ -502,7 +520,6 @@ export default {
 
     formatDateHeader(timestamp) {
       if (!timestamp) return '';
-
       const date = new Date(timestamp);
       return date.toLocaleDateString('fa-IR', {
         year: 'numeric',
@@ -521,7 +538,6 @@ export default {
         const previousDate = new Date(this.messages[index - 1].sentAt).toLocaleDateString('fa-IR');
         return currentDate !== previousDate;
       } catch (error) {
-        console.error('Error comparing dates:', error);
         return false;
       }
     }
@@ -568,6 +584,12 @@ export default {
   margin-bottom: 0.5rem;
   background: rgba(255, 255, 255, 0.3);
   border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.participant-item:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: translateX(-2px);
 }
 
 .participant-avatar {
@@ -582,6 +604,16 @@ export default {
   margin-left: 0.75rem;
   font-weight: 600;
   font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+.participant-avatar.teacher-avatar {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+}
+
+.participant-item:hover .participant-avatar {
+  transform: scale(1.1);
 }
 
 .participant-info {
@@ -630,22 +662,38 @@ export default {
   display: flex;
   max-width: 80%;
   gap: 0.75rem;
+  animation: fadeInMessage 0.3s ease-out;
+}
+
+@keyframes fadeInMessage {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .message-other {
   align-self: flex-start;
+  margin-left: 0;
+  margin-right: auto;
 }
 
 .message-own {
   align-self: flex-end;
   flex-direction: row-reverse;
+  margin-right: 0;
+  margin-left: auto;
 }
 
 .message-avatar {
   width: 35px;
   height: 35px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -655,15 +703,51 @@ export default {
   flex-shrink: 0;
 }
 
+.message-avatar.teacher-avatar {
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+}
+
+.message-own .message-avatar {
+  background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
 .message-content {
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 12px;
+  background: rgba(248, 249, 250, 0.9);
+  border-radius: 18px 18px 18px 4px;
   padding: 0.75rem 1rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  max-width: 300px;
+  transition: all 0.2s ease;
+}
+
+.message-content:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.message-content.teacher-message {
+  background: rgba(231, 76, 60, 0.15);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  border-radius: 18px 18px 18px 4px;
 }
 
 .message-own .message-content {
-  background: rgba(23, 162, 184, 0.2);
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+  border: 1px solid rgba(0, 123, 255, 0.3);
+  border-radius: 18px 18px 4px 18px;
+}
+
+.message-own .message-content .message-sender,
+.message-own .message-content .message-time {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.message-own .message-content .message-text {
+  color: white;
 }
 
 .message-header {
@@ -675,7 +759,12 @@ export default {
 .message-sender {
   font-weight: 600;
   font-size: 0.85rem;
-  color: rgba(49, 9, 87, 0.82);
+  color: #495057;
+}
+
+.message-sender.teacher-name {
+  color: #c0392b;
+  font-weight: 700;
 }
 
 .message-time {
@@ -724,18 +813,63 @@ export default {
   border-bottom: 2px solid rgba(23, 162, 184, 0.2);
 }
 
+.course-info {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
 .course-info p {
   margin-bottom: 0.5rem;
   color: #495057;
+  font-size: 0.9rem;
+}
+
+.course-info strong {
+  color: #333;
+  font-weight: 600;
 }
 
 .input-group {
   display: flex;
   gap: 0.5rem;
+  align-items: stretch;
 }
 
 .input-group .modern-form-control {
   flex: 1;
+  border-radius: 25px;
+  padding: 0.75rem 1.25rem;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  background: rgba(255, 255, 255, 0.9);
+  transition: all 0.3s ease;
+}
+
+.input-group .modern-form-control:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  background: white;
+}
+
+.input-group .modern-btn {
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.3s ease;
+}
+
+.input-group .modern-btn:hover:not(:disabled) {
+  transform: scale(1.1);
+}
+
+.input-group .modern-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 @media (max-width: 768px) {
@@ -744,18 +878,47 @@ export default {
   }
 
   .message-item {
-    max-width: 90%;
+    max-width: 85%;
+  }
+
+  .message-content {
+    max-width: 250px;
+    font-size: 0.9rem;
   }
 
   .chat-messages {
     padding: 1rem;
+  }
+
+  .message-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 0.7rem;
+  }
+
+  .participant-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 0.7rem;
+  }
+
+  .participant-name {
+    font-size: 0.85rem;
+  }
+
+  .participant-role {
+    font-size: 0.7rem;
   }
 }
 
 @media (prefers-color-scheme: dark) {
   .participant-name,
   .message-sender {
-    color: #0c264a;
+    color: #e2e8f0;
+  }
+
+  .message-sender.teacher-name {
+    color: #f56565;
   }
 
   .section-title {
@@ -765,6 +928,33 @@ export default {
 
   .course-info p {
     color: #cbd5e0;
+  }
+
+  .course-info strong {
+    color: #e2e8f0;
+  }
+
+  .message-content {
+    background: rgba(45, 55, 72, 0.9);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+  }
+
+  .message-content.teacher-message {
+    background: rgba(231, 76, 60, 0.2);
+    border-color: rgba(231, 76, 60, 0.4);
+  }
+
+  .message-own .message-content {
+    background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  }
+
+  .chat-messages {
+    background: rgba(45, 55, 72, 0.3);
+  }
+
+  .chat-input {
+    background: rgba(45, 55, 72, 0.3);
   }
 }
 </style>
