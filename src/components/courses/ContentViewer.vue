@@ -1,888 +1,974 @@
 <template>
-  <div class="modern-page-bg info-gradient">
-    <div class="modern-container large animate-slide-up">
-      <!-- Header -->
-      <div class="modern-header">
-        <div class="modern-logo info">
-          <i :class="getContentIcon(content?.type)"></i>
+  <div class="content-viewer modern-page-bg">
+    <!-- Loading State -->
+    <div v-if="loading" class="loading-container">
+      <div class="modern-container">
+        <div class="modern-header text-center">
+          <div class="modern-logo info">
+            <i class="fas fa-spinner fa-spin"></i>
+          </div>
+          <h1 class="modern-title">در حال بارگذاری...</h1>
+          <p class="modern-subtitle">لطفاً منتظر بمانید</p>
         </div>
-        <h1 class="modern-title">{{ content?.title || 'مشاهده محتوا' }}</h1>
-        <p class="modern-subtitle">{{ getContentTypeText(content?.type) }}</p>
       </div>
+    </div>
 
-      <!-- Content Card -->
-      <div class="modern-card animate-fade-in" style="animation-delay: 0.1s;">
-        <loading-spinner :loading="loading">
-          <!-- Error State -->
-          <div v-if="error" class="modern-alert modern-alert-danger">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            خطا در بارگذاری محتوا. لطفاً دوباره تلاش کنید.
-            <button class="modern-btn modern-btn-primary mt-3" @click="loadContent">
-              <i class="fas fa-redo me-2"></i>
+    <!-- Error State -->
+    <div v-else-if="error" class="error-container">
+      <div class="modern-container">
+        <div class="modern-header text-center">
+          <div class="modern-logo danger">
+            <i class="fas fa-exclamation-triangle"></i>
+          </div>
+          <h1 class="modern-title">خطا در بارگذاری</h1>
+          <p class="modern-subtitle">{{ error }}</p>
+          <div class="mt-4">
+            <button @click="fetchContentData" class="modern-btn modern-btn-primary">
+              <i class="fas fa-redo"></i>
               تلاش مجدد
             </button>
+            <button @click="goBack" class="modern-btn modern-btn-secondary ms-2">
+              <i class="fas fa-arrow-right"></i>
+              بازگشت
+            </button>
           </div>
-
-          <!-- Content Display -->
-          <div v-else-if="content" class="content-display">
-            <!-- Content Header Actions -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-              <button class="modern-btn modern-btn-secondary" @click="goBack">
-                <i class="fas fa-arrow-right me-2"></i>
-                بازگشت به درس
-              </button>
-
-              <div class="content-actions">
-                <button
-                    v-if="content?.type !== 'TEXT'"
-                    class="modern-btn modern-btn-outline me-2"
-                    @click="downloadContent"
-                    title="دانلود محتوا"
-                >
-                  <i class="fas fa-download me-1"></i>
-                  دانلود
-                </button>
-                <button
-                    class="modern-btn modern-btn-outline"
-                    @click="toggleFullscreen"
-                    :title="isFullscreen ? 'خروج از تمام صفحه' : 'نمایش تمام صفحه'"
-                >
-                  <i class="fas me-1" :class="isFullscreen ? 'fa-compress' : 'fa-expand'"></i>
-                  {{ isFullscreen ? 'خروج از تمام صفحه' : 'تمام صفحه' }}
-                </button>
-              </div>
-            </div>
-
-            <!-- Text Content -->
-            <div v-if="content.type === 'TEXT'" class="text-content-section">
-              <div class="form-section">
-                <h6 class="section-title">
-                  <i class="fas fa-align-left text-info me-2"></i>
-                  محتوای متنی
-                </h6>
-                <div class="text-content-container">
-                  <div class="content-text" v-html="formatTextContent(content.textContent)"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Video Content -->
-            <div v-else-if="content.type === 'VIDEO'" class="video-content-section">
-              <div class="form-section">
-                <h6 class="section-title">
-                  <i class="fas fa-play-circle text-primary me-2"></i>
-                  محتوای ویدیویی
-                </h6>
-                <div class="video-container">
-                  <div class="ratio ratio-16x9">
-                    <video
-                        ref="videoPlayer"
-                        controls
-                        class="video-player"
-                        @loadedmetadata="onVideoLoaded"
-                        @timeupdate="onVideoTimeUpdate"
-                        @ended="onVideoEnded"
-                        :poster="content.posterUrl"
-                    >
-                      <source :src="getContentUrl(content)" type="video/mp4">
-                      <p class="video-error">
-                        مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
-                        <br>
-                        لطفاً مرورگر خود را به‌روزرسانی کنید یا از مرورگر دیگری استفاده کنید.
-                      </p>
-                    </video>
-
-                    <!-- Loading overlay -->
-                    <div v-if="videoLoading" class="video-loading-overlay">
-                      <div class="loading-content">
-                        <div class="spinner-border text-primary" role="status"></div>
-                        <p class="mt-2 mb-0">در حال بارگذاری ویدیو...</p>
-                      </div>
-                    </div>
-
-                    <!-- Error overlay -->
-                    <div v-if="videoError" class="video-error-overlay">
-                      <div class="error-content">
-                        <i class="fas fa-exclamation-triangle text-warning mb-2"></i>
-                        <h6>خطا در بارگذاری ویدیو</h6>
-                        <p class="mb-3">متأسفانه نتوانستیم ویدیو را بارگذاری کنیم</p>
-                        <button class="modern-btn modern-btn-primary btn-sm" @click="retryVideo">
-                          <i class="fas fa-redo me-1"></i>
-                          تلاش مجدد
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Video Controls -->
-                  <div class="video-controls mt-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                      <div class="video-info">
-                        <small class="text-muted">
-                          <i class="fas fa-clock me-1"></i>
-                          مدت زمان: <span id="videoDuration">{{ formatTime(videoDuration) }}</span>
-                        </small>
-                        <small class="text-muted ms-3">
-                          <i class="fas fa-play me-1"></i>
-                          زمان فعلی: {{ formatTime(currentTime) }}
-                        </small>
-                      </div>
-                      <div class="playback-controls">
-                        <label class="modern-form-label me-2">سرعت پخش:</label>
-                        <select
-                            v-model="playbackSpeed"
-                            @change="changePlaybackSpeed"
-                            class="modern-form-control speed-select"
-                        >
-                          <option value="0.5">۰.۵x</option>
-                          <option value="0.75">۰.۷۵x</option>
-                          <option value="1">۱x</option>
-                          <option value="1.25">۱.۲۵x</option>
-                          <option value="1.5">۱.۵x</option>
-                          <option value="2">۲x</option>
-                        </select>
-                        <button
-                            class="modern-btn modern-btn-secondary btn-sm ms-2"
-                            @click="toggleVideoFullscreen"
-                            title="تمام صفحه ویدیو">
-                          <i class="fas fa-expand"></i>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- PDF Content -->
-            <div v-else-if="content.type === 'PDF'" class="pdf-content-section">
-              <div class="form-section">
-                <h6 class="section-title">
-                  <i class="fas fa-file-pdf text-danger me-2"></i>
-                  سند PDF
-                </h6>
-                <div class="pdf-container">
-                  <!-- PDF Toolbar -->
-                  <div class="pdf-toolbar">
-                    <div class="pdf-controls">
-                      <button
-                          @click="previousPage"
-                          :disabled="currentPage <= 1"
-                          class="modern-btn modern-btn-secondary btn-sm"
-                      >
-                        <i class="fas fa-chevron-right me-1"></i>
-                        صفحه قبل
-                      </button>
-                      <span class="page-info mx-3">
-                        صفحه {{ currentPage }} از {{ totalPages || '؟' }}
-                      </span>
-                      <button
-                          @click="nextPage"
-                          :disabled="currentPage >= totalPages"
-                          class="modern-btn modern-btn-secondary btn-sm"
-                      >
-                        صفحه بعد
-                        <i class="fas fa-chevron-left ms-1"></i>
-                      </button>
-                    </div>
-
-                    <div class="zoom-controls">
-                      <button @click="zoomOut" class="modern-btn modern-btn-outline btn-sm">
-                        <i class="fas fa-search-minus"></i>
-                      </button>
-                      <span class="zoom-info mx-2">{{ Math.round(zoomLevel * 100) }}%</span>
-                      <button @click="zoomIn" class="modern-btn modern-btn-outline btn-sm">
-                        <i class="fas fa-search-plus"></i>
-                      </button>
-                    </div>
-                  </div>
-
-                  <!-- PDF Viewer -->
-                  <div class="pdf-viewer">
-                    <iframe
-                        :src="getPdfUrl()"
-                        class="pdf-frame"
-                        @load="onPdfLoaded"
-                        frameborder="0"
-                    >
-                      <p class="text-center p-4">
-                        مرورگر شما از نمایش PDF پشتیبانی نمی‌کند.
-                        <button class="modern-btn modern-btn-primary" @click="downloadContent">
-                          <i class="fas fa-download me-1"></i>
-                          دانلود فایل
-                        </button>
-                      </p>
-                    </iframe>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Progress Section -->
-            <div class="progress-section mt-4">
-              <div class="form-section">
-                <h6 class="section-title">
-                  <i class="fas fa-chart-line text-success me-2"></i>
-                  پیشرفت مطالعه
-                </h6>
-                <div class="progress-info-card">
-                  <div class="row">
-                    <div class="col-md-8">
-                      <div class="progress-details">
-                        <h6>وضعیت مطالعه شما</h6>
-                        <div class="progress modern-progress mb-2">
-                          <div
-                              class="progress-bar bg-success"
-                              role="progressbar"
-                              :style="`width: ${progressPercentage}%`"
-                              :aria-valuenow="progressPercentage"
-                              aria-valuemin="0"
-                              aria-valuemax="100"
-                          >
-                            {{ Math.round(progressPercentage) }}%
-                          </div>
-                        </div>
-                        <small class="text-muted">
-                          <i class="fas fa-clock me-1"></i>
-                          زمان مطالعه: {{ formatStudyTime(totalViewTime) }}
-                        </small>
-                      </div>
-                    </div>
-                    <div class="col-md-4 text-center">
-                      <div class="progress-circle" :style="`--progress: ${progressPercentage}`">
-                        <div class="progress-circle-inner">
-                          <span class="progress-text">{{ Math.round(progressPercentage) }}%</span>
-                          <span class="progress-label">تکمیل شده</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Content Completion -->
-            <div class="content-completion mt-4" v-if="progressPercentage >= 80">
-              <div class="modern-alert modern-alert-success">
-                <i class="fas fa-check-circle me-2"></i>
-                تبریک! شما این محتوا را با موفقیت مطالعه کردید.
-                <button class="modern-btn modern-btn-success ms-3" @click="markContentComplete">
-                  <i class="fas fa-trophy me-1"></i>
-                  تأیید تکمیل
-                </button>
-              </div>
-            </div>
-          </div>
-        </loading-spinner>
+        </div>
       </div>
+    </div>
 
-      <!-- Related Content -->
-      <div v-if="content && !loading" class="modern-card animate-fade-in" style="animation-delay: 0.2s;">
-        <h6 class="section-title">
-          <i class="fas fa-link text-info me-2"></i>
-          عملیات مرتبط
-        </h6>
-        <div class="related-actions">
-          <button class="modern-btn modern-btn-outline me-2" @click="goBack">
-            <i class="fas fa-arrow-right me-1"></i>
-            بازگشت به درس
-          </button>
-          <button
-              v-if="content?.type !== 'TEXT'"
-              class="modern-btn modern-btn-info me-2"
-              @click="downloadContent"
-          >
-            <i class="fas fa-download me-1"></i>
-            دانلود محتوا
-          </button>
-          <button class="modern-btn modern-btn-secondary" @click="shareContent">
-            <i class="fas fa-share me-1"></i>
-            اشتراک‌گذاری
+    <!-- No Content -->
+    <div v-else-if="!content" class="no-content">
+      <div class="modern-container">
+        <div class="modern-header text-center">
+          <div class="modern-logo secondary">
+            <i class="fas fa-file-times"></i>
+          </div>
+          <h1 class="modern-title">محتوایی یافت نشد</h1>
+          <p class="modern-subtitle">محتوای درخواستی موجود نیست</p>
+          <button @click="goBack" class="modern-btn modern-btn-secondary mt-3">
+            <i class="fas fa-arrow-right"></i>
+            بازگشت
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Progress Overlay (when showing) -->
-    <div v-if="showProgress" class="progress-overlay">
-      <div class="progress-container">
-        <div class="progress-circle-large">
-          <svg viewBox="0 0 36 36" class="circular-chart">
-            <path class="circle-bg"
-                  d="M18 2.0845
-                a 15.9155 15.9155 0 0 1 0 31.831
-                a 15.9155 15.9155 0 0 1 0 -31.831"
-            />
-            <path class="circle"
-                  :stroke-dasharray="`${progressPercentage}, 100`"
-                  d="M18 2.0845
-                a 15.9155 15.9155 0 0 1 0 31.831
-                a 15.9155 15.9155 0 0 1 0 -31.831"
-            />
-          </svg>
-          <div class="percentage">{{ Math.round(progressPercentage) }}%</div>
+    <!-- Main Content -->
+    <div v-else class="content-container">
+      <div class="modern-container large animate-slide-up">
+
+        <!-- Content Header -->
+        <div class="content-header modern-card mb-4">
+          <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div class="content-info flex-grow-1">
+              <h1 class="content-title">{{ content.title }}</h1>
+              <div class="content-meta">
+                <span class="content-type-badge" :class="getContentTypeClass(content.type)">
+                  <i :class="getContentTypeIcon(content.type)"></i>
+                  {{ getContentTypeLabel(content.type) }}
+                </span>
+                <span class="time-badge">
+                  <i class="fas fa-clock"></i>
+                  زمان مطالعه: {{ formatTime(timeSpent) }}
+                </span>
+                <span v-if="content.lesson" class="lesson-badge">
+                  <i class="fas fa-book"></i>
+                  {{ content.lesson.title }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="content-actions">
+              <button
+                  @click="markAsComplete"
+                  :disabled="isMarkingComplete"
+                  class="modern-btn modern-btn-success"
+                  v-if="!isCompleted"
+              >
+                <i class="fas fa-check" v-if="!isMarkingComplete"></i>
+                <i class="fas fa-spinner fa-spin" v-else></i>
+                تکمیل شد
+              </button>
+              <span v-else class="modern-badge modern-badge-success">
+                <i class="fas fa-check-circle"></i>
+                تکمیل شده
+              </span>
+              <button @click="goBack" class="modern-btn modern-btn-secondary">
+                <i class="fas fa-arrow-right"></i>
+                بازگشت
+              </button>
+            </div>
+          </div>
         </div>
-        <p class="progress-text">پیشرفت مطالعه</p>
+
+        <!-- Content Body -->
+        <div class="content-body">
+
+          <!-- TEXT Content -->
+          <div v-if="content.type === 'TEXT'" class="text-content-section">
+            <div class="modern-card">
+              <div class="text-content-area">
+                <div class="content-text" v-html="formatTextContent(content.textContent)"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VIDEO Content -->
+          <div v-else-if="content.type === 'VIDEO'" class="video-content-section">
+            <div class="modern-card">
+              <div class="video-container">
+                <video
+                    ref="videoPlayer"
+                    :src="videoUrl"
+                    controls
+                    preload="metadata"
+                    @loadedmetadata="onVideoLoaded"
+                    @timeupdate="onVideoTimeUpdate"
+                    @ended="onVideoEnded"
+                    @error="onVideoError"
+                    class="video-player"
+                >
+                  مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
+                </video>
+
+                <!-- Video Error State -->
+                <div v-if="videoError" class="video-error">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <p>خطا در بارگذاری ویدیو</p>
+                  <button @click="retryVideo" class="modern-btn modern-btn-outline">
+                    تلاش مجدد
+                  </button>
+                </div>
+              </div>
+
+              <!-- Video Controls -->
+              <div class="video-controls mt-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                  <div class="playback-info">
+                    <span class="time-display">
+                      {{ formatVideoTime(currentVideoTime) }} / {{ formatVideoTime(videoDuration) }}
+                    </span>
+                  </div>
+                  <div class="playback-controls">
+                    <label class="modern-form-label me-2">سرعت پخش:</label>
+                    <select
+                        v-model="playbackSpeed"
+                        @change="changePlaybackSpeed"
+                        class="modern-form-control speed-select"
+                    >
+                      <option value="0.5">۰.۵x</option>
+                      <option value="0.75">۰.۷۵x</option>
+                      <option value="1">۱x</option>
+                      <option value="1.25">۱.۲۵x</option>
+                      <option value="1.5">۱.۵x</option>
+                      <option value="2">۲x</option>
+                    </select>
+                    <button
+                        class="modern-btn modern-btn-secondary btn-sm ms-2"
+                        @click="toggleVideoFullscreen"
+                        title="تمام صفحه"
+                    >
+                      <i class="fas fa-expand"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PDF Content -->
+          <div v-else-if="content.type === 'PDF'" class="pdf-content-section">
+            <div class="modern-card">
+
+              <!-- PDF Loading -->
+              <div v-if="pdfLoading" class="pdf-loading-container">
+                <div class="modern-logo info">
+                  <i class="fas fa-file-pdf"></i>
+                </div>
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">بارگذاری PDF...</span>
+                </div>
+                <p class="mt-3">در حال بارگذاری فایل PDF...</p>
+              </div>
+
+              <!-- PDF Error -->
+              <div v-else-if="pdfError" class="pdf-error-container">
+                <div class="modern-alert modern-alert-danger">
+                  <i class="fas fa-exclamation-triangle me-2"></i>
+                  {{ pdfError }}
+                  <button @click="retryPdfLoad" class="modern-btn modern-btn-outline-danger mt-2">
+                    تلاش مجدد
+                  </button>
+                </div>
+              </div>
+
+              <!-- PDF Viewer -->
+              <div v-else class="pdf-container">
+
+                <!-- PDF Controls -->
+                <div class="pdf-toolbar mb-3">
+                  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+                    <!-- Page Navigation -->
+                    <div class="btn-group pdf-nav-group">
+                      <button
+                          @click="previousPage"
+                          :disabled="currentPage <= 1"
+                          class="modern-btn modern-btn-outline"
+                      >
+                        <i class="fas fa-chevron-right"></i>
+                        قبلی
+                      </button>
+                      <span class="modern-btn modern-btn-outline disabled">
+                        {{ currentPage }} / {{ totalPages }}
+                      </span>
+                      <button
+                          @click="nextPage"
+                          :disabled="currentPage >= totalPages"
+                          class="modern-btn modern-btn-outline"
+                      >
+                        بعدی
+                        <i class="fas fa-chevron-left"></i>
+                      </button>
+                    </div>
+
+                    <!-- Zoom Controls -->
+                    <div class="btn-group zoom-group">
+                      <button @click="zoomOut" class="modern-btn modern-btn-outline">
+                        <i class="fas fa-search-minus"></i>
+                      </button>
+                      <span class="modern-btn modern-btn-outline disabled">
+                        {{ Math.round(pdfScale * 100) }}%
+                      </span>
+                      <button @click="zoomIn" class="modern-btn modern-btn-outline">
+                        <i class="fas fa-search-plus"></i>
+                      </button>
+                      <button @click="fitToWidth" class="modern-btn modern-btn-outline">
+                        <i class="fas fa-arrows-alt-h"></i>
+                        تنظیم عرض
+                      </button>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="btn-group action-group">
+                      <button @click="downloadPdf" class="modern-btn modern-btn-primary">
+                        <i class="fas fa-download"></i>
+                        دانلود
+                      </button>
+                      <button @click="togglePdfFullscreen" class="modern-btn modern-btn-outline">
+                        <i class="fas fa-expand"></i>
+                        تمام صفحه
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- PDF Canvas -->
+                <div class="pdf-viewer-wrapper" ref="pdfViewerWrapper">
+                  <div
+                      class="pdf-canvas-container"
+                      :style="{ transform: `scale(${pdfScale})`, transformOrigin: 'top center' }"
+                  >
+                    <canvas
+                        ref="pdfCanvas"
+                        class="pdf-display-canvas"
+                        @wheel="handlePdfZoom"
+                        tabindex="0"
+                    ></canvas>
+                  </div>
+                </div>
+
+                <!-- Mobile Navigation -->
+                <div class="pdf-mobile-nav d-md-none mt-3">
+                  <div class="modern-card">
+                    <div class="row text-center">
+                      <div class="col-4">
+                        <button
+                            @click="previousPage"
+                            :disabled="currentPage <= 1"
+                            class="modern-btn modern-btn-outline w-100"
+                        >
+                          <i class="fas fa-chevron-right"></i>
+                        </button>
+                      </div>
+                      <div class="col-4 d-flex align-items-center justify-content-center">
+                        <span class="modern-badge modern-badge-primary">
+                          {{ currentPage }}/{{ totalPages }}
+                        </span>
+                      </div>
+                      <div class="col-4">
+                        <button
+                            @click="nextPage"
+                            :disabled="currentPage >= totalPages"
+                            class="modern-btn modern-btn-outline w-100"
+                        >
+                          <i class="fas fa-chevron-left"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Unknown Content Type -->
+          <div v-else class="unknown-content-section">
+            <div class="modern-card">
+              <div class="unknown-content-area text-center">
+                <div class="unknown-content-icon">
+                  <i class="fas fa-question-circle"></i>
+                </div>
+                <h5>نوع محتوای ناشناخته</h5>
+                <p class="text-muted">
+                  نوع محتوای "{{ content.type }}" پشتیبانی نمی‌شود.
+                </p>
+                <button v-if="fileId" @click="downloadFile" class="modern-btn modern-btn-primary">
+                  <i class="fas fa-download"></i>
+                  دانلود فایل
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
-import axios from 'axios';
+import { defineComponent, ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
-export default {
+export default defineComponent({
   name: 'ContentViewer',
-  components: {
-    LoadingSpinner
-  },
-  props: {
-    contentId: {
-      type: [String, Number],
-      required: true
-    },
-    lessonId: {
-      type: [String, Number],
-      default: null
-    }
-  },
-  data() {
-    return {
-      content: null,
-      loading: true,
-      error: null,
-      isFullscreen: false,
 
-      // Video specific
-      currentTime: 0,
-      videoDuration: 0,
-      playbackSpeed: 1,
-      videoLoading: true,
-      videoError: false,
+  setup() {
+    const route = useRoute()
+    const router = useRouter()
 
-      // PDF specific
-      currentPage: 1,
-      totalPages: null,
-      zoomLevel: 1,
+    // State
+    const loading = ref(true)
+    const error = ref(null)
+    const content = ref(null)
+    const timeSpent = ref(0)
+    const startTime = ref(Date.now())
+    const isMarkingComplete = ref(false)
+    const isCompleted = ref(false)
 
-      // Progress tracking
-      showProgress: false,
-      progressPercentage: 0,
-      viewStartTime: null,
-      totalViewTime: 0,
+    // Video state
+    const videoError = ref(false)
+    const currentVideoTime = ref(0)
+    const videoDuration = ref(0)
+    const playbackSpeed = ref(1)
 
-      pdfSupported: true,
-      pdfLoading: false,
-      pdfUrl: null,
-      pdfBlob: null
-    };
-  },
-  async created() {
-    await this.fetchContentData();
+    // PDF state
+    const pdfDoc = ref(null)
+    const pdfLoading = ref(false)
+    const pdfError = ref(null)
+    const currentPage = ref(1)
+    const totalPages = ref(0)
+    const pdfScale = ref(1.0)
+    const pdfRenderTask = ref(null)
 
-  },
-  methods: {
-    async initializePdfViewer() {
-      if (this.content?.type !== 'PDF') return;
+    // Refs
+    const videoPlayer = ref(null)
+    const pdfCanvas = ref(null)
+    const pdfViewerWrapper = ref(null)
 
-      console.log('Initializing PDF viewer...');
-      this.pdfLoading = true;
+    // Timers
+    let timeTracker = null
 
-      // Check browser support first
-      this.checkPdfSupport();
+    // Computed
+    const contentId = computed(() => route.params.contentId)
 
-      if (this.pdfSupported) {
-        await this.loadPdfWithAuth();
-      } else {
-        this.pdfLoading = false;
-        console.log('PDF viewer not supported, using fallback');
+    const fileId = computed(() => {
+      return content.value?.fileId || content.value?.file?.id
+    })
+
+    const videoUrl = computed(() => {
+      if (content.value?.type === 'VIDEO' && fileId.value) {
+        return `/api/content/files/${fileId.value}`
       }
-    },
-    async loadPdfWithAuth() {
-      try {
-        if (!this.fileId) {
-          console.error('No file ID available for PDF');
-          this.pdfSupported = false;
-          this.pdfLoading = false;
-          return;
-        }
+      return null
+    })
 
-        console.log('Loading PDF with file ID:', this.fileId);
-
-        // Get authentication token
-        const token = localStorage.getItem('token');
-        if (!token) {
-          console.error('No authentication token');
-          this.pdfSupported = false;
-          this.pdfLoading = false;
-          return;
-        }
-
-        // Fetch PDF with proper authentication
-        const response = await fetch(`/api/content/files/${this.fileId}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Basic ${token}`,
-            'Accept': 'application/pdf,*/*'
-          }
-        });
-
-        console.log('PDF fetch response:', response.status, response.statusText);
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        // Verify content type
-        const contentType = response.headers.get('content-type');
-        console.log('PDF content type:', contentType);
-
-        if (!contentType || !contentType.includes('application/pdf')) {
-          console.warn('Response is not a PDF, content-type:', contentType);
-          this.pdfSupported = false;
-          this.pdfLoading = false;
-          return;
-        }
-
-        // Create blob and URL
-        const blob = await response.blob();
-        this.pdfBlob = blob;
-        this.pdfUrl = URL.createObjectURL(blob);
-
-        console.log('PDF loaded successfully:', {
-          size: blob.size,
-          url: this.pdfUrl
-        });
-
-        this.pdfLoading = false;
-
-      } catch (error) {
-        console.error('Error loading PDF:', error);
-        this.pdfSupported = false;
-        this.pdfLoading = false;
-
-        if (this.$toast) {
-          this.$toast.error('خطا در بارگذاری فایل PDF: ' + error.message);
-        }
-      }
-    },
-    async fetchContentData() {
-      if (!this.contentId) {
-        this.error = 'شناسه محتوا مشخص نشده است';
-        this.loading = false;
-        return;
+    // Methods
+    const fetchContentData = async () => {
+      if (!contentId.value) {
+        error.value = 'شناسه محتوا مشخص نشده است'
+        loading.value = false
+        return
       }
 
       try {
-        this.loading = true;
-        this.error = null;
+        loading.value = true
+        error.value = null
 
-        console.log('Fetching content:', this.contentId);
-
-        // Fetch content details
-        const response = await this.$http.get(`/content/${this.contentId}`);
-        this.content = response.data;
-
-        console.log('Content loaded:', this.content);
-
-        // Mark content as viewed for progress tracking
-        await this.markContentViewed();
-
-      } catch (error) {
-        console.error('Error fetching content:', error);
-        this.error = 'خطا در بارگذاری محتوا. لطفاً دوباره تلاش کنید.';
-
-        if (this.$toast) {
-          this.$toast.error('خطا در بارگذاری محتوا');
-        }
-      } finally {
-        this.loading = false;
-      }
-    },
-
-    async loadContent() {
-      this.loading = true;
-      this.error = null;
-
-      try {
-        // Fetch actual content from API
-        const response = await axios.get(`/content/${this.contentId}`);
-        this.content = response.data;
-
-        // Mark content as viewed
-        await this.markContentViewed();
-
-      } catch (error) {
-        console.error('Error loading content:', error);
-        this.error = 'خطا در بارگذاری محتوا. لطفاً دوباره تلاش کنید.';
-      } finally {
-        this.loading = false;
-      }
-    },
-    async markContentViewed() {
-      try {
-        if (this.contentId) {
-          await this.$http.post(`/progress/content/${this.contentId}/view`);
-        }
-      } catch (error) {
-        console.error('Error marking content as viewed:', error);
-      }
-    },
-    checkPdfSupport() {
-      const userAgent = navigator.userAgent.toLowerCase();
-      const isIE = userAgent.includes('msie') || userAgent.includes('trident');
-
-      if (isIE) {
-        console.log('Internet Explorer detected, disabling PDF viewer');
-        this.pdfSupported = false;
-        return;
-      }
-
-      // Mobile devices often have issues with PDF in iframe
-      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-      if (isMobile) {
-        console.log('Mobile device detected, using download fallback');
-        this.pdfSupported = false;
-        return;
-      }
-
-      console.log('Browser supports PDF viewing');
-      this.pdfSupported = true;
-    },
-    handlePdfLoad() {
-      console.log('PDF iframe loaded successfully');
-      this.pdfLoading = false;
-    },
-
-    // Handle PDF load error
-    handlePdfError(event) {
-      console.warn('PDF iframe failed to load:', event);
-      this.pdfSupported = false;
-      this.pdfLoading = false;
-    },
-    async downloadContent() {
-      try {
-        if (!this.fileId) {
-          if (this.$toast) {
-            this.$toast.error('فایل برای دانلود موجود نیست');
-          }
-          return;
-        }
-
-        console.log('Starting download for file ID:', this.fileId);
-
-        // If we already have the PDF blob, use it
-        if (this.pdfBlob && this.content.type === 'PDF') {
-          const url = URL.createObjectURL(this.pdfBlob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = (this.content.title || 'document') + '.pdf';
-
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-
-          URL.revokeObjectURL(url);
-
-          if (this.$toast) {
-            this.$toast.success('دانلود فایل شروع شد');
-          }
-          return;
-        }
-
-        // Otherwise, fetch the file with authentication
-        const token = localStorage.getItem('token');
-        const response = await fetch(`/api/content/files/${this.fileId}`, {
-          method: 'GET',
+        const token = localStorage.getItem('token')
+        const response = await fetch(`/api/content/${contentId.value}?timeSpent=${timeSpent.value}`, {
           headers: {
             'Authorization': `Basic ${token}`
           }
-        });
+        })
 
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          throw new Error(`خطا در دریافت محتوا: ${response.status}`)
         }
 
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
+        content.value = await response.json()
 
-        // Determine file extension
-        const contentType = response.headers.get('content-type');
-        let extension = '';
-        if (contentType) {
-          if (contentType.includes('pdf')) extension = '.pdf';
-          else if (contentType.includes('video')) extension = '.mp4';
-          else if (contentType.includes('image')) extension = '.jpg';
+        // Mark as viewed
+        await markContentViewed()
+
+        // Initialize based on content type
+        if (content.value.type === 'PDF') {
+          await initializePdfViewer()
         }
 
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = (this.content.title || 'download') + extension;
-
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        URL.revokeObjectURL(url);
-
-        if (this.$toast) {
-          this.$toast.success('دانلود فایل شروع شد');
-        }
-
-      } catch (error) {
-        console.error('Error downloading file:', error);
-        if (this.$toast) {
-          this.$toast.error('خطا در دانلود فایل: ' + error.message);
-        }
+      } catch (err) {
+        console.error('Error fetching content:', err)
+        error.value = err.message || 'خطا در بارگذاری محتوا'
+      } finally {
+        loading.value = false
       }
-    },
+    }
 
-    cleanup() {
-      if (this.pdfUrl && this.pdfUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(this.pdfUrl);
-        console.log('PDF blob URL cleaned up');
-      }
-    },
-
-    goBack() {
-      const lessonId = this.$route.query.lessonId;
-      if (lessonId) {
-        this.$router.push({
-          name: 'CourseDetail',
-          params: { id: lessonId },
-          query: { tab: 'lessons' }
-        });
-      } else {
-        this.$router.go(-1);
-      }
-    },
-
-    getContentUrl(content) {
-      if (content.type === 'TEXT') return null;
-      if (content.fileId) {
-        return `/content/files/${content.fileId}`;
-      }
-      // Fallback to fileUrl if available
-      return content.fileUrl || content.url;
-    },
-
-    getPdfUrl() {
-      return `${this.getContentUrl(this.content)}#page=${this.currentPage}&zoom=${Math.round(this.zoomLevel * 100)}`;
-    },
-
-    formatTextContent(text) {
-      if (!text) return '';
-      return text.replace(/\n/g, '<br>').replace(/•/g, '&bull;');
-    },
-
-    getContentTypeText(type) {
-      switch (type) {
-        case 'TEXT': return 'محتوای متنی';
-        case 'VIDEO': return 'محتوای ویدیویی';
-        case 'PDF': return 'سند PDF';
-        default: return 'محتوا';
-      }
-    },
-
-    getContentIcon(type) {
-      switch (type) {
-        case 'TEXT': return 'fas fa-align-left';
-        case 'VIDEO': return 'fas fa-play-circle';
-        case 'PDF': return 'fas fa-file-pdf';
-        default: return 'fas fa-file';
-      }
-    },
-
-    formatTime(seconds) {
-      if (!seconds || isNaN(seconds)) return '00:00';
-      const minutes = Math.floor(seconds / 60);
-      const remainingSeconds = Math.floor(seconds % 60);
-      return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-    },
-
-    formatStudyTime(milliseconds) {
-      const seconds = Math.floor(milliseconds / 1000);
-      const minutes = Math.floor(seconds / 60);
-      const hours = Math.floor(minutes / 60);
-
-      if (hours > 0) {
-        return `${hours} ساعت و ${minutes % 60} دقیقه`;
-      } else if (minutes > 0) {
-        return `${minutes} دقیقه`;
-      } else {
-        return `${seconds} ثانیه`;
-      }
-    },
-
-    // Video methods
-    onVideoLoaded() {
-      this.videoLoading = false;
-      this.videoError = false;
-      if (this.$refs.videoPlayer) {
-        this.videoDuration = this.$refs.videoPlayer.duration;
-      }
-    },
-
-    onVideoTimeUpdate() {
-      if (this.$refs.videoPlayer) {
-        this.currentTime = this.$refs.videoPlayer.currentTime;
-        this.updateProgress();
-      }
-    },
-
-    onVideoEnded() {
-      this.progressPercentage = 100;
-      this.showProgress = true;
-      setTimeout(() => this.showProgress = false, 3000);
-    },
-
-    retryVideo() {
-      const video = this.$refs.videoPlayer;
-      if (video) {
-        this.videoLoading = true;
-        this.videoError = false;
-        video.load();
-      }
-    },
-
-    changePlaybackSpeed() {
-      if (this.$refs.videoPlayer) {
-        this.$refs.videoPlayer.playbackRate = parseFloat(this.playbackSpeed);
-      }
-    },
-
-    toggleVideoFullscreen() {
-      const video = this.$refs.videoPlayer;
-      if (video) {
-        if (video.requestFullscreen) {
-          video.requestFullscreen();
-        } else if (video.webkitRequestFullscreen) {
-          video.webkitRequestFullscreen();
-        } else if (video.mozRequestFullScreen) {
-          video.mozRequestFullScreen();
-        }
-      }
-    },
-
-    // PDF methods
-    previousPage() {
-      if (this.currentPage > 1) {
-        this.currentPage--;
-        this.updateProgress();
-      }
-    },
-
-    nextPage() {
-      if (!this.totalPages || this.currentPage < this.totalPages) {
-        this.currentPage++;
-        this.updateProgress();
-      }
-    },
-
-
-
-
-    // Fullscreen methods
-    toggleFullscreen() {
-      if (this.isFullscreen) {
-        this.exitFullscreen();
-      } else {
-        this.enterFullscreen();
-      }
-    },
-
-    enterFullscreen() {
-      const element = document.documentElement;
-      if (element.requestFullscreen) {
-        element.requestFullscreen();
-      } else if (element.webkitRequestFullscreen) {
-        element.webkitRequestFullscreen();
-      } else if (element.msRequestFullscreen) {
-        element.msRequestFullscreen();
-      }
-      this.isFullscreen = true;
-    },
-
-    exitFullscreen() {
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
-      }
-      this.isFullscreen = false;
-    },
-
-    // Progress tracking
-    startProgressTracking() {
-      this.viewStartTime = Date.now();
-      // شروع ردیابی پیشرفت
-      this.progressInterval = setInterval(() => {
-        this.updateProgress();
-      }, 5000); // هر 5 ثانیه
-    },
-
-    stopProgressTracking() {
-      if (this.progressInterval) {
-        clearInterval(this.progressInterval);
-      }
-      if (this.viewStartTime) {
-        this.totalViewTime += Date.now() - this.viewStartTime;
-      }
-    },
-
-    updateProgress() {
-      if (this.content?.type === 'VIDEO' && this.videoDuration > 0) {
-        this.progressPercentage = (this.currentTime / this.videoDuration) * 100;
-      } else if (this.content?.type === 'PDF' && this.totalPages > 0) {
-        this.progressPercentage = (this.currentPage / this.totalPages) * 100;
-      } else if (this.content?.type === 'TEXT') {
-        // برای متن، بر اساس زمان صرف شده
-        const timeSpent = this.totalViewTime + (Date.now() - this.viewStartTime);
-        const estimatedReadTime = (this.content.textContent?.length || 1000) / 200 * 1000; // 200 کاراکتر در ثانیه
-        this.progressPercentage = Math.min((timeSpent / estimatedReadTime) * 100, 100);
-      }
-    },
-
-    async markContentComplete() {
+    const markContentViewed = async () => {
       try {
-        await axios.post(`/progress/content/${this.contentId}/complete`);
-        this.$toast?.success('محتوا به عنوان تکمیل شده علامت‌گذاری شد.');
-      } catch (error) {
-        console.error('Error marking content complete:', error);
-        this.$toast?.error('خطا در علامت‌گذاری محتوا');
+        const token = localStorage.getItem('token')
+        await fetch(`/api/progress/content/${contentId.value}/view?timeSpent=${timeSpent.value}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${token}`
+          }
+        })
+      } catch (err) {
+        console.error('Error marking content as viewed:', err)
       }
-    },
+    }
 
-  },
-  computed: {
-    fileId() {
-      // Get file ID from multiple possible locations
-      return this.content?.fileId || this.content?.file?.id;
-    },
-    pdfViewerUrl() {
-      if (this.fileId) {
-        return `/api/content/files/${this.fileId}`;
+    const markAsComplete = async () => {
+      try {
+        isMarkingComplete.value = true
+        const token = localStorage.getItem('token')
+
+        await fetch(`/api/progress/content/${contentId.value}/complete?timeSpent=${timeSpent.value}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Basic ${token}`
+          }
+        })
+
+        isCompleted.value = true
+
+      } catch (err) {
+        console.error('Error marking content complete:', err)
+      } finally {
+        isMarkingComplete.value = false
       }
-      return null;
     }
-  },
-  async mounted() {
-    // Initialize PDF viewer if content is PDF
-    if (this.content?.type === 'PDF') {
-      await this.initializePdfViewer();
+
+    // Video Methods
+    const onVideoLoaded = () => {
+      videoError.value = false
+      if (videoPlayer.value) {
+        videoDuration.value = videoPlayer.value.duration
+      }
     }
-  },
-  beforeUnmount() {
-    this.cleanup();
+
+    const onVideoTimeUpdate = () => {
+      if (videoPlayer.value) {
+        currentVideoTime.value = videoPlayer.value.currentTime
+      }
+    }
+
+    const onVideoEnded = () => {
+      // Auto mark as complete when video ends
+      if (!isCompleted.value) {
+        markAsComplete()
+      }
+    }
+
+    const onVideoError = () => {
+      videoError.value = true
+    }
+
+    const retryVideo = () => {
+      videoError.value = false
+      if (videoPlayer.value) {
+        videoPlayer.value.load()
+      }
+    }
+
+    const changePlaybackSpeed = () => {
+      if (videoPlayer.value) {
+        videoPlayer.value.playbackRate = parseFloat(playbackSpeed.value)
+      }
+    }
+
+    const toggleVideoFullscreen = () => {
+      if (videoPlayer.value) {
+        if (videoPlayer.value.requestFullscreen) {
+          videoPlayer.value.requestFullscreen()
+        }
+      }
+    }
+
+    // PDF Methods
+    const initializePdfViewer = async () => {
+      if (content.value?.type !== 'PDF') return
+
+      pdfLoading.value = true
+      pdfError.value = null
+
+      try {
+        await loadPdfWithPdfJs()
+      } catch (err) {
+        console.error('PDF initialization failed:', err)
+        pdfError.value = err.message || 'خطا در بارگذاری PDF'
+        pdfLoading.value = false
+      }
+    }
+
+    const loadPdfWithPdfJs = async () => {
+      try {
+        if (!fileId.value) {
+          throw new Error('شناسه فایل PDF موجود نیست')
+        }
+
+        // Import PDF.js
+        const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js')
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
+
+
+        // Fetch PDF
+        const token = localStorage.getItem('token')
+        const response = await fetch(`/api/content/files/${fileId.value}`, {
+          headers: {
+            'Authorization': `Basic ${token}`
+          }
+        })
+
+        if (!response.ok) {
+          throw new Error(`خطا در دریافت فایل: ${response.status}`)
+        }
+
+        const arrayBuffer = await response.arrayBuffer()
+
+        // Load PDF
+        pdfDoc.value = await pdfjsLib.getDocument(arrayBuffer).promise
+        totalPages.value = pdfDoc.value.numPages
+
+        // Render first page
+        await renderPdfPage(1)
+
+        pdfLoading.value = false
+
+        // Auto fit
+        nextTick(() => {
+          fitToWidth()
+        })
+
+      } catch (err) {
+        throw new Error(err.message || 'خطا در بارگذاری PDF')
+      }
+    }
+
+    const renderPdfPage = async (pageNum) => {
+      if (!pdfDoc.value || pageNum < 1 || pageNum > totalPages.value) {
+        return
+      }
+
+      try {
+        // Cancel previous render
+        if (pdfRenderTask.value) {
+          pdfRenderTask.value.cancel()
+        }
+
+        const page = await pdfDoc.value.getPage(pageNum)
+        const canvas = pdfCanvas.value
+
+        if (!canvas) return
+
+        const context = canvas.getContext('2d')
+        const viewport = page.getViewport({ scale: 1.0 })
+
+        canvas.height = viewport.height
+        canvas.width = viewport.width
+
+        const renderContext = {
+          canvasContext: context,
+          viewport: viewport
+        }
+
+        pdfRenderTask.value = page.render(renderContext)
+        await pdfRenderTask.value.promise
+
+        currentPage.value = pageNum
+
+      } catch (err) {
+        if (err.name !== 'RenderingCancelledException') {
+          console.error('Error rendering PDF page:', err)
+          pdfError.value = 'خطا در نمایش صفحه PDF'
+        }
+      }
+    }
+
+    const nextPage = async () => {
+      if (currentPage.value < totalPages.value) {
+        await renderPdfPage(currentPage.value + 1)
+      }
+    }
+
+    const previousPage = async () => {
+      if (currentPage.value > 1) {
+        await renderPdfPage(currentPage.value - 1)
+      }
+    }
+
+    const zoomIn = () => {
+      pdfScale.value = Math.min(pdfScale.value * 1.25, 3.0)
+    }
+
+    const zoomOut = () => {
+      pdfScale.value = Math.max(pdfScale.value / 1.25, 0.25)
+    }
+
+    const fitToWidth = () => {
+      nextTick(() => {
+        const wrapper = pdfViewerWrapper.value
+        const canvas = pdfCanvas.value
+
+        if (wrapper && canvas) {
+          const wrapperWidth = wrapper.clientWidth - 40
+          const canvasWidth = canvas.width
+
+          if (canvasWidth > 0) {
+            pdfScale.value = wrapperWidth / canvasWidth
+          }
+        }
+      })
+    }
+
+    const handlePdfZoom = (event) => {
+      if (event.ctrlKey || event.metaKey) {
+        event.preventDefault()
+
+        if (event.deltaY < 0) {
+          zoomIn()
+        } else {
+          zoomOut()
+        }
+      }
+    }
+
+    const downloadPdf = async () => {
+      try {
+        const token = localStorage.getItem('token')
+        const response = await fetch(`/api/content/files/${fileId.value}`, {
+          headers: {
+            'Authorization': `Basic ${token}`
+          }
+        })
+
+        if (!response.ok) {
+          throw new Error('خطا در دانلود فایل')
+        }
+
+        const blob = await response.blob()
+        const url = URL.createObjectURL(blob)
+
+        const link = document.createElement('a')
+        link.href = url
+        link.download = content.value.title || 'document.pdf'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        URL.revokeObjectURL(url)
+
+      } catch (err) {
+        console.error('Download error:', err)
+      }
+    }
+
+    const togglePdfFullscreen = () => {
+      const wrapper = pdfViewerWrapper.value
+      if (!wrapper) return
+
+      if (!document.fullscreenElement) {
+        wrapper.requestFullscreen().catch(err => {
+          console.error('Fullscreen error:', err)
+        })
+      } else {
+        document.exitFullscreen()
+      }
+    }
+
+    const retryPdfLoad = () => {
+      pdfError.value = null
+      initializePdfViewer()
+    }
+
+    // Utility Methods
+    const formatTime = (seconds) => {
+      const mins = Math.floor(seconds / 60)
+      const secs = seconds % 60
+      return `${mins}:${secs.toString().padStart(2, '0')}`
+    }
+
+    const formatVideoTime = (seconds) => {
+      if (!seconds || isNaN(seconds)) return '0:00'
+      const mins = Math.floor(seconds / 60)
+      const secs = Math.floor(seconds % 60)
+      return `${mins}:${secs.toString().padStart(2, '0')}`
+    }
+
+    const formatTextContent = (text) => {
+      if (!text) return ''
+      return text.replace(/\n/g, '<br>')
+    }
+
+    const getContentTypeLabel = (type) => {
+      const labels = {
+        'TEXT': 'محتوای متنی',
+        'VIDEO': 'ویدیو',
+        'PDF': 'فایل PDF'
+      }
+      return labels[type] || type
+    }
+
+    const getContentTypeIcon = (type) => {
+      const icons = {
+        'TEXT': 'fas fa-file-text',
+        'VIDEO': 'fas fa-play-circle',
+        'PDF': 'fas fa-file-pdf'
+      }
+      return icons[type] || 'fas fa-file'
+    }
+
+    const getContentTypeClass = (type) => {
+      const classes = {
+        'TEXT': 'modern-badge-info',
+        'VIDEO': 'modern-badge-success',
+        'PDF': 'modern-badge-danger'
+      }
+      return classes[type] || 'modern-badge-secondary'
+    }
+
+    const downloadFile = async () => {
+      if (!fileId.value) return
+
+      try {
+        const token = localStorage.getItem('token')
+        const response = await fetch(`/api/content/files/${fileId.value}`, {
+          headers: {
+            'Authorization': `Basic ${token}`
+          }
+        })
+
+        if (!response.ok) {
+          throw new Error('خطا در دانلود فایل')
+        }
+
+        const blob = await response.blob()
+        const url = URL.createObjectURL(blob)
+
+        const link = document.createElement('a')
+        link.href = url
+        link.download = content.value.title || 'file'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        URL.revokeObjectURL(url)
+
+      } catch (err) {
+        console.error('Download error:', err)
+      }
+    }
+
+    const goBack = () => {
+      sendTimeData()
+      router.back()
+    }
+
+    const sendTimeData = async () => {
+      if (timeSpent.value > 0 && contentId.value) {
+        try {
+          const token = localStorage.getItem('token')
+          await fetch(`/api/content/${contentId.value}?timeSpent=${timeSpent.value}`, {
+            headers: {
+              'Authorization': `Basic ${token}`
+            }
+          })
+        } catch (err) {
+          console.error('Error sending time data:', err)
+        }
+      }
+    }
+
+    // Event Handlers
+    const handleKeydown = (event) => {
+      if (content.value?.type !== 'PDF') return
+
+      switch (event.key) {
+        case 'ArrowLeft':
+          event.preventDefault()
+          nextPage()
+          break
+        case 'ArrowRight':
+          event.preventDefault()
+          previousPage()
+          break
+        case 'PageDown':
+        case ' ':
+          event.preventDefault()
+          nextPage()
+          break
+        case 'PageUp':
+          event.preventDefault()
+          previousPage()
+          break
+        case '+':
+        case '=':
+          if (event.ctrlKey || event.metaKey) {
+            event.preventDefault()
+            zoomIn()
+          }
+          break
+        case '-':
+          if (event.ctrlKey || event.metaKey) {
+            event.preventDefault()
+            zoomOut()
+          }
+          break
+      }
+    }
+
+    const handleResize = () => {
+      if (content.value?.type === 'PDF' && pdfDoc.value) {
+        fitToWidth()
+      }
+    }
+
+    // Time tracking
+    const startTimer = () => {
+      timeTracker = setInterval(() => {
+        timeSpent.value = Math.floor((Date.now() - startTime.value) / 1000)
+      }, 1000)
+    }
+
+    const stopTimer = () => {
+      if (timeTracker) {
+        clearInterval(timeTracker)
+        timeTracker = null
+      }
+    }
+
+    // Lifecycle
+    onMounted(() => {
+      fetchContentData()
+      startTimer()
+
+      // Event listeners
+      window.addEventListener('keydown', handleKeydown)
+      window.addEventListener('resize', handleResize)
+    })
+
+    onUnmounted(() => {
+      stopTimer()
+      sendTimeData()
+
+      // Cleanup
+      window.removeEventListener('keydown', handleKeydown)
+      window.removeEventListener('resize', handleResize)
+
+      if (pdfRenderTask.value) {
+        pdfRenderTask.value.cancel()
+      }
+    })
+
+    // Watchers
+    watch(() => route.params.contentId, () => {
+      if (route.params.contentId !== contentId.value) {
+        fetchContentData()
+      }
+    })
+
+    return {
+      // State
+      loading,
+      error,
+      content,
+      timeSpent,
+      isMarkingComplete,
+      isCompleted,
+
+      // Video
+      videoError,
+      currentVideoTime,
+      videoDuration,
+      playbackSpeed,
+      videoUrl,
+
+      // PDF
+      pdfLoading,
+      pdfError,
+      currentPage,
+      totalPages,
+      pdfScale,
+
+      // Refs
+      videoPlayer,
+      pdfCanvas,
+      pdfViewerWrapper,
+
+      // Computed
+      fileId,
+
+      // Methods
+      fetchContentData,
+      markAsComplete,
+      goBack,
+
+      // Video methods
+      onVideoLoaded,
+      onVideoTimeUpdate,
+      onVideoEnded,
+      onVideoError,
+      retryVideo,
+      changePlaybackSpeed,
+      toggleVideoFullscreen,
+
+      // PDF methods
+      nextPage,
+      previousPage,
+      zoomIn,
+      zoomOut,
+      fitToWidth,
+      handlePdfZoom,
+      downloadPdf,
+      togglePdfFullscreen,
+      retryPdfLoad,
+
+      // Utility
+      formatTime,
+      formatVideoTime,
+      formatTextContent,
+      getContentTypeLabel,
+      getContentTypeIcon,
+      getContentTypeClass,
+      downloadFile
+    }
   }
-
-};
+})
 </script>
 
 <style scoped>
+/* Base Styles */
 .content-viewer {
   min-height: 100vh;
   padding: 2rem 1rem;
@@ -894,92 +980,139 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 60vh;
+  min-height: 80vh;
 }
 
 .content-container {
   max-width: 100%;
 }
 
-.content-navigation {
-  display: flex;
-  justify-content: flex-start;
-}
-
-/* Content Header Styles */
+/* Content Header */
 .content-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.9);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: 12px 12px 0 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 2rem;
 }
 
 .content-title {
   color: #333;
+  font-weight: 700;
+  margin: 0 0 1rem 0;
+  font-size: 1.75rem;
+  line-height: 1.3;
+}
+
+.content-meta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.content-type-badge,
+.time-badge,
+.lesson-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
   font-weight: 600;
-  margin: 0;
-  flex: 1;
-  font-size: 1.5rem;
+}
+
+.content-type-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.time-badge {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+}
+
+.lesson-badge {
+  background: rgba(52, 152, 219, 0.1);
+  color: #3498db;
 }
 
 .content-actions {
   display: flex;
-  gap: 0.75rem;
+  gap: 1rem;
   flex-shrink: 0;
 }
 
+/* Content Body */
 .content-body {
-  border-radius: 0 0 12px 12px;
+  border-radius: 16px;
   overflow: hidden;
 }
 
-/* Text Content Styles */
-.text-content {
+/* TEXT Content */
+.text-content-section {
   background: white;
 }
 
 .text-content-area {
-  padding: 2rem;
+  padding: 3rem;
 }
 
 .content-text {
   line-height: 1.8;
   font-size: 1.1rem;
   color: #333;
-  white-space: pre-wrap;
-  word-wrap: break-word;
   max-width: none;
 }
 
-/* Video Content Styles */
-.video-content {
+.content-text h1,
+.content-text h2,
+.content-text h3,
+.content-text h4,
+.content-text h5,
+.content-text h6 {
+  color: #2c3e50;
+  margin: 2rem 0 1rem 0;
+}
+
+.content-text p {
+  margin-bottom: 1.5rem;
+}
+
+.content-text ul,
+.content-text ol {
+  margin: 1.5rem 0;
+  padding-right: 2rem;
+}
+
+/* VIDEO Content */
+.video-content-section {
   background: white;
 }
 
 .video-container {
   position: relative;
   background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+  min-height: 400px;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 400px;
 }
 
 .video-player {
   width: 100%;
   height: auto;
-  max-height: 70vh;
   min-height: 400px;
-  background: #000;
+  max-height: 70vh;
 }
 
 .video-error {
   text-align: center;
   color: #6c757d;
-  padding: 2rem;
+  padding: 3rem 2rem;
 }
 
 .video-error i {
@@ -988,99 +1121,167 @@ export default {
   display: block;
 }
 
-/* PDF Content Styles */
-.pdf-content {
-  display: flex;
-  flex-direction: column;
-  height: auto;
-  min-height: calc(100vh - 200px);
-  background: white;
+.video-controls {
+  padding: 1.5rem 2rem;
+  background: rgba(248, 249, 250, 0.7);
+  backdrop-filter: blur(10px);
 }
 
-.pdf-viewer-container {
-  flex: 1;
-  position: relative;
-  background: #f8f9fa;
-  border-radius: 0 0 12px 12px;
-  overflow: hidden;
-  min-height: 600px;
-}
-
-.pdf-viewer {
-  width: 100%;
-  height: 100%;
-  min-height: 600px;
-  border: none;
-  background: white;
-}
-
-.pdf-fallback {
+.playback-info {
   display: flex;
   align-items: center;
-  justify-content: center;
-  height: 100%;
-  min-height: 400px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  gap: 1rem;
 }
 
-.fallback-content {
+.time-display {
+  font-family: 'Courier New', monospace;
+  font-weight: 600;
+  color: #495057;
+}
+
+.playback-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.speed-select {
+  width: auto;
+  min-width: 100px;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+/* PDF Content */
+.pdf-content-section {
+  background: white;
+}
+
+.pdf-loading-container,
+.pdf-error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
   text-align: center;
   padding: 3rem 2rem;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  max-width: 400px;
-  margin: 2rem;
 }
 
-.fallback-icon {
-  font-size: 4rem;
-  margin-bottom: 1.5rem;
-  opacity: 0.7;
+.pdf-loading-container .spinner-border {
+  width: 3rem;
+  height: 3rem;
+  border-width: 0.3em;
+  margin: 1rem 0;
 }
 
-.fallback-content h5 {
-  color: #495057;
-  font-weight: 600;
+.pdf-toolbar {
+  background: rgba(248, 249, 250, 0.9);
+  backdrop-filter: blur(20px);
+  border-radius: 12px;
+  padding: 1.5rem;
   margin-bottom: 1rem;
 }
 
-.fallback-content .text-muted {
-  line-height: 1.6;
-  font-size: 0.95rem;
+.pdf-nav-group,
+.zoom-group,
+.action-group {
+  display: flex;
+  gap: 0;
 }
 
-.pdf-loading {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  background: rgba(255, 255, 255, 0.95);
-  padding: 2rem;
+.pdf-nav-group .modern-btn,
+.zoom-group .modern-btn,
+.action-group .modern-btn {
+  border-radius: 0;
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  border-right: none;
+}
+
+.pdf-nav-group .modern-btn:first-child,
+.zoom-group .modern-btn:first-child,
+.action-group .modern-btn:first-child {
+  border-radius: 8px 0 0 8px;
+  border-right: 2px solid rgba(102, 126, 234, 0.84);
+}
+
+.pdf-nav-group .modern-btn:last-child,
+.zoom-group .modern-btn:last-child,
+.action-group .modern-btn:last-child {
+  border-radius: 0 8px 8px 0;
+  border-right: 2px solid rgba(102, 126, 234, 0.84);
+}
+
+.pdf-viewer-wrapper {
+  background: #f8f9fa;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  z-index: 10;
+  padding: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 600px;
+  overflow: auto;
+  position: relative;
 }
 
-.pdf-loading .spinner-border {
-  width: 3rem;
-  height: 3rem;
+.pdf-canvas-container {
+  transition: transform 0.3s ease;
+  display: flex;
+  justify-content: center;
+  max-width: 100%;
 }
 
-.pdf-loading p {
-  margin: 0;
-  color: #6c757d;
-  font-weight: 500;
+.pdf-display-canvas {
+  display: block;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  background: white;
+  max-width: 100%;
+  height: auto;
+  cursor: grab;
 }
 
-/* Unknown Content Styles */
-.unknown-content {
+.pdf-display-canvas:active {
+  cursor: grabbing;
+}
+
+.pdf-display-canvas:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+.pdf-mobile-nav {
+  position: sticky;
+  bottom: 20px;
+  z-index: 100;
+}
+
+.pdf-mobile-nav .modern-card {
+  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 1rem;
+}
+
+/* Fullscreen */
+.pdf-viewer-wrapper:fullscreen {
+  background: #2c3e50;
+  padding: 1rem;
+}
+
+.pdf-viewer-wrapper:fullscreen .pdf-display-canvas {
+  border-color: #34495e;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Unknown Content */
+.unknown-content-section {
   background: white;
 }
 
 .unknown-content-area {
-  padding: 3rem 2rem;
+  padding: 4rem 2rem;
   text-align: center;
 }
 
@@ -1097,17 +1298,6 @@ export default {
   margin-bottom: 1rem;
 }
 
-.unknown-content-area .text-muted {
-  line-height: 1.6;
-  font-size: 0.95rem;
-}
-
-/* Error and Loading States */
-.loading-container .spinner-border,
-.error-container .modern-logo {
-  margin-bottom: 1rem;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
   .content-viewer {
@@ -1115,53 +1305,87 @@ export default {
   }
 
   .content-header {
+    padding: 1.5rem;
     flex-direction: column;
-    gap: 1rem;
     align-items: stretch;
-    padding: 1rem;
+  }
+
+  .content-info {
+    margin-bottom: 1.5rem;
   }
 
   .content-title {
-    font-size: 1.25rem;
-    text-align: center;
+    font-size: 1.5rem;
+  }
+
+  .content-meta {
+    justify-content: center;
   }
 
   .content-actions {
     justify-content: center;
+    width: 100%;
   }
 
   .text-content-area {
-    padding: 1.5rem;
+    padding: 2rem;
   }
 
   .content-text {
     font-size: 1rem;
-    line-height: 1.7;
   }
 
-  .video-player {
+  .video-container {
     min-height: 250px;
   }
 
-  .pdf-viewer {
+  .video-controls {
+    padding: 1rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .playback-controls {
+    justify-content: center;
+  }
+
+  .pdf-toolbar {
+    padding: 1rem;
+  }
+
+  .pdf-toolbar .d-flex {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .pdf-nav-group,
+  .zoom-group,
+  .action-group {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .pdf-nav-group .modern-btn,
+  .zoom-group .modern-btn,
+  .action-group .modern-btn {
+    flex: 1;
+    border-radius: 8px !important;
+    border-right: 2px solid rgba(102, 126, 234, 0.84) !important;
+    margin: 0 2px;
+  }
+
+  .pdf-viewer-wrapper {
+    padding: 1rem;
     min-height: 400px;
   }
 
-  .pdf-viewer-container {
-    min-height: 400px;
-  }
-
-  .fallback-content {
-    margin: 1rem;
-    padding: 2rem 1.5rem;
-  }
-
-  .fallback-icon {
-    font-size: 3rem;
+  .pdf-display-canvas {
+    max-width: calc(100vw - 2rem);
   }
 
   .unknown-content-area {
-    padding: 2rem 1.5rem;
+    padding: 3rem 1.5rem;
   }
 
   .unknown-content-icon {
@@ -1171,45 +1395,59 @@ export default {
 
 @media (max-width: 576px) {
   .content-title {
-    font-size: 1.1rem;
+    font-size: 1.25rem;
   }
 
   .text-content-area {
-    padding: 1rem;
+    padding: 1.5rem;
   }
 
   .content-text {
     font-size: 0.95rem;
   }
 
-  .video-player {
+  .video-container {
     min-height: 200px;
   }
 
-  .pdf-viewer {
-    min-height: 300px;
+  .pdf-toolbar {
+    padding: 0.75rem;
   }
 
-  .pdf-viewer-container {
+  .pdf-nav-group .modern-btn,
+  .zoom-group .modern-btn,
+  .action-group .modern-btn {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.5rem;
+  }
+
+  .pdf-viewer-wrapper {
+    padding: 0.5rem;
     min-height: 300px;
   }
 }
 
-/* Dark Mode Support */
+/* Dark Mode */
 @media (prefers-color-scheme: dark) {
   .content-header {
-    background: rgba(45, 55, 72, 0.9);
-    border-bottom-color: rgba(255, 255, 255, 0.1);
+    background: rgba(45, 55, 72, 0.95);
+    border-color: rgba(255, 255, 255, 0.1);
   }
 
   .content-title {
     color: #e2e8f0;
   }
 
-  .text-content,
-  .video-content,
-  .pdf-content,
-  .unknown-content {
+  .time-badge,
+  .lesson-badge {
+    background: rgba(102, 126, 234, 0.2);
+    color: #cbd5e0;
+  }
+
+  .text-content-section,
+  .video-content-section,
+  .pdf-content-section,
+  .unknown-content-section {
     background: #2d3748;
   }
 
@@ -1221,26 +1459,49 @@ export default {
     color: #e2e8f0;
   }
 
-  .pdf-viewer-container {
-    background: #2d3748;
-  }
-
-  .fallback-content {
-    background: #2d3748;
+  .content-text h1,
+  .content-text h2,
+  .content-text h3,
+  .content-text h4,
+  .content-text h5,
+  .content-text h6 {
     color: #e2e8f0;
   }
 
-  .fallback-content h5 {
-    color: #e2e8f0;
+  .video-controls {
+    background: rgba(45, 55, 72, 0.8);
   }
 
-  .pdf-loading {
+  .time-display {
+    color: #cbd5e0;
+  }
+
+  .pdf-toolbar {
+    background: rgba(45, 55, 72, 0.9);
+  }
+
+  .pdf-viewer-wrapper {
+    background: #1a202c;
+  }
+
+  .pdf-display-canvas {
+    border-color: #4a5568;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  .pdf-mobile-nav .modern-card {
     background: rgba(45, 55, 72, 0.95);
+    color: #e2e8f0;
+  }
+
+  .pdf-loading-container,
+  .pdf-error-container {
     color: #e2e8f0;
   }
 
   .unknown-content-area {
     background: #2d3748;
+    color: #e2e8f0;
   }
 
   .unknown-content-area h5 {
@@ -1250,13 +1511,15 @@ export default {
 
 /* Print Styles */
 @media print {
-  .content-navigation,
-  .content-actions {
-    display: none;
+  .content-header .content-actions,
+  .pdf-toolbar,
+  .pdf-mobile-nav,
+  .video-controls {
+    display: none !important;
   }
 
   .content-viewer {
-    background: white;
+    background: white !important;
     padding: 0;
   }
 
@@ -1268,9 +1531,20 @@ export default {
   .content-text {
     color: black;
   }
+
+  .pdf-viewer-wrapper {
+    background: white !important;
+    padding: 0 !important;
+  }
+
+  .pdf-display-canvas {
+    border: none !important;
+    box-shadow: none !important;
+    max-width: 100% !important;
+  }
 }
 
-/* Animation Classes */
+/* Animations */
 .animate-slide-up {
   animation: slideInUp 0.6s ease forwards;
 }
@@ -1286,25 +1560,15 @@ export default {
   }
 }
 
-/* Focus and Accessibility */
-.modern-btn:focus {
-  outline: 2px solid #667eea;
-  outline-offset: 2px;
-}
-
-.video-player:focus {
-  outline: 2px solid #667eea;
-  outline-offset: 2px;
-}
-
-/* High Contrast Mode */
+/* High Contrast */
 @media (prefers-contrast: high) {
   .content-header {
-    border-bottom: 2px solid #000;
+    border: 2px solid #000;
   }
 
   .content-title {
     color: #000;
+    font-weight: 800;
   }
 
   .content-text {
@@ -1312,9 +1576,50 @@ export default {
     font-weight: 500;
   }
 
-  .fallback-content,
-  .unknown-content-area {
+  .pdf-display-canvas {
     border: 2px solid #000;
+  }
+
+  .pdf-nav-group .modern-btn,
+  .zoom-group .modern-btn,
+  .action-group .modern-btn {
+    border-width: 2px;
+  }
+}
+
+/* Touch Gestures */
+@media (pointer: coarse) {
+  .pdf-display-canvas {
+    touch-action: pan-x pan-y pinch-zoom;
+  }
+}
+
+/* Loading Animation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.spinner-border {
+  border: 0.3em solid rgba(102, 126, 234, 0.3);
+  border-top: 0.3em solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* PDF Page Transition */
+.pdf-canvas-container {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 </style>

@@ -106,6 +106,9 @@
                       placeholder="پیام خود را بنویسید..."
                       v-model="newMessage"
                       :disabled="sending"
+                      @input="onTyping"
+                      @focus="onStartTyping"
+                      @blur="onStopTyping"
                   >
                   <button type="submit" class="modern-btn modern-btn-primary" :disabled="!newMessage.trim() || sending">
                     <span v-if="sending" class="spinner-border spinner-border-sm" role="status"></span>
@@ -162,7 +165,13 @@ export default {
       pageSize: 20,
       hasMoreMessages: false,
 
-      pollingInterval: null
+      pollingInterval: null,
+
+      // Activity tracking variables
+      chatStartTime: null,
+      typingStartTime: null,
+      totalTypingTime: 0,
+      isActive: true
     };
   },
   computed: {
@@ -178,6 +187,10 @@ export default {
     console.log('CourseChat created with courseId:', this.courseId);
     console.log('Current user:', this.currentUser);
 
+    // Initialize activity tracking
+    this.chatStartTime = Date.now();
+    this.isActive = true;
+
     try {
       await this.fetchCourseData();
       await this.fetchParticipants();
@@ -190,10 +203,60 @@ export default {
       }
     }
   },
+  mounted() {
+    // Add visibility change listener for activity tracking
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
+  },
   beforeUnmount() {
     this.stopPolling();
+
+    // Send viewing time before leaving
+    this.sendViewingTime();
+
+    // Remove event listeners
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
   },
   methods: {
+    // Activity tracking methods
+    handleVisibilityChange() {
+      if (document.hidden) {
+        this.sendViewingTime();
+        this.isActive = false;
+      } else {
+        this.chatStartTime = Date.now();
+        this.isActive = true;
+      }
+    },
+
+    onStartTyping() {
+      if (!this.typingStartTime) {
+        this.typingStartTime = Date.now();
+      }
+    },
+
+    onStopTyping() {
+      if (this.typingStartTime) {
+        this.totalTypingTime += Date.now() - this.typingStartTime;
+        this.typingStartTime = null;
+      }
+    },
+
+    onTyping() {
+      this.onStartTyping();
+    },
+
+    getViewingTime() {
+      return this.isActive && this.chatStartTime ?
+          Date.now() - this.chatStartTime : 0;
+    },
+
+    sendViewingTime() {
+      const timeSpent = this.getViewingTime();
+      if (timeSpent > 1000) { // Only send if more than 1 second
+        this.fetchMessages(true); // Silent reload to send time
+      }
+    },
+
     async fetchCourseData() {
       try {
         const response = await this.$http.get(`/courses/${this.courseId}`);
@@ -236,13 +299,20 @@ export default {
       }
     },
 
-    async fetchMessages() {
+    async fetchMessages(silent = false) {
       try {
-        this.loading = true;
+        if (!silent) {
+          this.loading = true;
+        }
+
+        // Calculate time spent viewing
+        const timeSpent = this.getViewingTime();
+
         const response = await this.$http.get(`/chat/course/${this.courseId}/messages`, {
           params: {
             page: 0,
-            size: this.pageSize
+            size: this.pageSize,
+            timeSpent: timeSpent
           }
         });
 
@@ -258,17 +328,22 @@ export default {
         this.messages = messages.sort((a, b) => new Date(a.sentAt) - new Date(b.sentAt));
         this.currentPage = 0;
         this.markMessagesAsRead();
+
+        // Reset chat timer after successful request
+        this.chatStartTime = Date.now();
       } catch (error) {
         console.error('Error fetching messages:', error);
         this.messages = [];
-        if (this.$toast) {
+        if (!silent && this.$toast) {
           this.$toast.error('مشکلی در دریافت پیام‌ها رخ داد.');
         }
       } finally {
-        this.loading = false;
-        this.$nextTick(() => {
-          this.scrollToBottom();
-        });
+        if (!silent) {
+          this.loading = false;
+          this.$nextTick(() => {
+            this.scrollToBottom();
+          });
+        }
       }
     },
 
@@ -313,11 +388,19 @@ export default {
 
       try {
         this.sending = true;
+
+        // Capture final typing time
+        this.onStopTyping();
+
         await this.$http.post(`/chat/course/${this.courseId}/send`, null, {
-          params: { message: this.newMessage }
+          params: {
+            message: this.newMessage,
+            timeSpent: this.totalTypingTime
+          }
         });
 
         this.newMessage = '';
+        this.totalTypingTime = 0;
 
         setTimeout(() => {
           this.fetchLatestMessages();
