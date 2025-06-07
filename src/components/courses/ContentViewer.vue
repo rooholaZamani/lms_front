@@ -532,6 +532,8 @@ export default defineComponent({
       }
     }
 
+    let pdfLibInstance = null
+
     // Alternative approach using script loading
     const loadPdfWithPdfJs = async () => {
       try {
@@ -539,23 +541,33 @@ export default defineComponent({
           throw new Error('شناسه فایل PDF موجود نیست')
         }
 
-        // Check if PDF.js is already loaded
+        console.log('Step 1: Starting PDF load process')
+
+        // Load PDF.js library
         if (!window.pdfjsLib) {
-          // Load PDF.js via script tag
+          console.log('Step 2: Loading PDF.js library')
           await new Promise((resolve, reject) => {
             const script = document.createElement('script')
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
-            script.onload = resolve
-            script.onerror = reject
+            script.onload = () => {
+              console.log('Step 3: PDF.js library loaded successfully')
+              resolve()
+            }
+            script.onerror = (error) => {
+              console.error('Step 3 ERROR: Failed to load PDF.js library', error)
+              reject(error)
+            }
             document.head.appendChild(script)
           })
         }
 
         // Set worker
+        console.log('Step 4: Setting up PDF worker')
         window.pdfjsLib.GlobalWorkerOptions.workerSrc =
             'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
 
-        // Rest of your existing code...
+        // Fetch PDF
+        console.log('Step 5: Fetching PDF file')
         const token = localStorage.getItem('token')
         const response = await fetch(`/api/content/files/${fileId.value}`, {
           headers: {
@@ -567,47 +579,96 @@ export default defineComponent({
           throw new Error(`خطا در دریافت فایل: ${response.status}`)
         }
 
+        console.log('Step 6: Converting to arrayBuffer')
         const arrayBuffer = await response.arrayBuffer()
+        console.log('Step 7: ArrayBuffer size:', arrayBuffer.byteLength)
 
-        // Load PDF using window.pdfjsLib
-        pdfDoc.value = await window.pdfjsLib.getDocument(arrayBuffer).promise
-        // ... rest remains the same
+        // Load PDF
+        console.log('Step 8: Parsing PDF with PDF.js')
+        const loadingTask = window.pdfjsLib.getDocument(arrayBuffer)
+
+        // Add progress tracking
+        loadingTask.onProgress = function(progress) {
+          console.log('PDF Loading progress:', progress.loaded / progress.total * 100 + '%')
+        }
+
+        pdfDoc.value = await loadingTask.promise
+        console.log('Step 9: PDF parsed successfully. Pages:', pdfDoc.value.numPages)
+
+        totalPages.value = pdfDoc.value.numPages
+
+        // Render first page
+        console.log('Step 10: Rendering first page')
+        await renderPdfPage(1)
+        console.log('Step 11: First page rendered successfully')
+
+        pdfLoading.value = false
+
+        // Auto fit
+        nextTick(() => {
+          fitToWidth()
+        })
+
       } catch (err) {
+        console.error('PDF Loading Error at step:', err)
         throw new Error(err.message || 'خطا در بارگذاری PDF')
       }
     }
 
     const renderPdfPage = async (pageNum) => {
       if (!pdfDoc.value || pageNum < 1 || pageNum > totalPages.value) {
+        console.log('Invalid page render request')
         return
       }
 
       try {
+        console.log('Rendering page:', pageNum)
+
         // Cancel previous render
         if (pdfRenderTask.value) {
-          pdfRenderTask.value.cancel()
+          try {
+            pdfRenderTask.value.cancel()
+            pdfRenderTask.value = null
+          } catch (e) {
+            // Ignore cancellation errors
+          }
         }
 
-        const page = await pdfDoc.value.getPage(pageNum)
-        const canvas = pdfCanvas.value
+        // اضافه کردن timeout برای getPage
+        const pagePromise = pdfDoc.value.getPage(pageNum)
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Page loading timeout')), 10000)
+        })
 
-        if (!canvas) return
+        const page = await Promise.race([pagePromise, timeoutPromise])
+        console.log('Page object retrieved successfully')
+
+        const canvas = pdfCanvas.value
+        if (!canvas) {
+          console.error('Canvas element not found')
+          return
+        }
 
         const context = canvas.getContext('2d')
-        const viewport = page.getViewport({ scale: 1.0 })
+        const viewport = page.getViewport({ scale: pdfScale.value || 1.0 })
 
         canvas.height = viewport.height
         canvas.width = viewport.width
+
+        // Clear canvas قبل از render جدید
+        context.clearRect(0, 0, canvas.width, canvas.height)
 
         const renderContext = {
           canvasContext: context,
           viewport: viewport
         }
 
+        console.log('Starting page render...')
         pdfRenderTask.value = page.render(renderContext)
         await pdfRenderTask.value.promise
 
         currentPage.value = pageNum
+        console.log('Page rendered successfully')
 
       } catch (err) {
         if (err.name !== 'RenderingCancelledException') {
