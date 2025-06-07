@@ -532,18 +532,30 @@ export default defineComponent({
       }
     }
 
+    // Alternative approach using script loading
     const loadPdfWithPdfJs = async () => {
       try {
         if (!fileId.value) {
           throw new Error('شناسه فایل PDF موجود نیست')
         }
 
-        // Import PDF.js
-        const pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js')
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
+        // Check if PDF.js is already loaded
+        if (!window.pdfjsLib) {
+          // Load PDF.js via script tag
+          await new Promise((resolve, reject) => {
+            const script = document.createElement('script')
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
+            script.onload = resolve
+            script.onerror = reject
+            document.head.appendChild(script)
+          })
+        }
 
+        // Set worker
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
 
-        // Fetch PDF
+        // Rest of your existing code...
         const token = localStorage.getItem('token')
         const response = await fetch(`/api/content/files/${fileId.value}`, {
           headers: {
@@ -557,20 +569,9 @@ export default defineComponent({
 
         const arrayBuffer = await response.arrayBuffer()
 
-        // Load PDF
-        pdfDoc.value = await pdfjsLib.getDocument(arrayBuffer).promise
-        totalPages.value = pdfDoc.value.numPages
-
-        // Render first page
-        await renderPdfPage(1)
-
-        pdfLoading.value = false
-
-        // Auto fit
-        nextTick(() => {
-          fitToWidth()
-        })
-
+        // Load PDF using window.pdfjsLib
+        pdfDoc.value = await window.pdfjsLib.getDocument(arrayBuffer).promise
+        // ... rest remains the same
       } catch (err) {
         throw new Error(err.message || 'خطا در بارگذاری PDF')
       }
