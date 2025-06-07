@@ -45,263 +45,226 @@
           </div>
           <h1 class="modern-title">محتوایی یافت نشد</h1>
           <p class="modern-subtitle">محتوای درخواستی موجود نیست</p>
-          <button @click="goBack" class="modern-btn modern-btn-secondary mt-3">
-            <i class="fas fa-arrow-right"></i>
-            بازگشت
-          </button>
+          <div class="mt-4">
+            <button @click="goBack" class="modern-btn modern-btn-primary">
+              <i class="fas fa-arrow-right"></i>
+              بازگشت به درس
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Main Content -->
-    <div v-else class="content-container">
-      <div class="modern-container large animate-slide-up">
+    <!-- Content Display -->
+    <div v-else class="content-wrapper animate-fade-in">
+      <div class="container-fluid p-0">
+        <div class="row g-0">
+          <div class="col-lg-10 mx-auto">
 
-        <!-- Content Header -->
-        <div class="content-header modern-card mb-4">
-          <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
-            <div class="content-info flex-grow-1">
-              <h1 class="content-title">{{ content.title }}</h1>
-              <div class="content-meta">
-                <span class="content-type-badge" :class="getContentTypeClass(content.type)">
-                  <i :class="getContentTypeIcon(content.type)"></i>
-                  {{ getContentTypeLabel(content.type) }}
-                </span>
-                <span class="time-badge">
-                  <i class="fas fa-clock"></i>
-                  زمان مطالعه: {{ formatTime(timeSpent) }}
-                </span>
-                <span v-if="content.lesson" class="lesson-badge">
-                  <i class="fas fa-book"></i>
-                  {{ content.lesson.title }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Action Buttons -->
-            <div class="content-actions">
-              <button
-                  @click="markAsComplete"
-                  :disabled="isMarkingComplete"
-                  class="modern-btn modern-btn-success"
-                  v-if="!isCompleted"
-              >
-                <i class="fas fa-check" v-if="!isMarkingComplete"></i>
-                <i class="fas fa-spinner fa-spin" v-else></i>
-                تکمیل شد
-              </button>
-              <span v-else class="modern-badge modern-badge-success">
-                <i class="fas fa-check-circle"></i>
-                تکمیل شده
-              </span>
-              <button @click="goBack" class="modern-btn modern-btn-secondary">
-                <i class="fas fa-arrow-right"></i>
-                بازگشت
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Content Body -->
-        <div class="content-body">
-
-          <!-- TEXT Content -->
-          <div v-if="content.type === 'TEXT'" class="text-content-section">
-            <div class="modern-card">
-              <div class="text-content-area">
-                <div class="content-text" v-html="formatTextContent(content.textContent)"></div>
-              </div>
-            </div>
-          </div>
-
-          <!-- VIDEO Content -->
-          <div v-else-if="content.type === 'VIDEO'" class="video-content-section">
-            <div class="modern-card">
-              <div class="video-container">
-                <video
-                    ref="videoPlayer"
-                    :src="videoUrl"
-                    controls
-                    preload="metadata"
-                    @loadedmetadata="onVideoLoaded"
-                    @timeupdate="onVideoTimeUpdate"
-                    @ended="onVideoEnded"
-                    @error="onVideoError"
-                    class="video-player"
-                >
-                  مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
-                </video>
-
-                <!-- Video Error State -->
-                <div v-if="videoError" class="video-error">
-                  <i class="fas fa-exclamation-triangle"></i>
-                  <p>خطا در بارگذاری ویدیو</p>
-                  <button @click="retryVideo" class="modern-btn modern-btn-outline">
-                    تلاش مجدد
+            <!-- Content Header -->
+            <div class="content-header modern-card mb-4">
+              <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div>
+                  <h1 class="content-title">{{ content.title }}</h1>
+                  <p class="content-meta mb-0">
+                    <i class="fas fa-clock me-2"></i>
+                    <span>{{ timeSpent }} ثانیه مطالعه</span>
+                  </p>
+                </div>
+                <div class="content-actions">
+                  <button
+                      @click="markAsComplete"
+                      :disabled="isMarkingComplete || isCompleted"
+                      class="modern-btn modern-btn-success"
+                  >
+                    <i class="fas" :class="isCompleted ? 'fa-check-circle' : 'fa-check'"></i>
+                    {{ isCompleted ? 'تکمیل شده' : 'علامت‌گذاری به عنوان تکمیل شده' }}
+                  </button>
+                  <button @click="goBack" class="modern-btn modern-btn-secondary ms-2">
+                    <i class="fas fa-arrow-right"></i>
+                    بازگشت
                   </button>
                 </div>
               </div>
+            </div>
 
-              <!-- Video Controls -->
-              <div class="video-controls mt-3">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                  <div class="playback-info">
-                    <span class="time-display">
-                      {{ formatVideoTime(currentVideoTime) }} / {{ formatVideoTime(videoDuration) }}
-                    </span>
-                  </div>
-                  <div class="playback-controls">
-                    <label class="modern-form-label me-2">سرعت پخش:</label>
-                    <select
-                        v-model="playbackSpeed"
-                        @change="changePlaybackSpeed"
-                        class="modern-form-control speed-select"
-                    >
-                      <option value="0.5">۰.۵x</option>
-                      <option value="0.75">۰.۷۵x</option>
-                      <option value="1">۱x</option>
-                      <option value="1.25">۱.۲۵x</option>
-                      <option value="1.5">۱.۵x</option>
-                      <option value="2">۲x</option>
-                    </select>
-                    <button
-                        class="modern-btn modern-btn-secondary btn-sm ms-2"
-                        @click="toggleVideoFullscreen"
-                        title="تمام صفحه"
-                    >
-                      <i class="fas fa-expand"></i>
+            <!-- Text Content -->
+            <div v-if="content.type === 'TEXT'" class="text-content-section">
+              <div class="modern-card">
+                <div class="content-text" v-html="content.textContent"></div>
+              </div>
+            </div>
+
+            <!-- Video Content -->
+            <div v-else-if="content.type === 'VIDEO'" class="video-content-section">
+              <div class="modern-card">
+
+                <!-- Video Error -->
+                <div v-if="videoError" class="video-error-container">
+                  <div class="modern-alert modern-alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    خطا در بارگذاری ویدیو
+                    <button @click="retryVideo" class="modern-btn modern-btn-outline-danger mt-2">
+                      تلاش مجدد
                     </button>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
 
-          <!-- PDF Content -->
-          <div v-else-if="content.type === 'PDF'" class="pdf-content-section">
-            <div class="modern-card">
+                <!-- Video Player -->
+                <div v-else class="video-container">
+                  <video
+                      ref="videoPlayer"
+                      :src="videoUrl"
+                      class="video-player"
+                      controls
+                      controlsList="nodownload"
+                      @loadedmetadata="onVideoLoaded"
+                      @timeupdate="onVideoTimeUpdate"
+                      @ended="onVideoEnded"
+                      @error="onVideoError"
+                  >
+                    مرورگر شما از نمایش ویدیو پشتیبانی نمی‌کند.
+                  </video>
 
-              <!-- PDF Loading -->
-              <div v-if="pdfLoading" class="pdf-loading-container">
-                <div class="modern-logo info">
-                  <i class="fas fa-file-pdf"></i>
-                </div>
-                <div class="spinner-border text-primary" role="status">
-                  <span class="visually-hidden">بارگذاری PDF...</span>
-                </div>
-                <p class="mt-3">در حال بارگذاری فایل PDF...</p>
-              </div>
-
-              <!-- PDF Error -->
-              <div v-else-if="pdfError" class="pdf-error-container">
-                <div class="modern-alert modern-alert-danger">
-                  <i class="fas fa-exclamation-triangle me-2"></i>
-                  {{ pdfError }}
-                  <button @click="retryPdfLoad" class="modern-btn modern-btn-outline-danger mt-2">
-                    تلاش مجدد
-                  </button>
-                </div>
-              </div>
-
-              <!-- PDF Viewer -->
-              <div v-else class="pdf-container">
-
-                <!-- PDF Controls -->
-                <div class="pdf-toolbar mb-3">
-                  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-
-                    <!-- Page Navigation -->
-                    <div class="btn-group pdf-nav-group">
-                      <button
-                          @click="previousPage"
-                          :disabled="currentPage <= 1"
-                          class="modern-btn modern-btn-outline"
-                      >
-                        <i class="fas fa-chevron-right"></i>
-                        قبلی
-                      </button>
-                      <span class="modern-btn modern-btn-outline disabled">
-                        {{ currentPage }} / {{ totalPages }}
-                      </span>
-                      <button
-                          @click="nextPage"
-                          :disabled="currentPage >= totalPages"
-                          class="modern-btn modern-btn-outline"
-                      >
-                        بعدی
-                        <i class="fas fa-chevron-left"></i>
-                      </button>
-                    </div>
-
-                    <!-- Zoom Controls -->
-                    <div class="btn-group zoom-group">
-                      <button @click="zoomOut" class="modern-btn modern-btn-outline">
-                        <i class="fas fa-search-minus"></i>
-                      </button>
-                      <span class="modern-btn modern-btn-outline disabled">
-                        {{ Math.round(pdfScale * 100) }}%
-                      </span>
-                      <button @click="zoomIn" class="modern-btn modern-btn-outline">
-                        <i class="fas fa-search-plus"></i>
-                      </button>
-                      <button @click="fitToWidth" class="modern-btn modern-btn-outline">
-                        <i class="fas fa-arrows-alt-h"></i>
-                        تنظیم عرض
-                      </button>
-                    </div>
-
-                    <!-- Actions -->
-                    <div class="btn-group action-group">
-                      <button @click="downloadPdf" class="modern-btn modern-btn-primary">
-                        <i class="fas fa-download"></i>
-                        دانلود
-                      </button>
-                      <button @click="togglePdfFullscreen" class="modern-btn modern-btn-outline">
+                  <!-- Video Controls -->
+                  <div class="video-controls mt-3">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                      <div class="time-display">
+                        <span>{{ formatTime(currentVideoTime) }} / {{ formatTime(videoDuration) }}</span>
+                      </div>
+                      <div class="speed-control">
+                        <label class="me-2">سرعت پخش:</label>
+                        <select v-model="playbackSpeed" @change="changePlaybackSpeed" class="form-select speed-select">
+                          <option value="0.5">0.5x</option>
+                          <option value="0.75">0.75x</option>
+                          <option value="1">1x</option>
+                          <option value="1.25">1.25x</option>
+                          <option value="1.5">1.5x</option>
+                          <option value="2">2x</option>
+                        </select>
+                      </div>
+                      <button @click="toggleVideoFullscreen" class="modern-btn modern-btn-outline">
                         <i class="fas fa-expand"></i>
                         تمام صفحه
                       </button>
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
 
-                <!-- PDF Canvas -->
-                <div class="pdf-viewer-wrapper" ref="pdfViewerWrapper">
-                  <div
-                      class="pdf-canvas-container"
-                      :style="{ transform: `scale(${pdfScale})`, transformOrigin: 'top center' }"
-                  >
-                    <canvas
-                        ref="pdfCanvas"
-                        class="pdf-display-canvas"
-                        @wheel="handlePdfZoom"
-                        tabindex="0"
-                    ></canvas>
+            <!-- PDF Content -->
+            <div v-else-if="content.type === 'PDF'" class="pdf-content-section">
+              <div class="modern-card">
+
+                <!-- PDF Loading -->
+                <div v-if="pdfLoading" class="pdf-loading-container">
+                  <div class="modern-logo info">
+                    <i class="fas fa-file-pdf"></i>
+                  </div>
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">بارگذاری PDF...</span>
+                  </div>
+                  <p class="mt-3">در حال بارگذاری فایل PDF...</p>
+                </div>
+
+                <!-- PDF Error -->
+                <div v-else-if="pdfError" class="pdf-error-container">
+                  <div class="modern-alert modern-alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {{ pdfError }}
+                    <button @click="retryPdfLoad" class="modern-btn modern-btn-outline-danger mt-2">
+                      تلاش مجدد
+                    </button>
                   </div>
                 </div>
 
-                <!-- Mobile Navigation -->
-                <div class="pdf-mobile-nav d-md-none mt-3">
-                  <div class="modern-card">
-                    <div class="row text-center">
-                      <div class="col-4">
+                <!-- PDF Viewer -->
+                <div v-else class="pdf-container">
+
+                  <!-- PDF Controls -->
+                  <div class="pdf-toolbar mb-3">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+
+                      <!-- Page Navigation -->
+                      <div class="btn-group pdf-nav-group">
                         <button
                             @click="previousPage"
                             :disabled="currentPage <= 1"
-                            class="modern-btn modern-btn-outline w-100"
+                            class="modern-btn modern-btn-outline"
                         >
                           <i class="fas fa-chevron-right"></i>
+                          قبلی
                         </button>
-                      </div>
-                      <div class="col-4 d-flex align-items-center justify-content-center">
-                        <span class="modern-badge modern-badge-primary">
-                          {{ currentPage }}/{{ totalPages }}
+                        <span class="modern-btn modern-btn-outline disabled">
+                          {{ currentPage }} / {{ totalPages }}
                         </span>
-                      </div>
-                      <div class="col-4">
                         <button
                             @click="nextPage"
                             :disabled="currentPage >= totalPages"
-                            class="modern-btn modern-btn-outline w-100"
+                            class="modern-btn modern-btn-outline"
+                        >
+                          بعدی
+                          <i class="fas fa-chevron-left"></i>
+                        </button>
+                      </div>
+
+                      <!-- Zoom Controls -->
+                      <div class="btn-group zoom-group">
+                        <button @click="zoomOut" class="modern-btn modern-btn-outline">
+                          <i class="fas fa-search-minus"></i>
+                        </button>
+                        <button @click="fitToWidth" class="modern-btn modern-btn-outline">
+                          <i class="fas fa-compress"></i>
+                          متناسب
+                        </button>
+                        <button @click="zoomIn" class="modern-btn modern-btn-outline">
+                          <i class="fas fa-search-plus"></i>
+                        </button>
+                      </div>
+
+                      <!-- Actions -->
+                      <div class="btn-group action-group">
+                        <button @click="toggleFullscreenPdf" class="modern-btn modern-btn-outline">
+                          <i class="fas fa-expand"></i>
+                          تمام صفحه
+                        </button>
+                        <button @click="downloadFile" class="modern-btn modern-btn-primary">
+                          <i class="fas fa-download"></i>
+                          دانلود
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- PDF Canvas -->
+                  <div class="pdf-viewer-wrapper" ref="pdfViewerWrapper">
+                    <div class="pdf-canvas-container">
+                      <canvas
+                          ref="pdfCanvas"
+                          class="pdf-display-canvas"
+                          tabindex="0"
+                          @keydown="handlePdfKeyboard"
+                      ></canvas>
+                    </div>
+                  </div>
+
+                  <!-- Mobile Navigation -->
+                  <div class="pdf-mobile-nav d-md-none mt-3">
+                    <div class="modern-card">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <button
+                            @click="previousPage"
+                            :disabled="currentPage <= 1"
+                            class="modern-btn modern-btn-outline"
+                        >
+                          <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <span class="text-muted">{{ currentPage }} / {{ totalPages }}</span>
+                        <button
+                            @click="nextPage"
+                            :disabled="currentPage >= totalPages"
+                            class="modern-btn modern-btn-outline"
                         >
                           <i class="fas fa-chevron-left"></i>
                         </button>
@@ -311,23 +274,23 @@
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Unknown Content Type -->
-          <div v-else class="unknown-content-section">
-            <div class="modern-card">
-              <div class="unknown-content-area text-center">
-                <div class="unknown-content-icon">
-                  <i class="fas fa-question-circle"></i>
+            <!-- Unknown Content Type -->
+            <div v-else class="unknown-content-section">
+              <div class="modern-card">
+                <div class="unknown-content-area">
+                  <div class="modern-logo secondary">
+                    <i class="fas fa-question-circle"></i>
+                  </div>
+                  <h5 class="mt-3">نوع محتوا پشتیبانی نمی‌شود</h5>
+                  <p class="text-muted">
+                    نوع محتوای "{{ content.type }}" در حال حاضر پشتیبانی نمی‌شود.
+                  </p>
+                  <button v-if="fileId" @click="downloadFile" class="modern-btn modern-btn-primary">
+                    <i class="fas fa-download"></i>
+                    دانلود فایل
+                  </button>
                 </div>
-                <h5>نوع محتوای ناشناخته</h5>
-                <p class="text-muted">
-                  نوع محتوای "{{ content.type }}" پشتیبانی نمی‌شود.
-                </p>
-                <button v-if="fileId" @click="downloadFile" class="modern-btn modern-btn-primary">
-                  <i class="fas fa-download"></i>
-                  دانلود فایل
-                </button>
               </div>
             </div>
           </div>
@@ -363,8 +326,9 @@ export default defineComponent({
     const videoDuration = ref(0)
     const playbackSpeed = ref(1)
 
-    // PDF state
-    const pdfDoc = ref(null)
+    // PDF state - تغییر مهم: استفاده از متغیر معمولی برای PDF document
+    let pdfDocInstance = null  // بجای ref، از متغیر معمولی استفاده می‌کنیم
+    const isPdfLoaded = ref(false)  // برای track کردن وضعیت
     const pdfLoading = ref(false)
     const pdfError = ref(null)
     const currentPage = ref(1)
@@ -378,7 +342,7 @@ export default defineComponent({
     const pdfViewerWrapper = ref(null)
 
     // Timers
-    let timeTracker = null
+    let timeTrackingInterval = null
 
     // Computed
     const contentId = computed(() => route.params.contentId)
@@ -422,16 +386,17 @@ export default defineComponent({
         // Mark as viewed
         await markContentViewed()
 
-        // Initialize based on content type
-        if (content.value.type === 'PDF') {
-          await initializePdfViewer()
-        }
-
       } catch (err) {
         console.error('Error fetching content:', err)
         error.value = err.message || 'خطا در بارگذاری محتوا'
       } finally {
         loading.value = false
+      }
+
+      // Initialize PDF after content is loaded and DOM is ready
+      if (content.value?.type === 'PDF') {
+        await nextTick()  // صبر کن تا DOM با محتوای جدید آپدیت بشه
+        await initializePdfViewer()
       }
     }
 
@@ -524,6 +489,9 @@ export default defineComponent({
       pdfError.value = null
 
       try {
+        // صبر کن تا مطمئن بشیم DOM آماده است
+        await nextTick()
+
         await loadPdfWithPdfJs()
       } catch (err) {
         console.error('PDF initialization failed:', err)
@@ -532,9 +500,7 @@ export default defineComponent({
       }
     }
 
-    let pdfLibInstance = null
-
-    // Alternative approach using script loading
+    // PDF loading function with fixed proxy issue
     const loadPdfWithPdfJs = async () => {
       try {
         if (!fileId.value) {
@@ -583,7 +549,7 @@ export default defineComponent({
         const arrayBuffer = await response.arrayBuffer()
         console.log('Step 7: ArrayBuffer size:', arrayBuffer.byteLength)
 
-        // Load PDF
+        // Load PDF - تغییر مهم: ذخیره در متغیر معمولی
         console.log('Step 8: Parsing PDF with PDF.js')
         const loadingTask = window.pdfjsLib.getDocument(arrayBuffer)
 
@@ -592,31 +558,73 @@ export default defineComponent({
           console.log('PDF Loading progress:', progress.loaded / progress.total * 100 + '%')
         }
 
-        pdfDoc.value = await loadingTask.promise
-        console.log('Step 9: PDF parsed successfully. Pages:', pdfDoc.value.numPages)
+        // تغییر مهم: ذخیره PDF document در متغیر معمولی
+        pdfDocInstance = await loadingTask.promise
+        isPdfLoaded.value = true
 
-        totalPages.value = pdfDoc.value.numPages
+        console.log('Step 9: PDF parsed successfully. Pages:', pdfDocInstance.numPages)
+        totalPages.value = pdfDocInstance.numPages
 
-        // Render first page
-        console.log('Step 10: Rendering first page')
-        await renderPdfPage(1)
-        console.log('Step 11: First page rendered successfully')
-
+        // اول pdfLoading رو false کن تا UI نمایش داده بشه
         pdfLoading.value = false
 
+        // صبر کن تا DOM آماده بشه
+        await nextTick()
+
+        // دوباره چک کن که آیا canvas موجود است
+        console.log('Step 10: Checking for canvas availability')
+        await waitForCanvas()
+
+        // حالا رندر کن
+        console.log('Step 11: Rendering first page')
+        await renderPdfPage(1)
+        console.log('Step 12: First page rendered successfully')
+
         // Auto fit
-        nextTick(() => {
-          fitToWidth()
-        })
+        await nextTick()
+        fitToWidth()
 
       } catch (err) {
         console.error('PDF Loading Error at step:', err)
+        pdfLoading.value = false  // اطمینان از false شدن loading در صورت خطا
         throw new Error(err.message || 'خطا در بارگذاری PDF')
       }
     }
 
+    // Watch for canvas to be ready
+    const waitForCanvas = () => {
+      return new Promise((resolve) => {
+        console.log('Waiting for canvas element...')
+
+        if (pdfCanvas.value) {
+          console.log('Canvas already available')
+          resolve(pdfCanvas.value)
+        } else {
+          let checkCount = 0
+          const checkInterval = setInterval(() => {
+            checkCount++
+            console.log(`Canvas check attempt ${checkCount}`)
+
+            if (pdfCanvas.value) {
+              clearInterval(checkInterval)
+              console.log('Canvas found after waiting')
+              resolve(pdfCanvas.value)
+            }
+          }, 50)
+
+          // Timeout after 5 seconds
+          setTimeout(() => {
+            clearInterval(checkInterval)
+            console.error('Canvas wait timeout')
+            resolve(null)
+          }, 5000)
+        }
+      })
+    }
+
     const renderPdfPage = async (pageNum) => {
-      if (!pdfDoc.value || pageNum < 1 || pageNum > totalPages.value) {
+      // تغییر مهم: استفاده از pdfDocInstance بجای pdfDoc.value
+      if (!pdfDocInstance || pageNum < 1 || pageNum > totalPages.value) {
         console.log('Invalid page render request')
         return
       }
@@ -634,8 +642,8 @@ export default defineComponent({
           }
         }
 
-        // اضافه کردن timeout برای getPage
-        const pagePromise = pdfDoc.value.getPage(pageNum)
+        // تغییر مهم: استفاده از pdfDocInstance
+        const pagePromise = pdfDocInstance.getPage(pageNum)
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => reject(new Error('Page loading timeout')), 10000)
         })
@@ -643,10 +651,11 @@ export default defineComponent({
         const page = await Promise.race([pagePromise, timeoutPromise])
         console.log('Page object retrieved successfully')
 
-        const canvas = pdfCanvas.value
+        // صبر کن تا canvas آماده بشه
+        const canvas = await waitForCanvas()
         if (!canvas) {
-          console.error('Canvas element not found')
-          return
+          console.error('Canvas element not found after waiting')
+          throw new Error('Canvas element not available')
         }
 
         const context = canvas.getContext('2d')
@@ -690,136 +699,79 @@ export default defineComponent({
       }
     }
 
-    const zoomIn = () => {
-      pdfScale.value = Math.min(pdfScale.value * 1.25, 3.0)
+    const zoomIn = async () => {
+      if (!isPdfLoaded.value) return
+
+      pdfScale.value = Math.min(pdfScale.value + 0.25, 3.0)
+      await renderPdfPage(currentPage.value)
     }
 
-    const zoomOut = () => {
-      pdfScale.value = Math.max(pdfScale.value / 1.25, 0.25)
+    const zoomOut = async () => {
+      if (!isPdfLoaded.value) return
+
+      pdfScale.value = Math.max(pdfScale.value - 0.25, 0.5)
+      await renderPdfPage(currentPage.value)
     }
 
-    const fitToWidth = () => {
-      nextTick(() => {
-        const wrapper = pdfViewerWrapper.value
-        const canvas = pdfCanvas.value
+    const fitToWidth = async () => {
+      if (!isPdfLoaded.value || !pdfCanvas.value) return
 
-        if (wrapper && canvas) {
-          const wrapperWidth = wrapper.clientWidth - 40
-          const canvasWidth = canvas.width
-
-          if (canvasWidth > 0) {
-            pdfScale.value = wrapperWidth / canvasWidth
-          }
-        }
-      })
-    }
-
-    const handlePdfZoom = (event) => {
-      if (event.ctrlKey || event.metaKey) {
-        event.preventDefault()
-
-        if (event.deltaY < 0) {
-          zoomIn()
-        } else {
-          zoomOut()
-        }
-      }
-    }
-
-    const downloadPdf = async () => {
       try {
-        const token = localStorage.getItem('token')
-        const response = await fetch(`/api/content/files/${fileId.value}`, {
-          headers: {
-            'Authorization': `Basic ${token}`
-          }
-        })
+        const page = await pdfDocInstance.getPage(currentPage.value)
+        const viewport = page.getViewport({ scale: 1.0 })
+        const containerWidth = pdfCanvas.value.parentElement.clientWidth - 40
 
-        if (!response.ok) {
-          throw new Error('خطا در دانلود فایل')
-        }
-
-        const blob = await response.blob()
-        const url = URL.createObjectURL(blob)
-
-        const link = document.createElement('a')
-        link.href = url
-        link.download = content.value.title || 'document.pdf'
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-
-        URL.revokeObjectURL(url)
-
+        pdfScale.value = containerWidth / viewport.width
+        await renderPdfPage(currentPage.value)
       } catch (err) {
-        console.error('Download error:', err)
+        console.error('Error fitting to width:', err)
       }
     }
 
-    const togglePdfFullscreen = () => {
-      const wrapper = pdfViewerWrapper.value
-      if (!wrapper) return
-
-      if (!document.fullscreenElement) {
-        wrapper.requestFullscreen().catch(err => {
-          console.error('Fullscreen error:', err)
-        })
-      } else {
-        document.exitFullscreen()
-      }
-    }
-
-    const retryPdfLoad = () => {
+    const retryPdfLoad = async () => {
       pdfError.value = null
-      initializePdfViewer()
-    }
-
-    // Utility Methods
-    const formatTime = (seconds) => {
-      const mins = Math.floor(seconds / 60)
-      const secs = seconds % 60
-      return `${mins}:${secs.toString().padStart(2, '0')}`
-    }
-
-    const formatVideoTime = (seconds) => {
-      if (!seconds || isNaN(seconds)) return '0:00'
-      const mins = Math.floor(seconds / 60)
-      const secs = Math.floor(seconds % 60)
-      return `${mins}:${secs.toString().padStart(2, '0')}`
-    }
-
-    const formatTextContent = (text) => {
-      if (!text) return ''
-      return text.replace(/\n/g, '<br>')
-    }
-
-    const getContentTypeLabel = (type) => {
-      const labels = {
-        'TEXT': 'محتوای متنی',
-        'VIDEO': 'ویدیو',
-        'PDF': 'فایل PDF'
+      // پاک کردن instance قبلی
+      if (pdfDocInstance) {
+        try {
+          pdfDocInstance.destroy()
+        } catch (e) {
+          // Ignore destroy errors
+        }
+        pdfDocInstance = null
+        isPdfLoaded.value = false
       }
-      return labels[type] || type
+      await initializePdfViewer()
     }
 
-    const getContentTypeIcon = (type) => {
-      const icons = {
-        'TEXT': 'fas fa-file-text',
-        'VIDEO': 'fas fa-play-circle',
-        'PDF': 'fas fa-file-pdf'
+    const handlePdfKeyboard = (event) => {
+      switch (event.key) {
+        case 'ArrowLeft':
+          nextPage()
+          break
+        case 'ArrowRight':
+          previousPage()
+          break
+        case '+':
+        case '=':
+          zoomIn()
+          break
+        case '-':
+          zoomOut()
+          break
       }
-      return icons[type] || 'fas fa-file'
     }
 
-    const getContentTypeClass = (type) => {
-      const classes = {
-        'TEXT': 'modern-badge-info',
-        'VIDEO': 'modern-badge-success',
-        'PDF': 'modern-badge-danger'
+    const toggleFullscreenPdf = () => {
+      if (pdfViewerWrapper.value) {
+        if (document.fullscreenElement) {
+          document.exitFullscreen()
+        } else {
+          pdfViewerWrapper.value.requestFullscreen()
+        }
       }
-      return classes[type] || 'modern-badge-secondary'
     }
 
+    // General Methods
     const downloadFile = async () => {
       if (!fileId.value) return
 
@@ -836,130 +788,93 @@ export default defineComponent({
         }
 
         const blob = await response.blob()
-        const url = URL.createObjectURL(blob)
-
-        const link = document.createElement('a')
-        link.href = url
-        link.download = content.value.title || 'file'
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-
-        URL.revokeObjectURL(url)
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = content.value.title || 'download'
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
 
       } catch (err) {
-        console.error('Download error:', err)
+        console.error('Error downloading file:', err)
+        alert('خطا در دانلود فایل')
       }
+    }
+
+    const formatTime = (seconds) => {
+      const mins = Math.floor(seconds / 60)
+      const secs = Math.floor(seconds % 60)
+      return `${mins}:${secs.toString().padStart(2, '0')}`
     }
 
     const goBack = () => {
-      sendTimeData()
       router.back()
     }
 
-    const sendTimeData = async () => {
-      if (timeSpent.value > 0 && contentId.value) {
-        try {
-          const token = localStorage.getItem('token')
-          await fetch(`/api/content/${contentId.value}?timeSpent=${timeSpent.value}`, {
-            headers: {
-              'Authorization': `Basic ${token}`
-            }
-          })
-        } catch (err) {
-          console.error('Error sending time data:', err)
-        }
-      }
-    }
-
-    // Event Handlers
-    const handleKeydown = (event) => {
-      if (content.value?.type !== 'PDF') return
-
-      switch (event.key) {
-        case 'ArrowLeft':
-          event.preventDefault()
-          nextPage()
-          break
-        case 'ArrowRight':
-          event.preventDefault()
-          previousPage()
-          break
-        case 'PageDown':
-        case ' ':
-          event.preventDefault()
-          nextPage()
-          break
-        case 'PageUp':
-          event.preventDefault()
-          previousPage()
-          break
-        case '+':
-        case '=':
-          if (event.ctrlKey || event.metaKey) {
-            event.preventDefault()
-            zoomIn()
-          }
-          break
-        case '-':
-          if (event.ctrlKey || event.metaKey) {
-            event.preventDefault()
-            zoomOut()
-          }
-          break
-      }
-    }
-
-    const handleResize = () => {
-      if (content.value?.type === 'PDF' && pdfDoc.value) {
-        fitToWidth()
-      }
-    }
-
-    // Time tracking
-    const startTimer = () => {
-      timeTracker = setInterval(() => {
+    // Track time spent
+    const startTimeTracking = () => {
+      timeTrackingInterval = setInterval(() => {
         timeSpent.value = Math.floor((Date.now() - startTime.value) / 1000)
       }, 1000)
     }
 
-    const stopTimer = () => {
-      if (timeTracker) {
-        clearInterval(timeTracker)
-        timeTracker = null
+    // Watch for PDF readiness
+    watch(() => [content.value?.type, pdfLoading.value], async ([type, loading]) => {
+      if (type === 'PDF' && !loading && isPdfLoaded.value && !currentPage.value) {
+        console.log('PDF is ready, attempting first render')
+        await nextTick()
+        if (pdfCanvas.value) {
+          await renderPdfPage(1)
+          fitToWidth()
+        }
       }
-    }
+    })
 
     // Lifecycle
     onMounted(() => {
       fetchContentData()
-      startTimer()
-
-      // Event listeners
-      window.addEventListener('keydown', handleKeydown)
-      window.addEventListener('resize', handleResize)
+      startTimeTracking()
     })
 
     onUnmounted(() => {
-      stopTimer()
-      sendTimeData()
+      // Stop time tracking
+      if (timeTrackingInterval) {
+        clearInterval(timeTrackingInterval)
+      }
 
-      // Cleanup
-      window.removeEventListener('keydown', handleKeydown)
-      window.removeEventListener('resize', handleResize)
+      // Clean up PDF
+      if (pdfDocInstance) {
+        try {
+          pdfDocInstance.destroy()
+          pdfDocInstance = null
+          isPdfLoaded.value = false
+        } catch (err) {
+          console.error('Error destroying PDF:', err)
+        }
+      }
 
+      // Cancel any ongoing render task
       if (pdfRenderTask.value) {
-        pdfRenderTask.value.cancel()
+        try {
+          pdfRenderTask.value.cancel()
+        } catch (e) {
+          // Ignore cancellation errors
+        }
+      }
+
+      // Send final time spent
+      if (contentId.value && timeSpent.value > 0) {
+        const token = localStorage.getItem('token')
+        navigator.sendBeacon(
+            `/api/progress/content/${contentId.value}/time?timeSpent=${timeSpent.value}`,
+            new Blob([JSON.stringify({ timeSpent: timeSpent.value })], { type: 'application/json' })
+        )
       }
     })
 
-    // Watchers
-    watch(() => route.params.contentId, () => {
-      if (route.params.contentId !== contentId.value) {
-        fetchContentData()
-      }
-    })
-
+    // Return all reactive properties and methods
     return {
       // State
       loading,
@@ -974,6 +889,7 @@ export default defineComponent({
       currentVideoTime,
       videoDuration,
       playbackSpeed,
+      videoPlayer,
       videoUrl,
 
       // PDF
@@ -982,21 +898,15 @@ export default defineComponent({
       currentPage,
       totalPages,
       pdfScale,
-
-      // Refs
-      videoPlayer,
       pdfCanvas,
       pdfViewerWrapper,
-
-      // Computed
-      fileId,
 
       // Methods
       fetchContentData,
       markAsComplete,
       goBack,
 
-      // Video methods
+      // Video Methods
       onVideoLoaded,
       onVideoTimeUpdate,
       onVideoEnded,
@@ -1005,25 +915,22 @@ export default defineComponent({
       changePlaybackSpeed,
       toggleVideoFullscreen,
 
-      // PDF methods
+      // PDF Methods
       nextPage,
       previousPage,
       zoomIn,
       zoomOut,
       fitToWidth,
-      handlePdfZoom,
-      downloadPdf,
-      togglePdfFullscreen,
       retryPdfLoad,
+      handlePdfKeyboard,
+      toggleFullscreenPdf,
 
-      // Utility
+      // General Methods
+      downloadFile,
       formatTime,
-      formatVideoTime,
-      formatTextContent,
-      getContentTypeLabel,
-      getContentTypeIcon,
-      getContentTypeClass,
-      downloadFile
+
+      // Computed
+      fileId
     }
   }
 })
@@ -1033,99 +940,64 @@ export default defineComponent({
 /* Base Styles */
 .content-viewer {
   min-height: 100vh;
-  padding: 2rem 1rem;
+  background: #f8f9fa;
 }
 
 .loading-container,
 .error-container,
 .no-content {
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 80vh;
 }
 
-.content-container {
-  max-width: 100%;
+.content-wrapper {
+  padding: 2rem 0;
 }
 
 /* Content Header */
 .content-header {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  padding: 2rem;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .content-title {
-  color: #333;
-  font-weight: 700;
-  margin: 0 0 1rem 0;
   font-size: 1.75rem;
-  line-height: 1.3;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
 }
 
 .content-meta {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-  align-items: center;
-}
-
-.content-type-badge,
-.time-badge,
-.lesson-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.content-type-badge {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.time-badge {
-  background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
-}
-
-.lesson-badge {
-  background: rgba(52, 152, 219, 0.1);
-  color: #3498db;
+  color: #6c757d;
+  font-size: 0.9rem;
 }
 
 .content-actions {
   display: flex;
-  gap: 1rem;
-  flex-shrink: 0;
+  gap: 0.5rem;
+  margin-top: 1rem;
 }
 
-/* Content Body */
-.content-body {
-  border-radius: 16px;
-  overflow: hidden;
+@media (min-width: 768px) {
+  .content-actions {
+    margin-top: 0;
+  }
 }
 
-/* TEXT Content */
+/* Text Content */
 .text-content-section {
-  background: white;
-}
-
-.text-content-area {
-  padding: 3rem;
+  margin-top: 1rem;
 }
 
 .content-text {
-  line-height: 1.8;
+  padding: 2rem;
   font-size: 1.1rem;
+  line-height: 1.8;
   color: #333;
-  max-width: none;
 }
 
 .content-text h1,
@@ -1134,21 +1006,75 @@ export default defineComponent({
 .content-text h4,
 .content-text h5,
 .content-text h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.75em;
+  font-weight: 600;
   color: #2c3e50;
-  margin: 2rem 0 1rem 0;
 }
 
 .content-text p {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.2em;
 }
 
 .content-text ul,
 .content-text ol {
-  margin: 1.5rem 0;
+  margin-bottom: 1.2em;
   padding-right: 2rem;
 }
 
-/* VIDEO Content */
+.content-text li {
+  margin-bottom: 0.5em;
+}
+
+.content-text blockquote {
+  border-right: 4px solid #667eea;
+  padding-right: 1rem;
+  margin: 1.5rem 0;
+  color: #555;
+  font-style: italic;
+}
+
+.content-text pre {
+  background: #f4f4f4;
+  padding: 1rem;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+}
+
+.content-text code {
+  background: #f4f4f4;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+.content-text img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 1.5rem 0;
+}
+
+.content-text table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+}
+
+.content-text th,
+.content-text td {
+  border: 1px solid #ddd;
+  padding: 0.75rem;
+  text-align: right;
+}
+
+.content-text th {
+  background: #f8f9fa;
+  font-weight: 600;
+}
+
+/* Video Content */
 .video-content-section {
   background: white;
 }
@@ -1158,50 +1084,34 @@ export default defineComponent({
   background: #000;
   border-radius: 12px;
   overflow: hidden;
-  min-height: 400px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .video-player {
   width: 100%;
   height: auto;
-  min-height: 400px;
   max-height: 70vh;
-}
-
-.video-error {
-  text-align: center;
-  color: #6c757d;
-  padding: 3rem 2rem;
-}
-
-.video-error i {
-  font-size: 3rem;
-  margin-bottom: 1rem;
   display: block;
+  background: #000;
+}
+
+.video-error-container {
+  padding: 4rem 2rem;
+  text-align: center;
 }
 
 .video-controls {
-  padding: 1.5rem 2rem;
-  background: rgba(248, 249, 250, 0.7);
-  backdrop-filter: blur(10px);
-}
-
-.playback-info {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
 }
 
 .time-display {
-  font-family: 'Courier New', monospace;
-  font-weight: 600;
-  color: #495057;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.9rem;
+  color: #6c757d;
 }
 
-.playback-controls {
+.speed-control {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -1347,174 +1257,32 @@ export default defineComponent({
   text-align: center;
 }
 
-.unknown-content-icon {
-  font-size: 4rem;
-  color: #6c757d;
-  margin-bottom: 1.5rem;
-  opacity: 0.7;
-}
-
 .unknown-content-area h5 {
-  color: #495057;
+  color: #2c3e50;
   font-weight: 600;
-  margin-bottom: 1rem;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .content-viewer {
-    padding: 1rem 0.5rem;
-  }
-
-  .content-header {
-    padding: 1.5rem;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .content-info {
-    margin-bottom: 1.5rem;
-  }
-
-  .content-title {
-    font-size: 1.5rem;
-  }
-
-  .content-meta {
-    justify-content: center;
-  }
-
-  .content-actions {
-    justify-content: center;
-    width: 100%;
-  }
-
-  .text-content-area {
-    padding: 2rem;
-  }
-
-  .content-text {
-    font-size: 1rem;
-  }
-
-  .video-container {
-    min-height: 250px;
-  }
-
-  .video-controls {
-    padding: 1rem;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-  }
-
-  .playback-controls {
-    justify-content: center;
-  }
-
-  .pdf-toolbar {
-    padding: 1rem;
-  }
-
-  .pdf-toolbar .d-flex {
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .pdf-nav-group,
-  .zoom-group,
-  .action-group {
-    justify-content: center;
-    width: 100%;
-  }
-
-  .pdf-nav-group .modern-btn,
-  .zoom-group .modern-btn,
-  .action-group .modern-btn {
-    flex: 1;
-    border-radius: 8px !important;
-    border-right: 2px solid rgba(102, 126, 234, 0.84) !important;
-    margin: 0 2px;
-  }
-
-  .pdf-viewer-wrapper {
-    padding: 1rem;
-    min-height: 400px;
-  }
-
-  .pdf-display-canvas {
-    max-width: calc(100vw - 2rem);
-  }
-
-  .unknown-content-area {
-    padding: 3rem 1.5rem;
-  }
-
-  .unknown-content-icon {
-    font-size: 3rem;
-  }
-}
-
-@media (max-width: 576px) {
-  .content-title {
-    font-size: 1.25rem;
-  }
-
-  .text-content-area {
-    padding: 1.5rem;
-  }
-
-  .content-text {
-    font-size: 0.95rem;
-  }
-
-  .video-container {
-    min-height: 200px;
-  }
-
-  .pdf-toolbar {
-    padding: 0.75rem;
-  }
-
-  .pdf-nav-group .modern-btn,
-  .zoom-group .modern-btn,
-  .action-group .modern-btn {
-    font-size: 0.75rem;
-    padding: 0.375rem 0.5rem;
-  }
-
-  .pdf-viewer-wrapper {
-    padding: 0.5rem;
-    min-height: 300px;
-  }
 }
 
 /* Dark Mode */
 @media (prefers-color-scheme: dark) {
-  .content-header {
-    background: rgba(45, 55, 72, 0.95);
-    border-color: rgba(255, 255, 255, 0.1);
+  .content-viewer {
+    background: #1a202c;
+  }
+
+  .content-header,
+  .text-content-section .modern-card,
+  .video-content-section .modern-card,
+  .pdf-content-section .modern-card,
+  .unknown-content-section .modern-card {
+    background: #2d3748;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   }
 
   .content-title {
     color: #e2e8f0;
   }
 
-  .time-badge,
-  .lesson-badge {
-    background: rgba(102, 126, 234, 0.2);
-    color: #cbd5e0;
-  }
-
-  .text-content-section,
-  .video-content-section,
-  .pdf-content-section,
-  .unknown-content-section {
-    background: #2d3748;
-  }
-
-  .text-content-area {
-    background: #2d3748;
+  .content-meta {
+    color: #a0aec0;
   }
 
   .content-text {
