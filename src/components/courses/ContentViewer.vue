@@ -70,10 +70,10 @@
                 >
                   <div v-if="isMarkingComplete" class="spinner-border spinner-border-sm me-2" role="status"></div>
                   <i v-else class="fas me-2" :class="isCompleted ? 'fa-check-circle' : 'fa-check'"></i>
-                  {{ isCompleted ? 'تکمیل شده' : 'علامت‌گذاری به عنوان تکمیل شده' }}
+                  {{ isCompleted ? 'تکمیل شده' : 'تکمیل محتوا' }}
                 </button>
-                <button @click="goBack" class="modern-btn modern-btn-secondary ms-2">
-                  <i class="fas fa-arrow-right"></i>
+                <button @click="goBack" class="modern-btn modern-btn-outline">
+                  <i class="fas fa-arrow-right me-2"></i>
                   بازگشت
                 </button>
               </div>
@@ -82,17 +82,17 @@
 
           <!-- Text Content -->
           <div v-if="content.type === 'TEXT'" class="text-content-section">
-            <div class="modern-card">
+            <div class="modern-card animate-slide-up">
               <div class="content-text" v-html="content.textContent"></div>
             </div>
           </div>
 
           <!-- Video Content -->
           <div v-else-if="content.type === 'VIDEO'" class="video-content-section">
-            <div class="modern-card">
+            <div class="modern-card animate-slide-up">
 
               <!-- Video Loading -->
-              <div v-if="videoLoading" class="video-loading-container">
+              <div v-if="videoLoading && !videoBlobUrl" class="video-loading-container">
                 <div class="modern-logo info">
                   <i class="fas fa-video"></i>
                 </div>
@@ -115,10 +115,10 @@
               <div v-else class="video-container">
                 <video
                     ref="videoPlayer"
-                    :src="videoUrl"
+                    :src="videoBlobUrl || videoUrl"
                     class="video-player"
                     controls
-                    controlsList="nodownload"
+                    preload="metadata"
                     @loadedmetadata="onVideoLoaded"
                     @timeupdate="onVideoTimeUpdate"
                     @ended="onVideoEnded"
@@ -156,101 +156,306 @@
 
           <!-- PDF Content -->
           <div v-else-if="content.type === 'PDF'" class="pdf-content-section">
-            <div class="modern-card">
+            <div class="modern-card animate-slide-up">
 
-              <!-- PDF Loading -->
+              <!-- PDF Loading State -->
               <div v-if="pdfLoading" class="pdf-loading-container">
                 <div class="modern-logo info">
-                  <i class="fas fa-file-pdf"></i>
+                  <i class="fas fa-file-pdf fa-3x text-primary"></i>
                 </div>
-                <div class="spinner-border text-primary" role="status"></div>
-                <p class="mt-3 mb-0">در حال بارگذاری PDF...</p>
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">در حال بارگذاری...</span>
+                </div>
+                <p class="mt-3 mb-0 fw-semibold">در حال بارگذاری PDF...</p>
+                <small class="text-muted">لطفاً صبر کنید</small>
               </div>
 
-              <!-- PDF Error -->
+              <!-- PDF Error State -->
               <div v-else-if="pdfError" class="pdf-error-container">
                 <div class="modern-alert modern-alert-danger">
                   <i class="fas fa-exclamation-triangle me-2"></i>
-                  {{ pdfError }}
-                  <button @click="retryPdfLoad" class="modern-btn modern-btn-outline-danger mt-2">
-                    تلاش مجدد
-                  </button>
+                  <strong>خطا در بارگذاری PDF:</strong>
+                  <br>{{ pdfError }}
+                  <div class="mt-3">
+                    <button @click="retryPdfLoad" class="modern-btn modern-btn-outline-danger me-2">
+                      <i class="fas fa-redo"></i>
+                      تلاش مجدد
+                    </button>
+                    <button @click="downloadFile" class="modern-btn modern-btn-outline-secondary me-2">
+                      <i class="fas fa-download"></i>
+                      دانلود فایل
+                    </button>
+                    <button @click="debugPdfState" class="modern-btn modern-btn-outline-info">
+                      <i class="fas fa-bug"></i>
+                      Debug Info
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <!-- PDF Viewer -->
-              <div v-else>
+              <!-- PDF Viewer - حالت عادی -->
+              <div v-else-if="isPdfLoaded && totalPages > 0">
+
                 <!-- PDF Toolbar -->
                 <div class="pdf-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+
+                  <!-- Navigation Group -->
                   <div class="pdf-nav-group">
-                    <button @click="previousPage" :disabled="currentPage <= 1" class="modern-btn modern-btn-outline">
+                    <button
+                        @click="previousPage"
+                        :disabled="currentPage <= 1 || !!pdfRenderTask || !isPdfLoaded"
+                        class="modern-btn modern-btn-outline"
+                        title="صفحه قبل (→)"
+                    >
                       <i class="fas fa-chevron-right"></i>
                     </button>
-                    <span class="px-3 py-2 bg-light rounded">
+                    <span class="px-3 py-2 bg-light rounded text-nowrap">
                       صفحه {{ currentPage }} از {{ totalPages }}
                     </span>
-                    <button @click="nextPage" :disabled="currentPage >= totalPages" class="modern-btn modern-btn-outline">
+                    <button
+                        @click="nextPage"
+                        :disabled="currentPage >= totalPages || !!pdfRenderTask || !isPdfLoaded"
+                        class="modern-btn modern-btn-outline"
+                        title="صفحه بعد (←)"
+                    >
                       <i class="fas fa-chevron-left"></i>
                     </button>
                   </div>
 
+                  <!-- Zoom Group -->
                   <div class="zoom-group">
-                    <button @click="zoomOut" class="modern-btn modern-btn-outline">
+                    <button
+                        @click="zoomOut"
+                        :disabled="pdfScale <= 0.5 || !!pdfRenderTask || !isPdfLoaded"
+                        class="modern-btn modern-btn-outline"
+                        title="کوچک کردن (Ctrl + -)"
+                    >
                       <i class="fas fa-search-minus"></i>
                     </button>
-                    <span class="px-3 py-2 bg-light rounded">
+                    <span class="px-3 py-2 bg-light rounded text-nowrap">
                       {{ Math.round(pdfScale * 100) }}%
                     </span>
-                    <button @click="zoomIn" class="modern-btn modern-btn-outline">
+                    <button
+                        @click="zoomIn"
+                        :disabled="pdfScale >= 3.0 || !!pdfRenderTask || !isPdfLoaded"
+                        class="modern-btn modern-btn-outline"
+                        title="بزرگ کردن (Ctrl + +)"
+                    >
                       <i class="fas fa-search-plus"></i>
                     </button>
                   </div>
 
+                  <!-- Action Group -->
                   <div class="action-group">
-                    <button @click="fitToWidth" class="modern-btn modern-btn-outline">
+                    <button
+                        @click="fitToWidth"
+                        :disabled="!!pdfRenderTask || !isPdfLoaded"
+                        class="modern-btn modern-btn-outline"
+                        title="تنظیم عرض (Ctrl + F)"
+                    >
                       <i class="fas fa-arrows-alt-h"></i>
-                      تنظیم عرض
+                      <span class="d-none d-md-inline">تنظیم عرض</span>
                     </button>
-                    <button @click="toggleFullscreenPdf" class="modern-btn modern-btn-outline">
+                    <button
+                        @click="toggleFullscreenPdf"
+                        class="modern-btn modern-btn-outline"
+                        title="تمام صفحه"
+                    >
                       <i class="fas fa-expand"></i>
-                      تمام صفحه
+                      <span class="d-none d-lg-inline">تمام صفحه</span>
+                    </button>
+                    <button
+                        @click="downloadFile"
+                        class="modern-btn modern-btn-outline"
+                        title="دانلود PDF"
+                    >
+                      <i class="fas fa-download"></i>
+                      <span class="d-none d-lg-inline">دانلود</span>
                     </button>
                   </div>
                 </div>
 
-                <!-- PDF Viewer -->
+                <!-- PDF Status Indicator -->
+                <div v-if="pdfRenderTask" class="alert alert-info py-2 mb-3">
+                  <div class="d-flex align-items-center">
+                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                    <small>در حال رندر صفحه {{ currentPage }}...</small>
+                  </div>
+                </div>
+
+                <!-- PDF Viewer Container -->
                 <div
                     ref="pdfViewerWrapper"
                     class="pdf-viewer-wrapper"
                     @keydown="handlePdfKeyboard"
                     tabindex="0"
+                    role="application"
+                    aria-label="نمایشگر PDF"
+                    :aria-describedby="`pdf-page-info-${contentId}`"
                 >
-                  <div class="pdf-canvas-container">
-                    <canvas ref="pdfCanvas" class="pdf-display-canvas"></canvas>
+                  <!-- Page Info for Screen Readers -->
+                  <div
+                      :id="`pdf-page-info-${contentId}`"
+                      class="visually-hidden"
+                      aria-live="polite"
+                  >
+                    صفحه {{ currentPage }} از {{ totalPages }}، زوم {{ Math.round(pdfScale * 100) }} درصد
+                  </div>
+
+                  <!-- Canvas Container -->
+                  <div
+                      class="pdf-canvas-container"
+                      :class="{ 'changing-page': !!pdfRenderTask }"
+                  >
+                    <canvas
+                        ref="pdfCanvas"
+                        class="pdf-display-canvas"
+                        role="img"
+                        :aria-label="`صفحه ${currentPage} از PDF ${content.title}`"
+                    ></canvas>
+
+                    <!-- Loading Overlay for Page Changes -->
+                    <div
+                        v-if="pdfRenderTask"
+                        class="position-absolute top-50 start-50 translate-middle"
+                        style="z-index: 10;"
+                    >
+                      <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">در حال رندر صفحه...</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 <!-- Mobile PDF Navigation -->
                 <div class="pdf-mobile-nav d-md-none">
                   <div class="modern-card text-center">
-                    <div class="d-flex justify-content-center align-items-center gap-3">
-                      <button @click="previousPage" :disabled="currentPage <= 1" class="modern-btn modern-btn-sm modern-btn-outline">
+                    <div class="d-flex justify-content-center align-items-center gap-3 mb-2">
+                      <button
+                          @click="previousPage"
+                          :disabled="currentPage <= 1 || !!pdfRenderTask || !isPdfLoaded"
+                          class="modern-btn modern-btn-sm modern-btn-outline"
+                          title="صفحه قبل"
+                      >
                         <i class="fas fa-chevron-right"></i>
                       </button>
                       <span class="fw-semibold">{{ currentPage }} / {{ totalPages }}</span>
-                      <button @click="nextPage" :disabled="currentPage >= totalPages" class="modern-btn modern-btn-sm modern-btn-outline">
+                      <button
+                          @click="nextPage"
+                          :disabled="currentPage >= totalPages || !!pdfRenderTask || !isPdfLoaded"
+                          class="modern-btn modern-btn-sm modern-btn-outline"
+                          title="صفحه بعد"
+                      >
                         <i class="fas fa-chevron-left"></i>
+                      </button>
+                    </div>
+
+                    <!-- Mobile Quick Actions -->
+                    <div class="d-flex justify-content-center gap-2">
+                      <button
+                          @click="fitToWidth"
+                          :disabled="!!pdfRenderTask || !isPdfLoaded"
+                          class="modern-btn modern-btn-sm modern-btn-outline"
+                          title="تنظیم عرض"
+                      >
+                        <i class="fas fa-arrows-alt-h"></i>
+                      </button>
+                      <button
+                          @click="toggleFullscreenPdf"
+                          class="modern-btn modern-btn-sm modern-btn-outline"
+                          title="تمام صفحه"
+                      >
+                        <i class="fas fa-expand"></i>
+                      </button>
+                      <button
+                          @click="downloadFile"
+                          class="modern-btn modern-btn-sm modern-btn-outline"
+                          title="دانلود"
+                      >
+                        <i class="fas fa-download"></i>
                       </button>
                     </div>
                   </div>
                 </div>
+
+                <!-- PDF Information Panel -->
+                <div class="mt-3 p-3 bg-light rounded">
+                  <div class="row g-3 text-center">
+                    <div class="col-6 col-md-3">
+                      <small class="text-muted d-block">تعداد صفحات</small>
+                      <strong>{{ totalPages }}</strong>
+                    </div>
+                    <div class="col-6 col-md-3">
+                      <small class="text-muted d-block">صفحه فعلی</small>
+                      <strong>{{ currentPage }}</strong>
+                    </div>
+                    <div class="col-6 col-md-3">
+                      <small class="text-muted d-block">زوم</small>
+                      <strong>{{ Math.round(pdfScale * 100) }}%</strong>
+                    </div>
+                    <div class="col-6 col-md-3">
+                      <small class="text-muted d-block">وضعیت</small>
+                      <strong>{{ pdfRenderTask ? 'در حال رندر' : 'آماده' }}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Keyboard Shortcuts Help -->
+                <div class="mt-2">
+                  <button
+                      class="btn btn-link btn-sm text-muted p-0"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#pdf-shortcuts"
+                      aria-expanded="false"
+                  >
+                    <i class="fas fa-keyboard me-1"></i>
+                    میانبرهای صفحه کلید
+                  </button>
+                  <div class="collapse mt-2" id="pdf-shortcuts">
+                    <div class="card card-body bg-light border-0">
+                      <div class="row g-2 small">
+                        <div class="col-md-6">
+                          <strong>پیمایش:</strong><br>
+                          ← / → : صفحه بعد/قبل<br>
+                          Home / End : اولین/آخرین صفحه
+                        </div>
+                        <div class="col-md-6">
+                          <strong>زوم:</strong><br>
+                          Ctrl + / Ctrl - : بزرگ/کوچک کردن<br>
+                          Ctrl F : تنظیم عرض
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
               </div>
+
+              <!-- PDF Not Loaded State -->
+              <div v-else-if="!pdfLoading && !pdfError" class="pdf-error-container">
+                <div class="modern-alert modern-alert-warning">
+                  <i class="fas fa-file-pdf me-2"></i>
+                  PDF هنوز بارگذاری نشده است
+                  <div class="mt-2">
+                    <button @click="initializePdfViewer" class="modern-btn modern-btn-outline-warning me-2">
+                      <i class="fas fa-refresh"></i>
+                      شروع بارگذاری
+                    </button>
+                    <button @click="debugPdfState" class="modern-btn modern-btn-outline-info">
+                      <i class="fas fa-info"></i>
+                      بررسی وضعیت
+                    </button>
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
 
           <!-- Unknown Content Type -->
           <div v-else class="unknown-content-section">
-            <div class="modern-card">
+            <div class="modern-card animate-slide-up">
               <div class="unknown-content-area">
                 <div class="modern-logo warning mb-4">
                   <i class="fas fa-question-circle"></i>
@@ -324,46 +529,53 @@ export default defineComponent({
     })
 
     const videoUrl = computed(() => {
-      // اگر blob URL موجود است، از آن استفاده کن
-      if (videoBlobUrl.value) {
-        return videoBlobUrl.value
+      if (fileId.value) {
+        return `/api/content/files/${fileId.value}?timeSpent=${timeSpent.value}`
       }
       return null
     })
 
-    // اضافه کردن متد برای دریافت ویدیو با authentication
-    const fetchVideoBlob = async (fileId) => {
-      try {
-        videoLoading.value = true
-        videoError.value = false
+    // Helper Functions
+    const formatTime = (seconds) => {
+      if (!seconds || seconds < 0) return '00:00:00'
+      const hours = Math.floor(seconds / 3600)
+      const minutes = Math.floor((seconds % 3600) / 60)
+      const secs = Math.floor(seconds % 60)
 
-        const token = localStorage.getItem('token')
-        const response = await fetch(`/api/content/files/${fileId}?timeSpent=${timeSpent.value}`, {
-          headers: {
-            'Authorization': `Basic ${token}`
-          }
-        })
+      return [
+        hours.toString().padStart(2, '0'),
+        minutes.toString().padStart(2, '0'),
+        secs.toString().padStart(2, '0')
+      ].join(':')
+    }
 
-        if (!response.ok) {
-          throw new Error(`خطا در دریافت ویدیو: ${response.status}`)
+    const formatFileSize = (bytes) => {
+      if (!bytes || bytes === 0) return '0 B'
+
+      const k = 1024
+      const sizes = ['B', 'KB', 'MB', 'GB']
+      const i = Math.floor(Math.log(bytes) / Math.log(k))
+
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+    }
+
+    // debounce helper
+    function debounce(func, wait) {
+      let timeout
+      return function executedFunction(...args) {
+        const later = () => {
+          clearTimeout(timeout)
+          func(...args)
         }
-
-        const blob = await response.blob()
-        const blobUrl = URL.createObjectURL(blob)
-        videoBlobUrl.value = blobUrl
-
-      } catch (err) {
-        console.error('Error fetching video blob:', err)
-        videoError.value = true
-      } finally {
-        videoLoading.value = false
+        clearTimeout(timeout)
+        timeout = setTimeout(later, wait)
       }
     }
 
-    // Methods
+    // Main Methods
     const fetchContentData = async () => {
       if (!contentId.value) {
-        error.value = 'شناسه محتوا مشخص نشده است'
+        error.value = 'شناسه محتوا نامعتبر است'
         loading.value = false
         return
       }
@@ -373,41 +585,39 @@ export default defineComponent({
         error.value = null
 
         const token = localStorage.getItem('token')
-        const response = await fetch(`/api/content/${contentId.value}?timeSpent=${timeSpent.value}`, {
+        const response = await fetch(`/api/content/${contentId.value}`, {
           headers: {
             'Authorization': `Basic ${token}`
           }
         })
 
         if (!response.ok) {
-          throw new Error(`خطا در دریافت محتوا: ${response.status}`)
+          throw new Error('خطا در دریافت اطلاعات محتوا')
         }
 
-        content.value = await response.json()
+        const data = await response.json()
+        content.value = data
 
         // Mark as viewed
-        await markContentViewed()
+        markAsViewed()
 
-        // اگر محتوا ویدیو است، blob URL را دریافت کن
-        if (content.value?.type === 'VIDEO' && fileId.value) {
+        // Initialize based on content type
+        if (data.type === 'VIDEO' && fileId.value) {
           await fetchVideoBlob(fileId.value)
+        } else if (data.type === 'PDF' && fileId.value) {
+          await nextTick()
+          initializePdfViewer()
         }
 
       } catch (err) {
         console.error('Error fetching content:', err)
-        error.value = err.message || 'خطا در بارگذاری محتوا'
+        error.value = err.message || 'خطا در دریافت محتوا'
       } finally {
         loading.value = false
       }
-
-      // Initialize PDF after content is loaded and DOM is ready
-      if (content.value?.type === 'PDF') {
-        await nextTick()  // صبر کن تا DOM با محتوای جدید آپدیت بشه
-        await initializePdfViewer()
-      }
     }
 
-    const markContentViewed = async () => {
+    const markAsViewed = async () => {
       try {
         const token = localStorage.getItem('token')
         await fetch(`/api/progress/content/${contentId.value}/view?timeSpent=${timeSpent.value}`, {
@@ -442,7 +652,38 @@ export default defineComponent({
       }
     }
 
+    const goBack = () => {
+      router.go(-1)
+    }
+
     // Video Methods
+    const fetchVideoBlob = async (videoFileId) => {
+      try {
+        videoLoading.value = true
+        videoError.value = false
+
+        const token = localStorage.getItem('token')
+        const response = await fetch(`/api/content/files/${videoFileId}?timeSpent=${timeSpent.value}`, {
+          headers: {
+            'Authorization': `Basic ${token}`
+          }
+        })
+
+        if (!response.ok) {
+          throw new Error('خطا در دریافت ویدیو')
+        }
+
+        const blob = await response.blob()
+        videoBlobUrl.value = URL.createObjectURL(blob)
+
+      } catch (err) {
+        console.error('Error fetching video:', err)
+        videoError.value = true
+      } finally {
+        videoLoading.value = false
+      }
+    }
+
     const onVideoLoaded = () => {
       if (videoPlayer.value) {
         videoDuration.value = videoPlayer.value.duration || 0
@@ -489,7 +730,7 @@ export default defineComponent({
       }
     }
 
-    // PDF Methods
+    // PDF Methods - ورژن تصحیح شده برای حل مشکل private field
     const initializePdfViewer = async () => {
       if (!fileId.value) {
         pdfError.value = 'فایل PDF یافت نشد'
@@ -500,14 +741,25 @@ export default defineComponent({
         pdfLoading.value = true
         pdfError.value = null
 
-        // Import PDF.js
-        const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf')
+        // پاک کردن وضعیت قبلی
+        if (pdfRenderTask.value) {
+          try {
+            pdfRenderTask.value.cancel()
+          } catch (e) {
+            // Ignore cancel errors
+          }
+          pdfRenderTask.value = null
+        }
 
-        // Set worker
-        const pdfjsWorker = await import('pdfjs-dist/legacy/build/pdf.worker.entry')
-        pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker.default
+        // Import PDF.js با روش جدید و امن‌تر
+        const pdfjsLib = await import('pdfjs-dist')
 
-        // Fetch PDF with authentication
+        // تنظیم worker با روش بهتر
+        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
+        }
+
+        // دریافت PDF با authentication
         const token = localStorage.getItem('token')
         const response = await fetch(`/api/content/files/${fileId.value}?timeSpent=${timeSpent.value}`, {
           headers: {
@@ -521,13 +773,15 @@ export default defineComponent({
 
         const pdfArrayBuffer = await response.arrayBuffer()
 
-        // Load PDF document
+        // بارگذاری PDF document با تنظیمات بهینه
         const loadingTask = pdfjsLib.getDocument({
           data: pdfArrayBuffer,
-          cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/cmaps/',
-          cMapPacked: true,
+          verbosity: 0, // کاهش لاگ‌ها
+          disableAutoFetch: false,
+          disableStream: false
         })
 
+        // Wait for PDF to load
         pdfDocInstance = await loadingTask.promise
         isPdfLoaded.value = true
         totalPages.value = pdfDocInstance.numPages
@@ -535,11 +789,15 @@ export default defineComponent({
 
         console.log('PDF loaded successfully, total pages:', totalPages.value)
 
-        // Initial render
+        // رندر اولیه با تأخیر
         await nextTick()
         if (pdfCanvas.value) {
-          await renderPdfPage(1)
-          fitToWidth()
+          setTimeout(async () => {
+            await renderPdfPage(1)
+            setTimeout(() => {
+              fitToWidth()
+            }, 200)
+          }, 100)
         }
 
       } catch (err) {
@@ -552,8 +810,18 @@ export default defineComponent({
     }
 
     const renderPdfPage = async (pageNumber) => {
-      if (!pdfDocInstance || !pdfCanvas.value || pdfRenderTask.value) {
+      if (!pdfDocInstance || !pdfCanvas.value) {
         return
+      }
+
+      // لغو رندر قبلی در صورت وجود
+      if (pdfRenderTask.value) {
+        try {
+          pdfRenderTask.value.cancel()
+        } catch (e) {
+          // Ignore cancel errors
+        }
+        pdfRenderTask.value = null
       }
 
       try {
@@ -563,23 +831,39 @@ export default defineComponent({
         const canvas = pdfCanvas.value
         const context = canvas.getContext('2d')
 
+        // پاک کردن canvas قبلی
+        context.clearRect(0, 0, canvas.width, canvas.height)
+
         const viewport = page.getViewport({ scale: pdfScale.value })
 
-        // Set canvas dimensions
-        canvas.height = viewport.height
-        canvas.width = viewport.width
-        canvas.style.height = viewport.height + 'px'
-        canvas.style.width = viewport.width + 'px'
+        // تنظیم dimensions
+        const devicePixelRatio = window.devicePixelRatio || 1
+        const canvasWidth = viewport.width * devicePixelRatio
+        const canvasHeight = viewport.height * devicePixelRatio
 
-        // Render PDF page
+        // تنظیم اندازه canvas
+        canvas.width = canvasWidth
+        canvas.height = canvasHeight
+        canvas.style.width = viewport.width + 'px'
+        canvas.style.height = viewport.height + 'px'
+
+        // تنظیم scale برای quality بهتر
+        context.scale(devicePixelRatio, devicePixelRatio)
+
+        // رندر PDF page با promise handling بهتر
         const renderContext = {
           canvasContext: context,
           viewport: viewport
         }
 
-        pdfRenderTask.value = page.render(renderContext)
-        await pdfRenderTask.value.promise
+        // استفاده از approach جدید برای render
+        const renderTask = page.render(renderContext)
+        pdfRenderTask.value = renderTask
 
+        // منتظر اتمام render
+        await renderTask.promise
+
+        // پاک کردن task پس از اتمام
         pdfRenderTask.value = null
         currentPage.value = pageNumber
 
@@ -588,57 +872,106 @@ export default defineComponent({
       } catch (err) {
         if (err.name !== 'RenderingCancelledException') {
           console.error('Error rendering PDF page:', err)
+          pdfError.value = 'خطا در نمایش صفحه PDF'
         }
         pdfRenderTask.value = null
       }
     }
 
     const nextPage = async () => {
-      if (currentPage.value < totalPages.value) {
+      if (currentPage.value < totalPages.value && !pdfRenderTask.value && isPdfLoaded.value) {
         await renderPdfPage(currentPage.value + 1)
       }
     }
 
     const previousPage = async () => {
-      if (currentPage.value > 1) {
+      if (currentPage.value > 1 && !pdfRenderTask.value && isPdfLoaded.value) {
         await renderPdfPage(currentPage.value - 1)
       }
     }
 
     const zoomIn = async () => {
-      pdfScale.value = Math.min(pdfScale.value + 0.25, 3.0)
-      await renderPdfPage(currentPage.value)
+      if (pdfRenderTask.value || !isPdfLoaded.value) return
+
+      const newScale = Math.min(pdfScale.value + 0.25, 3.0)
+      if (newScale !== pdfScale.value) {
+        pdfScale.value = newScale
+        await renderPdfPage(currentPage.value)
+      }
     }
 
     const zoomOut = async () => {
-      pdfScale.value = Math.max(pdfScale.value - 0.25, 0.5)
-      await renderPdfPage(currentPage.value)
+      if (pdfRenderTask.value || !isPdfLoaded.value) return
+
+      const newScale = Math.max(pdfScale.value - 0.25, 0.5)
+      if (newScale !== pdfScale.value) {
+        pdfScale.value = newScale
+        await renderPdfPage(currentPage.value)
+      }
     }
 
     const fitToWidth = async () => {
-      if (!pdfViewerWrapper.value || !pdfDocInstance) {
+      if (!pdfViewerWrapper.value || !pdfDocInstance || pdfRenderTask.value || !isPdfLoaded.value) {
         return
       }
 
       try {
         const page = await pdfDocInstance.getPage(currentPage.value)
         const viewport = page.getViewport({ scale: 1.0 })
-        const containerWidth = pdfViewerWrapper.value.clientWidth - 40 // padding
 
+        // محاسبه عرض container
+        const containerRect = pdfViewerWrapper.value.getBoundingClientRect()
+        const containerWidth = containerRect.width - 80
+
+        // محاسبه scale
         const scale = containerWidth / viewport.width
-        pdfScale.value = Math.max(0.5, Math.min(scale, 3.0))
+        const clampedScale = Math.max(0.5, Math.min(scale, 3.0))
 
-        await renderPdfPage(currentPage.value)
+        if (Math.abs(pdfScale.value - clampedScale) > 0.01) {
+          pdfScale.value = clampedScale
+          await renderPdfPage(currentPage.value)
+        }
       } catch (err) {
         console.error('Error fitting to width:', err)
       }
     }
 
     const retryPdfLoad = () => {
-      initializePdfViewer()
+      // Reset all states
+      pdfError.value = null
+      pdfLoading.value = false
+      isPdfLoaded.value = false
+      currentPage.value = 1
+      totalPages.value = 0
+      pdfScale.value = 1.0
+
+      if (pdfRenderTask.value) {
+        try {
+          pdfRenderTask.value.cancel()
+        } catch (e) {
+          // Ignore errors
+        }
+        pdfRenderTask.value = null
+      }
+
+      pdfDocInstance = null
+
+      // پاک کردن canvas
+      if (pdfCanvas.value) {
+        const context = pdfCanvas.value.getContext('2d')
+        context.clearRect(0, 0, pdfCanvas.value.width, pdfCanvas.value.height)
+      }
+
+      // تلاش مجدد با تأخیر
+      setTimeout(() => {
+        initializePdfViewer()
+      }, 200)
     }
 
     const handlePdfKeyboard = (event) => {
+      // جلوگیری از اجرای commands در حالت loading
+      if (pdfRenderTask.value || !isPdfLoaded.value) return
+
       switch (event.code) {
         case 'ArrowLeft':
           event.preventDefault()
@@ -650,31 +983,73 @@ export default defineComponent({
           break
         case 'Equal':
         case 'NumpadAdd':
-          if (event.ctrlKey) {
+          if (event.ctrlKey || event.metaKey) {
             event.preventDefault()
             zoomIn()
           }
           break
         case 'Minus':
         case 'NumpadSubtract':
-          if (event.ctrlKey) {
+          if (event.ctrlKey || event.metaKey) {
             event.preventDefault()
             zoomOut()
+          }
+          break
+        case 'Home':
+          event.preventDefault()
+          if (currentPage.value !== 1) {
+            renderPdfPage(1)
+          }
+          break
+        case 'End':
+          event.preventDefault()
+          if (currentPage.value !== totalPages.value) {
+            renderPdfPage(totalPages.value)
+          }
+          break
+        case 'KeyF':
+          if (event.ctrlKey || event.metaKey) {
+            event.preventDefault()
+            fitToWidth()
           }
           break
       }
     }
 
-    const toggleFullscreenPdf = () => {
+    const toggleFullscreenPdf = async () => {
       if (!pdfViewerWrapper.value) return
 
-      if (document.fullscreenElement) {
-        document.exitFullscreen()
-      } else {
-        pdfViewerWrapper.value.requestFullscreen().catch(err => {
-          console.error('Error attempting to enable fullscreen:', err)
-        })
+      try {
+        if (document.fullscreenElement) {
+          await document.exitFullscreen()
+        } else {
+          await pdfViewerWrapper.value.requestFullscreen()
+          // تنظیم مجدد اندازه پس از fullscreen
+          setTimeout(() => {
+            if (isPdfLoaded.value) {
+              fitToWidth()
+            }
+          }, 300)
+        }
+      } catch (err) {
+        console.error('Error toggling fullscreen:', err)
       }
+    }
+
+    // متد اضافی برای دیباگ
+    const debugPdfState = () => {
+      console.log('PDF Debug State:', {
+        isPdfLoaded: isPdfLoaded.value,
+        currentPage: currentPage.value,
+        totalPages: totalPages.value,
+        pdfScale: pdfScale.value,
+        hasRenderTask: !!pdfRenderTask.value,
+        hasDocument: !!pdfDocInstance,
+        hasCanvas: !!pdfCanvas.value,
+        hasWrapper: !!pdfViewerWrapper.value,
+        pdfError: pdfError.value,
+        pdfLoading: pdfLoading.value
+      })
     }
 
     // General Methods
@@ -705,47 +1080,40 @@ export default defineComponent({
 
       } catch (err) {
         console.error('Error downloading file:', err)
-        alert('خطا در دانلود فایل')
       }
     }
 
-    const formatTime = (seconds) => {
-      const mins = Math.floor(seconds / 60)
-      const secs = Math.floor(seconds % 60)
-      return `${mins}:${secs.toString().padStart(2, '0')}`
-    }
-
-    const goBack = () => {
-      router.back()
-    }
-
-    // Track time spent
-    const startTimeTracking = () => {
-      timeTrackingInterval = setInterval(() => {
-        timeSpent.value = Math.floor((Date.now() - startTime.value) / 1000)
-      }, 1000)
-    }
-
-    // Watch for PDF readiness
-    watch(() => [content.value?.type, pdfLoading.value], async ([type, loading]) => {
-      if (type === 'PDF' && !loading && isPdfLoaded.value && !currentPage.value) {
-        console.log('PDF is ready, attempting first render')
-        await nextTick()
-        if (pdfCanvas.value) {
-          await renderPdfPage(1)
-          fitToWidth()
-        }
+    // resize handler with debounce
+    const handleResize = debounce(() => {
+      if (isPdfLoaded.value && pdfCanvas.value) {
+        fitToWidth()
       }
-    })
+    }, 250)
 
     // Lifecycle
     onMounted(() => {
       fetchContentData()
-      startTimeTracking()
+
+      // Time tracking
+      timeTrackingInterval = setInterval(() => {
+        timeSpent.value = Math.floor((Date.now() - startTime.value) / 1000)
+      }, 1000)
+
+      // Add resize listener
+      window.addEventListener('resize', handleResize)
+
+      // listener برای تغییر fullscreen
+      document.addEventListener('fullscreenchange', () => {
+        setTimeout(() => {
+          if (isPdfLoaded.value) {
+            fitToWidth()
+          }
+        }, 100)
+      })
     })
 
     onUnmounted(() => {
-      // Stop time tracking
+      // Clear timers
       if (timeTrackingInterval) {
         clearInterval(timeTrackingInterval)
       }
@@ -753,40 +1121,61 @@ export default defineComponent({
       // Clean up video blob URL
       if (videoBlobUrl.value) {
         URL.revokeObjectURL(videoBlobUrl.value)
-        videoBlobUrl.value = null
       }
 
       // Clean up PDF
-      if (pdfDocInstance) {
-        try {
-          pdfDocInstance.destroy()
-          pdfDocInstance = null
-          isPdfLoaded.value = false
-        } catch (err) {
-          console.error('Error destroying PDF:', err)
-        }
-      }
-
-      // Cancel any ongoing render task
       if (pdfRenderTask.value) {
         try {
           pdfRenderTask.value.cancel()
         } catch (e) {
-          // Ignore cancellation errors
+          // Ignore errors
         }
+        pdfRenderTask.value = null
       }
 
-      // Send final time spent
-      if (contentId.value && timeSpent.value > 0) {
-        const token = localStorage.getItem('token')
-        navigator.sendBeacon(
-            `/api/progress/content/${contentId.value}/time?timeSpent=${timeSpent.value}`,
-            new Blob([JSON.stringify({ timeSpent: timeSpent.value })], { type: 'application/json' })
-        )
+      // Clean up PDF document instance
+      if (pdfDocInstance) {
+        try {
+          pdfDocInstance.destroy()
+        } catch (e) {
+          // Ignore errors
+        }
+        pdfDocInstance = null
+      }
+
+      // Remove listeners
+      window.removeEventListener('resize', handleResize)
+    })
+
+    // Watchers
+    watch(() => fileId.value, (newFileId) => {
+      if (newFileId && content.value?.type === 'PDF') {
+        resetPdfViewer()
+        initializePdfViewer()
       }
     })
 
-    // Return all reactive properties and methods
+    const resetPdfViewer = () => {
+      if (pdfRenderTask.value) {
+        pdfRenderTask.value.cancel()
+        pdfRenderTask.value = null
+      }
+
+      pdfDocInstance = null
+      isPdfLoaded.value = false
+      pdfLoading.value = false
+      pdfError.value = null
+      currentPage.value = 1
+      totalPages.value = 0
+      pdfScale.value = 1.0
+
+      // پاک کردن canvas
+      if (pdfCanvas.value) {
+        const context = pdfCanvas.value.getContext('2d')
+        context.clearRect(0, 0, pdfCanvas.value.width, pdfCanvas.value.height)
+      }
+    }
+
     return {
       // State
       loading,
@@ -797,8 +1186,8 @@ export default defineComponent({
       isCompleted,
 
       // Video
-      videoError,
       videoLoading,
+      videoError,
       currentVideoTime,
       videoDuration,
       playbackSpeed,
@@ -807,6 +1196,7 @@ export default defineComponent({
       videoUrl,
 
       // PDF
+      isPdfLoaded,
       pdfLoading,
       pdfError,
       currentPage,
@@ -814,12 +1204,15 @@ export default defineComponent({
       pdfScale,
       pdfCanvas,
       pdfViewerWrapper,
+      pdfRenderTask,
 
       // Methods
       fetchContentData,
       markAsComplete,
       goBack,
       fetchVideoBlob,
+      formatTime,
+      formatFileSize,
 
       // Video Methods
       onVideoLoaded,
@@ -831,6 +1224,7 @@ export default defineComponent({
       toggleVideoFullscreen,
 
       // PDF Methods
+      initializePdfViewer,
       nextPage,
       previousPage,
       zoomIn,
@@ -839,12 +1233,13 @@ export default defineComponent({
       retryPdfLoad,
       handlePdfKeyboard,
       toggleFullscreenPdf,
+      debugPdfState,
 
       // General Methods
       downloadFile,
-      formatTime,
 
       // Computed
+      contentId,
       fileId
     }
   }
@@ -1052,9 +1447,11 @@ export default defineComponent({
   font-size: 0.875rem;
 }
 
-/* PDF Content */
+/* PDF Content - بهبود یافته */
 .pdf-content-section {
   background: white;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .pdf-loading-container,
@@ -1063,7 +1460,7 @@ export default defineComponent({
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 400px;
+  min-height: 500px;
   text-align: center;
   padding: 3rem 2rem;
 }
@@ -1075,12 +1472,17 @@ export default defineComponent({
   margin: 1rem 0;
 }
 
+/* PDF Toolbar - بهبود یافته */
 .pdf-toolbar {
-  background: rgba(248, 249, 250, 0.9);
+  background: rgba(248, 249, 250, 0.95);
   backdrop-filter: blur(20px);
   border-radius: 12px;
-  padding: 1.5rem;
+  padding: 1.25rem;
   margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 1rem;
+  z-index: 10;
 }
 
 .pdf-nav-group,
@@ -1088,6 +1490,7 @@ export default defineComponent({
 .action-group {
   display: flex;
   gap: 0;
+  align-items: center;
 }
 
 .pdf-nav-group .modern-btn,
@@ -1095,84 +1498,172 @@ export default defineComponent({
 .action-group .modern-btn {
   border-radius: 0;
   font-size: 0.875rem;
-  padding: 0.5rem 1rem;
-  border-right: none;
+  padding: 0.6rem 1rem;
+  border-left: none;
+  transition: all 0.2s ease;
+  min-width: auto;
+}
+
+.pdf-nav-group .modern-btn:hover,
+.zoom-group .modern-btn:hover,
+.action-group .modern-btn:hover {
+  background-color: rgba(102, 126, 234, 0.1);
+  border-color: rgba(102, 126, 234, 0.3);
 }
 
 .pdf-nav-group .modern-btn:first-child,
 .zoom-group .modern-btn:first-child,
 .action-group .modern-btn:first-child {
   border-radius: 8px 0 0 8px;
-  border-right: 2px solid rgba(102, 126, 234, 0.84);
+  border-left: 2px solid rgba(102, 126, 234, 0.2);
 }
 
 .pdf-nav-group .modern-btn:last-child,
 .zoom-group .modern-btn:last-child,
 .action-group .modern-btn:last-child {
   border-radius: 0 8px 8px 0;
-  border-right: 2px solid rgba(102, 126, 234, 0.84);
+  border-left: 2px solid rgba(102, 126, 234, 0.2);
 }
 
+.pdf-nav-group span,
+.zoom-group span {
+  min-width: 120px;
+  text-align: center;
+  font-weight: 600;
+  color: #2c3e50;
+  white-space: nowrap;
+}
+
+/* PDF Viewer Wrapper - بهبود یافته */
 .pdf-viewer-wrapper {
-  background: #f8f9fa;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   border-radius: 12px;
   padding: 2rem;
   display: flex;
   justify-content: center;
   align-items: flex-start;
   min-height: 600px;
+  max-height: 80vh;
   overflow: auto;
   position: relative;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
+.pdf-viewer-wrapper:focus {
+  outline: 3px solid rgba(102, 126, 234, 0.3);
+  outline-offset: 2px;
+}
+
+/* PDF Canvas Container - بهبود یافته */
 .pdf-canvas-container {
-  transition: transform 0.3s ease;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   justify-content: center;
+  align-items: flex-start;
   max-width: 100%;
+  position: relative;
 }
 
 .pdf-display-canvas {
   display: block;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border: 2px solid #dee2e6;
+  border-radius: 12px;
+  box-shadow:
+      0 8px 30px rgba(0, 0, 0, 0.12),
+      0 4px 15px rgba(0, 0, 0, 0.08);
   background: white;
   max-width: 100%;
   height: auto;
   cursor: grab;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pdf-display-canvas:hover {
+  transform: translateY(-2px);
+  box-shadow:
+      0 12px 40px rgba(0, 0, 0, 0.15),
+      0 6px 20px rgba(0, 0, 0, 0.1);
 }
 
 .pdf-display-canvas:active {
   cursor: grabbing;
+  transform: translateY(0);
 }
 
 .pdf-display-canvas:focus {
-  outline: 2px solid #667eea;
-  outline-offset: 2px;
+  outline: 3px solid rgba(102, 126, 234, 0.5);
+  outline-offset: 3px;
 }
 
+/* Mobile PDF Navigation - بهبود یافته */
 .pdf-mobile-nav {
   position: sticky;
   bottom: 20px;
   z-index: 100;
+  margin-top: 1rem;
 }
 
 .pdf-mobile-nav .modern-card {
   backdrop-filter: blur(20px);
   background: rgba(255, 255, 255, 0.95);
   padding: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
-/* Fullscreen */
+.pdf-mobile-nav .modern-btn-sm {
+  padding: 0.5rem 0.75rem;
+  min-width: 40px;
+}
+
+/* Fullscreen Styles - بهبود یافته */
 .pdf-viewer-wrapper:fullscreen {
-  background: #2c3e50;
+  background: #1a1a1a;
   padding: 1rem;
+  max-height: none;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .pdf-viewer-wrapper:fullscreen .pdf-display-canvas {
-  border-color: #34495e;
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+  border-color: #444;
+  box-shadow:
+      0 20px 60px rgba(0, 0, 0, 0.5),
+      0 10px 30px rgba(0, 0, 0, 0.3);
+  max-height: 90vh;
+  max-width: 90vw;
+}
+
+.pdf-viewer-wrapper:fullscreen .pdf-canvas-container {
+  align-items: center;
+}
+
+/* Loading Animation */
+@keyframes pdfPulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 0.4; }
+}
+
+.pdf-loading-container {
+  animation: pdfPulse 2s infinite;
+}
+
+/* Error State */
+.pdf-error-container {
+  color: #dc3545;
+}
+
+.pdf-error-container .modern-alert {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* Animation for page transitions */
+.pdf-canvas-container.changing-page {
+  opacity: 0.7;
+  transform: scale(0.98);
 }
 
 /* Unknown Content */
@@ -1235,15 +1726,33 @@ export default defineComponent({
   }
 
   .pdf-toolbar {
-    background: rgba(45, 55, 72, 0.9);
+    background: rgba(45, 55, 72, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .pdf-nav-group span,
+  .zoom-group span {
+    color: #e2e8f0;
   }
 
   .pdf-viewer-wrapper {
-    background: #2d3748;
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+  }
+
+  .pdf-display-canvas {
+    border-color: #4a5568;
+    box-shadow:
+        0 8px 30px rgba(0, 0, 0, 0.3),
+        0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+
+  .pdf-mobile-nav .modern-card {
+    background: rgba(45, 55, 72, 0.95);
+    border-color: rgba(255, 255, 255, 0.1);
   }
 }
 
-/* Responsive */
+/* Responsive Design - بهبود یافته */
 @media (max-width: 768px) {
   .content-wrapper {
     padding: 1rem 0;
@@ -1264,10 +1773,34 @@ export default defineComponent({
   .pdf-toolbar {
     flex-direction: column;
     gap: 1rem;
+    padding: 1rem;
+    position: static;
   }
 
   .pdf-toolbar > div {
     justify-content: center;
+    width: 100%;
+  }
+
+  .pdf-nav-group,
+  .zoom-group,
+  .action-group {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .pdf-viewer-wrapper {
+    padding: 1rem;
+    min-height: 400px;
+    max-height: 60vh;
+  }
+
+  .pdf-display-canvas {
+    max-width: calc(100vw - 2rem);
+  }
+
+  .pdf-mobile-nav {
+    bottom: 10px;
   }
 
   .video-controls .d-flex {
@@ -1278,6 +1811,86 @@ export default defineComponent({
 
   .speed-control {
     justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .pdf-toolbar {
+    padding: 0.75rem;
+  }
+
+  .pdf-nav-group .modern-btn,
+  .zoom-group .modern-btn,
+  .action-group .modern-btn {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .pdf-nav-group span,
+  .zoom-group span {
+    min-width: 100px;
+    font-size: 0.85rem;
+  }
+
+  .pdf-viewer-wrapper {
+    padding: 0.5rem;
+    border-radius: 8px;
+  }
+}
+
+/* Accessibility Improvements */
+.pdf-toolbar button:focus,
+.pdf-mobile-nav button:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+  z-index: 1;
+}
+
+.pdf-toolbar button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Custom Scrollbar for PDF Viewer */
+.pdf-viewer-wrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.pdf-viewer-wrapper::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.pdf-viewer-wrapper::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.3);
+  border-radius: 4px;
+}
+
+.pdf-viewer-wrapper::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.5);
+}
+
+/* Print Styles */
+@media print {
+  .pdf-toolbar,
+  .pdf-mobile-nav {
+    display: none !important;
+  }
+
+  .pdf-viewer-wrapper {
+    background: white !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .pdf-display-canvas {
+    border: none !important;
+    box-shadow: none !important;
+    max-width: 100% !important;
+    page-break-inside: avoid;
   }
 }
 
@@ -1294,6 +1907,14 @@ export default defineComponent({
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* High DPI Support */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .pdf-display-canvas {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
   }
 }
 </style>
