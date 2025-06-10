@@ -1,296 +1,266 @@
 <template>
-  <div class="content-viewer modern-page-bg">
+  <div class="content-viewer">
     <!-- Loading State -->
     <div v-if="loading" class="loading-container">
-      <div class="modern-container">
-        <div class="modern-header text-center">
-          <div class="modern-logo info">
-            <i class="fas fa-spinner fa-spin"></i>
-          </div>
-          <h1 class="modern-title">در حال بارگذاری...</h1>
-          <p class="modern-subtitle">لطفاً منتظر بمانید</p>
+      <div class="text-center">
+        <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+          <span class="visually-hidden">در حال بارگذاری...</span>
         </div>
+        <h5 class="text-muted">در حال بارگذاری محتوا...</h5>
       </div>
     </div>
 
     <!-- Error State -->
     <div v-else-if="error" class="error-container">
-      <div class="modern-container">
-        <div class="modern-header text-center">
-          <div class="modern-logo danger">
-            <i class="fas fa-exclamation-triangle"></i>
-          </div>
-          <h1 class="modern-title">خطا در بارگذاری</h1>
-          <p class="modern-subtitle">{{ error }}</p>
-          <div class="mt-4">
-            <button @click="fetchContentData" class="modern-btn modern-btn-primary">
-              <i class="fas fa-redo"></i>
-              تلاش مجدد
-            </button>
-            <button @click="goBack" class="modern-btn modern-btn-secondary ms-2">
-              <i class="fas fa-arrow-right"></i>
-              بازگشت
-            </button>
-          </div>
+      <div class="text-center">
+        <div class="modern-logo error mb-4">
+          <i class="fas fa-exclamation-triangle"></i>
         </div>
+        <h4 class="text-danger mb-3">خطا در بارگذاری محتوا</h4>
+        <p class="text-muted mb-4">{{ error }}</p>
+        <button @click="fetchContentData" class="modern-btn modern-btn-primary">
+          <i class="fas fa-redo me-2"></i>
+          تلاش مجدد
+        </button>
       </div>
     </div>
 
     <!-- No Content -->
     <div v-else-if="!content" class="no-content">
-      <div class="modern-container">
-        <div class="modern-header text-center">
-          <div class="modern-logo secondary">
-            <i class="fas fa-file-times"></i>
-          </div>
-          <h1 class="modern-title">محتوایی یافت نشد</h1>
-          <p class="modern-subtitle">محتوای درخواستی موجود نیست</p>
-          <div class="mt-4">
-            <button @click="goBack" class="modern-btn modern-btn-primary">
-              <i class="fas fa-arrow-right"></i>
-              بازگشت به درس
-            </button>
-          </div>
+      <div class="text-center">
+        <div class="modern-logo warning mb-4">
+          <i class="fas fa-file-alt"></i>
         </div>
+        <h4 class="text-warning mb-3">محتوایی یافت نشد</h4>
+        <p class="text-muted">محتوای درخواستی موجود نیست یا حذف شده است.</p>
       </div>
     </div>
 
-    <!-- Content Display -->
-    <div v-else class="content-wrapper animate-fade-in">
-      <div class="container-fluid p-0">
-        <div class="row g-0">
-          <div class="col-lg-10 mx-auto">
+    <!-- Content -->
+    <div v-else class="container content-wrapper">
+      <div class="row justify-content-center">
+        <div class="col-12 col-lg-10 col-xl-8">
 
-            <!-- Content Header -->
-            <div class="content-header modern-card mb-4">
-              <div class="d-flex justify-content-between align-items-center flex-wrap">
-                <div>
-                  <h1 class="content-title">{{ content.title }}</h1>
-                  <p class="content-meta mb-0">
-                    <i class="fas fa-clock me-2"></i>
-                    <span>{{ timeSpent }} ثانیه مطالعه</span>
-                  </p>
+          <!-- Content Header -->
+          <div class="content-header mb-4 animate-slide-up">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+              <div class="flex-grow-1">
+                <h1 class="content-title">{{ content.title }}</h1>
+                <div class="content-meta">
+                  <span class="me-3">
+                    <i class="fas fa-book me-1"></i>
+                    {{ content.lesson?.courseTitle }}
+                  </span>
+                  <span class="me-3">
+                    <i class="fas fa-bookmark me-1"></i>
+                    {{ content.lesson?.title }}
+                  </span>
+                  <span class="me-3">
+                    <i class="fas fa-clock me-1"></i>
+                    {{ formatTime(timeSpent) }} مطالعه شده
+                  </span>
                 </div>
-                <div class="content-actions">
-                  <button
-                      @click="markAsComplete"
-                      :disabled="isMarkingComplete || isCompleted"
-                      class="modern-btn modern-btn-success"
-                  >
-                    <i class="fas" :class="isCompleted ? 'fa-check-circle' : 'fa-check'"></i>
-                    {{ isCompleted ? 'تکمیل شده' : 'علامت‌گذاری به عنوان تکمیل شده' }}
-                  </button>
-                  <button @click="goBack" class="modern-btn modern-btn-secondary ms-2">
-                    <i class="fas fa-arrow-right"></i>
-                    بازگشت
+              </div>
+              <div class="content-actions">
+                <button
+                    @click="markAsComplete"
+                    :disabled="isMarkingComplete || isCompleted"
+                    class="modern-btn"
+                    :class="isCompleted ? 'modern-btn-success' : 'modern-btn-primary'"
+                >
+                  <div v-if="isMarkingComplete" class="spinner-border spinner-border-sm me-2" role="status"></div>
+                  <i v-else class="fas me-2" :class="isCompleted ? 'fa-check-circle' : 'fa-check'"></i>
+                  {{ isCompleted ? 'تکمیل شده' : 'علامت‌گذاری به عنوان تکمیل شده' }}
+                </button>
+                <button @click="goBack" class="modern-btn modern-btn-secondary ms-2">
+                  <i class="fas fa-arrow-right"></i>
+                  بازگشت
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Text Content -->
+          <div v-if="content.type === 'TEXT'" class="text-content-section">
+            <div class="modern-card">
+              <div class="content-text" v-html="content.textContent"></div>
+            </div>
+          </div>
+
+          <!-- Video Content -->
+          <div v-else-if="content.type === 'VIDEO'" class="video-content-section">
+            <div class="modern-card">
+
+              <!-- Video Loading -->
+              <div v-if="videoLoading" class="video-loading-container">
+                <div class="modern-logo info">
+                  <i class="fas fa-video"></i>
+                </div>
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-3 mb-0">در حال بارگذاری ویدیو...</p>
+              </div>
+
+              <!-- Video Error -->
+              <div v-else-if="videoError" class="video-error-container">
+                <div class="modern-alert modern-alert-danger">
+                  <i class="fas fa-exclamation-triangle me-2"></i>
+                  خطا در بارگذاری ویدیو
+                  <button @click="retryVideo" class="modern-btn modern-btn-outline-danger mt-2">
+                    تلاش مجدد
                   </button>
                 </div>
               </div>
-            </div>
 
-            <!-- Text Content -->
-            <div v-if="content.type === 'TEXT'" class="text-content-section">
-              <div class="modern-card">
-                <div class="content-text" v-html="content.textContent"></div>
+              <!-- Video Player -->
+              <div v-else class="video-container">
+                <video
+                    ref="videoPlayer"
+                    :src="videoUrl"
+                    class="video-player"
+                    controls
+                    controlsList="nodownload"
+                    @loadedmetadata="onVideoLoaded"
+                    @timeupdate="onVideoTimeUpdate"
+                    @ended="onVideoEnded"
+                    @error="onVideoError"
+                >
+                  مرورگر شما از نمایش ویدیو پشتیبانی نمی‌کند.
+                </video>
+
+                <!-- Video Controls -->
+                <div class="video-controls mt-3">
+                  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="time-display">
+                      <span>{{ formatTime(currentVideoTime) }} / {{ formatTime(videoDuration) }}</span>
+                    </div>
+                    <div class="speed-control">
+                      <label class="me-2">سرعت پخش:</label>
+                      <select v-model="playbackSpeed" @change="changePlaybackSpeed" class="form-select speed-select">
+                        <option value="0.5">0.5x</option>
+                        <option value="0.75">0.75x</option>
+                        <option value="1">1x</option>
+                        <option value="1.25">1.25x</option>
+                        <option value="1.5">1.5x</option>
+                        <option value="2">2x</option>
+                      </select>
+                    </div>
+                    <button @click="toggleVideoFullscreen" class="modern-btn modern-btn-outline">
+                      <i class="fas fa-expand"></i>
+                      تمام صفحه
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
+          </div>
 
-            <!-- Video Content -->
-            <div v-else-if="content.type === 'VIDEO'" class="video-content-section">
-              <div class="modern-card">
+          <!-- PDF Content -->
+          <div v-else-if="content.type === 'PDF'" class="pdf-content-section">
+            <div class="modern-card">
 
-                <!-- Video Error -->
-                <div v-if="videoError" class="video-error-container">
-                  <div class="modern-alert modern-alert-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    خطا در بارگذاری ویدیو
-                    <button @click="retryVideo" class="modern-btn modern-btn-outline-danger mt-2">
-                      تلاش مجدد
+              <!-- PDF Loading -->
+              <div v-if="pdfLoading" class="pdf-loading-container">
+                <div class="modern-logo info">
+                  <i class="fas fa-file-pdf"></i>
+                </div>
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-3 mb-0">در حال بارگذاری PDF...</p>
+              </div>
+
+              <!-- PDF Error -->
+              <div v-else-if="pdfError" class="pdf-error-container">
+                <div class="modern-alert modern-alert-danger">
+                  <i class="fas fa-exclamation-triangle me-2"></i>
+                  {{ pdfError }}
+                  <button @click="retryPdfLoad" class="modern-btn modern-btn-outline-danger mt-2">
+                    تلاش مجدد
+                  </button>
+                </div>
+              </div>
+
+              <!-- PDF Viewer -->
+              <div v-else>
+                <!-- PDF Toolbar -->
+                <div class="pdf-toolbar d-flex justify-content-between align-items-center flex-wrap gap-3 mb-3">
+                  <div class="pdf-nav-group">
+                    <button @click="previousPage" :disabled="currentPage <= 1" class="modern-btn modern-btn-outline">
+                      <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <span class="px-3 py-2 bg-light rounded">
+                      صفحه {{ currentPage }} از {{ totalPages }}
+                    </span>
+                    <button @click="nextPage" :disabled="currentPage >= totalPages" class="modern-btn modern-btn-outline">
+                      <i class="fas fa-chevron-left"></i>
+                    </button>
+                  </div>
+
+                  <div class="zoom-group">
+                    <button @click="zoomOut" class="modern-btn modern-btn-outline">
+                      <i class="fas fa-search-minus"></i>
+                    </button>
+                    <span class="px-3 py-2 bg-light rounded">
+                      {{ Math.round(pdfScale * 100) }}%
+                    </span>
+                    <button @click="zoomIn" class="modern-btn modern-btn-outline">
+                      <i class="fas fa-search-plus"></i>
+                    </button>
+                  </div>
+
+                  <div class="action-group">
+                    <button @click="fitToWidth" class="modern-btn modern-btn-outline">
+                      <i class="fas fa-arrows-alt-h"></i>
+                      تنظیم عرض
+                    </button>
+                    <button @click="toggleFullscreenPdf" class="modern-btn modern-btn-outline">
+                      <i class="fas fa-expand"></i>
+                      تمام صفحه
                     </button>
                   </div>
                 </div>
 
-                <!-- Video Player -->
-                <div v-else class="video-container">
-                  <video
-                      ref="videoPlayer"
-                      :src="videoUrl"
-                      class="video-player"
-                      controls
-                      controlsList="nodownload"
-                      @loadedmetadata="onVideoLoaded"
-                      @timeupdate="onVideoTimeUpdate"
-                      @ended="onVideoEnded"
-                      @error="onVideoError"
-                  >
-                    مرورگر شما از نمایش ویدیو پشتیبانی نمی‌کند.
-                  </video>
+                <!-- PDF Viewer -->
+                <div
+                    ref="pdfViewerWrapper"
+                    class="pdf-viewer-wrapper"
+                    @keydown="handlePdfKeyboard"
+                    tabindex="0"
+                >
+                  <div class="pdf-canvas-container">
+                    <canvas ref="pdfCanvas" class="pdf-display-canvas"></canvas>
+                  </div>
+                </div>
 
-                  <!-- Video Controls -->
-                  <div class="video-controls mt-3">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                      <div class="time-display">
-                        <span>{{ formatTime(currentVideoTime) }} / {{ formatTime(videoDuration) }}</span>
-                      </div>
-                      <div class="speed-control">
-                        <label class="me-2">سرعت پخش:</label>
-                        <select v-model="playbackSpeed" @change="changePlaybackSpeed" class="form-select speed-select">
-                          <option value="0.5">0.5x</option>
-                          <option value="0.75">0.75x</option>
-                          <option value="1">1x</option>
-                          <option value="1.25">1.25x</option>
-                          <option value="1.5">1.5x</option>
-                          <option value="2">2x</option>
-                        </select>
-                      </div>
-                      <button @click="toggleVideoFullscreen" class="modern-btn modern-btn-outline">
-                        <i class="fas fa-expand"></i>
-                        تمام صفحه
+                <!-- Mobile PDF Navigation -->
+                <div class="pdf-mobile-nav d-md-none">
+                  <div class="modern-card text-center">
+                    <div class="d-flex justify-content-center align-items-center gap-3">
+                      <button @click="previousPage" :disabled="currentPage <= 1" class="modern-btn modern-btn-sm modern-btn-outline">
+                        <i class="fas fa-chevron-right"></i>
+                      </button>
+                      <span class="fw-semibold">{{ currentPage }} / {{ totalPages }}</span>
+                      <button @click="nextPage" :disabled="currentPage >= totalPages" class="modern-btn modern-btn-sm modern-btn-outline">
+                        <i class="fas fa-chevron-left"></i>
                       </button>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <!-- PDF Content -->
-            <div v-else-if="content.type === 'PDF'" class="pdf-content-section">
-              <div class="modern-card">
-
-                <!-- PDF Loading -->
-                <div v-if="pdfLoading" class="pdf-loading-container">
-                  <div class="modern-logo info">
-                    <i class="fas fa-file-pdf"></i>
-                  </div>
-                  <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">بارگذاری PDF...</span>
-                  </div>
-                  <p class="mt-3">در حال بارگذاری فایل PDF...</p>
+          <!-- Unknown Content Type -->
+          <div v-else class="unknown-content-section">
+            <div class="modern-card">
+              <div class="unknown-content-area">
+                <div class="modern-logo warning mb-4">
+                  <i class="fas fa-question-circle"></i>
                 </div>
-
-                <!-- PDF Error -->
-                <div v-else-if="pdfError" class="pdf-error-container">
-                  <div class="modern-alert modern-alert-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    {{ pdfError }}
-                    <button @click="retryPdfLoad" class="modern-btn modern-btn-outline-danger mt-2">
-                      تلاش مجدد
-                    </button>
-                  </div>
-                </div>
-
-                <!-- PDF Viewer -->
-                <div v-else class="pdf-container">
-
-                  <!-- PDF Controls -->
-                  <div class="pdf-toolbar mb-3">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-
-                      <!-- Page Navigation -->
-                      <div class="btn-group pdf-nav-group">
-                        <button
-                            @click="previousPage"
-                            :disabled="currentPage <= 1"
-                            class="modern-btn modern-btn-outline"
-                        >
-                          <i class="fas fa-chevron-right"></i>
-                          قبلی
-                        </button>
-                        <span class="modern-btn modern-btn-outline disabled">
-                          {{ currentPage }} / {{ totalPages }}
-                        </span>
-                        <button
-                            @click="nextPage"
-                            :disabled="currentPage >= totalPages"
-                            class="modern-btn modern-btn-outline"
-                        >
-                          بعدی
-                          <i class="fas fa-chevron-left"></i>
-                        </button>
-                      </div>
-
-                      <!-- Zoom Controls -->
-                      <div class="btn-group zoom-group">
-                        <button @click="zoomOut" class="modern-btn modern-btn-outline">
-                          <i class="fas fa-search-minus"></i>
-                        </button>
-                        <button @click="fitToWidth" class="modern-btn modern-btn-outline">
-                          <i class="fas fa-compress"></i>
-                          متناسب
-                        </button>
-                        <button @click="zoomIn" class="modern-btn modern-btn-outline">
-                          <i class="fas fa-search-plus"></i>
-                        </button>
-                      </div>
-
-                      <!-- Actions -->
-                      <div class="btn-group action-group">
-                        <button @click="toggleFullscreenPdf" class="modern-btn modern-btn-outline">
-                          <i class="fas fa-expand"></i>
-                          تمام صفحه
-                        </button>
-                        <button @click="downloadFile" class="modern-btn modern-btn-primary">
-                          <i class="fas fa-download"></i>
-                          دانلود
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- PDF Canvas -->
-                  <div class="pdf-viewer-wrapper" ref="pdfViewerWrapper">
-                    <div class="pdf-canvas-container">
-                      <canvas
-                          ref="pdfCanvas"
-                          class="pdf-display-canvas"
-                          tabindex="0"
-                          @keydown="handlePdfKeyboard"
-                      ></canvas>
-                    </div>
-                  </div>
-
-                  <!-- Mobile Navigation -->
-                  <div class="pdf-mobile-nav d-md-none mt-3">
-                    <div class="modern-card">
-                      <div class="d-flex justify-content-between align-items-center">
-                        <button
-                            @click="previousPage"
-                            :disabled="currentPage <= 1"
-                            class="modern-btn modern-btn-outline"
-                        >
-                          <i class="fas fa-chevron-right"></i>
-                        </button>
-                        <span class="text-muted">{{ currentPage }} / {{ totalPages }}</span>
-                        <button
-                            @click="nextPage"
-                            :disabled="currentPage >= totalPages"
-                            class="modern-btn modern-btn-outline"
-                        >
-                          <i class="fas fa-chevron-left"></i>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Unknown Content Type -->
-            <div v-else class="unknown-content-section">
-              <div class="modern-card">
-                <div class="unknown-content-area">
-                  <div class="modern-logo secondary">
-                    <i class="fas fa-question-circle"></i>
-                  </div>
-                  <h5 class="mt-3">نوع محتوا پشتیبانی نمی‌شود</h5>
-                  <p class="text-muted">
-                    نوع محتوای "{{ content.type }}" در حال حاضر پشتیبانی نمی‌شود.
-                  </p>
-                  <button v-if="fileId" @click="downloadFile" class="modern-btn modern-btn-primary">
-                    <i class="fas fa-download"></i>
-                    دانلود فایل
-                  </button>
-                </div>
+                <h5>نوع محتوای نامشخص</h5>
+                <p class="text-muted mb-4">نوع این محتوا پشتیبانی نمی‌شود.</p>
+                <button v-if="fileId" @click="downloadFile" class="modern-btn modern-btn-primary">
+                  <i class="fas fa-download"></i>
+                  دانلود فایل
+                </button>
               </div>
             </div>
           </div>
@@ -321,6 +291,8 @@ export default defineComponent({
     const isCompleted = ref(false)
 
     // Video state
+    const videoBlobUrl = ref(null)
+    const videoLoading = ref(false)
     const videoError = ref(false)
     const currentVideoTime = ref(0)
     const videoDuration = ref(0)
@@ -352,11 +324,41 @@ export default defineComponent({
     })
 
     const videoUrl = computed(() => {
-      if (content.value?.type === 'VIDEO' && fileId.value) {
-        return `/api/content/files/${fileId.value}`
+      // اگر blob URL موجود است، از آن استفاده کن
+      if (videoBlobUrl.value) {
+        return videoBlobUrl.value
       }
       return null
     })
+
+    // اضافه کردن متد برای دریافت ویدیو با authentication
+    const fetchVideoBlob = async (fileId) => {
+      try {
+        videoLoading.value = true
+        videoError.value = false
+
+        const token = localStorage.getItem('token')
+        const response = await fetch(`/api/content/files/${fileId}?timeSpent=${timeSpent.value}`, {
+          headers: {
+            'Authorization': `Basic ${token}`
+          }
+        })
+
+        if (!response.ok) {
+          throw new Error(`خطا در دریافت ویدیو: ${response.status}`)
+        }
+
+        const blob = await response.blob()
+        const blobUrl = URL.createObjectURL(blob)
+        videoBlobUrl.value = blobUrl
+
+      } catch (err) {
+        console.error('Error fetching video blob:', err)
+        videoError.value = true
+      } finally {
+        videoLoading.value = false
+      }
+    }
 
     // Methods
     const fetchContentData = async () => {
@@ -385,6 +387,11 @@ export default defineComponent({
 
         // Mark as viewed
         await markContentViewed()
+
+        // اگر محتوا ویدیو است، blob URL را دریافت کن
+        if (content.value?.type === 'VIDEO' && fileId.value) {
+          await fetchVideoBlob(fileId.value)
+        }
 
       } catch (err) {
         console.error('Error fetching content:', err)
@@ -429,7 +436,7 @@ export default defineComponent({
         isCompleted.value = true
 
       } catch (err) {
-        console.error('Error marking content complete:', err)
+        console.error('Error marking content as complete:', err)
       } finally {
         isMarkingComplete.value = false
       }
@@ -437,33 +444,30 @@ export default defineComponent({
 
     // Video Methods
     const onVideoLoaded = () => {
-      videoError.value = false
       if (videoPlayer.value) {
-        videoDuration.value = videoPlayer.value.duration
+        videoDuration.value = videoPlayer.value.duration || 0
       }
     }
 
     const onVideoTimeUpdate = () => {
       if (videoPlayer.value) {
-        currentVideoTime.value = videoPlayer.value.currentTime
+        currentVideoTime.value = videoPlayer.value.currentTime || 0
       }
     }
 
     const onVideoEnded = () => {
-      // Auto mark as complete when video ends
-      if (!isCompleted.value) {
-        markAsComplete()
-      }
+      console.log('Video ended')
     }
 
     const onVideoError = () => {
+      console.error('Video error occurred')
       videoError.value = true
     }
 
-    const retryVideo = () => {
-      videoError.value = false
-      if (videoPlayer.value) {
-        videoPlayer.value.load()
+    const retryVideo = async () => {
+      if (fileId.value) {
+        videoError.value = false
+        await fetchVideoBlob(fileId.value)
       }
     }
 
@@ -477,213 +481,115 @@ export default defineComponent({
       if (videoPlayer.value) {
         if (videoPlayer.value.requestFullscreen) {
           videoPlayer.value.requestFullscreen()
+        } else if (videoPlayer.value.webkitRequestFullscreen) {
+          videoPlayer.value.webkitRequestFullscreen()
+        } else if (videoPlayer.value.mozRequestFullScreen) {
+          videoPlayer.value.mozRequestFullScreen()
         }
       }
     }
 
     // PDF Methods
     const initializePdfViewer = async () => {
-      if (content.value?.type !== 'PDF') return
-
-      pdfLoading.value = true
-      pdfError.value = null
-
-      try {
-        // صبر کن تا مطمئن بشیم DOM آماده است
-        await nextTick()
-
-        await loadPdfWithPdfJs()
-      } catch (err) {
-        console.error('PDF initialization failed:', err)
-        pdfError.value = err.message || 'خطا در بارگذاری PDF'
-        pdfLoading.value = false
+      if (!fileId.value) {
+        pdfError.value = 'فایل PDF یافت نشد'
+        return
       }
-    }
 
-    // PDF loading function with fixed proxy issue
-    const loadPdfWithPdfJs = async () => {
       try {
-        if (!fileId.value) {
-          throw new Error('شناسه فایل PDF موجود نیست')
-        }
+        pdfLoading.value = true
+        pdfError.value = null
 
-        console.log('Step 1: Starting PDF load process')
-
-        // Load PDF.js library
-        if (!window.pdfjsLib) {
-          console.log('Step 2: Loading PDF.js library')
-          await new Promise((resolve, reject) => {
-            const script = document.createElement('script')
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
-            script.onload = () => {
-              console.log('Step 3: PDF.js library loaded successfully')
-              resolve()
-            }
-            script.onerror = (error) => {
-              console.error('Step 3 ERROR: Failed to load PDF.js library', error)
-              reject(error)
-            }
-            document.head.appendChild(script)
-          })
-        }
+        // Import PDF.js
+        const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf')
 
         // Set worker
-        console.log('Step 4: Setting up PDF worker')
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
+        const pdfjsWorker = await import('pdfjs-dist/legacy/build/pdf.worker.entry')
+        pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker.default
 
-        // Fetch PDF
-        console.log('Step 5: Fetching PDF file')
+        // Fetch PDF with authentication
         const token = localStorage.getItem('token')
-        const response = await fetch(`/api/content/files/${fileId.value}`, {
+        const response = await fetch(`/api/content/files/${fileId.value}?timeSpent=${timeSpent.value}`, {
           headers: {
             'Authorization': `Basic ${token}`
           }
         })
 
         if (!response.ok) {
-          throw new Error(`خطا در دریافت فایل: ${response.status}`)
+          throw new Error(`خطا در دریافت PDF: ${response.status}`)
         }
 
-        console.log('Step 6: Converting to arrayBuffer')
-        const arrayBuffer = await response.arrayBuffer()
-        console.log('Step 7: ArrayBuffer size:', arrayBuffer.byteLength)
+        const pdfArrayBuffer = await response.arrayBuffer()
 
-        // Load PDF - تغییر مهم: ذخیره در متغیر معمولی
-        console.log('Step 8: Parsing PDF with PDF.js')
-        const loadingTask = window.pdfjsLib.getDocument(arrayBuffer)
+        // Load PDF document
+        const loadingTask = pdfjsLib.getDocument({
+          data: pdfArrayBuffer,
+          cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/cmaps/',
+          cMapPacked: true,
+        })
 
-        // Add progress tracking
-        loadingTask.onProgress = function(progress) {
-          console.log('PDF Loading progress:', progress.loaded / progress.total * 100 + '%')
-        }
-
-        // تغییر مهم: ذخیره PDF document در متغیر معمولی
         pdfDocInstance = await loadingTask.promise
         isPdfLoaded.value = true
-
-        console.log('Step 9: PDF parsed successfully. Pages:', pdfDocInstance.numPages)
         totalPages.value = pdfDocInstance.numPages
+        currentPage.value = 1
 
-        // اول pdfLoading رو false کن تا UI نمایش داده بشه
-        pdfLoading.value = false
+        console.log('PDF loaded successfully, total pages:', totalPages.value)
 
-        // صبر کن تا DOM آماده بشه
+        // Initial render
         await nextTick()
-
-        // دوباره چک کن که آیا canvas موجود است
-        console.log('Step 10: Checking for canvas availability')
-        await waitForCanvas()
-
-        // حالا رندر کن
-        console.log('Step 11: Rendering first page')
-        await renderPdfPage(1)
-        console.log('Step 12: First page rendered successfully')
-
-        // Auto fit
-        await nextTick()
-        fitToWidth()
+        if (pdfCanvas.value) {
+          await renderPdfPage(1)
+          fitToWidth()
+        }
 
       } catch (err) {
-        console.error('PDF Loading Error at step:', err)
-        pdfLoading.value = false  // اطمینان از false شدن loading در صورت خطا
-        throw new Error(err.message || 'خطا در بارگذاری PDF')
+        console.error('Error loading PDF:', err)
+        pdfError.value = err.message || 'خطا در بارگذاری PDF'
+        isPdfLoaded.value = false
+      } finally {
+        pdfLoading.value = false
       }
     }
 
-    // Watch for canvas to be ready
-    const waitForCanvas = () => {
-      return new Promise((resolve) => {
-        console.log('Waiting for canvas element...')
-
-        if (pdfCanvas.value) {
-          console.log('Canvas already available')
-          resolve(pdfCanvas.value)
-        } else {
-          let checkCount = 0
-          const checkInterval = setInterval(() => {
-            checkCount++
-            console.log(`Canvas check attempt ${checkCount}`)
-
-            if (pdfCanvas.value) {
-              clearInterval(checkInterval)
-              console.log('Canvas found after waiting')
-              resolve(pdfCanvas.value)
-            }
-          }, 50)
-
-          // Timeout after 5 seconds
-          setTimeout(() => {
-            clearInterval(checkInterval)
-            console.error('Canvas wait timeout')
-            resolve(null)
-          }, 5000)
-        }
-      })
-    }
-
-    const renderPdfPage = async (pageNum) => {
-      // تغییر مهم: استفاده از pdfDocInstance بجای pdfDoc.value
-      if (!pdfDocInstance || pageNum < 1 || pageNum > totalPages.value) {
-        console.log('Invalid page render request')
+    const renderPdfPage = async (pageNumber) => {
+      if (!pdfDocInstance || !pdfCanvas.value || pdfRenderTask.value) {
         return
       }
 
       try {
-        console.log('Rendering page:', pageNum)
+        console.log('Rendering page:', pageNumber)
 
-        // Cancel previous render
-        if (pdfRenderTask.value) {
-          try {
-            pdfRenderTask.value.cancel()
-            pdfRenderTask.value = null
-          } catch (e) {
-            // Ignore cancellation errors
-          }
-        }
-
-        // تغییر مهم: استفاده از pdfDocInstance
-        const pagePromise = pdfDocInstance.getPage(pageNum)
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Page loading timeout')), 10000)
-        })
-
-        const page = await Promise.race([pagePromise, timeoutPromise])
-        console.log('Page object retrieved successfully')
-
-        // صبر کن تا canvas آماده بشه
-        const canvas = await waitForCanvas()
-        if (!canvas) {
-          console.error('Canvas element not found after waiting')
-          throw new Error('Canvas element not available')
-        }
-
+        const page = await pdfDocInstance.getPage(pageNumber)
+        const canvas = pdfCanvas.value
         const context = canvas.getContext('2d')
-        const viewport = page.getViewport({ scale: pdfScale.value || 1.0 })
 
+        const viewport = page.getViewport({ scale: pdfScale.value })
+
+        // Set canvas dimensions
         canvas.height = viewport.height
         canvas.width = viewport.width
+        canvas.style.height = viewport.height + 'px'
+        canvas.style.width = viewport.width + 'px'
 
-        // Clear canvas قبل از render جدید
-        context.clearRect(0, 0, canvas.width, canvas.height)
-
+        // Render PDF page
         const renderContext = {
           canvasContext: context,
           viewport: viewport
         }
 
-        console.log('Starting page render...')
         pdfRenderTask.value = page.render(renderContext)
         await pdfRenderTask.value.promise
 
-        currentPage.value = pageNum
-        console.log('Page rendered successfully')
+        pdfRenderTask.value = null
+        currentPage.value = pageNumber
+
+        console.log('Page rendered successfully:', pageNumber)
 
       } catch (err) {
         if (err.name !== 'RenderingCancelledException') {
           console.error('Error rendering PDF page:', err)
-          pdfError.value = 'خطا در نمایش صفحه PDF'
         }
+        pdfRenderTask.value = null
       }
     }
 
@@ -700,74 +606,74 @@ export default defineComponent({
     }
 
     const zoomIn = async () => {
-      if (!isPdfLoaded.value) return
-
       pdfScale.value = Math.min(pdfScale.value + 0.25, 3.0)
       await renderPdfPage(currentPage.value)
     }
 
     const zoomOut = async () => {
-      if (!isPdfLoaded.value) return
-
       pdfScale.value = Math.max(pdfScale.value - 0.25, 0.5)
       await renderPdfPage(currentPage.value)
     }
 
     const fitToWidth = async () => {
-      if (!isPdfLoaded.value || !pdfCanvas.value) return
+      if (!pdfViewerWrapper.value || !pdfDocInstance) {
+        return
+      }
 
       try {
         const page = await pdfDocInstance.getPage(currentPage.value)
         const viewport = page.getViewport({ scale: 1.0 })
-        const containerWidth = pdfCanvas.value.parentElement.clientWidth - 40
+        const containerWidth = pdfViewerWrapper.value.clientWidth - 40 // padding
 
-        pdfScale.value = containerWidth / viewport.width
+        const scale = containerWidth / viewport.width
+        pdfScale.value = Math.max(0.5, Math.min(scale, 3.0))
+
         await renderPdfPage(currentPage.value)
       } catch (err) {
         console.error('Error fitting to width:', err)
       }
     }
 
-    const retryPdfLoad = async () => {
-      pdfError.value = null
-      // پاک کردن instance قبلی
-      if (pdfDocInstance) {
-        try {
-          pdfDocInstance.destroy()
-        } catch (e) {
-          // Ignore destroy errors
-        }
-        pdfDocInstance = null
-        isPdfLoaded.value = false
-      }
-      await initializePdfViewer()
+    const retryPdfLoad = () => {
+      initializePdfViewer()
     }
 
     const handlePdfKeyboard = (event) => {
-      switch (event.key) {
+      switch (event.code) {
         case 'ArrowLeft':
+          event.preventDefault()
           nextPage()
           break
         case 'ArrowRight':
+          event.preventDefault()
           previousPage()
           break
-        case '+':
-        case '=':
-          zoomIn()
+        case 'Equal':
+        case 'NumpadAdd':
+          if (event.ctrlKey) {
+            event.preventDefault()
+            zoomIn()
+          }
           break
-        case '-':
-          zoomOut()
+        case 'Minus':
+        case 'NumpadSubtract':
+          if (event.ctrlKey) {
+            event.preventDefault()
+            zoomOut()
+          }
           break
       }
     }
 
     const toggleFullscreenPdf = () => {
-      if (pdfViewerWrapper.value) {
-        if (document.fullscreenElement) {
-          document.exitFullscreen()
-        } else {
-          pdfViewerWrapper.value.requestFullscreen()
-        }
+      if (!pdfViewerWrapper.value) return
+
+      if (document.fullscreenElement) {
+        document.exitFullscreen()
+      } else {
+        pdfViewerWrapper.value.requestFullscreen().catch(err => {
+          console.error('Error attempting to enable fullscreen:', err)
+        })
       }
     }
 
@@ -777,7 +683,7 @@ export default defineComponent({
 
       try {
         const token = localStorage.getItem('token')
-        const response = await fetch(`/api/content/files/${fileId.value}`, {
+        const response = await fetch(`/api/content/files/${fileId.value}?timeSpent=${timeSpent.value}`, {
           headers: {
             'Authorization': `Basic ${token}`
           }
@@ -791,7 +697,7 @@ export default defineComponent({
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = content.value.title || 'download'
+        a.download = content.value?.file?.originalFilename || 'file'
         document.body.appendChild(a)
         a.click()
         window.URL.revokeObjectURL(url)
@@ -844,6 +750,12 @@ export default defineComponent({
         clearInterval(timeTrackingInterval)
       }
 
+      // Clean up video blob URL
+      if (videoBlobUrl.value) {
+        URL.revokeObjectURL(videoBlobUrl.value)
+        videoBlobUrl.value = null
+      }
+
       // Clean up PDF
       if (pdfDocInstance) {
         try {
@@ -886,10 +798,12 @@ export default defineComponent({
 
       // Video
       videoError,
+      videoLoading,
       currentVideoTime,
       videoDuration,
       playbackSpeed,
       videoPlayer,
+      videoBlobUrl,
       videoUrl,
 
       // PDF
@@ -905,6 +819,7 @@ export default defineComponent({
       fetchContentData,
       markAsComplete,
       goBack,
+      fetchVideoBlob,
 
       // Video Methods
       onVideoLoaded,
@@ -1094,9 +1009,22 @@ export default defineComponent({
   background: #000;
 }
 
+.video-loading-container,
 .video-error-container {
-  padding: 4rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
   text-align: center;
+  padding: 3rem 2rem;
+}
+
+.video-loading-container .spinner-border {
+  width: 3rem;
+  height: 3rem;
+  border-width: 0.3em;
+  margin: 1rem 0;
 }
 
 .video-controls {
@@ -1311,141 +1239,57 @@ export default defineComponent({
   }
 
   .pdf-viewer-wrapper {
-    background: #1a202c;
-  }
-
-  .pdf-display-canvas {
-    border-color: #4a5568;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  }
-
-  .pdf-mobile-nav .modern-card {
-    background: rgba(45, 55, 72, 0.95);
-    color: #e2e8f0;
-  }
-
-  .pdf-loading-container,
-  .pdf-error-container {
-    color: #e2e8f0;
-  }
-
-  .unknown-content-area {
     background: #2d3748;
-    color: #e2e8f0;
-  }
-
-  .unknown-content-area h5 {
-    color: #e2e8f0;
   }
 }
 
-/* Print Styles */
-@media print {
-  .content-header .content-actions,
-  .pdf-toolbar,
-  .pdf-mobile-nav,
-  .video-controls {
-    display: none !important;
+/* Responsive */
+@media (max-width: 768px) {
+  .content-wrapper {
+    padding: 1rem 0;
   }
 
-  .content-viewer {
-    background: white !important;
-    padding: 0;
-  }
-
-  .modern-card {
-    box-shadow: none;
-    border: 1px solid #ccc;
-  }
-
-  .content-text {
-    color: black;
-  }
-
-  .pdf-viewer-wrapper {
-    background: white !important;
-    padding: 0 !important;
-  }
-
-  .pdf-display-canvas {
-    border: none !important;
-    box-shadow: none !important;
-    max-width: 100% !important;
-  }
-}
-
-/* Animations */
-.animate-slide-up {
-  animation: slideInUp 0.6s ease forwards;
-}
-
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* High Contrast */
-@media (prefers-contrast: high) {
   .content-header {
-    border: 2px solid #000;
+    padding: 1rem;
   }
 
   .content-title {
-    color: #000;
-    font-weight: 800;
+    font-size: 1.5rem;
   }
 
-  .content-text {
-    color: #000;
-    font-weight: 500;
+  .content-actions {
+    flex-direction: column;
   }
 
-  .pdf-display-canvas {
-    border: 2px solid #000;
+  .pdf-toolbar {
+    flex-direction: column;
+    gap: 1rem;
   }
 
-  .pdf-nav-group .modern-btn,
-  .zoom-group .modern-btn,
-  .action-group .modern-btn {
-    border-width: 2px;
+  .pdf-toolbar > div {
+    justify-content: center;
+  }
+
+  .video-controls .d-flex {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+  }
+
+  .speed-control {
+    justify-content: center;
   }
 }
 
-/* Touch Gestures */
-@media (pointer: coarse) {
-  .pdf-display-canvas {
-    touch-action: pan-x pan-y pinch-zoom;
-  }
+/* Animation */
+.animate-slide-up {
+  animation: slideUp 0.6s ease-out;
 }
 
-/* Loading Animation */
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-.spinner-border {
-  border: 0.3em solid rgba(102, 126, 234, 0.3);
-  border-top: 0.3em solid #667eea;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-/* PDF Page Transition */
-.pdf-canvas-container {
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
+@keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(30px);
   }
   to {
     opacity: 1;
