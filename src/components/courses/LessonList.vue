@@ -63,7 +63,7 @@
                 <i class="fas fa-clipboard-check me-1"></i>
                 آزمون
               </span>
-              <span v-if="lesson.hasExercise || (lesson.exercises && lesson.exercises.length > 0)"
+              <span v-if="lesson.hasExercise || (lesson.exercises && lesson.exercises.length > 0) || lessonExercises[lesson.id]"
                     class="modern-badge modern-badge-warning me-1">
                 <i class="fas fa-dumbbell me-1"></i>
                 تمرین
@@ -188,6 +188,7 @@
           <!-- Lesson Exercises -->
           <div v-if="lesson.hasExercise || (lesson.exercises && lesson.exercises.length > 0)" class="lesson-section">
             <h6 class="section-title">
+              <i class="fas fa-dumbbell text-warning me-2"></i>
               <i class="fas fa-dumbbell text-warning me-2"></i>
               تمرین‌های درس
             </h6>
@@ -319,7 +320,8 @@ export default {
       selectedContent: null,
       contentModal: null,
       showContentModal: false,
-      lessonExams: {}
+      lessonExams: {},
+      lessonExercises: {}
     };
   },
   watch: {
@@ -329,6 +331,7 @@ export default {
         if (newLessons.length > 0) {
           this.fetchAllLessonsContent();
           this.fetchLessonExams();
+          this.fetchLessonExercises();
         }
 
         // Still fetch detailed content when expanded
@@ -343,7 +346,8 @@ export default {
     },
   },
   mounted() {
-    this.fetchAllLessonsContent();
+    this.fetchAllLessonsContent()
+    this.fetchLessonExercises();
   },
   // beforeUnmount() {
   //   // Cleanup when component is destroyed
@@ -378,6 +382,31 @@ export default {
       });
 
       await Promise.all(examPromises);
+    },
+    async fetchLessonExercises() {
+      const exercisePromises = this.lessons.map(async (lesson) => {
+        try {
+          const response = await axios.get(`/exercises/lesson/${lesson.id}`);
+          if (response.data) {
+            this.lessonExercises[lesson.id] = response.data;
+            // Update the lesson object to ensure hasExercise is set correctly
+            lesson.hasExercise = true;
+            if (!lesson.exercises) {
+              lesson.exercises = [];
+            }
+            if (!lesson.exercises.find(ex => ex.id === response.data.id)) {
+              lesson.exercises.push(response.data);
+            }
+          }
+        } catch (error) {
+          // No exercise found for this lesson - this is normal
+          console.log(`No exercise found for lesson ${lesson.id}`);
+          this.lessonExercises[lesson.id] = null;
+          lesson.hasExercise = false;
+        }
+      });
+
+      await Promise.all(exercisePromises);
     },
     async startExam(lesson) {
       try {
