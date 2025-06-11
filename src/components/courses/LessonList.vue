@@ -154,11 +154,11 @@
                 <div class="assessment-meta">
                   <span class="meta-badge bg-white">
                     <i class="fas fa-clock me-1"></i>
-                    ۳۰ دقیقه
+                 {{ lessonExams[lesson.id]?.duration || 'نامشخص' }} دقیقه
                   </span>
                   <span class="meta-badge bg-white">
                     <i class="fas fa-question-circle me-1"></i>
-                    ۱۰ سوال
+                   {{ lessonExams[lesson.id]?.questionCount || 0 }} سوال
                   </span>
                 </div>
               </div>

@@ -40,15 +40,15 @@
                   placeholder="عنوان آزمون..."
               >
             </div>
-            <div class="col-md-3 modern-form-group">
-              <label class="modern-form-label">وضعیت</label>
-              <select class="modern-form-control" v-model="statusFilter">
-                <option value="all">همه وضعیت‌ها</option>
-                <option value="active">فعال</option>
-                <option value="upcoming">در آینده</option>
-                <option value="completed">پایان یافته</option>
-              </select>
-            </div>
+<!--            <div class="col-md-3 modern-form-group">-->
+<!--              <label class="modern-form-label">وضعیت</label>-->
+<!--              <select class="modern-form-control" v-model="statusFilter">-->
+<!--                <option value="all">همه وضعیت‌ها</option>-->
+<!--                <option value="active">فعال</option>-->
+<!--                <option value="upcoming">در آینده</option>-->
+<!--                <option value="completed">پایان یافته</option>-->
+<!--              </select>-->
+<!--            </div>-->
             <div class="col-md-3 modern-form-group">
               <label class="modern-form-label">مرتب‌سازی</label>
               <select class="modern-form-control" v-model="sortBy">

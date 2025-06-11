@@ -12,79 +12,79 @@
         </div>
 
         <div class="d-flex flex-wrap gap-2">
-          <div class="search-container">
-            <input
-                type="text"
-                class="modern-form-control"
-                placeholder="جستجو در دانش‌آموزان..."
-                v-model="searchQuery"
-                @input="filterStudents"
-                style="min-width: 250px;">
-            <i class="fas fa-search search-icon"></i>
-          </div>
+<!--          <div class="search-container">-->
+<!--            <input-->
+<!--                type="text"-->
+<!--                class="modern-form-control"-->
+<!--                placeholder="جستجو در دانش‌آموزان..."-->
+<!--                v-model="searchQuery"-->
+<!--                @input="filterStudents"-->
+<!--                style="min-width: 250px;">-->
+<!--            <i class="fas fa-search search-icon"></i>-->
+<!--          </div>-->
 
-          <div class="dropdown">
-            <button class="modern-btn modern-btn-outline text-gray dropdown-toggle" type="button" data-bs-toggle="dropdown">
-              <i class="fas fa-filter me-1"></i> فیلتر دوره
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-              <li><a class="dropdown-item" href="#" @click.prevent="filterByCourse('')">همه دوره‌ها</a></li>
-              <li v-for="course in courses" :key="course.id">
-                <a class="dropdown-item" href="#" @click.prevent="filterByCourse(course.id)">
-                  {{ course.title }}
-                </a>
-              </li>
-            </ul>
-          </div>
+<!--          <div class="dropdown">-->
+<!--            <button class="modern-btn modern-btn-outline text-gray dropdown-toggle" type="button" data-bs-toggle="dropdown">-->
+<!--              <i class="fas fa-filter me-1"></i> فیلتر دوره-->
+<!--            </button>-->
+<!--            <ul class="dropdown-menu dropdown-menu-end">-->
+<!--              <li><a class="dropdown-item" href="#" @click.prevent="filterByCourse('')">همه دوره‌ها</a></li>-->
+<!--              <li v-for="course in courses" :key="course.id">-->
+<!--                <a class="dropdown-item" href="#" @click.prevent="filterByCourse(course.id)">-->
+<!--                  {{ course.title }}-->
+<!--                </a>-->
+<!--              </li>-->
+<!--            </ul>-->
+<!--          </div>-->
 
-          <button class="modern-btn modern-btn-secondary" @click="exportStudents">
-            <i class="fas fa-download me-1"></i> خروجی Excel
-          </button>
+<!--          <button class="modern-btn modern-btn-secondary" @click="exportStudents">-->
+<!--            <i class="fas fa-download me-1"></i> خروجی Excel-->
+<!--          </button>-->
         </div>
       </div>
 
       <!-- Stats Cards -->
-      <div class="row mb-4">
-        <div class="col-lg-3 col-md-6 mb-3">
-          <div class="modern-stat-card animate-slide-up">
-            <div class="modern-stat-icon text-primary">
-              <i class="fas fa-users"></i>
-            </div>
-            <div class="modern-stat-value">{{ stats.totalStudents }}</div>
-            <div class="modern-stat-label">کل دانش‌آموزان</div>
-          </div>
-        </div>
+<!--      <div class="row mb-4">-->
+<!--        <div class="col-lg-3 col-md-6 mb-3">-->
+<!--          <div class="modern-stat-card animate-slide-up">-->
+<!--            <div class="modern-stat-icon text-primary">-->
+<!--              <i class="fas fa-users"></i>-->
+<!--            </div>-->
+<!--            <div class="modern-stat-value">{{ stats.totalStudents }}</div>-->
+<!--            <div class="modern-stat-label">کل دانش‌آموزان</div>-->
+<!--          </div>-->
+<!--        </div>-->
 
-        <div class="col-lg-3 col-md-6 mb-3">
-          <div class="modern-stat-card animate-slide-up" style="animation-delay: 0.1s;">
-            <div class="modern-stat-icon text-success">
-              <i class="fas fa-user-check"></i>
-            </div>
-            <div class="modern-stat-value">{{ stats.activeStudents }}</div>
-            <div class="modern-stat-label">دانش‌آموزان فعال</div>
-          </div>
-        </div>
+<!--        <div class="col-lg-3 col-md-6 mb-3">-->
+<!--          <div class="modern-stat-card animate-slide-up" style="animation-delay: 0.1s;">-->
+<!--            <div class="modern-stat-icon text-success">-->
+<!--              <i class="fas fa-user-check"></i>-->
+<!--            </div>-->
+<!--            <div class="modern-stat-value">{{ stats.activeStudents }}</div>-->
+<!--            <div class="modern-stat-label">دانش‌آموزان فعال</div>-->
+<!--          </div>-->
+<!--        </div>-->
 
-        <div class="col-lg-3 col-md-6 mb-3">
-          <div class="modern-stat-card animate-slide-up" style="animation-delay: 0.2s;">
-            <div class="modern-stat-icon text-warning">
-              <i class="fas fa-graduation-cap"></i>
-            </div>
-            <div class="modern-stat-value">{{ stats.averageProgress }}%</div>
-            <div class="modern-stat-label">میانگین پیشرفت</div>
-          </div>
-        </div>
+<!--        <div class="col-lg-3 col-md-6 mb-3">-->
+<!--          <div class="modern-stat-card animate-slide-up" style="animation-delay: 0.2s;">-->
+<!--            <div class="modern-stat-icon text-warning">-->
+<!--              <i class="fas fa-graduation-cap"></i>-->
+<!--            </div>-->
+<!--            <div class="modern-stat-value">{{ stats.averageProgress }}%</div>-->
+<!--            <div class="modern-stat-label">میانگین پیشرفت</div>-->
+<!--          </div>-->
+<!--        </div>-->
 
-        <div class="col-lg-3 col-md-6 mb-3">
-          <div class="modern-stat-card animate-slide-up" style="animation-delay: 0.3s;">
-            <div class="modern-stat-icon text-info">
-              <i class="fas fa-book"></i>
-            </div>
-            <div class="modern-stat-value">{{ courses.length }}</div>
-            <div class="modern-stat-label">دوره‌های فعال</div>
-          </div>
-        </div>
-      </div>
+<!--        <div class="col-lg-3 col-md-6 mb-3">-->
+<!--          <div class="modern-stat-card animate-slide-up" style="animation-delay: 0.3s;">-->
+<!--            <div class="modern-stat-icon text-info">-->
+<!--              <i class="fas fa-book"></i>-->
+<!--            </div>-->
+<!--            <div class="modern-stat-value">{{ courses.length }}</div>-->
+<!--            <div class="modern-stat-label">دوره‌های فعال</div>-->
+<!--          </div>-->
+<!--        </div>-->
+<!--      </div>-->
 
       <loading-spinner :loading="loading">
         <!-- Students Table -->

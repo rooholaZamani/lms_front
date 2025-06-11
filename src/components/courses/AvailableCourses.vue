@@ -31,15 +31,15 @@
           </div>
 
           <div class="col-md-3">
-            <div class="modern-form-group">
-              <label class="modern-form-label">دسته‌بندی</label>
-              <select v-model="categoryFilter" class="modern-form-control" @change="filterCourses">
-                <option value="">همه دسته‌بندی‌ها</option>
-                <option v-for="category in categories" :key="category.id" :value="category.id">
-                  {{ category.name }}
-                </option>
-              </select>
-            </div>
+<!--            <div class="modern-form-group">-->
+<!--              <label class="modern-form-label">دسته‌بندی</label>-->
+<!--              <select v-model="categoryFilter" class="modern-form-control" @change="filterCourses">-->
+<!--                <option value="">همه دسته‌بندی‌ها</option>-->
+<!--                <option v-for="category in categories" :key="category.id" :value="category.id">-->
+<!--                  {{ category.name }}-->
+<!--                </option>-->
+<!--              </select>-->
+<!--            </div>-->
           </div>
 
           <div class="col-md-3">
@@ -47,7 +47,6 @@
               <label class="modern-form-label">مرتب‌سازی</label>
               <select v-model="sortBy" class="modern-form-control" @change="sortCourses">
                 <option value="title">نام (الفبا)</option>
-                <option value="popularity">محبوبیت</option>
                 <option value="newest">جدیدترین</option>
                 <option value="students">تعداد دانش‌آموزان</option>
               </select>
@@ -65,18 +64,18 @@
         </div>
 
         <div class="d-flex align-items-center mt-3">
-          <div class="form-check form-switch">
-            <input
-                class="form-check-input"
-                type="checkbox"
-                id="showOnlyPopular"
-                v-model="showOnlyPopular"
-                @change="filterCourses"
-            >
-            <label class="form-check-label" for="showOnlyPopular">
-              فقط دوره‌های محبوب
-            </label>
-          </div>
+<!--          <div class="form-check form-switch">-->
+<!--            <input-->
+<!--                class="form-check-input"-->
+<!--                type="checkbox"-->
+<!--                id="showOnlyPopular"-->
+<!--                v-model="showOnlyPopular"-->
+<!--                @change="filterCourses"-->
+<!--            >-->
+<!--&lt;!&ndash;            <label class="form-check-label" for="showOnlyPopular">&ndash;&gt;-->
+<!--&lt;!&ndash;              فقط دوره‌های محبوب&ndash;&gt;-->
+<!--&lt;!&ndash;            </label>&ndash;&gt;-->
+<!--          </div>-->
 
           <div class="view-mode-toggle ms-auto">
             <button
@@ -104,22 +103,19 @@
             <div class="course-card">
               <div class="course-card-header">
                 <div class="course-image">
-                  <img :src="getCourseImage(course)" :alt="course.title">
-                  <div class="course-popularity" v-if="isPopularCourse(course)">
-                    <i class="fas fa-fire"></i> محبوب
-                  </div>
+<!--                  <img :src="getCourseImage(course)" :alt="course.title">-->
+<!--                  <div class="course-popularity" v-if="isPopularCourse(course)">-->
+<!--                    <i class="fas fa-fire"></i> محبوب-->
+<!--                  </div>-->
                 </div>
-                <div class="course-actions">
-                  <button class="btn-action" @click="toggleFavorite(course)" title="افزودن به علاقه‌مندی‌ها">
-                    <i class="fas" :class="course.isFavorite ? 'fa-heart text-danger' : 'fa-heart-o'"></i>
-                  </button>
-                </div>
+<!--                <div class="course-actions">-->
+<!--                  <button class="btn-action" @click="toggleFavorite(course)" title="افزودن به علاقه‌مندی‌ها">-->
+<!--                    <i class="fas" :class="course.isFavorite ? 'fa-heart text-danger' : 'fa-heart-o'"></i>-->
+<!--                  </button>-->
+<!--                </div>-->
               </div>
 
               <div class="course-card-body">
-                <div class="course-category" v-if="course.categoryId">
-                  {{ getCategoryName(course.categoryId) }}
-                </div>
                 <h5 class="course-title">{{ course.title }}</h5>
                 <p class="course-description">{{ truncateText(course.description, 100) }}</p>
 
@@ -136,17 +132,17 @@
               </div>
 
               <div class="course-card-footer">
-                <div class="d-flex align-items-center mb-2">
-                  <div class="course-rating me-2">
-                    <i v-for="i in 5" :key="i" class="fas fa-star"
-                       :class="i <= (course.rating || 0) ? 'text-warning' : 'text-muted'"></i>
-                  </div>
-                  <div class="rating-count text-muted">({{ course.ratingCount || 0 }})</div>
-                </div>
+<!--                <div class="d-flex align-items-center mb-2">-->
+<!--                  <div class="course-rating me-2">-->
+<!--                    <i v-for="i in 5" :key="i" class="fas fa-star"-->
+<!--                       :class="i <= (course.rating || 0) ? 'text-warning' : 'text-muted'"></i>-->
+<!--                  </div>-->
+<!--                  <div class="rating-count text-muted">({{ course.ratingCount || 0 }})</div>-->
+<!--                </div>-->
 
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-center text-white">
                   <div class="course-students">
-                    <i class="fas fa-users me-1"></i>
+                    <i class="fas fa-users me-1 "></i>
                     {{ course.enrolledStudents ? course.enrolledStudents.length : 0 }} دانش‌آموز
                   </div>
 
@@ -163,26 +159,23 @@
         <!-- List View Mode -->
         <div v-else class="courses-list animate-fade-in" style="animation-delay: 0.2s;">
           <div v-for="course in paginatedCourses" :key="course.id" class="course-list-item">
-            <div class="course-list-image">
-              <img :src="getCourseImage(course)" :alt="course.title">
-              <div class="course-popularity" v-if="isPopularCourse(course)">
-                <i class="fas fa-fire"></i> محبوب
-              </div>
-            </div>
+<!--            <div class="course-list-image">-->
+<!--              <img :src="getCourseImage(course)" :alt="course.title">-->
+<!--              <div class="course-popularity" v-if="isPopularCourse(course)">-->
+<!--                <i class="fas fa-fire"></i> محبوب-->
+<!--              </div>-->
+<!--            </div>-->
 
             <div class="course-list-content">
               <div class="course-list-header">
                 <div>
-                  <div class="course-category" v-if="course.categoryId">
-                    {{ getCategoryName(course.categoryId) }}
-                  </div>
                   <h5 class="course-title">{{ course.title }}</h5>
                 </div>
-                <div class="course-actions">
-                  <button class="btn-action" @click="toggleFavorite(course)" title="افزودن به علاقه‌مندی‌ها">
-                    <i class="fas" :class="course.isFavorite ? 'fa-heart text-danger' : 'fa-heart-o'"></i>
-                  </button>
-                </div>
+<!--                <div class="course-actions">-->
+<!--                  <button class="btn-action" @click="toggleFavorite(course)" title="افزودن به علاقه‌مندی‌ها">-->
+<!--                    <i class="fas" :class="course.isFavorite ? 'fa-heart text-danger' : 'fa-heart-o'"></i>-->
+<!--                  </button>-->
+<!--                </div>-->
               </div>
 
               <p class="course-description">{{ truncateText(course.description, 200) }}</p>
@@ -201,11 +194,11 @@
                     <i class="fas fa-users me-1"></i>
                     {{ course.enrolledStudents ? course.enrolledStudents.length : 0 }} دانش‌آموز
                   </div>
-                  <div class="course-rating">
-                    <i v-for="i in 5" :key="i" class="fas fa-star"
-                       :class="i <= (course.rating || 0) ? 'text-warning' : 'text-muted'"></i>
-                    <span class="rating-count text-muted">({{ course.ratingCount || 0 }})</span>
-                  </div>
+<!--                  <div class="course-rating">-->
+<!--                    <i v-for="i in 5" :key="i" class="fas fa-star"-->
+<!--                       :class="i <= (course.rating || 0) ? 'text-warning' : 'text-muted'"></i>-->
+<!--                    <span class="rating-count text-muted">({{ course.ratingCount || 0 }})</span>-->
+<!--                  </div>-->
                 </div>
 
                 <div class="course-actions">
@@ -304,15 +297,6 @@ export default {
       currentPage: 1,
       coursesPerPage: 12,
 
-      categories: [
-        { id: 1, name: 'برنامه‌نویسی' },
-        { id: 2, name: 'طراحی وب' },
-        { id: 3, name: 'ریاضیات' },
-        { id: 4, name: 'فیزیک' },
-        { id: 5, name: 'زبان انگلیسی' },
-        { id: 6, name: 'هوش مصنوعی' }
-      ],
-
       coursesData: []
     };
   },
@@ -401,17 +385,13 @@ export default {
     },
 
     getCourseImage(course) {
-      return `https://picsum.photos/400/200?random=${course.id}`;
+      // return `https://picsum.photos/400/200?random=${course.id}`;
+      return ``;
     },
 
     getTeacherName(teacher) {
       if (!teacher) return 'نامشخص';
       return this.getUserFullName(teacher);
-    },
-
-    getCategoryName(categoryId) {
-      const category = this.categories.find(c => c.id === categoryId);
-      return category ? category.name : 'عمومی';
     },
 
     isPopularCourse(course) {
@@ -439,9 +419,6 @@ export default {
       switch (this.sortBy) {
         case 'title':
           this.coursesData.sort((a, b) => a.title.localeCompare(b.title));
-          break;
-        case 'popularity':
-          this.coursesData.sort((a, b) => (b.rating || 0) - (a.rating || 0));
           break;
         case 'newest':
           this.coursesData.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));

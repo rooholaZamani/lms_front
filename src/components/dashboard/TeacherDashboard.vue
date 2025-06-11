@@ -127,33 +127,33 @@
     </div>
 
     <!-- فعالیت‌های اخیر -->
-    <div class="modern-card">
-      <div class="modern-card-header">
-        <h5 class="mb-0">
-          <i class="fas fa-history text-info me-2"></i>
-          فعالیت‌های اخیر دانش‌آموزان
-        </h5>
-      </div>
-      <div class="modern-card-body">
-        <loading-spinner :loading="loadingStudentActivities">
-          <template v-if="studentActivities.length === 0">
-            <div class="text-center py-4">
-              <div class="modern-logo large secondary mb-3">
-                <i class="fas fa-user-graduate"></i>
-              </div>
-              <h6 class="text-muted">فعالیت اخیری وجود ندارد</h6>
-            </div>
-          </template>
+<!--    <div class="modern-card">-->
+<!--      <div class="modern-card-header">-->
+<!--        <h5 class="mb-0">-->
+<!--          <i class="fas fa-history text-info me-2"></i>-->
+<!--          فعالیت‌های اخیر دانش‌آموزان-->
+<!--        </h5>-->
+<!--      </div>-->
+<!--      <div class="modern-card-body">-->
+<!--        <loading-spinner :loading="loadingStudentActivities">-->
+<!--          <template v-if="studentActivities.length === 0">-->
+<!--            <div class="text-center py-4">-->
+<!--              <div class="modern-logo large secondary mb-3">-->
+<!--                <i class="fas fa-user-graduate"></i>-->
+<!--              </div>-->
+<!--              <h6 class="text-muted">فعالیت اخیری وجود ندارد</h6>-->
+<!--            </div>-->
+<!--          </template>-->
 
-          <template v-else>
-            <student-activity-table
-                :students="studentActivities"
-                @view-progress="viewStudentProgress"
-                @send-message="sendMessageToStudent" />
-          </template>
-        </loading-spinner>
-      </div>
-    </div>
+<!--          <template v-else>-->
+<!--            <student-activity-table-->
+<!--                :students="studentActivities"-->
+<!--                @view-progress="viewStudentProgress"-->
+<!--                @send-message="sendMessageToStudent" />-->
+<!--          </template>-->
+<!--        </loading-spinner>-->
+<!--      </div>-->
+<!--    </div>-->
   </div>
 
   <!-- مودال ایجاد دوره جدید -->

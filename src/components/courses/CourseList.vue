@@ -60,23 +60,23 @@
                     </div>
                   </div>
                 </div>
-                <div class="course-actions">
-                  <button class="btn-action" @click="toggleFavorite(course)" title="افزودن به علاقه‌مندی‌ها">
-                    <i class="fas" :class="course.isFavorite ? 'fa-heart text-danger' : 'fa-heart'"></i>
-                  </button>
-                </div>
+<!--                <div class="course-actions">-->
+<!--                  <button class="btn-action" @click="toggleFavorite(course)" title="افزودن به علاقه‌مندی‌ها">-->
+<!--                    <i class="fas" :class="course.isFavorite ? 'fa-heart text-danger' : 'fa-heart'"></i>-->
+<!--                  </button>-->
+<!--                </div>-->
               </div>
 
               <div class="course-card-body">
                 <h5 class="course-title">{{ course.title }}</h5>
-                <p class="course-description">{{ truncateText(course.description, 100) }}</p>
+                <p class="course-description text-warning">{{ truncateText(course.description, 100) }}</p>
 
-                <div class="course-meta">
+                <div class="course-meta text-white">
                   <div class="course-teacher">
                     <i class="fas fa-chalkboard-teacher me-1"></i>
                     {{ getTeacherName(course.teacher) }}
                   </div>
-                  <div class="course-lessons">
+                  <div class="course-lessons ">
                     <i class="fas fa-book-open me-1"></i>
                     {{ course.lessons ? course.lessons.length : 0 }} درس
                   </div>
@@ -89,7 +89,7 @@
                   مشاهده دوره
                 </router-link>
 
-                <div class="course-students mt-2 text-center">
+                <div class="course-students mt-2 text-center text-info">
                   <i class="fas fa-users me-1"></i>
                   {{ course.enrolledStudents ? course.enrolledStudents.length : 0 }} دانش‌آموز
                 </div>

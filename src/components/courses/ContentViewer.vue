@@ -16,7 +16,7 @@
         <div class="modern-logo error mb-4">
           <i class="fas fa-exclamation-triangle"></i>
         </div>
-        <h4 class="text-danger mb-3">خطا در بارگذاری محتوا</h4>
+        <h4 class="text-danger mb-3">آیا در دوره ثبت نام کردید؟</h4>
         <p class="text-muted mb-4">{{ error }}</p>
         <button @click="fetchContentData" class="modern-btn modern-btn-primary">
           <i class="fas fa-redo me-2"></i>

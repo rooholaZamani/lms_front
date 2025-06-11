@@ -94,9 +94,9 @@
                   <i class="fas fa-tasks"></i>
                 </div>
                 <span v-if="!collapsed" class="nav-text">تکالیف در حال بررسی</span>
-                <div v-if="!collapsed" class="nav-badge modern-badge modern-badge-warning">
-                  <span>3</span>
-                </div>
+<!--                <div v-if="!collapsed" class="nav-badge modern-badge modern-badge-warning">-->
+<!--                  <span>3</span>-->
+<!--                </div>-->
               </router-link>
             </li>
 
@@ -357,22 +357,22 @@
             </router-link>
           </li>
 
-          <li v-if="isTeacher" class="nav-item">
-            <router-link
-                class="modern-nav-link"
-                :to="{ name: 'Reports' }"
-                active-class="active"
-                :title="collapsed ? 'گزارش‌ها' : ''"
-            >
-              <div class="nav-icon">
-                <i class="fas fa-chart-bar"></i>
-              </div>
-              <span v-if="!collapsed" class="nav-text">گزارش‌ها</span>
-              <div v-if="!collapsed" class="nav-arrow">
-                <i class="fas fa-chevron-left"></i>
-              </div>
-            </router-link>
-          </li>
+<!--          <li v-if="isTeacher" class="nav-item">-->
+<!--            <router-link-->
+<!--                class="modern-nav-link"-->
+<!--                :to="{ name: 'Reports' }"-->
+<!--                active-class="active"-->
+<!--                :title="collapsed ? 'گزارش‌ها' : ''"-->
+<!--            >-->
+<!--              <div class="nav-icon">-->
+<!--                <i class="fas fa-chart-bar"></i>-->
+<!--              </div>-->
+<!--              <span v-if="!collapsed" class="nav-text">گزارش‌ها</span>-->
+<!--              <div v-if="!collapsed" class="nav-arrow">-->
+<!--                <i class="fas fa-chevron-left"></i>-->
+<!--              </div>-->
+<!--            </router-link>-->
+<!--          </li>-->
         </ul>
       </nav>
     </div>

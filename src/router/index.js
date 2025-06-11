@@ -31,16 +31,16 @@ const routes = [
       showSidebar: true
     }
   },
-  {
-    path: '/reports',
-    name: 'Reports',
-    component: () => import(/* webpackChunkName: "reports" */ '../components/views/Reports.vue'),
-    meta: {
-      title: 'گزارش‌ها',
-      requiresAuth: true,
-      showSidebar: true
-    }
-  },
+  // {
+  //   path: '/reports',
+  //   name: 'Reports',
+  //   component: () => import(/* webpackChunkName: "reports" */ '../components/views/Reports.vue'),
+  //   meta: {
+  //     title: 'گزارش‌ها',
+  //     requiresAuth: true,
+  //     showSidebar: true
+  //   }
+  // },
   {
     path: '/login',
     name: 'Login',
