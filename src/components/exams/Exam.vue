@@ -299,12 +299,17 @@ export default {
         this.stopTimer();
 
         const submissionData = {
-          examId: this.id,
-          answers: this.answers.map((answer, index) => ({
-            questionId: this.exam.questions[index].id,
-            answer: answer
-          }))
+          answers: {},  // Change to object/map format
+          timeSpent: Math.floor(((this.exam.duration || 60) * 60 - this.remainingTime) / 60) // Add time spent in minutes
         };
+
+// Convert array answers to map format
+        this.answers.forEach((answer, index) => {
+          if (answer !== null && answer !== undefined) {
+            const questionId = this.exam.questions[index].id.toString();
+            submissionData.answers[questionId] = answer;
+          }
+        });
 
         const response = await axios.post(`/exams/${this.id}/submit`, submissionData);
         this.examResult = response.data;

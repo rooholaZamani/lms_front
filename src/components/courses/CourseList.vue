@@ -174,17 +174,26 @@
 </template>
 
 <script>
+import { mapActions, mapGetters } from 'vuex'
+
 export default {
   name: 'CourseList',
   data() {
     return {
       courses: [],
-      progressData: [],
-      loading: false,
-      error: null,
       refreshing: null,
       showDetailModal: false,
       selectedCourse: null
+    }
+  },
+
+  computed: {
+    ...mapGetters('progress', ['isLoading', 'getError']),
+    loading() {
+      return this.isLoading
+    },
+    error() {
+      return this.getError
     }
   },
 
@@ -193,87 +202,38 @@ export default {
   },
 
   methods: {
+    ...mapActions('progress', [
+      'fetchCoursesWithProgress',
+      'refreshCourseProgress'
+    ]),
+    ...mapActions('courses', [
+      'fetchCourseById'
+    ]),
+
     async fetchCoursesWithProgress() {
       try {
-        this.loading = true;
-        this.error = null;
-
-        // Fetch enrolled courses and progress data simultaneously
-        const [coursesResponse, progressResponse] = await Promise.all([
-          fetch('/api/courses/enrolled', {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }),
-          fetch('/api/progress', {
-            method: 'GET',
-            credentials: 'include',
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          })
-        ]);
-
-        if (!coursesResponse.ok) {
-          throw new Error(`خطا در دریافت دوره‌ها: ${coursesResponse.status}`);
-        }
-
-        if (!progressResponse.ok) {
-          throw new Error(`خطا در دریافت اطلاعات پیشرفت: ${progressResponse.status}`);
-        }
-
-        const courses = await coursesResponse.json();
-        const progressData = await progressResponse.json();
-
-        // Merge courses with their progress data
-        this.courses = courses.map(course => {
-          const progress = progressData.find(p => p.courseId === course.id);
-          return {
-            ...course,
-            completionPercentage: progress ? progress.completionPercentage : 0,
-            completedLessons: progress ? progress.completedLessonCount : 0,
-            totalLessons: progress ? progress.totalLessons : 0,
-            lastAccessed: progress ? progress.lastAccessed : null,
-            viewedContent: progress ? progress.viewedContent : [],
-            completedContent: progress ? progress.completedContent : []
-          };
-        });
-
+        this.courses = await this.$store.dispatch('progress/fetchCoursesWithProgress');
       } catch (error) {
-        console.error('Error fetching courses:', error);
-        this.error = error.message || 'خطا در بارگذاری اطلاعات دوره‌ها';
-      } finally {
-        this.loading = false;
+        console.error('Error fetching courses with progress:', error);
+        // Error is handled by the store
       }
     },
 
     async refreshCourseProgress(courseId) {
       try {
         this.refreshing = courseId;
+        const progressData = await this.$store.dispatch('progress/refreshCourseProgress', courseId);
 
-        const response = await fetch(`/api/progress/${courseId}`, {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (response.ok) {
-          const progressData = await response.json();
-          const courseIndex = this.courses.findIndex(c => c.id === courseId);
-
-          if (courseIndex !== -1) {
-            this.courses[courseIndex] = {
-              ...this.courses[courseIndex],
-              completionPercentage: progressData.completionPercentage,
-              completedLessons: progressData.completedLessonCount,
-              totalLessons: progressData.totalLessons,
-              lastAccessed: progressData.lastAccessed
-            };
-          }
+        // Update local courses data
+        const courseIndex = this.courses.findIndex(c => c.id === courseId);
+        if (courseIndex !== -1) {
+          this.courses[courseIndex] = {
+            ...this.courses[courseIndex],
+            completionPercentage: progressData.completionPercentage,
+            completedLessons: progressData.completedLessonCount,
+            totalLessons: progressData.totalLessons,
+            lastAccessed: progressData.lastAccessed
+          };
         }
       } catch (error) {
         console.error('Error refreshing progress:', error);
@@ -357,19 +317,9 @@ export default {
 
     async viewCourseDetails(courseId) {
       try {
-        const response = await fetch(`/api/courses/${courseId}`, {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          this.selectedCourse = data.course;
-          this.showDetailModal = true;
-        }
+        const data = await this.fetchCourseById(courseId);
+        this.selectedCourse = data.course;
+        this.showDetailModal = true;
       } catch (error) {
         console.error('Error fetching course details:', error);
       }

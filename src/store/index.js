@@ -2,11 +2,13 @@
 import { createStore } from 'vuex'
 import auth from './auth'
 import courses from './courses'
+import progress from './progress'
 
 export default createStore({
     modules: {
         auth,
-        courses
+        courses,
+        progress
     },
     // اضافه کردن getters عمومی برای دسترسی آسان‌تر به auth
     getters: {

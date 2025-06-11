@@ -107,10 +107,10 @@
                     <i class="fas fa-question-circle me-2"></i>
                     سوال {{ index + 1 }}: {{ question.text }}
                   </h6>
-                  <span :class="examResult.answers[index].isCorrect ? 'modern-badge modern-badge-success' : 'modern-badge modern-badge-danger'">
-                    <i :class="examResult.answers[index].isCorrect ? 'fas fa-check' : 'fas fa-times'" class="me-1"></i>
-                    {{ examResult.answers[index].isCorrect ? 'درست' : 'نادرست' }}
-                  </span>
+                  <span :class="examResult.answers[index]?.isCorrect ? 'modern-badge modern-badge-success' : 'modern-badge modern-badge-danger'">
+                    <i :class="examResult.answers[index]?.isCorrect ? 'fas fa-check' : 'fas fa-times'" class="me-1"></i>
+                    {{ examResult.answers[index]?.isCorrect ? 'درست' : 'نادرست' }}
+                </span>
                 </div>
 
                 <div class="question-content">
@@ -157,8 +157,8 @@
                     <div class="answer-item">
                       <div class="answer-label">توضیحات استاد:</div>
                       <div class="answer-content">
-                        <div class="answer-box" :class="examResult.answers[index].feedback ? 'has-feedback' : 'no-feedback'">
-                          {{ examResult.answers[index].feedback || 'هنوز بررسی نشده است.' }}
+                        <div class="answer-box" :class="examResult.answers[index]?.feedback ? 'has-feedback' : 'no-feedback'">
+                          {{ examResult.answers[index]?.feedback || 'هنوز بررسی نشده است.' }}
                         </div>
                       </div>
                     </div>
