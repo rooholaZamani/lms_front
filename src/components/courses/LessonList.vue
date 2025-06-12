@@ -345,9 +345,22 @@ export default {
       immediate: true
     },
   },
-  mounted() {
-    this.fetchAllLessonsContent()
-    this.fetchLessonExercises();
+  async mounted() {
+    // Ensure lessons are loaded first
+    await this.$nextTick();
+
+    if (this.lessons && this.lessons.length > 0) {
+      await this.fetchAllLessonsContent();
+      await this.fetchLessonExercises();
+    } else {
+      // Wait for lessons to be available
+      this.$watch('lessons', async (newLessons) => {
+        if (newLessons && newLessons.length > 0) {
+          await this.fetchAllLessonsContent();
+          await this.fetchLessonExercises();
+        }
+      }, { immediate: true });
+    }
   },
   // beforeUnmount() {
   //   // Cleanup when component is destroyed
@@ -384,29 +397,63 @@ export default {
       await Promise.all(examPromises);
     },
     async fetchLessonExercises() {
+      console.log('Starting to fetch exercises for lessons:', this.lessons.map(l => l.id));
+
       const exercisePromises = this.lessons.map(async (lesson) => {
         try {
-          const response = await axios.get(`/exercises/lesson/${lesson.id}`);
-          if (response.data) {
+          console.log(`Fetching exercises for lesson ${lesson.id}`);
+          const response = await axios.get(`/assignments/lesson/${lesson.id}`);
+
+          console.log(`Response for lesson ${lesson.id}:`, response.data);
+
+          // More robust data checking
+          if (response.data && (Array.isArray(response.data) ? response.data.length > 0 : response.data.id)) {
             this.lessonExercises[lesson.id] = response.data;
-            // Update the lesson object to ensure hasExercise is set correctly
             lesson.hasExercise = true;
+
+            // Handle both single exercise and array of exercises
+            const exercises = Array.isArray(response.data) ? response.data : [response.data];
+
             if (!lesson.exercises) {
               lesson.exercises = [];
             }
-            if (!lesson.exercises.find(ex => ex.id === response.data.id)) {
-              lesson.exercises.push(response.data);
-            }
+
+            exercises.forEach(exercise => {
+              if (!lesson.exercises.find(ex => ex.id === exercise.id)) {
+                lesson.exercises.push(exercise);
+              }
+            });
+
+            console.log(`Successfully loaded ${exercises.length} exercise(s) for lesson ${lesson.id}`);
+          } else {
+            console.log(`No valid exercise data for lesson ${lesson.id}:`, response.data);
+            this.lessonExercises[lesson.id] = null;
+            lesson.hasExercise = false;
           }
         } catch (error) {
-          // No exercise found for this lesson - this is normal
-          console.log(`No exercise found for lesson ${lesson.id}`);
+          console.error(`Error fetching exercises for lesson ${lesson.id}:`, error.response?.status, error.response?.data);
           this.lessonExercises[lesson.id] = null;
           lesson.hasExercise = false;
         }
       });
 
       await Promise.all(exercisePromises);
+      console.log('Finished fetching all exercises. Final state:', this.lessonExercises);
+    },
+    async startExercise(lesson) {
+      try {
+        if (this.lessonExercises[lesson.id]) {
+          this.$router.push({
+            name: 'Exercise',
+            params: { id: this.lessonExercises[lesson.id].id }
+          });
+        } else {
+          this.$toast?.error('این درس تمرین ندارد');
+        }
+      } catch (error) {
+        console.error('Error starting exercise:', error);
+        this.$toast?.error('خطا در دسترسی به تمرین');
+      }
     },
     async startExam(lesson) {
       try {
