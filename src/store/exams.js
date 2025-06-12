@@ -8,5 +8,4 @@ export default {
         submissions: [],
         loading: false
     },
-    // ... mutations and actions for comprehensive exam management
 }

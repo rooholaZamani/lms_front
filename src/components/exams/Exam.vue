@@ -180,7 +180,12 @@ export default {
         score: 0,
         correctCount: 0,
         incorrectCount: 0,
-        answers: []
+        answers: [],
+        hasStudentTaken: false,
+        studentScore: null,
+        studentPassed: null,
+        studentSubmissionTime: null,
+        showResults: false
       }
     }
   },
@@ -203,32 +208,44 @@ export default {
       try {
         this.loading = true;
         const response = await axios.get(`/exams/${this.id}`);
-
-
-        console.log('Exam API Response:', response.data);
-        console.log('Questions in exam:', response.data.questions);
-        console.log('Exam status:', response.data.status);
-
-
         this.exam = response.data;
 
-        if (this.exam.lesson && this.exam.lesson.course) {
-          this.courseId = this.exam.lesson.course.id;
-        }
+        // NEW: Check if student already took the exam
+        this.hasStudentTaken = response.data.hasStudentTaken || false;
+        this.studentScore = response.data.studentScore;
+        this.studentPassed = response.data.studentPassed;
+        this.studentSubmissionTime = response.data.studentSubmissionTime;
 
-        if (this.exam.questions) {
-          this.answers = Array(this.exam.questions.length).fill(null);
+        if (this.hasStudentTaken) {
+          this.showResults = true;
+          this.examCompleted = true;
+          this.examResult = {
+            score: this.studentScore,
+            passed: this.studentPassed,
+            submissionTime: this.studentSubmissionTime
+          };
         }
 
         this.loading = false;
       } catch (error) {
-        console.error('Error fetching exam data:', error);
-        this.error = 'مشکلی در دریافت اطلاعات آزمون رخ داد. لطفاً دوباره تلاش کنید.';
+        console.error('Error fetching exam:', error);
+        this.$toast.error('مشکلی در دریافت آزمون رخ داد. لطفاً دوباره تلاش کنید.');
         this.loading = false;
       }
     },
+    formatDateTime(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('fa-IR') + ' ' + date.toLocaleTimeString('fa-IR');
+    },
+
 
     startExam() {
+      if (this.hasStudentTaken) {
+        this.$toast.warning('شما قبلاً این آزمون را شرکت کرده‌اید.');
+        return;
+      }
+
       this.examStarted = true;
       this.remainingTime = (this.exam.duration || 60) * 60;
       this.startTimer();
@@ -299,11 +316,10 @@ export default {
         this.stopTimer();
 
         const submissionData = {
-          answers: {},  // Change to object/map format
-          timeSpent: Math.floor(((this.exam.duration || 60) * 60 - this.remainingTime) / 60) // Add time spent in minutes
+          answers: {},
+          timeSpent: Math.floor(((this.exam.duration || 60) * 60 - this.remainingTime) / 60)
         };
 
-// Convert array answers to map format
         this.answers.forEach((answer, index) => {
           if (answer !== null && answer !== undefined) {
             const questionId = this.exam.questions[index].id.toString();
@@ -318,7 +334,15 @@ export default {
 
       } catch (error) {
         console.error('Error submitting exam:', error);
-        this.$toast.error('مشکلی در ارسال پاسخ‌ها رخ داد. لطفاً دوباره تلاش کنید.');
+
+        // NEW: Handle multiple attempt error
+        if (error.response?.data?.message?.includes('already taken')) {
+          this.$toast.error('شما قبلاً این آزمون را شرکت کرده‌اید');
+          // Refresh exam data to show results
+          await this.fetchExamData();
+        } else {
+          this.$toast.error('مشکلی در ارسال پاسخ‌ها رخ داد. لطفاً دوباره تلاش کنید.');
+        }
       }
     },
 
