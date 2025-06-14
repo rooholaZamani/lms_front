@@ -31,16 +31,7 @@ const routes = [
       showSidebar: true
     }
   },
-  // {
-  //   path: '/reports',
-  //   name: 'Reports',
-  //   component: () => import(/* webpackChunkName: "reports" */ '../components/views/Reports.vue'),
-  //   meta: {
-  //     title: 'گزارش‌ها',
-  //     requiresAuth: true,
-  //     showSidebar: true
-  //   }
-  // },
+
   {
     path: '/login',
     name: 'Login',
@@ -152,6 +143,28 @@ const routes = [
     component: () => import(/* webpackChunkName: "pending-assignments" */ '../components/assignments/PendingAssignments.vue'),
     meta: {
       title: 'تکالیف در حال بررسی',
+      requiresAuth: true,
+      requiresTeacher: true,
+      showSidebar: true
+    }
+  },
+  {
+    path: '/teacher/assignments',
+    name: 'AssignmentManager',
+    component: () => import(/* webpackChunkName: "assignment-manager" */ '../components/assignments/AssignmentManager.vue'),
+    meta: {
+      title: 'مدیریت تکالیف',
+      requiresAuth: true,
+      requiresTeacher: true,
+      showSidebar: true
+    }
+  },
+  {
+    path: '/teacher/grading',
+    name: 'AssignmentGrading',
+    component: () => import(/* webpackChunkName: "assignment-grading" */ '../components/assignments/AssignmentGradingTable.vue'),
+    meta: {
+      title: 'نمره‌گذاری تکالیف',
       requiresAuth: true,
       requiresTeacher: true,
       showSidebar: true

@@ -99,7 +99,39 @@
 <!--                </div>-->
               </router-link>
             </li>
+            <li class="nav-item">
+              <router-link
+                  class="modern-nav-link"
+                  :to="{ name: 'AssignmentManager' }"
+                  active-class="active"
+                  :title="collapsed ? 'مدیریت تکالیف' : ''"
+              >
+                <div class="nav-icon">
+                  <i class="fas fa-tasks"></i>
+                </div>
+                <span v-if="!collapsed" class="nav-text">مدیریت تکالیف</span>
+                <div v-if="!collapsed" class="nav-arrow">
+                  <i class="fas fa-chevron-left"></i>
+                </div>
+              </router-link>
+            </li>
 
+            <li class="nav-item">
+              <router-link
+                  class="modern-nav-link"
+                  :to="{ name: 'AssignmentGrading' }"
+                  active-class="active"
+                  :title="collapsed ? 'نمره‌گذاری تکالیف' : ''"
+              >
+                <div class="nav-icon">
+                  <i class="fas fa-clipboard-check"></i>
+                </div>
+                <span v-if="!collapsed" class="nav-text">نمره‌گذاری تکالیف</span>
+                <div v-if="!collapsed" class="nav-arrow">
+                  <i class="fas fa-chevron-left"></i>
+                </div>
+              </router-link>
+            </li>
             <li class="nav-item">
               <router-link
                   class="modern-nav-link"
