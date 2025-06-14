@@ -289,8 +289,10 @@ export default {
     getStatusBadgeClass(status) {
       switch (status) {
         case 'active':
+        case 'FINALIZED':
           return 'modern-badge-success';
         case 'upcoming':
+        case 'DRAFT':
           return 'modern-badge-primary';
         case 'completed':
           return 'modern-badge-secondary';
@@ -306,12 +308,16 @@ export default {
           return 'در آینده';
         case 'completed':
           return 'پایان یافته';
+        case 'FINALIZED':
+          return 'نهایی شده';
+        case 'DRAFT':
+          return 'پیش‌نویس';
         default:
           return 'نامشخص';
       }
     },
     getLessonTitle(exam) {
-      return exam.lesson?.title || 'نامشخص';
+      return exam.lesson?.title || exam.lessonTitle || 'نامشخص';
     },
     calculateAverageScore(exam) {
       if (!exam.submissions || exam.submissions.length === 0) {

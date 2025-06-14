@@ -181,7 +181,7 @@
 import axios from 'axios';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
 import StudentCourseCard from '@/components/dashboard/StudentCourseCard.vue';
-import StudentExamsTable from '@/components/dashboard/StudentExamsTable.vue';
+import StudentExamsTable from '@/components/exams/StudentExamsTable.vue';
 import { useFormatters } from '@/composables/useFormatters.js';
 
 export default {

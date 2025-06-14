@@ -1239,7 +1239,7 @@ export default {
         const examData = {
           title: this.examForm.title,
           description: this.examForm.description,
-          duration: this.examForm.duration,
+          timeLimit: this.examForm.duration,
           passingScore: this.examForm.passingScore,
           shuffleQuestions: this.examForm.shuffleQuestions
         };

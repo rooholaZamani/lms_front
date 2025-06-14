@@ -1,580 +1,586 @@
 <template>
-  <div class="modern-page-bg" style="min-height: calc(100vh - 56px); padding: 2rem 1rem;">
-    <div class="container-fluid">
+  <div class="exercise-container">
+    <!-- Loading State -->
+    <div v-if="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">در حال بارگذاری...</span>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div v-else class="container-fluid">
       <!-- Header -->
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h2 class="text-white mb-2">
-            <i class="fas fa-dumbbell me-3"></i>
-            {{ isCreating ? 'ایجاد تمرین جدید' : isEditing ? 'ویرایش تمرین' : exercise.title }}
-          </h2>
-          <p class="text-white-50 mb-0">مدیریت تمرین‌ها و تست‌های آموزشی</p>
-        </div>
-
-        <div v-if="!isCreating && !isEditing">
-          <button v-if="isTeacher" class="modern-btn modern-btn-primary me-2" @click="editExercise">
-            <i class="fas fa-edit me-1"></i> ویرایش
-          </button>
-          <button v-if="isTeacher" class="modern-btn modern-btn-success me-2" @click="viewResults">
-            <i class="fas fa-chart-bar me-1"></i> نتایج
-          </button>
-          <button v-if="isStudent && !hasSubmitted && !isExpired" class="modern-btn modern-btn-warning" @click="startExercise">
-            <i class="fas fa-play me-1"></i> شروع تمرین
-          </button>
-          <button v-if="isStudent && hasSubmitted" class="modern-btn modern-btn-info" @click="viewMyResults">
-            <i class="fas fa-eye me-1"></i> مشاهده نتیجه من
-          </button>
-        </div>
-
-        <div v-else>
-          <button class="modern-btn modern-btn-secondary" @click="cancel">
-            <i class="fas fa-times me-1"></i> انصراف
-          </button>
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="modern-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <div>
+                <h4 class="mb-0">
+                  <i class="fas fa-dumbbell me-2"></i>
+                  {{ isCreating ? 'ایجاد تمرین جدید' : (exercise ? exercise.title : 'تمرین') }}
+                </h4>
+                <p class="text-muted mb-0" v-if="!isCreating && exercise">
+                  درس: {{ exercise.lesson ? exercise.lesson.title : 'نامشخص' }} |
+                  کورس: {{ getCourseTitle() }} |
+                  مدرس: {{ getTeacherName() }}
+                </p>
+              </div>
+              <button @click="goBack" class="modern-btn modern-btn-outline-secondary">
+                <i class="fas fa-arrow-right me-1"></i>
+                بازگشت
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      <loading-spinner :loading="loading">
-        <!-- Exercise Info Display -->
-        <div v-if="!isCreating && !isEditing && !exercise.inProgress" class="modern-card mb-4 animate-slide-up">
-          <div class="modern-card-header bg-primary text-white">
-            <h5 class="mb-0">
-              <i class="fas fa-info-circle me-2"></i>
-              اطلاعات تمرین
-            </h5>
-          </div>
-          <div class="modern-card-body">
-            <div class="row">
-              <div class="col-md-8">
-                <div class="form-section">
-                  <p class="section-description">{{ exercise.description }}</p>
-
-                  <div class="exercise-meta">
-                    <div class="row">
-                      <div class="col-md-6 mb-3">
-                        <div class="modern-stat-card">
-                          <div class="modern-stat-icon text-primary">
-                            <i class="fas fa-clock"></i>
-                          </div>
-                          <div class="modern-stat-value">{{ exercise.timeLimit }}</div>
-                          <div class="modern-stat-label">دقیقه زمان مجاز</div>
-                        </div>
-                      </div>
-
-                      <div class="col-md-6 mb-3">
-                        <div class="modern-stat-card">
-                          <div class="modern-stat-icon text-success">
-                            <i class="fas fa-check-circle"></i>
-                          </div>
-                          <div class="modern-stat-value">{{ exercise.passingScore }}%</div>
-                          <div class="modern-stat-label">نمره قبولی</div>
-                        </div>
-                      </div>
-
-                      <div class="col-md-6 mb-3">
-                        <div class="modern-stat-card">
-                          <div class="modern-stat-icon text-warning">
-                            <i class="fas fa-question-circle"></i>
-                          </div>
-                          <div class="modern-stat-value">{{ exercise.questions ? exercise.questions.length : 0 }}</div>
-                          <div class="modern-stat-label">تعداد سوالات</div>
-                        </div>
-                      </div>
-
-                      <div class="col-md-6 mb-3">
-                        <div class="modern-stat-card">
-                          <div class="modern-stat-icon text-info">
-                            <i class="fas fa-random"></i>
-                          </div>
-                          <div class="modern-stat-value">{{ exercise.adaptiveDifficulty ? 'تطبیقی' : 'ثابت' }}</div>
-                          <div class="modern-stat-label">سطح دشواری</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div v-if="isStudent && hasSubmitted" class="form-section">
-                  <h6 class="section-title">
-                    <i class="fas fa-trophy text-warning me-2"></i>
-                    نتیجه شما
-                  </h6>
-                  <div class="row">
-                    <div class="col-md-3">
-                      <div class="modern-stat-card" :class="{'success': submission.passed, 'danger': !submission.passed}">
-                        <div class="modern-stat-value">{{ submission.score }}%</div>
-                        <div class="modern-stat-label">نمره</div>
-                      </div>
-                    </div>
-                    <div class="col-md-3">
-                      <div class="modern-stat-card info">
-                        <div class="modern-stat-value">+{{ submission.timeBonus }}</div>
-                        <div class="modern-stat-label">امتیاز زمان</div>
-                      </div>
-                    </div>
-                    <div class="col-md-3">
-                      <div class="modern-stat-card" :class="{'success': submission.passed, 'danger': !submission.passed}">
-                        <div class="modern-stat-value">{{ submission.totalScore }}</div>
-                        <div class="modern-stat-label">امتیاز کل</div>
-                      </div>
-                    </div>
-                    <div class="col-md-3">
-                      <div class="modern-stat-card">
-                        <div class="modern-stat-value">
-                          <span :class="submission.passed ? 'modern-badge modern-badge-success' : 'modern-badge modern-badge-danger'">
-                            {{ submission.passed ? 'قبول' : 'مردود' }}
-                          </span>
-                        </div>
-                        <div class="modern-stat-label">وضعیت</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="col-md-4">
-                <div class="form-section">
-                  <h6 class="section-title">
-                    <i class="fas fa-book me-2"></i>
-                    اطلاعات درس
-                  </h6>
-                  <div class="info-item">
-                    <div class="info-label">درس:</div>
-                    <div class="info-value">{{ exercise.lesson ? exercise.lesson.title : 'نامشخص' }}</div>
-                  </div>
-                  <div class="info-item">
-                    <div class="info-label">دوره:</div>
-                    <div class="info-value">{{ getCourseTitle() }}</div>
-                  </div>
-                  <div class="info-item">
-                    <div class="info-label">استاد:</div>
-                    <div class="info-value">{{ getTeacherName() }}</div>
-                  </div>
-                </div>
-              </div>
+      <!-- Exercise Form (Create/Edit Mode) -->
+      <div v-if="isCreating || isEditing" class="row">
+        <div class="col-12">
+          <div class="modern-card">
+            <div class="card-header">
+              <h5 class="mb-0">
+                <i class="fas fa-edit me-2"></i>
+                {{ isCreating ? 'اطلاعات تمرین جدید' : 'ویرایش تمرین' }}
+              </h5>
             </div>
-          </div>
-
-          <div v-if="isTeacher" class="modern-card-footer">
-            <button v-if="exercise.questions && exercise.questions.length > 0" class="modern-btn modern-btn-primary" @click="manageQuestions">
-              <i class="fas fa-list me-1"></i> مدیریت سوالات
-            </button>
-            <button v-else class="modern-btn modern-btn-success" @click="addQuestions">
-              <i class="fas fa-plus me-1"></i> افزودن سوالات
-            </button>
-          </div>
-        </div>
-
-        <!-- Exercise Creation/Edit Form -->
-        <div v-if="isCreating || isEditing" class="modern-card mb-4 animate-slide-up">
-          <div class="modern-card-header bg-primary text-white">
-            <h5 class="mb-0">
-              <i class="fas fa-edit me-2"></i>
-              {{ isCreating ? 'ایجاد تمرین جدید' : 'ویرایش تمرین' }}
-            </h5>
-          </div>
-          <div class="modern-card-body">
-            <form @submit.prevent="saveExercise">
-              <div class="form-section">
-                <h6 class="section-title">
-                  <i class="fas fa-info-circle me-2"></i>
-                  اطلاعات کلی
-                </h6>
-
+            <div class="card-body">
+              <form @submit.prevent="saveExercise">
                 <div class="row">
-                  <div class="col-md-6 modern-form-group">
-                    <label for="title" class="modern-form-label">عنوان تمرین</label>
-                    <input type="text" class="modern-form-control" id="title" v-model="exerciseForm.title" required>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">عنوان تمرین</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        v-model="exerciseForm.title"
+                        required
+                        placeholder="عنوان تمرین را وارد کنید"
+                    >
                   </div>
-                  <div class="col-md-6 modern-form-group">
-                    <label for="lessonId" class="modern-form-label">درس</label>
-                    <select v-if="isCreating" class="modern-form-control" id="lessonId" v-model="exerciseForm.lessonId" required>
-                      <option value="" disabled selected>انتخاب درس</option>
+                  <div class="col-md-6 mb-3" v-if="isCreating">
+                    <label class="form-label">درس</label>
+                    <select class="form-select" v-model="exerciseForm.lessonId" required>
+                      <option value="">انتخاب درس</option>
                       <option v-for="lesson in availableLessons" :key="lesson.id" :value="lesson.id">
-                        {{ lesson.title }} ({{ lesson.course ? lesson.course.title : 'نامشخص' }})
+                        {{ lesson.title }} ({{ lesson.course ? lesson.course.title : '' }})
                       </option>
                     </select>
-                    <input v-else type="text" class="modern-form-control" :value="exercise.lesson ? exercise.lesson.title : 'نامشخص'" disabled>
                   </div>
                 </div>
 
-                <div class="modern-form-group">
-                  <label for="description" class="modern-form-label">توضیحات</label>
-                  <textarea class="modern-form-control" id="description" v-model="exerciseForm.description" rows="3" required></textarea>
+                <div class="mb-3">
+                  <label class="form-label">توضیحات</label>
+                  <textarea
+                      class="form-control"
+                      rows="3"
+                      v-model="exerciseForm.description"
+                      placeholder="توضیحات تمرین را وارد کنید"
+                  ></textarea>
                 </div>
-              </div>
-
-              <div class="form-section">
-                <h6 class="section-title">
-                  <i class="fas fa-cog me-2"></i>
-                  تنظیمات
-                </h6>
 
                 <div class="row">
-                  <div class="col-md-4 modern-form-group">
-                    <label for="timeLimit" class="modern-form-label">زمان مجاز (دقیقه)</label>
-                    <input type="number" class="modern-form-control" id="timeLimit" v-model="exerciseForm.timeLimit" min="1" required>
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">محدودیت زمانی (دقیقه)</label>
+                    <input
+                        type="number"
+                        class="form-control"
+                        v-model.number="exerciseForm.timeLimit"
+                        min="1"
+                        placeholder="زمان به دقیقه"
+                    >
                   </div>
-                  <div class="col-md-4 modern-form-group">
-                    <label for="passingScore" class="modern-form-label">نمره قبولی (درصد)</label>
-                    <input type="number" class="modern-form-control" id="passingScore" v-model="exerciseForm.passingScore" min="0" max="100" required>
+                  <div class="col-md-4 mb-3">
+                    <label class="form-label">نمره قبولی</label>
+                    <input
+                        type="number"
+                        class="form-control"
+                        v-model.number="exerciseForm.passingScore"
+                        min="0"
+                        max="100"
+                        placeholder="نمره قبولی از 100"
+                    >
                   </div>
-                  <div class="col-md-4 modern-form-group">
+                  <div class="col-md-4 mb-3">
                     <div class="form-check mt-4">
-                      <input class="form-check-input" type="checkbox" id="adaptiveDifficulty" v-model="exerciseForm.adaptiveDifficulty">
-                      <label class="form-check-label" for="adaptiveDifficulty">دشواری تطبیقی</label>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="text-end">
-                <button type="button" class="modern-btn modern-btn-secondary me-2" @click="cancel">انصراف</button>
-                <button type="submit" class="modern-btn modern-btn-primary" :disabled="isSubmitting">
-                  <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  {{ isCreating ? 'ایجاد تمرین' : 'به‌روزرسانی تمرین' }}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        <!-- Questions Management Section -->
-        <div v-if="showQuestionsManager && isTeacher" class="modern-card mb-4 animate-slide-up" style="animation-delay: 0.1s;">
-          <div class="modern-card-header bg-info text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-              <i class="fas fa-question-circle me-2"></i>
-              مدیریت سوالات
-            </h5>
-            <button class="modern-btn modern-btn-light" @click="showAddQuestionModal">
-              <i class="fas fa-plus me-1"></i> افزودن سوال
-            </button>
-          </div>
-          <div class="modern-card-body">
-            <question-list
-                :questions="exercise.questions || []"
-                @add-question="showAddQuestionModal"
-                @edit-question="editQuestion"
-                @delete-question="confirmDeleteQuestion"
-            />
-          </div>
-        </div>
-
-        <!-- Exercise In Progress -->
-        <div v-if="exercise.inProgress" class="exercise-active">
-          <div class="modern-card animate-slide-up">
-            <div class="modern-card-header bg-warning text-dark d-flex justify-content-between align-items-center">
-              <h5 class="mb-0">
-                <i class="fas fa-play-circle me-2"></i>
-                در حال انجام تمرین: {{ exercise.title }}
-              </h5>
-              <div class="exercise-timer" :class="{ 'timer-warning': remainingTime <= 300 }">
-                <i class="fas fa-clock me-1"></i>
-                <span>{{ formatTime(remainingTime) }}</span>
-              </div>
-            </div>
-            <div class="modern-card-body">
-              <div class="progress mb-4">
-                <div class="progress-bar" role="progressbar"
-                     :style="`width: ${((currentQuestionIndex + 1) / currentQuestions.length) * 100}%`"
-                     :aria-valuenow="((currentQuestionIndex + 1) / currentQuestions.length) * 100"
-                     aria-valuemin="0" aria-valuemax="100">
-                  {{ currentQuestionIndex + 1 }} / {{ currentQuestions.length }}
-                </div>
-              </div>
-
-              <!-- Current Question -->
-              <div class="form-section">
-                <h4 class="section-title">سوال {{ currentQuestionIndex + 1 }} از {{ currentQuestions.length }}</h4>
-                <div class="question-text">{{ currentQuestion.text }}</div>
-
-                <!-- Multiple Choice -->
-                <div v-if="currentquestion.questionType === 'MULTIPLE_CHOICE'" class="options-container mt-4">
-                  <div v-for="(option, index) in currentQuestion.answers" :key="index" class="option-item">
-                    <div class="form-check">
-                      <input class="form-check-input" type="radio"
-                             :id="`option-${index}`"
-                             :name="`question-${currentQuestionIndex}`"
-                             :value="index"
-                             v-model="answers[currentQuestionIndex]">
-                      <label class="form-check-label" :for="`option-${index}`">
-                        {{ option.text }}
+                      <input
+                          class="form-check-input"
+                          type="checkbox"
+                          v-model="exerciseForm.adaptiveDifficulty"
+                          id="adaptiveDifficulty"
+                      >
+                      <label class="form-check-label" for="adaptiveDifficulty">
+                        سختی تطبیقی
                       </label>
                     </div>
                   </div>
                 </div>
 
-                <!-- True/False -->
-                <div v-else-if="currentquestion.questionType === 'TRUE_FALSE'" class="options-container mt-4">
-                  <div class="option-item">
-                    <div class="form-check">
-                      <input class="form-check-input" type="radio"
-                             id="option-true"
-                             :name="`question-${currentQuestionIndex}`"
-                             value="true"
-                             v-model="answers[currentQuestionIndex]">
-                      <label class="form-check-label" for="option-true">درست</label>
-                    </div>
-                  </div>
-                  <div class="option-item">
-                    <div class="form-check">
-                      <input class="form-check-input" type="radio"
-                             id="option-false"
-                             :name="`question-${currentQuestionIndex}`"
-                             value="false"
-                             v-model="answers[currentQuestionIndex]">
-                      <label class="form-check-label" for="option-false">نادرست</label>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Short Answer -->
-                <div v-else-if="currentquestion.questionType === 'SHORT_ANSWER'" class="mt-4">
-                  <div class="modern-form-group">
-                    <label for="short-answer" class="modern-form-label">پاسخ کوتاه:</label>
-                    <input type="text" class="modern-form-control"
-                           id="short-answer"
-                           v-model="answers[currentQuestionIndex]">
-                  </div>
-                </div>
-
-                <!-- Navigation Buttons -->
-                <div class="exercise-navigation mt-4 d-flex justify-content-between">
-                  <button class="modern-btn modern-btn-secondary"
-                          @click="previousQuestion"
-                          :disabled="currentQuestionIndex === 0">
-                    <i class="fas fa-chevron-right me-1"></i> سوال قبلی
+                <div class="d-flex gap-2">
+                  <button type="submit" class="modern-btn modern-btn-primary" :disabled="submitting">
+                    <i class="fas fa-save me-1"></i>
+                    {{ submitting ? 'در حال ذخیره...' : (isCreating ? 'ایجاد تمرین' : 'ذخیره تغییرات') }}
                   </button>
+                  <button type="button" @click="cancel" class="modern-btn modern-btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i>
+                    انصراف
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
 
-                  <div>
-                    <button v-if="currentQuestionIndex < currentQuestions.length - 1"
-                            class="modern-btn modern-btn-primary"
-                            @click="nextQuestion">
-                      سوال بعدی <i class="fas fa-chevron-left ms-1"></i>
-                    </button>
-                    <button v-else
-                            class="modern-btn modern-btn-success"
-                            @click="finishExercise">
-                      پایان تمرین <i class="fas fa-check ms-1"></i>
-                    </button>
+      <!-- Exercise Details View -->
+      <div v-else-if="exercise">
+        <!-- Exercise Info -->
+        <div class="row mb-4">
+          <div class="col-md-8">
+            <div class="modern-card">
+              <div class="card-body">
+                <h5 class="card-title">{{ exercise.title }}</h5>
+                <p class="card-text" v-if="exercise.description">{{ exercise.description }}</p>
+
+                <div class="exercise-meta">
+                  <div class="meta-item">
+                    <i class="fas fa-clock text-primary me-2"></i>
+                    <span>محدودیت زمانی: {{ exercise.timeLimit || 'نامحدود' }} دقیقه</span>
+                  </div>
+                  <div class="meta-item">
+                    <i class="fas fa-check-circle text-success me-2"></i>
+                    <span>نمره قبولی: {{ exercise.passingScore || 0 }}</span>
+                  </div>
+                  <div class="meta-item">
+                    <i class="fas fa-chart-line text-info me-2"></i>
+                    <span>سختی تطبیقی: {{ exercise.adaptiveDifficulty ? 'فعال' : 'غیرفعال' }}</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Question Navigation -->
-          <div class="modern-card mt-4 animate-slide-up" style="animation-delay: 0.1s;">
-            <div class="modern-card-header">
-              <h5 class="mb-0">
-                <i class="fas fa-map me-2"></i>
-                راهنمای سوالات
-              </h5>
-            </div>
-            <div class="modern-card-body">
-              <div class="question-nav">
-                <button
-                    v-for="(_, index) in currentQuestions"
-                    :key="index"
-                    :class="[
-                    'question-nav-item',
-                    {'answered': answers[index] !== null && answers[index] !== undefined},
-                    {'current': currentQuestionIndex === index}
-                  ]"
-                    @click="goToQuestion(index)">
-                  {{ index + 1 }}
-                </button>
-              </div>
-              <div class="question-nav-legend mt-3">
-                <div class="legend-item">
-                  <div class="legend-marker answered"></div>
-                  <span>پاسخ داده شده</span>
+          <div class="col-md-4">
+            <div class="modern-card">
+              <div class="card-body text-center">
+                <h6 class="card-title">وضعیت تمرین</h6>
+                <div class="exercise-status">
+                  <div class="status-item">
+                    <div class="status-number">{{ questions.length }}</div>
+                    <div class="status-label">سوال</div>
+                  </div>
+                  <div class="status-item" v-if="isTeacher">
+                    <div class="status-number">{{ submissions.length }}</div>
+                    <div class="status-label">پاسخ ارسالی</div>
+                  </div>
                 </div>
-                <div class="legend-item">
-                  <div class="legend-marker unanswered"></div>
-                  <span>بدون پاسخ</span>
+
+                <!-- Teacher Actions -->
+                <div v-if="isTeacher" class="mt-3 d-grid gap-2">
+                  <button @click="editExercise" class="modern-btn modern-btn-primary">
+                    <i class="fas fa-edit me-1"></i>
+                    ویرایش تمرین
+                  </button>
+                  <button @click="showQuestionsManager = true" class="modern-btn modern-btn-info">
+                    <i class="fas fa-question-circle me-1"></i>
+                    مدیریت سوالات
+                  </button>
                 </div>
-                <div class="legend-item">
-                  <div class="legend-marker current"></div>
-                  <span>سوال فعلی</span>
+
+                <!-- Student Submission Status -->
+                <div v-if="isStudent" class="mt-3">
+                  <div v-if="hasSubmitted" class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    شما این تمرین را ارسال کرده‌اید
+                    <div class="mt-2">
+                      <small>نمره: {{ submission.totalScore || submission.score || 0 }}</small>
+                    </div>
+                  </div>
+                  <div v-else class="d-grid">
+                    <button @click="startExercise" class="modern-btn modern-btn-success">
+                      <i class="fas fa-play me-1"></i>
+                      شروع تمرین
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </loading-spinner>
+
+        <!-- Questions Manager -->
+        <div v-if="showQuestionsManager && isTeacher" class="row mb-4">
+          <div class="col-12">
+            <div class="modern-card">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                  <i class="fas fa-question-circle me-2"></i>
+                  مدیریت سوالات
+                </h5>
+                <button @click="showQuestionsManager = false" class="modern-btn modern-btn-outline-secondary">
+                  <i class="fas fa-times me-1"></i>
+                  بستن
+                </button>
+              </div>
+              <div class="card-body">
+                <!-- Question Form -->
+                <form @submit.prevent="addQuestion" class="mb-4">
+                  <div class="mb-3">
+                    <label class="form-label">متن سوال</label>
+                    <textarea
+                        class="form-control"
+                        v-model="questionForm.text"
+                        rows="2"
+                        required
+                        placeholder="متن سوال را وارد کنید"
+                    ></textarea>
+                  </div>
+
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">امتیاز</label>
+                      <input
+                          type="number"
+                          class="form-control"
+                          v-model.number="questionForm.points"
+                          min="1"
+                          required
+                      >
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">محدودیت زمان (ثانیه)</label>
+                      <input
+                          type="number"
+                          class="form-control"
+                          v-model.number="questionForm.timeLimit"
+                          min="10"
+                      >
+                    </div>
+                  </div>
+
+                  <!-- Options -->
+                  <div class="mb-3">
+                    <label class="form-label">گزینه‌های پاسخ</label>
+                    <div v-for="(option, index) in questionForm.options" :key="index" class="input-group mb-2">
+                      <input
+                          type="text"
+                          class="form-control"
+                          v-model="option.text"
+                          :placeholder="`گزینه ${index + 1}`"
+                          required
+                      >
+                      <div class="input-group-text">
+                        <input
+                            class="form-check-input"
+                            type="radio"
+                            :name="`correct-option`"
+                            v-model="questionForm.correctOption"
+                            :value="index"
+                        >
+                      </div>
+                      <button
+                          type="button"
+                          @click="removeOption(index)"
+                          class="btn btn-outline-danger"
+                          v-if="questionForm.options.length > 2"
+                      >
+                        <i class="fas fa-times"></i>
+                      </button>
+                    </div>
+                    <button
+                        type="button"
+                        @click="addOption"
+                        class="btn btn-outline-primary btn-sm"
+                    >
+                      <i class="fas fa-plus me-1"></i>
+                      افزودن گزینه
+                    </button>
+                  </div>
+
+                  <button type="submit" class="modern-btn modern-btn-success" :disabled="submitting">
+                    <i class="fas fa-plus me-1"></i>
+                    {{ submitting ? 'در حال افزودن...' : 'افزودن سوال' }}
+                  </button>
+                </form>
+
+                <!-- Questions List -->
+                <div v-if="questions.length > 0">
+                  <h6>سوالات موجود ({{ questions.length }})</h6>
+                  <div class="questions-list">
+                    <div v-for="(question, index) in questions" :key="question.id" class="question-item">
+                      <div class="question-header">
+                        <span class="question-number">{{ index + 1 }}</span>
+                        <span class="question-text">{{ question.text }}</span>
+                        <span class="question-points">{{ question.points }} امتیاز</span>
+                      </div>
+                      <div class="question-options">
+                        <div v-for="option in question.options" :key="option.id"
+                             :class="['option-item', { 'correct-option': option.correct }]">
+                          <i :class="option.correct ? 'fas fa-check-circle text-success' : 'far fa-circle'"></i>
+                          {{ option.text }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Student Answers Section (For Teachers) -->
+        <div v-if="isTeacher && !isEditing && !showQuestionsManager" class="row">
+          <div class="col-12">
+            <div class="modern-card">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                  <i class="fas fa-users me-2"></i>
+                  پاسخ‌های دانش‌آموزان
+                </h5>
+                <div class="d-flex gap-2">
+                  <button
+                      @click="fetchSubmissions"
+                      class="modern-btn modern-btn-outline-primary"
+                      :disabled="loadingSubmissions"
+                  >
+                    <i class="fas fa-sync-alt me-1" :class="{'fa-spin': loadingSubmissions}"></i>
+                    بروزرسانی
+                  </button>
+                  <button
+                      @click="downloadAnswersCSV"
+                      class="modern-btn modern-btn-success"
+                      :disabled="!hasSubmissions"
+                  >
+                    <i class="fas fa-download me-1"></i>
+                    دانلود CSV
+                  </button>
+                </div>
+              </div>
+
+              <div class="card-body">
+                <div v-if="loadingSubmissions" class="text-center py-4">
+                  <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">در حال بارگذاری...</span>
+                  </div>
+                </div>
+
+                <div v-else-if="!hasSubmissions" class="text-center py-4 text-muted">
+                  <i class="fas fa-inbox fa-3x mb-3"></i>
+                  <p>هنوز هیچ پاسخی ارسال نشده است</p>
+                </div>
+
+                <div v-else>
+                  <div class="table-responsive">
+                    <table class="table table-hover">
+                      <thead class="table-light">
+                      <tr>
+                        <th>دانش‌آموز</th>
+                        <th>زمان ارسال</th>
+                        <th>نمره</th>
+                        <th>وضعیت</th>
+                        <th>عملیات</th>
+                      </tr>
+                      </thead>
+                      <tbody>
+                      <tr v-for="submission in submissions" :key="submission.id">
+                        <td>
+                          <div class="d-flex align-items-center">
+                            <div class="avatar-sm me-2">
+                              {{ getStudentName(submission).charAt(0) }}
+                            </div>
+                            {{ getStudentName(submission) }}
+                          </div>
+                        </td>
+                        <td>
+                          {{ new Date(submission.submissionTime).toLocaleString('fa-IR') }}
+                        </td>
+                        <td>
+                            <span class="badge" :class="submission.passed ? 'bg-success' : 'bg-danger'">
+                              {{ submission.totalScore || submission.score || 0 }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge" :class="submission.passed ? 'bg-success' : 'bg-danger'">
+                              {{ submission.passed ? 'قبول' : 'رد' }}
+                            </span>
+                        </td>
+                        <td>
+                          <button
+                              @click="showSubmissionDetail(submission)"
+                              class="btn btn-sm btn-outline-primary"
+                          >
+                            <i class="fas fa-eye me-1"></i>
+                            مشاهده جزئیات
+                          </button>
+                        </td>
+                      </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Modals -->
-    <base-modal
-        modal-id="questionModal"
-        :title="isEditingQuestion ? 'ویرایش سوال' : 'افزودن سوال جدید'"
-        modal-size="modal-lg"
-        ref="questionModal"
-    >
-      <question-form
-          :question-data="currentQuestion"
-          :is-editing="isEditingQuestion"
-          :is-submitting="isQuestionSubmitting"
-          @save="saveQuestion"
-          @cancel="$refs.questionModal.hide()"
-      />
-    </base-modal>
+    <!-- Submission Detail Modal -->
+    <div class="modal fade" id="submissionDetailModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">جزئیات پاسخ - {{ selectedSubmission?.student ? getStudentName(selectedSubmission) : '' }}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body" v-if="selectedSubmission">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <strong>زمان ارسال:</strong>
+                {{ new Date(selectedSubmission.submissionTime).toLocaleString('fa-IR') }}
+              </div>
+              <div class="col-md-6">
+                <strong>نمره نهایی:</strong>
+                {{ selectedSubmission.totalScore || selectedSubmission.score || 0 }}
+              </div>
+            </div>
 
-    <confirmation-dialog
-        modal-id="deleteQuestionModal"
-        title="حذف سوال"
-        :message="'آیا از حذف این سوال اطمینان دارید؟ این عمل قابل بازگشت نیست.'"
-        :details="selectedQuestion?.text"
-        confirm-text="حذف سوال"
-        confirm-button-type="danger"
-        icon="trash-alt"
-        ref="deleteConfirmDialog"
-        @confirm="deleteQuestion"
-    />
+            <h6>پاسخ‌های ارسالی:</h6>
+            <div v-if="questions && questions.length > 0">
+              <div v-for="(question, index) in questions" :key="question.id" class="card mb-3">
+                <div class="card-body">
+                  <h6 class="card-title">سوال {{ index + 1 }}</h6>
+                  <p class="card-text">{{ question.text }}</p>
 
-    <confirmation-dialog
-        modal-id="finishExerciseModal"
-        title="پایان تمرین"
-        :message="'آیا مطمئن هستید می‌خواهید تمرین را به پایان برسانید؟'"
-        :details="getUnsolvedQuestionsText()"
-        confirm-text="پایان تمرین"
-        confirm-button-type="success"
-        icon="check-circle"
-        ref="finishExerciseDialog"
-        @confirm="submitExercise"
-    />
+                  <div class="row">
+                    <div class="col-md-8">
+                      <strong>پاسخ انتخاب شده:</strong>
+                      <span class="ms-2">
+                        {{ getAnswerText(question, selectedSubmission.answers ? selectedSubmission.answers[question.id.toString()] : null) }}
+                      </span>
+                    </div>
+                    <div class="col-md-4">
+                      <strong>زمان پاسخ:</strong>
+                      <span class="ms-2">
+                        {{ selectedSubmission.answerTimes ? selectedSubmission.answerTimes[question.id.toString()] || 0 : 0 }} ثانیه
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- نمایش گزینه‌های سوال -->
+                  <div class="mt-2">
+                    <small class="text-muted">گزینه‌های سوال:</small>
+                    <ul class="list-unstyled mt-1">
+                      <li v-for="option in question.options" :key="option.id"
+                          :class="{'text-success fw-bold': option.correct, 'text-primary': selectedSubmission.answers && selectedSubmission.answers[question.id.toString()] == option.id}">
+                        <i :class="option.correct ? 'fas fa-check text-success' : 'far fa-circle'"></i>
+                        {{ option.text }}
+                        <span v-if="selectedSubmission.answers && selectedSubmission.answers[question.id.toString()] == option.id" class="badge bg-primary ms-2">انتخاب شده</span>
+                        <span v-if="option.correct" class="badge bg-success ms-2">پاسخ صحیح</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios';
-import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
-import BaseModal from '@/components/common/BaseModal.vue';
-import ConfirmationDialog from '@/components/common/ConfirmationDialog.vue';
-import QuestionList from '@/components/exams/QuestionList.vue';
-import QuestionForm from '@/components/exams/QuestionForm.vue';
-import { useUser } from '@/composables/useUser.js';
-import { useFormatters } from '@/composables/useFormatters.js';
-import formMixin from '@/mixins/formMixin.js';
+import { mapGetters } from 'vuex';
 
 export default {
   name: 'Exercise',
-  components: {
-    LoadingSpinner,
-    BaseModal,
-    ConfirmationDialog,
-    QuestionList,
-    QuestionForm
-  },
-  mixins: [formMixin],
-  props: {
-    id: {
-      type: String,
-      default: null
-    },
-    lessonId: {
-      type: String,
-      default: null
-    }
-  },
-  setup() {
-    const { isTeacher, isStudent } = useUser();
-    const { formatDate, formatTime } = useFormatters();
+  props: ['id'],
 
-    return {
-      isTeacher,
-      isStudent,
-      formatDate,
-      formatTime
-    };
-  },
   data() {
     return {
-      loading: true,
-      isCreating: !this.id,
+      loading: false,
+      submitting: false,
+      exercise: null,
+      questions: [],
+      submissions: [],
+      selectedSubmission: null,
+      isCreating: false,
       isEditing: false,
-      exercise: {
-        title: '',
-        description: '',
-        timeLimit: 30,
-        passingScore: 60,
-        lesson: null,
-        questions: [],
-        adaptiveDifficulty: true,
-        inProgress: false
-      },
+      showQuestionsManager: false,
+      loadingSubmissions: false,
+      hasSubmitted: false,
+      submission: null,
+      availableLessons: [],
+
       exerciseForm: {
         title: '',
         description: '',
         timeLimit: 30,
         passingScore: 60,
-        lessonId: this.lessonId || '',
-        adaptiveDifficulty: true
+        lessonId: '',
+        adaptiveDifficulty: false
       },
-      availableLessons: [],
-      isSubmitting: false,
-      showQuestionsManager: false,
 
-      // For question management
-      currentQuestion: {},
-      isEditingQuestion: false,
-      selectedQuestion: null,
-      isQuestionSubmitting: false,
-
-      // For exercise taking (students)
-      currentQuestions: [],
-      currentQuestionIndex: 0,
-      answers: [],
-      answerTimes: {},
-      startTime: null,
-      remainingTime: 0,
-      timerInterval: null,
-      hasSubmitted: false,
-      submission: null,
-
-      // For tracking question start times
-      questionStartTimes: {}
+      questionForm: {
+        text: '',
+        points: 10,
+        timeLimit: 60,
+        options: [
+          { text: '', correct: false },
+          { text: '', correct: false }
+        ],
+        correctOption: 0
+      }
     };
   },
-  computed: {
-    isExpired() {
-      if (!this.exercise || !this.exercise.expiryDate) return false;
-      return new Date(this.exercise.expiryDate) < new Date();
-    },
-    currentQuestion() {
-      if (!this.currentQuestions || this.currentQuestions.length === 0) {
-        return { text: 'سوالی وجود ندارد', type: 'MULTIPLE_CHOICE', answers: [] };
-      }
-      return this.currentQuestions[this.currentQuestionIndex] || {};
-    }
-  },
-  async created() {
-    if (this.isCreating) {
-      await this.fetchAvailableLessons();
-      this.loading = false;
-    } else {
-      await this.fetchExerciseData();
-    }
-  },
-  beforeUnmount() {
-    this.stopTimer();
-  },
-  methods: {
-    async fetchExerciseData() {
-      try {
-        this.loading = true;
-        const response = await axios.get(`/exercises/${this.id}`);
-        this.exercise = response.data;
 
+  computed: {
+    ...mapGetters(['currentUser', 'isTeacher', 'isStudent']),
+
+    hasSubmissions() {
+      return this.submissions && this.submissions.length > 0;
+    }
+  },
+
+  async mounted() {
+    if (this.$route.query.create === 'true') {
+      this.isCreating = true;
+      await this.fetchAvailableLessons();
+    } else if (this.id) {
+      await this.loadExercise();
+      if (this.isTeacher) {
+        await this.fetchSubmissions();
+      }
+    }
+  },
+
+  methods: {
+    async loadExercise() {
+      this.loading = true;
+      try {
+        // Load exercise details
+        const exerciseResponse = await axios.get(`/exercises/${this.id}`);
+        this.exercise = exerciseResponse.data;
+
+        // Load questions
+        const questionsResponse = await axios.get(`/exercises/${this.id}/questions`);
+        this.questions = questionsResponse.data;
+
+        // Initialize form with exercise data
         this.exerciseForm = {
-          title: this.exercise.title,
-          description: this.exercise.description,
-          timeLimit: this.exercise.timeLimit,
-          passingScore: this.exercise.passingScore,
+          title: this.exercise.title || '',
+          description: this.exercise.description || '',
+          timeLimit: this.exercise.timeLimit || 30,
+          passingScore: this.exercise.passingScore || 60,
           lessonId: this.exercise.lesson ? this.exercise.lesson.id : '',
-          adaptiveDifficulty: this.exercise.adaptiveDifficulty
+          adaptiveDifficulty: this.exercise.adaptiveDifficulty || false
         };
 
+        // Check student submission status
         if (this.isStudent) {
           try {
             const submissionResponse = await axios.get(`/exercises/${this.id}/student-submission`);
@@ -603,6 +609,203 @@ export default {
         console.error('Error fetching lessons:', error);
         this.showErrorToast('مشکلی در دریافت لیست درس‌ها رخ داد.');
       }
+    },
+
+    async fetchSubmissions() {
+      if (!this.isTeacher) return;
+
+      this.loadingSubmissions = true;
+      try {
+        const response = await axios.get(`/exercises/${this.id}/submissions`);
+        this.submissions = response.data;
+      } catch (error) {
+        console.error('Error fetching submissions:', error);
+        this.showErrorToast('خطا در دریافت پاسخ‌های دانش‌آموزان');
+      } finally {
+        this.loadingSubmissions = false;
+      }
+    },
+
+    async saveExercise() {
+      this.submitting = true;
+      try {
+        if (this.isCreating) {
+          const response = await axios.post(`/exercises/lesson/${this.exerciseForm.lessonId}`, this.exerciseForm);
+          this.showSuccessToast('تمرین با موفقیت ایجاد شد.');
+          this.$router.push(`/exercises/${response.data.id}`);
+        } else {
+          await axios.put(`/exercises/${this.id}`, this.exerciseForm);
+          this.exercise = { ...this.exercise, ...this.exerciseForm };
+          this.isEditing = false;
+          this.showSuccessToast('تمرین با موفقیت به‌روزرسانی شد.');
+        }
+      } catch (error) {
+        console.error('Error saving exercise:', error);
+        this.showErrorToast('خطا در ذخیره تمرین. لطفاً دوباره تلاش کنید.');
+      } finally {
+        this.submitting = false;
+      }
+    },
+
+    async addQuestion() {
+      this.submitting = true;
+      try {
+        // Prepare question data
+        const questionData = {
+          text: this.questionForm.text,
+          questionType: 'MULTIPLE_CHOICE',
+          points: this.questionForm.points,
+          timeLimit: this.questionForm.timeLimit,
+          isRequired: true,
+          difficulty: 2.0,
+          options: this.questionForm.options.map((option, index) => ({
+            text: option.text,
+            correct: index === this.questionForm.correctOption,
+            answerType: 'TEXT',
+            points: index === this.questionForm.correctOption ? this.questionForm.points : 0,
+            orderIndex: index
+          }))
+        };
+
+        await axios.post(`/exercises/${this.id}/questions`, questionData);
+
+        // Reset form
+        this.questionForm = {
+          text: '',
+          points: 10,
+          timeLimit: 60,
+          options: [
+            { text: '', correct: false },
+            { text: '', correct: false }
+          ],
+          correctOption: 0
+        };
+
+        // Reload questions
+        await this.loadQuestions();
+        this.showSuccessToast('سوال با موفقیت اضافه شد.');
+      } catch (error) {
+        console.error('Error adding question:', error);
+        this.showErrorToast('خطا در افزودن سوال. لطفاً دوباره تلاش کنید.');
+      } finally {
+        this.submitting = false;
+      }
+    },
+
+    async loadQuestions() {
+      try {
+        const response = await axios.get(`/exercises/${this.id}/questions`);
+        this.questions = response.data;
+      } catch (error) {
+        console.error('Error loading questions:', error);
+      }
+    },
+
+    addOption() {
+      this.questionForm.options.push({ text: '', correct: false });
+    },
+
+    removeOption(index) {
+      if (this.questionForm.options.length > 2) {
+        this.questionForm.options.splice(index, 1);
+        if (this.questionForm.correctOption >= index && this.questionForm.correctOption > 0) {
+          this.questionForm.correctOption--;
+        }
+      }
+    },
+
+    downloadAnswersCSV() {
+      if (!this.submissions || this.submissions.length === 0) {
+        this.showErrorToast('هیچ پاسخی برای دانلود وجود ندارد');
+        return;
+      }
+
+      const csvHeaders = ['نام دانش‌آموز', 'زمان ارسال', 'نمره', 'نمره کل', 'وضعیت قبولی'];
+
+      // اضافه کردن عناوین سوالات
+      if (this.questions && this.questions.length > 0) {
+        this.questions.forEach((question, index) => {
+          csvHeaders.push(`سوال ${index + 1}`);
+          csvHeaders.push(`زمان پاسخ ${index + 1} (ثانیه)`);
+        });
+      }
+
+      const csvRows = [csvHeaders];
+
+      this.submissions.forEach(submission => {
+        const studentName = this.getStudentName(submission);
+        const submissionTime = new Date(submission.submissionTime).toLocaleString('fa-IR');
+        const status = submission.passed ? 'قبول' : 'رد';
+
+        const row = [
+          studentName,
+          submissionTime,
+          submission.score || 0,
+          submission.totalScore || 0,
+          status
+        ];
+
+        // اضافه کردن پاسخ‌ها
+        if (this.questions && this.questions.length > 0) {
+          this.questions.forEach((question) => {
+            const questionId = question.id.toString();
+            const answer = submission.answers ? submission.answers[questionId] : '';
+            const answerTime = submission.answerTimes ? submission.answerTimes[questionId] : '';
+
+            // پیدا کردن متن پاسخ انتخاب شده
+            let answerText = answer;
+            if (question.options && answer) {
+              const selectedOption = question.options.find(opt => opt.id.toString() === answer.toString());
+              answerText = selectedOption ? selectedOption.text : answer;
+            }
+
+            row.push(answerText || 'پاسخ داده نشده');
+            row.push(answerTime || 0);
+          });
+        }
+
+        csvRows.push(row);
+      });
+
+      // تبدیل به CSV
+      const csvContent = csvRows.map(row =>
+          row.map(cell => `"${cell.toString().replace(/"/g, '""')}"`).join(',')
+      ).join('\n');
+
+      // دانلود فایل
+      const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `تمرین_${this.exercise.title}_پاسخها.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      this.showSuccessToast('فایل پاسخ‌ها با موفقیت دانلود شد');
+    },
+
+    showSubmissionDetail(submission) {
+      this.selectedSubmission = submission;
+
+      // نمایش modal با Bootstrap 5
+      const modal = new bootstrap.Modal(document.getElementById('submissionDetailModal'));
+      modal.show();
+    },
+
+    getStudentName(submission) {
+      if (!submission.student) return 'نامشخص';
+      return submission.student.firstName && submission.student.lastName
+          ? `${submission.student.firstName} ${submission.student.lastName}`
+          : submission.student.username;
+    },
+
+    getAnswerText(question, answerId) {
+      if (!question.options || !answerId) return 'پاسخ داده نشده';
+
+      const selectedOption = question.options.find(opt => opt.id.toString() === answerId.toString());
+      return selectedOption ? selectedOption.text : answerId;
     },
 
     getCourseTitle() {
@@ -645,476 +848,337 @@ export default {
       }
     },
 
-    async saveExercise() {
-      this.isSubmitting = true;
-
-      try {
-        let response;
-
-        if (this.isCreating) {
-          response = await axios.post(`/exercises/lesson/${this.exerciseForm.lessonId}`, {
-            title: this.exerciseForm.title,
-            description: this.exerciseForm.description,
-            timeLimit: this.exerciseForm.timeLimit,
-            passingScore: this.exerciseForm.passingScore,
-            adaptiveDifficulty: this.exerciseForm.adaptiveDifficulty
-          });
-
-          this.$router.replace({
-            name: 'Exercise',
-            params: { id: response.data.id }
-          });
-
-          this.showSuccessToast('تمرین با موفقیت ایجاد شد.');
-        } else {
-          response = await axios.put(`/exercises/${this.id}`, {
-            title: this.exerciseForm.title,
-            description: this.exerciseForm.description,
-            timeLimit: this.exerciseForm.timeLimit,
-            passingScore: this.exerciseForm.passingScore,
-            adaptiveDifficulty: this.exerciseForm.adaptiveDifficulty
-          });
-
-          this.exercise = {
-            ...this.exercise,
-            title: response.data.title,
-            description: response.data.description,
-            timeLimit: response.data.timeLimit,
-            passingScore: response.data.passingScore,
-            adaptiveDifficulty: response.data.adaptiveDifficulty
-          };
-
-          this.isEditing = false;
-          this.showSuccessToast('تمرین با موفقیت به‌روزرسانی شد.');
-        }
-      } catch (error) {
-        console.error('Error saving exercise:', error);
-        this.showErrorToast('مشکلی در ذخیره تمرین رخ داد. لطفاً دوباره تلاش کنید.');
-      } finally {
-        this.isSubmitting = false;
-      }
+    goBack() {
+      this.$router.go(-1);
     },
 
-    // Questions Management
-    manageQuestions() {
-      this.showQuestionsManager = !this.showQuestionsManager;
-    },
-
-    addQuestions() {
-      this.showQuestionsManager = true;
-      this.showAddQuestionModal();
-    },
-
-    showAddQuestionModal() {
-      this.isEditingQuestion = false;
-      this.currentQuestion = {
-        text: '',
-        type: 'MULTIPLE_CHOICE',
-        answers: [
-          { text: '', correct: true },
-          { text: '', correct: false },
-          { text: '', correct: false },
-          { text: '', correct: false }
-        ],
-        points: 10
-      };
-      this.$refs.questionModal.show();
-    },
-
-    editQuestion(question) {
-      this.isEditingQuestion = true;
-      this.selectedQuestion = question;
-      this.currentQuestion = { ...question };
-
-      if (!this.currentQuestion.answers || !Array.isArray(this.currentQuestion.answers)) {
-        this.currentQuestion.answers = [
-          { text: '', correct: true },
-          { text: '', correct: false },
-          { text: '', correct: false },
-          { text: '', correct: false }
-        ];
-      }
-
-      this.$refs.questionModal.show();
-    },
-
-    async saveQuestion() {
-      this.isQuestionSubmitting = true;
-
-      try {
-        let response;
-        const questionData = {
-          ...this.currentQuestion,
-          exerciseId: this.id
-        };
-
-        if (this.isEditingQuestion) {
-          response = await axios.put(`/exercises/questions/${this.selectedQuestion.id}`, questionData);
-          const index = this.exercise.questions.findIndex(q => q.id === this.selectedQuestion.id);
-          if (index !== -1) {
-            this.exercise.questions[index] = response.data;
-          }
-          this.showSuccessToast('سوال با موفقیت به‌روزرسانی شد.');
-        } else {
-          response = await axios.post(`/exercises/${this.id}/questions`, questionData);
-          if (!this.exercise.questions) {
-            this.exercise.questions = [];
-          }
-          this.exercise.questions.push(response.data);
-          this.showSuccessToast('سوال جدید با موفقیت اضافه شد.');
-        }
-
-        this.$refs.questionModal.hide();
-      } catch (error) {
-        console.error('Error saving question:', error);
-        this.showErrorToast('مشکلی در ذخیره سوال رخ داد. لطفاً دوباره تلاش کنید.');
-      } finally {
-        this.isQuestionSubmitting = false;
-      }
-    },
-
-    confirmDeleteQuestion(question) {
-      this.selectedQuestion = question;
-      this.$refs.deleteConfirmDialog.show();
-    },
-
-    async deleteQuestion() {
-      if (!this.selectedQuestion) return;
-
-      try {
-        await axios.delete(`/exercises/questions/${this.selectedQuestion.id}`);
-        this.exercise.questions = this.exercise.questions.filter(q => q.id !== this.selectedQuestion.id);
-        this.showSuccessToast('سوال با موفقیت حذف شد.');
-      } catch (error) {
-        console.error('Error deleting question:', error);
-        this.showErrorToast('مشکلی در حذف سوال رخ داد. لطفاً دوباره تلاش کنید.');
-      }
-    },
-
-    // Exercise taking for students
     startExercise() {
-      if (!this.exercise || !this.exercise.questions || this.exercise.questions.length === 0) {
-        this.showErrorToast('این تمرین هنوز سوالی ندارد.');
-        return;
-      }
-
-      this.exercise.inProgress = true;
-      this.currentQuestions = [...this.exercise.questions];
-      if (this.exercise.adaptiveDifficulty) {
-        this.currentQuestions.sort(() => Math.random() - 0.5);
-      }
-
-      this.answers = Array(this.currentQuestions.length).fill(null);
-      this.answerTimes = {};
-      this.remainingTime = this.exercise.timeLimit * 60;
-      this.startTime = new Date();
-      this.startTimer();
-      this.recordQuestionStartTime(0);
+      this.$router.push(`/exercises/${this.id}/take`);
     },
 
-    startTimer() {
-      this.timerInterval = setInterval(() => {
-        if (this.remainingTime > 0) {
-          this.remainingTime--;
-        } else {
-          this.stopTimer();
-          this.submitExercise();
-        }
-      }, 1000);
-    },
-
-    stopTimer() {
-      if (this.timerInterval) {
-        clearInterval(this.timerInterval);
-        this.timerInterval = null;
-      }
-    },
-
-    recordQuestionStartTime(questionIndex) {
-      this.questionStartTimes[questionIndex] = new Date();
-    },
-
-    recordQuestionTime(questionIndex) {
-      if (this.questionStartTimes[questionIndex]) {
-        const endTime = new Date();
-        const startTime = this.questionStartTimes[questionIndex];
-        const timeSpent = Math.floor((endTime - startTime) / 1000);
-        this.answerTimes[questionIndex] = timeSpent;
-      }
-    },
-
-    previousQuestion() {
-      if (this.currentQuestionIndex > 0) {
-        this.recordQuestionTime(this.currentQuestionIndex);
-        this.currentQuestionIndex--;
-        this.recordQuestionStartTime(this.currentQuestionIndex);
-      }
-    },
-
-    nextQuestion() {
-      if (this.currentQuestionIndex < this.currentQuestions.length - 1) {
-        this.recordQuestionTime(this.currentQuestionIndex);
-        this.currentQuestionIndex++;
-        this.recordQuestionStartTime(this.currentQuestionIndex);
-      }
-    },
-
-    goToQuestion(index) {
-      if (index >= 0 && index < this.currentQuestions.length) {
-        this.recordQuestionTime(this.currentQuestionIndex);
-        this.currentQuestionIndex = index;
-        this.recordQuestionStartTime(this.currentQuestionIndex);
-      }
-    },
-
-    finishExercise() {
-      this.recordQuestionTime(this.currentQuestionIndex);
-      const unansweredCount = this.answers.filter(a => a === null || a === undefined).length;
-
-      if (unansweredCount > 0) {
-        this.$refs.finishExerciseDialog.show();
+    showSuccessToast(message) {
+      if (window.toast) {
+        window.toast.success(message);
       } else {
-        this.submitExercise();
+        alert(message);
       }
     },
 
-    getUnsolvedQuestionsText() {
-      const unansweredCount = this.answers.filter(a => a === null || a === undefined).length;
-      if (unansweredCount === 0) return '';
-      return `هنوز ${unansweredCount} سوال بدون پاسخ وجود دارد. آیا مطمئن هستید؟`;
-    },
-
-    async submitExercise() {
-      this.stopTimer();
-
-      try {
-        const submissionData = {
-          answers: {},
-          answerTimes: {}
-        };
-
-        this.currentQuestions.forEach((question, index) => {
-          submissionData.answers[question.id] = this.answers[index];
-          submissionData.answerTimes[question.id] = this.answerTimes[index] || 0;
-        });
-
-        const response = await axios.post(`/exercises/${this.id}/submit`, submissionData);
-        this.hasSubmitted = true;
-        this.submission = response.data;
-        this.exercise.inProgress = false;
-        this.showSuccessToast('تمرین با موفقیت ارسال شد.');
-      } catch (error) {
-        console.error('Error submitting exercise:', error);
-        this.showErrorToast('مشکلی در ارسال تمرین رخ داد. لطفاً دوباره تلاش کنید.');
+    showErrorToast(message) {
+      if (window.toast) {
+        window.toast.error(message);
+      } else {
+        alert(message);
       }
-    },
-
-    viewResults() {
-      this.$router.push({
-        name: 'ExerciseResults',
-        params: { id: this.id }
-      });
-    },
-
-    viewMyResults() {
-      this.$router.push({
-        name: 'ExerciseResult',
-        params: { id: this.id }
-      });
     }
   }
-}
+};
 </script>
 
 <style scoped>
-/* Exercise specific styles */
-.exercise-timer {
-  background-color: rgba(255, 255, 255, 0.2);
+.exercise-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 20px 0;
+}
+
+.modern-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  margin-bottom: 20px;
+}
+
+.modern-card .card-header {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 15px 15px 0 0;
+  padding: 1rem 1.5rem;
+}
+
+.modern-card .card-body {
+  padding: 1.5rem;
+}
+
+.modern-btn {
+  border: none;
+  border-radius: 8px;
   padding: 0.5rem 1rem;
-  border-radius: 20px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+}
+
+.modern-btn-primary {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+}
+
+.modern-btn-primary:hover {
+  background: linear-gradient(45deg, #5a6fd8, #6a3093);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.modern-btn-success {
+  background: linear-gradient(45deg, #56ab2f, #a8e6cf);
+  color: white;
+}
+
+.modern-btn-success:hover {
+  background: linear-gradient(45deg, #4a9025, #96d4b5);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(86, 171, 47, 0.4);
+}
+
+.modern-btn-info {
+  background: linear-gradient(45deg, #3498db, #2980b9);
+  color: white;
+}
+
+.modern-btn-info:hover {
+  background: linear-gradient(45deg, #2980b9, #2471a3);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+}
+
+.modern-btn-outline-primary {
+  background: transparent;
+  color: #667eea;
+  border: 2px solid #667eea;
+}
+
+.modern-btn-outline-primary:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.modern-btn-outline-secondary {
+  background: transparent;
+  color: #6c757d;
+  border: 2px solid #6c757d;
+}
+
+.modern-btn-outline-secondary:hover {
+  background: #6c757d;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.exercise-meta {
+  background: rgba(102, 126, 234, 0.05);
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.meta-item:last-child {
+  margin-bottom: 0;
+}
+
+.exercise-status {
+  display: flex;
+  justify-content: space-around;
+  margin: 1rem 0;
+}
+
+.status-item {
+  text-align: center;
+}
+
+.status-number {
+  font-size: 2rem;
   font-weight: bold;
+  color: #667eea;
+  display: block;
 }
 
-.timer-warning {
-  background-color: #fff3cd;
-  color: #856404;
-  animation: pulse 1.5s infinite;
-}
-
-.section-description {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  margin-bottom: 2rem;
+.status-label {
+  font-size: 0.9rem;
   color: #6c757d;
 }
 
-.info-item {
+.questions-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.question-item {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.question-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid rgba(0,0,0,0.05);
+  margin-bottom: 0.5rem;
+  gap: 1rem;
 }
 
-.info-item:last-child {
-  border-bottom: none;
+.question-number {
+  background: #667eea;
+  color: white;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: bold;
+  flex-shrink: 0;
 }
 
-.info-label {
+.question-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+.question-points {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.question-options {
+  margin-top: 0.5rem;
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem 0;
+  font-size: 0.9rem;
+}
+
+.option-item i {
+  margin-right: 0.5rem;
+  width: 16px;
+}
+
+.correct-option {
+  color: #28a745;
+  font-weight: 500;
+}
+
+.avatar-sm {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.8rem;
+}
+
+.table-responsive {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.table th {
+  background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+  border: none;
   font-weight: 600;
   color: #495057;
 }
 
-.info-value {
-  color: #6c757d;
+.table td {
+  border-color: #e9ecef;
+  vertical-align: middle;
 }
 
-.question-text {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-  color: #333;
+.table tbody tr:hover {
+  background-color: rgba(102, 126, 234, 0.05);
 }
 
-.options-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.option-item {
-  background: rgba(255, 255, 255, 0.5);
-  border: 2px solid #e9ecef;
+.modal-content {
+  border: none;
   border-radius: 12px;
-  padding: 1rem;
-  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.modal-header {
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  color: white;
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+}
+
+.modal-header .btn-close {
+  filter: invert(1);
+}
+
+.form-control, .form-select {
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 0.75rem;
   transition: all 0.3s ease;
 }
 
-.option-item:hover {
+.form-control:focus, .form-select:focus {
   border-color: #667eea;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  box-shadow: 0 0 0 0.25rem rgba(102, 126, 234, 0.25);
 }
 
-.form-check-input:checked + .form-check-label {
-  color: #667eea;
+.form-label {
   font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
 }
 
-.question-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.question-nav-item {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f8f9fa;
-  border: 2px solid #dee2e6;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.question-nav-item:hover {
-  background-color: #e9ecef;
-  transform: scale(1.05);
-}
-
-.question-nav-item.answered {
-  background-color: #d4edda;
-  border-color: #c3e6cb;
-  color: #155724;
-}
-
-.question-nav-item.current {
-  background-color: #667eea;
-  border-color: #667eea;
-  color: white;
-}
-
-.question-nav-legend {
-  display: flex;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  font-size: 0.9rem;
-}
-
-.legend-marker {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  margin-left: 0.5rem;
-}
-
-.legend-marker.answered {
-  background-color: #d4edda;
-  border: 2px solid #c3e6cb;
-}
-
-.legend-marker.unanswered {
-  background-color: #f8f9fa;
-  border: 2px solid #dee2e6;
-}
-
-.legend-marker.current {
-  background-color: #667eea;
-  border: 2px solid #667eea;
-}
-
-/* Modern stat card variants */
-.modern-stat-card.success {
-  background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(25, 135, 84, 0.1));
-  border-color: #28a745;
-}
-
-.modern-stat-card.danger {
-  background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(204, 43, 57, 0.1));
-  border-color: #dc3545;
-}
-
-.modern-stat-card.info {
-  background: linear-gradient(135deg, rgba(23, 162, 184, 0.1), rgba(13, 145, 169, 0.1));
-  border-color: #17a2b8;
-}
-
-/* Responsive adjustments */
 @media (max-width: 768px) {
-  .exercise-timer {
-    font-size: 0.9rem;
-    padding: 0.25rem 0.75rem;
+  .exercise-container {
+    padding: 10px;
   }
 
-  .question-nav-item {
-    width: 35px;
-    height: 35px;
-    font-size: 0.85rem;
+  .modern-card .card-body {
+    padding: 1rem;
   }
 
-  .legend-item {
-    font-size: 0.8rem;
+  .d-flex.gap-2 {
+    flex-direction: column;
+    gap: 0.5rem !important;
   }
 
-  .question-text {
-    font-size: 1rem;
+  .modern-btn {
+    width: 100%;
   }
-}
 
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.8; }
-  100% { opacity: 1; }
+  .exercise-status {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .question-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
 }
 </style>

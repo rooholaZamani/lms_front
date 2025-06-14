@@ -88,7 +88,7 @@
       <!-- Next lesson indicator -->
       <div class="next-lesson" v-if="nextLesson">
         <div class="next-lesson-title">درس بعدی:</div>
-        <div class="next-lesson-content">
+        <div class="next-lesson-content text-info">
           <i class="fas fa-play-circle text-primary me-2"></i>
           {{ nextLesson.title }}
         </div>

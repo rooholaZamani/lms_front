@@ -103,9 +103,31 @@
               <router-link :to="`/exams/${exam.id}/results`" class="modern-btn modern-btn-info">
                 <i class="fas fa-chart-bar me-1"></i> نتایج
               </router-link>
-              <button class="modern-btn modern-btn-danger" @click="confirmDeleteExam(exam)">
-                <i class="fas fa-trash me-1"></i> حذف
+
+              <!-- دکمه حذف با شرایط -->
+              <button
+                  v-if="canDeleteExam(exam)"
+                  class="modern-btn modern-btn-danger"
+                  :disabled="isDeleting && selectedExam?.id === exam.id"
+                  @click="confirmDeleteExam(exam)"
+              >
+                <i class="fas fa-spinner fa-spin me-1" v-if="isDeleting && selectedExam?.id === exam.id"></i>
+                <i class="fas fa-trash me-1" v-else></i>
+                {{ isDeleting && selectedExam?.id === exam.id ? 'در حال حذف...' : 'حذف' }}
               </button>
+
+              <!-- دکمه حذف غیرفعال با tooltip -->
+              <span
+                  v-else
+                  class="d-inline-block"
+                  :title="getDeleteTooltip(exam)"
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="top"
+              >
+                <button class="modern-btn modern-btn-danger opacity-50" disabled>
+                  <i class="fas fa-trash me-1"></i> حذف
+                </button>
+              </span>
             </div>
           </div>
         </div>
@@ -130,11 +152,12 @@
     <confirmation-dialog
         ref="confirmDialog"
         title="حذف آزمون"
-        message="آیا از حذف این آزمون اطمینان دارید؟"
-        details="این عمل قابل بازگشت نیست و تمام نتایج آزمون نیز حذف خواهند شد."
+        :message="getDeleteConfirmMessage()"
+        details="این عمل قابل بازگشت نیست و تمام اطلاعات آزمون حذف خواهند شد."
         confirm-text="حذف آزمون"
         confirm-button-type="danger"
         icon="trash-alt"
+        :loading="isDeleting"
         @confirm="deleteExam"
     />
   </div>
@@ -189,6 +212,37 @@ export default {
   },
   async created() {
     await this.fetchExams();
+  },
+  mounted() {
+    // فعال کردن Bootstrap tooltips
+    this.$nextTick(() => {
+      if (typeof window !== 'undefined' && window.bootstrap) {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+          return new window.bootstrap.Tooltip(tooltipTriggerEl);
+        });
+      }
+    });
+  },
+  watch: {
+    exams: {
+      handler() {
+        this.$nextTick(() => {
+          // بروزرسانی tooltips پس از تغییر لیست آزمون‌ها
+          if (typeof window !== 'undefined' && window.bootstrap) {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+              const existingTooltip = window.bootstrap.Tooltip.getInstance(tooltipTriggerEl);
+              if (existingTooltip) {
+                existingTooltip.dispose();
+              }
+              new window.bootstrap.Tooltip(tooltipTriggerEl);
+            });
+          }
+        });
+      },
+      deep: true
+    }
   },
   methods: {
     async fetchExams() {
@@ -264,22 +318,108 @@ export default {
       this.sortExams();
     },
 
+    // جدید: بررسی امکان حذف آزمون
+    canDeleteExam(exam) {
+      // فقط آزمون‌های پیش‌نویس قابل حذف هستند
+      if (exam.status !== 'DRAFT') {
+        return false;
+      }
+
+      // اگر آزمون شرکت‌کننده داشته باشد قابل حذف نیست
+      if (exam.submissions && exam.submissions.length > 0) {
+        return false;
+      }
+
+      return true;
+    },
+
+    // جدید: متن tooltip برای دکمه حذف
+    getDeleteTooltip(exam) {
+      if (exam.status !== 'DRAFT') {
+        return 'فقط آزمون‌های پیش‌نویس قابل حذف هستند';
+      }
+      if (exam.submissions && exam.submissions.length > 0) {
+        return 'آزمون دارای شرکت‌کننده است و قابل حذف نیست';
+      }
+      return 'حذف آزمون';
+    },
+
+    // جدید: پیام تأیید دینامیک
+    getDeleteConfirmMessage() {
+      if (!this.selectedExam) return 'آیا از حذف این آزمون اطمینان دارید؟';
+      return `آیا از حذف آزمون "${this.selectedExam.title}" اطمینان دارید؟`;
+    },
+
+    // اصلاح شده: confirmDeleteExam
     confirmDeleteExam(exam) {
+      // بررسی امکان حذف قبل از نمایش مودال
+      if (!this.canDeleteExam(exam)) {
+        this.$toast?.error(this.getDeleteTooltip(exam));
+        return;
+      }
+
       this.selectedExam = exam;
       this.$refs.confirmDialog.show();
     },
 
+    // اصلاح کامل: deleteExam
     async deleteExam() {
       if (!this.selectedExam || this.isDeleting) return;
 
       this.isDeleting = true;
+
       try {
-        this.exams = this.exams.filter(e => e.id !== this.selectedExam.id);
-        this.$toast?.success('آزمون با موفقیت حذف شد.');
-        this.selectedExam = null;
+        // فراخوانی API حذف آزمون
+        const response = await axios.delete(`/api/exams/${this.selectedExam.id}`);
+
+        if (response.data && response.data.success) {
+          // حذف از state محلی
+          this.exams = this.exams.filter(e => e.id !== this.selectedExam.id);
+
+          // نمایش پیام موفقیت
+          this.$toast?.success(response.data.message || 'آزمون با موفقیت حذف شد.');
+
+          // پاک کردن آزمون انتخاب شده
+          this.selectedExam = null;
+
+        } else {
+          // نمایش پیام خطای دریافتی از سرور
+          this.$toast?.error(response.data?.message || 'خطا در حذف آزمون');
+        }
+
       } catch (error) {
         console.error('Error deleting exam:', error);
-        this.$toast?.error('خطا در حذف آزمون');
+
+        // مدیریت انواع خطاها بر اساس response
+        if (error.response) {
+          const { status, data } = error.response;
+
+          switch (status) {
+            case 400:
+              this.$toast?.error(data?.message || 'فقط آزمون‌های پیش‌نویس بدون شرکت‌کننده قابل حذف هستند.');
+              break;
+
+            case 403:
+              this.$toast?.error(data?.message || 'شما مجاز به حذف این آزمون نیستید.');
+              break;
+
+            case 404:
+              this.$toast?.error('آزمون مورد نظر یافت نشد.');
+              // حذف از لیست محلی چون آزمون دیگر وجود ندارد
+              this.exams = this.exams.filter(e => e.id !== this.selectedExam.id);
+              break;
+
+            default:
+              this.$toast?.error(data?.message || 'خطا در حذف آزمون. لطفاً دوباره تلاش کنید.');
+          }
+        } else if (error.request) {
+          // خطای شبکه
+          this.$toast?.error('خطا در برقراری ارتباط با سرور. لطفاً اتصال اینترنت را بررسی کنید.');
+        } else {
+          // سایر خطاها
+          this.$toast?.error('خطای غیرمنتظره رخ داد.');
+        }
+
       } finally {
         this.isDeleting = false;
       }
@@ -314,7 +454,6 @@ export default {
   margin-bottom: 1rem;
   gap: 1rem;
 }
-
 
 .exam-title {
   font-weight: 600;
@@ -354,6 +493,40 @@ export default {
   padding: 3rem 1rem;
 }
 
+/* استایل های جدید برای دکمه حذف */
+.modern-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  pointer-events: none;
+}
+
+.modern-btn:disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.opacity-50 {
+  opacity: 0.5;
+}
+
+[data-bs-toggle="tooltip"] {
+  cursor: help;
+}
+
+.modern-btn .fa-spin {
+  animation: fa-spin 1s infinite linear;
+}
+
+@keyframes fa-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 @media (max-width: 768px) {
   .exams-grid {
     grid-template-columns: 1fr;
@@ -361,10 +534,20 @@ export default {
 
   .exam-actions {
     flex-direction: column;
+    gap: 0.5rem;
   }
 
   .exam-actions .modern-btn {
     flex: none;
+    width: 100%;
+  }
+
+  .exam-actions .d-inline-block {
+    width: 100%;
+  }
+
+  .exam-actions .d-inline-block button {
+    width: 100%;
   }
 }
 </style>
