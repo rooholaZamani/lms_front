@@ -3,6 +3,49 @@
   <div class="performance-analysis-container">
     <LoadingSpinner v-if="loading" />
 
+    <!-- Debug Panel (only show in development) -->
+    <div v-if="showDebug" class="modern-card mb-4 border-warning">
+      <div class="card-header bg-warning text-dark">
+        <h6 class="mb-0">
+          <i class="fas fa-bug me-2"></i>
+          اطلاعات دیباگ
+          <button @click="showDebug = false" class="btn btn-sm btn-outline-dark float-end">
+            <i class="fas fa-times"></i>
+          </button>
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-3">
+            <h6>آمار دوره:</h6>
+            <pre class="debug-text">{{ JSON.stringify(courseStats, null, 2) }}</pre>
+          </div>
+          <div class="col-md-3">
+            <h6>آمار مشارکت:</h6>
+            <pre class="debug-text">{{ JSON.stringify(participationStats, null, 2) }}</pre>
+          </div>
+          <div class="col-md-3">
+            <h6>آمار زمان:</h6>
+            <pre class="debug-text">{{ JSON.stringify(timeStats, null, 2) }}</pre>
+          </div>
+          <div class="col-md-3">
+            <h6>آمار نمرات:</h6>
+            <pre class="debug-text">{{ JSON.stringify(scoreStats, null, 2) }}</pre>
+          </div>
+        </div>
+        <div class="row mt-3">
+          <div class="col-md-6">
+            <h6>آزمون‌های موجود:</h6>
+            <pre class="debug-text">{{ JSON.stringify(availableExams, null, 2) }}</pre>
+          </div>
+          <div class="col-md-6">
+            <h6>Timeline مشارکت:</h6>
+            <pre class="debug-text">{{ JSON.stringify(participationTimeline.slice(0, 3), null, 2) }}</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Header with filters -->
     <div class="modern-card mb-4">
       <div class="card-header bg-primary text-white">
@@ -62,13 +105,21 @@
           <!-- Refresh Button -->
           <div class="col-md-2">
             <label class="form-label">&nbsp;</label>
-            <button
-                @click="refreshData"
-                class="btn btn-outline-primary w-100"
-                :disabled="!selectedCourse || loading">
-              <i class="fas fa-sync-alt me-1"></i>
-              بروزرسانی
-            </button>
+            <div class="d-flex gap-1">
+              <button
+                  @click="refreshData"
+                  class="btn btn-outline-primary"
+                  :disabled="!selectedCourse || loading">
+                <i class="fas fa-sync-alt"></i>
+              </button>
+              <button
+                  @click="showDebug = !showDebug"
+                  class="btn btn-outline-warning"
+                  :disabled="!selectedCourse"
+                  title="نمایش اطلاعات دیباگ">
+                <i class="fas fa-bug"></i>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -142,7 +193,12 @@
         <div class="card-body">
           <h6 class="card-title">{{ getChartTitle() }}</h6>
           <div class="chart-container">
-            <canvas ref="analyticsChart" width="800" height="400"></canvas>
+            <div v-if="loading" class="d-flex justify-content-center align-items-center h-100">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">در حال بارگذاری...</span>
+              </div>
+            </div>
+            <canvas v-else ref="analyticsChart" width="800" height="400"></canvas>
           </div>
         </div>
       </div>
@@ -494,11 +550,18 @@
       </div>
     </div>
 
-    <!-- Empty State -->
-    <div v-else-if="!selectedCourse && !loading" class="text-center py-5">
+    <!-- No Data State -->
+    <div v-if="!selectedCourse && !loading && !error" class="text-center py-5">
       <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
       <h5 class="text-muted">لطفاً یک دوره انتخاب کنید</h5>
       <p class="text-muted">برای مشاهده تحلیل عملکرد، ابتدا دوره مورد نظر را انتخاب کنید.</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-if="error" class="alert alert-danger" role="alert">
+      <i class="fas fa-exclamation-triangle me-2"></i>
+      {{ error }}
+      <button @click="error = null" class="btn-close float-end"></button>
     </div>
 
     <!-- Error State -->
@@ -530,6 +593,7 @@ export default {
     const analyticsChart = ref(null);
     const timelineChart = ref(null);
     const scoresChart = ref(null);
+    const showDebug = ref(false);
 
     // Data state
     const courses = ref([]);
@@ -592,8 +656,9 @@ export default {
         loading.value = true;
         const response = await axios.get('/courses/teaching');
         courses.value = response.data;
+        console.log('Courses fetched:', response.data); // Debug log
       } catch (err) {
-        error.value = 'خطا در دریافت لیست دوره‌ها';
+        error.value = 'خطا در دریافت لیست دوره‌ها: ' + (err.response?.data?.message || err.message);
         console.error('Error fetching courses:', err);
       } finally {
         loading.value = false;
@@ -607,6 +672,8 @@ export default {
         loading.value = true;
         error.value = null;
 
+        console.log(`Fetching analytics for course ${selectedCourse.value}, period: ${selectedPeriod.value}, analysis: ${analysisType.value}`);
+
         // Fetch all analytics data based on analysis type
         await Promise.all([
           fetchCourseStats(),
@@ -616,8 +683,10 @@ export default {
         // Update charts
         await nextTick();
         updateCharts();
+
+        console.log('Analytics data fetch completed successfully');
       } catch (err) {
-        error.value = 'خطا در دریافت داده‌های تحلیلی';
+        error.value = 'خطا در دریافت داده‌های تحلیلی: ' + (err.response?.data?.message || err.message);
         console.error('Error fetching analytics:', err);
       } finally {
         loading.value = false;
@@ -625,24 +694,37 @@ export default {
     };
 
     const fetchCourseStats = async () => {
-      const [performanceResponse, timeResponse] = await Promise.all([
-        axios.get(`/analytics/teacher/course/${selectedCourse.value}/performance`, {
-          params: { period: selectedPeriod.value }
-        }),
-        axios.get(`/analytics/course/${selectedCourse.value}/time-distribution`, {
-          params: { period: selectedPeriod.value }
-        })
-      ]);
+      try {
+        const [performanceResponse, timeResponse] = await Promise.all([
+          axios.get(`/analytics/teacher/course/${selectedCourse.value}/performance`, {
+            params: { period: selectedPeriod.value }
+          }),
+          axios.get(`/analytics/course/${selectedCourse.value}/time-distribution`, {
+            params: { period: selectedPeriod.value }
+          })
+        ]);
 
-      const performanceData = performanceResponse.data;
-      const timeData = timeResponse.data;
+        const performanceData = performanceResponse.data;
+        const timeData = timeResponse.data;
 
-      courseStats.value = {
-        totalStudents: performanceData.studentCount || 0,
-        averageProgress: Math.round(performanceData.averageProgress || 0),
-        averageTimeSpent: Math.round((timeData.averageTimePerStudent || 0) / 60), // Convert to hours
-        completionRate: Math.round(performanceData.completionRate || 0)
-      };
+        courseStats.value = {
+          totalStudents: timeData.totalStudents || performanceData.studentCount || 0,
+          averageProgress: Math.round(performanceData.averageProgress || 0),
+          averageTimeSpent: Math.round((timeData.averageTimePerStudent || 0) / 60), // Convert minutes to hours
+          completionRate: Math.round(performanceData.completionRate || 0)
+        };
+
+        console.log('Course stats fetched:', { performanceData, timeData }); // Debug log
+      } catch (error) {
+        console.error('Error fetching course stats:', error);
+        // Set default values on error
+        courseStats.value = {
+          totalStudents: 0,
+          averageProgress: 0,
+          averageTimeSpent: 0,
+          completionRate: 0
+        };
+      }
     };
 
     const fetchAnalysisSpecificData = async () => {
@@ -725,54 +807,110 @@ export default {
     };
 
     const fetchParticipationAnalysis = async () => {
-      const response = await axios.get(`/analytics/course/${selectedCourse.value}/activity-stats`, {
-        params: { period: selectedPeriod.value, includeTimeline: true }
-      });
+      try {
+        const response = await axios.get(`/analytics/course/${selectedCourse.value}/activity-stats`, {
+          params: { period: selectedPeriod.value, includeTimeline: true }
+        });
 
-      const data = response.data;
+        const data = response.data;
 
-      participationStats.value = {
-        contentStudy: Math.round(data.participationMetrics?.contentStudy?.participationRate || 0),
-        chatActivity: Math.round(data.participationMetrics?.chatActivity?.participationRate || 0),
-        assignmentSubmission: Math.round(data.participationMetrics?.assignmentSubmission?.participationRate || 0),
-        examParticipation: Math.round(data.participationMetrics?.examParticipation?.participationRate || 0)
-      };
+        // Extract participation rates from nested structure
+        const metrics = data.participationMetrics || {};
+        participationStats.value = {
+          contentStudy: Math.round(metrics.contentStudy?.participationRate || 0),
+          chatActivity: Math.round(metrics.chatActivity?.participationRate || 0),
+          assignmentSubmission: Math.round(metrics.assignmentSubmission?.participationRate || 0),
+          examParticipation: Math.round(metrics.examParticipation?.participationRate || 0)
+        };
 
-      // Store engagement timeline for chart
-      participationTimeline.value = data.engagementTrend || [];
+        // Store engagement timeline for chart
+        participationTimeline.value = data.engagementTrend || [];
+
+        console.log('Participation analysis fetched:', data); // Debug log
+      } catch (error) {
+        console.error('Error fetching participation analysis:', error);
+        // Set default values on error
+        participationStats.value = {
+          contentStudy: 0,
+          chatActivity: 0,
+          assignmentSubmission: 0,
+          examParticipation: 0
+        };
+        participationTimeline.value = [];
+      }
     };
 
     const fetchTimeAnalysis = async () => {
-      const response = await axios.get(`/analytics/course/${selectedCourse.value}/time-distribution`, {
-        params: { period: selectedPeriod.value, includeTimeline: true }
-      });
+      try {
+        const response = await axios.get(`/analytics/course/${selectedCourse.value}/time-distribution`, {
+          params: { period: selectedPeriod.value, granularity: 'daily' }
+        });
 
-      const data = response.data;
+        const data = response.data;
 
-      timeStats.value = {
-        averageDaily: Math.round(data.averageTimePerStudent / 60), // Convert to hours
-        averageWeekly: Math.round((data.averageTimePerStudent * 7) / 60),
-        mostActive: Math.round((data.timeDistribution?.ranges?.slice(-1)[0]?.maxTime || 300) / 60)
-      };
+        // Calculate time stats from API data
+        const avgTimeMinutes = data.averageTimePerStudent || 0;
+        timeStats.value = {
+          averageDaily: Math.round(avgTimeMinutes / 60), // Convert minutes to hours
+          averageWeekly: Math.round((avgTimeMinutes * 7) / 60),
+          mostActive: Math.round(avgTimeMinutes / 60) // Use average as approximation
+        };
 
-      // Use actual time distribution from API
-      timeDistribution.value = data.timeDistribution?.ranges?.map(range => ({
-        label: range.label,
-        count: range.studentCount,
-        percentage: range.percentage,
-        color: getTimeRangeColor(range.percentage)
-      })) || [];
+        // Use actual time distribution from API
+        if (data.timeDistribution && data.timeDistribution.ranges) {
+          timeDistribution.value = data.timeDistribution.ranges.map(range => ({
+            label: range.label,
+            count: range.studentCount || 0,
+            percentage: range.percentage || 0,
+            color: getTimeRangeColor(range.percentage || 0)
+          }));
+        } else {
+          // Fallback to empty array
+          timeDistribution.value = [];
+        }
+
+        console.log('Time analysis fetched:', data); // Debug log
+      } catch (error) {
+        console.error('Error fetching time analysis:', error);
+        // Set default values on error
+        timeStats.value = { averageDaily: 0, averageWeekly: 0, mostActive: 0 };
+        timeDistribution.value = [];
+      }
     };
 
     const fetchExamData = async () => {
-      const response = await axios.get('/exams/teaching');
-      // Filter exams for the selected course
-      const courseExams = response.data.filter(exam =>
-          exam.lesson && exam.lesson.course &&
-          exam.lesson.course.id === selectedCourse.value &&
-          exam.status === 'FINALIZED'
-      );
-      availableExams.value = courseExams;
+      try {
+        // Get exam breakdown from exam-scores API
+        const response = await axios.get(`/analytics/course/${selectedCourse.value}/exam-scores`, {
+          params: { period: selectedPeriod.value }
+        });
+
+        const data = response.data;
+
+        // Use examBreakdown to populate available exams
+        if (data.examBreakdown && data.examBreakdown.length > 0) {
+          availableExams.value = data.examBreakdown.map(exam => ({
+            id: exam.examId,
+            title: exam.examTitle,
+            averageScore: exam.averageScore,
+            submissionCount: exam.submissionCount
+          }));
+        } else {
+          // Fallback to teaching exams API
+          const examResponse = await axios.get('/exams/teaching');
+          const courseExams = examResponse.data.filter(exam =>
+              exam.lesson && exam.lesson.course &&
+              exam.lesson.course.id === selectedCourse.value &&
+              exam.status === 'FINALIZED'
+          );
+          availableExams.value = courseExams;
+        }
+
+        console.log('Exam data fetched:', availableExams.value); // Debug log
+      } catch (error) {
+        console.error('Error fetching exam data:', error);
+        availableExams.value = [];
+      }
     };
 
     const fetchScoreDistribution = async () => {
@@ -781,25 +919,37 @@ export default {
         params.examId = selectedExam.value;
       }
 
-      const response = await axios.get(`/analytics/course/${selectedCourse.value}/exam-scores`, {
-        params
-      });
+      try {
+        const response = await axios.get(`/analytics/course/${selectedCourse.value}/exam-scores`, {
+          params
+        });
 
-      const data = response.data;
+        const data = response.data;
 
-      scoreStats.value = {
-        average: Math.round(data.averageScore || 0),
-        highest: data.highestScore || 0,
-        lowest: data.lowestScore || 0,
-        passRate: Math.round(data.passRate || 0)
-      };
+        // Handle potential null/undefined values safely
+        scoreStats.value = {
+          average: Math.round(data.averageScore || 0),
+          highest: data.highestScore || 0,
+          lowest: data.lowestScore || 0,
+          passRate: Math.round(data.passRate || 0)
+        };
 
-      gradeDistribution.value = {
-        excellent: data.gradeDistribution?.excellent || 0,
-        good: data.gradeDistribution?.good || 0,
-        average: data.gradeDistribution?.average || 0,
-        poor: data.gradeDistribution?.poor || 0
-      };
+        // Handle gradeDistribution safely
+        const gradeDistrib = data.gradeDistribution || {};
+        gradeDistribution.value = {
+          excellent: gradeDistrib.excellent || 0,
+          good: gradeDistrib.good || 0,
+          average: gradeDistrib.average || 0,
+          poor: gradeDistrib.poor || 0
+        };
+
+        console.log('Score distribution fetched:', data); // Debug log
+      } catch (error) {
+        console.error('Error fetching score distribution:', error);
+        // Set default values on error
+        scoreStats.value = { average: 0, highest: 0, lowest: 0, passRate: 0 };
+        gradeDistribution.value = { excellent: 0, good: 0, average: 0, poor: 0 };
+      }
     };
 
     const updateCharts = () => {
@@ -944,13 +1094,15 @@ export default {
       ctx.lineTo(margin + chartWidth, margin + chartHeight);
       ctx.stroke();
 
-      // Draw lines for each activity type
+      // Draw lines for each activity type (based on API structure)
       const activities = ['contentViews', 'chatMessages', 'assignments', 'examAttempts'];
       const colors = ['#007bff', '#28a745', '#ffc107', '#17a2b8'];
       const labels = ['مشاهده محتوا', 'پیام‌های چت', 'تکالیف', 'آزمون‌ها'];
 
       activities.forEach((activity, index) => {
         const values = timeline.map(item => item[activity] || 0);
+        if (values.length === 0) return;
+
         const maxValue = Math.max(...values, 1);
 
         ctx.strokeStyle = colors[index];
@@ -958,7 +1110,7 @@ export default {
         ctx.beginPath();
 
         values.forEach((value, i) => {
-          const x = margin + (i / (values.length - 1 || 1)) * chartWidth;
+          const x = margin + (i / Math.max(values.length - 1, 1)) * chartWidth;
           const y = margin + chartHeight - (value / maxValue) * chartHeight;
 
           if (i === 0) {
@@ -966,6 +1118,12 @@ export default {
           } else {
             ctx.lineTo(x, y);
           }
+
+          // Draw data points
+          ctx.fillStyle = colors[index];
+          ctx.beginPath();
+          ctx.arc(x, y, 3, 0, 2 * Math.PI);
+          ctx.fill();
         });
 
         ctx.stroke();
@@ -1214,6 +1372,7 @@ export default {
       analyticsChart,
       timelineChart,
       scoresChart,
+      showDebug,
 
       // Data
       courses,
@@ -1551,6 +1710,17 @@ export default {
 
 .grade-count {
   font-weight: 500;
+}
+
+/* Debug panel */
+.debug-text {
+  font-size: 0.75rem;
+  max-height: 200px;
+  overflow-y: auto;
+  background: #f8f9fa;
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
 }
 
 /* Responsive design */
