@@ -1,4 +1,4 @@
-// src/router/index.js - نسخه پاک‌شده از route های غیرفعال
+// src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router'
 import store from '../store'
 
@@ -31,6 +31,7 @@ const routes = [
       showSidebar: true
     }
   },
+
   {
     path: '/login',
     name: 'Login',
@@ -238,6 +239,17 @@ const routes = [
     }
   },
   {
+    path: '/question-bank',
+    name: 'QuestionBank',
+    component: () => import(/* webpackChunkName: "question-bank" */ '../components/exams/QuestionBank.vue'),
+    meta: {
+      title: 'بانک سوالات',
+      requiresAuth: true,
+      requiresTeacher: true,
+      showSidebar: true
+    }
+  },
+  {
     path: '/content/:contentId/view',
     name: 'ContentViewer',
     component: () => import(/* webpackChunkName: "content-viewer" */ '../components/courses/ContentViewer.vue'),
@@ -282,6 +294,16 @@ const routes = [
     }
   },
   {
+    path: '/teacher/student-activities',
+    name: 'StudentActivities',
+    component: () => import('../components/analytics/StudentActivities.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresTeacher: true,
+      showSidebar: true
+    }
+  },
+  {
     path: '/student/exam-results',
     name: 'StudentExamResults',
     component: () => import(/* webpackChunkName: "student-exams-table" */ '../components/exams/StudentExamResults.vue'),
@@ -289,6 +311,17 @@ const routes = [
       title: 'نتایج آزمون‌ها',
       requiresAuth: true,
       requiresStudent: true,
+      showSidebar: true
+    }
+  },
+  {
+    path: '/question-bank',
+    name: 'QuestionBank',
+    component: () => import(/* webpackChunkName: "question-bank" */ '../components/exams/QuestionBank.vue'),
+    meta: {
+      title: 'بانک سوالات',
+      requiresAuth: true,
+      requiresTeacher: true,
       showSidebar: true
     }
   },
@@ -303,6 +336,7 @@ const routes = [
       hideSidebar: true
     }
   },
+
   {
     path: '/chat/:courseId',
     name: 'CourseChat',
@@ -332,25 +366,69 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   // تنظیم عنوان صفحه
-  document.title = to.meta.title ? `${to.meta.title} | سامانه یادگیری` : 'سامانه یادگیری'
+  document.title = to.meta.title ? `${to.meta.title} - سامانه آموزش آنلاین` : 'سامانه آموزش آنلاین'
 
-  // بررسی دسترسی
-  const token = store.getters.isLoggedIn
-  const userRole = store.getters.userRole
+  // بررسی نیاز به احراز هویت
+  if (to.matched.some(record => record.meta.requiresAuth)) {
+    // بررسی وضعیت لاگین کاربر
+    if (!store.getters.isLoggedIn) {
+      console.log("کاربر لاگین نیست:", localStorage.getItem('token'), store.state.auth);
 
-  if (to.meta.requiresAuth && !token) {
-    return next('/login')
+      // یک راه میانبر برای حالت تست: اگر localStorage دارای token است، ولی store هنوز مقدار ندارد
+      if (localStorage.getItem('token') && process.env.NODE_ENV === 'development') {
+        console.log("بازیابی داده‌های تست از localStorage");
+        try {
+          const user = JSON.parse(localStorage.getItem('user') || 'null');
+          const userRole = JSON.parse(localStorage.getItem('userRole') || 'null');
+
+          if (user && userRole) {
+            // تنظیم مجدد state در Vuex
+            store.commit('auth/auth_success', {
+              token: localStorage.getItem('token'),
+              user: user,
+              userRole: userRole
+            });
+            return next(); // ادامه مسیر
+          }
+        } catch (e) {
+          console.error("خطا در بازیابی داده‌ها:", e);
+        }
+      }
+
+      // کاربر وارد نشده است، به صفحه ورود منتقل می‌شود
+      next({
+        path: '/login',
+        query: { redirect: to.fullPath }
+      });
+    } else {
+      // بررسی نقش در صورت نیاز
+      if (to.matched.some(record => record.meta.requiresTeacher)) {
+        if (store.getters.userRole.isTeacher) {
+          next();
+        } else {
+          // کاربر مجوز دسترسی ندارد
+          next({ name: 'Forbidden' });
+        }
+      } else if (to.matched.some(record => record.meta.requiresStudent)) {
+        if (store.getters.userRole.isStudent) {
+          next();
+        } else {
+          // کاربر مجوز دسترسی ندارد
+          next({ name: 'Forbidden' });
+        }
+      } else {
+        next();
+      }
+    }
+  } else {
+    // صفحاتی که نیازی به احراز هویت ندارند
+    if (store.getters.isLoggedIn && (to.path === '/login' || to.path === '/register')) {
+      // کاربر قبلاً وارد شده و می‌خواهد به صفحه ورود برود
+      next({ name: 'Dashboard' });
+    } else {
+      next();
+    }
   }
-
-  if (to.meta.requiresTeacher && userRole !== 'TEACHER') {
-    return next('/forbidden')
-  }
-
-  if (to.meta.requiresStudent && userRole !== 'STUDENT') {
-    return next('/forbidden')
-  }
-
-  next()
-})
+});
 
 export default router
