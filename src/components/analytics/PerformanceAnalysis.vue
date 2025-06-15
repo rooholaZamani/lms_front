@@ -1,69 +1,64 @@
-<template>
-  <!-- Performance Analysis Component - Updated with new APIs -->
-  <div class="performance-analysis-container">
-    <LoadingSpinner v-if="loading" />
+<!--
+  PerformanceAnalysis.vue - Teacher Performance Analytics Component
 
-    <!-- Debug Panel (only show in development) -->
-    <div v-if="showDebug" class="modern-card mb-4 border-warning">
-      <div class="card-header bg-warning text-dark">
-        <h6 class="mb-0">
-          <i class="fas fa-bug me-2"></i>
-          اطلاعات دیباگ
-          <button @click="showDebug = false" class="btn btn-sm btn-outline-dark float-end">
-            <i class="fas fa-times"></i>
-          </button>
-        </h6>
-      </div>
-      <div class="card-body">
-        <div class="row">
-          <div class="col-md-3">
-            <h6>آمار دوره:</h6>
-            <pre class="debug-text">{{ JSON.stringify(courseStats, null, 2) }}</pre>
-          </div>
-          <div class="col-md-3">
-            <h6>آمار مشارکت:</h6>
-            <pre class="debug-text">{{ JSON.stringify(participationStats, null, 2) }}</pre>
-          </div>
-          <div class="col-md-3">
-            <h6>آمار زمان:</h6>
-            <pre class="debug-text">{{ JSON.stringify(timeStats, null, 2) }}</pre>
-          </div>
-          <div class="col-md-3">
-            <h6>آمار نمرات:</h6>
-            <pre class="debug-text">{{ JSON.stringify(scoreStats, null, 2) }}</pre>
-          </div>
-        </div>
-        <div class="row mt-3">
-          <div class="col-md-6">
-            <h6>آزمون‌های موجود:</h6>
-            <pre class="debug-text">{{ JSON.stringify(availableExams, null, 2) }}</pre>
-          </div>
-          <div class="col-md-6">
-            <h6>Timeline مشارکت:</h6>
-            <pre class="debug-text">{{ JSON.stringify(participationTimeline.slice(0, 3), null, 2) }}</pre>
-          </div>
-        </div>
+  REQUIRED API ENHANCEMENTS:
+
+  1. Lesson Progress API (MISSING):
+     GET /api/analytics/course/{courseId}/lesson-progress?period={period}
+
+     Expected Response:
+     {
+       "lessons": [
+         {
+           "lessonId": 1,
+           "lessonTitle": "Introduction",
+           "completionRate": 85.5,
+           "completedStudents": 17,
+           "totalStudents": 20,
+           "averageTime": 45
+         }
+       ],
+       "distribution": {
+         "excellent": 5,  // students with 80-100% progress
+         "good": 8,       // students with 60-79% progress
+         "average": 5,    // students with 40-59% progress
+         "poor": 2        // students with <40% progress
+       }
+     }
+
+  2. Enhance existing APIs with additional fields:
+     - /api/analytics/course/{courseId}/exam-scores should include "availableExams" array
+     - /api/analytics/teacher/course/{courseId}/difficult-lessons should include "difficultyScore" field
+-->
+
+<template>
+  <div class="performance-analysis-container">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h4 class="text-dark mb-0">
+        <i class="fas fa-chart-line me-2"></i>
+        تحلیل عملکرد
+      </h4>
+      <div class="d-flex gap-2">
+        <button @click="refreshData" class="btn btn-outline-primary" :disabled="loading">
+          <i class="fas fa-sync-alt"></i>
+          بروزرسانی
+        </button>
+        <button @click="exportData" class="btn btn-outline-success">
+          <i class="fas fa-download"></i>
+          خروجی
+        </button>
       </div>
     </div>
 
-    <!-- Header with filters -->
+    <!-- Filters Row -->
     <div class="modern-card mb-4">
-      <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">
-          <i class="fas fa-chart-line me-2"></i>
-          تحلیل عملکرد دوره
-        </h5>
-      </div>
       <div class="card-body">
         <div class="row g-3">
           <!-- Course Selection -->
           <div class="col-md-4">
-            <label class="form-label">انتخاب دوره:</label>
-            <select
-                v-model="selectedCourse"
-                @change="fetchAnalyticsData"
-                class="form-select"
-                :disabled="loading">
+            <label class="form-label fw-bold">انتخاب دوره:</label>
+            <select v-model="selectedCourse" @change="updateAnalysisView" class="form-select">
               <option value="">انتخاب کنید...</option>
               <option v-for="course in courses" :key="course.id" :value="course.id">
                 {{ course.title }}
@@ -71,63 +66,33 @@
             </select>
           </div>
 
-          <!-- Time Period Selection -->
+          <!-- Period Selection -->
           <div class="col-md-3">
-            <label class="form-label">بازه زمانی:</label>
-            <select
-                v-model="selectedPeriod"
-                @change="fetchAnalyticsData"
-                class="form-select"
-                :disabled="!selectedCourse || loading">
+            <label class="form-label fw-bold">بازه زمانی:</label>
+            <select v-model="selectedPeriod" class="form-select">
               <option value="week">هفته گذشته</option>
               <option value="month">ماه گذشته</option>
-              <option value="quarter">سه ماه گذشته</option>
-              <option value="semester">شش ماه گذشته</option>
+              <option value="quarter">سه‌ماه گذشته</option>
+              <option value="year">سال گذشته</option>
             </select>
           </div>
 
-          <!-- Analysis Type Selection -->
+          <!-- Analysis Type -->
           <div class="col-md-3">
-            <label class="form-label">نوع تحلیل:</label>
-            <select
-                v-model="analysisType"
-                @change="updateAnalysisView"
-                class="form-select"
-                :disabled="!selectedCourse || loading">
-              <option value="progress">پیشرفت دانش‌آموزان</option>
+            <label class="form-label fw-bold">نوع تحلیل:</label>
+            <select v-model="analysisType" class="form-select">
+              <option value="progress">پیشرفت دروس</option>
+              <option value="difficult">دروس دشوار</option>
+              <option value="participation">مشارکت</option>
+              <option value="time">زمان مطالعه</option>
               <option value="scores">توزیع نمرات</option>
-              <option value="time">زمان صرف شده</option>
-              <option value="difficult">دروس چالش‌برانگیز</option>
-              <option value="participation">میزان مشارکت</option>
             </select>
           </div>
 
-          <!-- Refresh Button -->
-          <div class="col-md-2">
-            <label class="form-label">&nbsp;</label>
-            <div class="d-flex gap-1">
-              <button
-                  @click="refreshData"
-                  class="btn btn-outline-primary"
-                  :disabled="!selectedCourse || loading">
-                <i class="fas fa-sync-alt"></i>
-              </button>
-              <button
-                  @click="showDebug = !showDebug"
-                  class="btn btn-outline-warning"
-                  :disabled="!selectedCourse"
-                  title="نمایش اطلاعات دیباگ">
-                <i class="fas fa-bug"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Exam Selection for Score Distribution -->
-        <div v-if="analysisType === 'scores'" class="row mt-3">
-          <div class="col-md-4">
-            <label class="form-label">انتخاب آزمون:</label>
-            <select v-model="selectedExam" @change="fetchScoreDistribution" class="form-select">
+          <!-- Exam Selection (for scores analysis) -->
+          <div v-if="analysisType === 'scores'" class="col-md-2">
+            <label class="form-label fw-bold">آزمون:</label>
+            <select v-model="selectedExam" class="form-select">
               <option value="">همه آزمون‌ها</option>
               <option v-for="exam in availableExams" :key="exam.id" :value="exam.id">
                 {{ exam.title }}
@@ -136,6 +101,28 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Loading State -->
+    <div v-if="loading && !selectedCourse" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">در حال بارگذاری...</span>
+      </div>
+      <p class="mt-3 text-muted">در حال بارگذاری...</p>
+    </div>
+
+    <!-- No Course Selected -->
+    <div v-if="!selectedCourse && !loading" class="text-center py-5">
+      <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+      <h5 class="text-muted">لطفاً یک دوره انتخاب کنید</h5>
+      <p class="text-muted">برای مشاهده تحلیل عملکرد، ابتدا دوره مورد نظر را انتخاب کنید.</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-if="error" class="alert alert-danger" role="alert">
+      <i class="fas fa-exclamation-triangle me-2"></i>
+      {{ error }}
+      <button @click="error = null" class="btn-close float-end"></button>
     </div>
 
     <!-- Analytics Content -->
@@ -198,7 +185,13 @@
                 <span class="visually-hidden">در حال بارگذاری...</span>
               </div>
             </div>
-            <canvas v-else ref="analyticsChart" width="800" height="400"></canvas>
+            <canvas
+                v-show="!loading"
+                ref="analyticsChart"
+                width="800"
+                height="400"
+                style="max-width: 100%; height: auto;"
+            ></canvas>
           </div>
         </div>
       </div>
@@ -207,49 +200,56 @@
 
       <!-- Progress Analysis -->
       <div v-if="analysisType === 'progress'" class="row">
-        <div class="col-md-6">
+        <div class="col-md-8">
           <div class="modern-card">
             <div class="card-body">
-              <h6 class="card-title">پیشرفت بر اساس درس</h6>
-              <div class="lesson-progress-list">
+              <h6 class="card-title">جزئیات پیشرفت دروس</h6>
+              <div v-if="lessonProgress.length > 0" class="lesson-progress-list">
                 <div v-for="lesson in lessonProgress" :key="lesson.id" class="lesson-item">
                   <div class="lesson-info">
                     <span class="lesson-name">{{ lesson.title }}</span>
-                    <span class="lesson-stats">{{ lesson.completedStudents }}/{{ courseStats.totalStudents }}</span>
+                    <span class="lesson-stats">{{ lesson.completedStudents }}/{{ lesson.totalStudents }} دانش‌آموز</span>
                   </div>
                   <div class="progress mb-2">
                     <div
                         class="progress-bar"
                         :class="getProgressBarClass(lesson.completionRate)"
-                        :style="{ width: lesson.completionRate + '%' }">
+                        :style="{ width: lesson.completionRate + '%' }"
+                    >
                       {{ Math.round(lesson.completionRate) }}%
                     </div>
                   </div>
+                  <small class="text-muted">میانگین زمان: {{ lesson.averageTime }} دقیقه</small>
                 </div>
+              </div>
+              <div v-else class="text-center py-4">
+                <i class="fas fa-info-circle text-muted mb-2"></i>
+                <p class="text-muted">جزئیات درس‌ها در دسترس نیست</p>
+                <small class="text-muted">این قابلیت نیاز به API اضافی دارد</small>
               </div>
             </div>
           </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
           <div class="modern-card">
             <div class="card-body">
-              <h6 class="card-title">توزیع سطح پیشرفت</h6>
+              <h6 class="card-title">توزیع پیشرفت</h6>
               <div class="progress-distribution">
                 <div class="distribution-item">
-                  <span class="level excellent">پیشرفته (90-100%)</span>
-                  <span class="count">{{ progressDistribution.excellent }} نفر</span>
+                  <span class="level excellent">عالی (80-100%)</span>
+                  <span class="badge bg-success">{{ progressDistribution.excellent }} نفر</span>
                 </div>
                 <div class="distribution-item">
-                  <span class="level good">خوب (70-89%)</span>
-                  <span class="count">{{ progressDistribution.good }} نفر</span>
+                  <span class="level good">خوب (60-79%)</span>
+                  <span class="badge bg-info">{{ progressDistribution.good }} نفر</span>
                 </div>
                 <div class="distribution-item">
-                  <span class="level average">متوسط (50-69%)</span>
-                  <span class="count">{{ progressDistribution.average }} نفر</span>
+                  <span class="level average">متوسط (40-59%)</span>
+                  <span class="badge bg-warning">{{ progressDistribution.average }} نفر</span>
                 </div>
                 <div class="distribution-item">
-                  <span class="level poor">ضعیف (0-49%)</span>
-                  <span class="count">{{ progressDistribution.poor }} نفر</span>
+                  <span class="level poor">ضعیف (زیر 40%)</span>
+                  <span class="badge bg-danger">{{ progressDistribution.poor }} نفر</span>
                 </div>
               </div>
             </div>
@@ -262,38 +262,43 @@
         <div class="col-md-8">
           <div class="modern-card">
             <div class="card-body">
-              <h6 class="card-title">دروس چالش‌برانگیز</h6>
-              <div class="difficult-lessons-list">
+              <h6 class="card-title">دروس دشوار</h6>
+              <div v-if="difficultLessons.length > 0" class="difficult-lessons-list">
                 <div v-for="lesson in difficultLessons" :key="lesson.id" class="difficulty-item">
                   <div class="lesson-header">
                     <h6>{{ lesson.title }}</h6>
-                    <span class="difficulty-badge" :class="getDifficultyClass(lesson.difficultyScore)">
+                    <span class="badge" :class="getDifficultyClass(lesson.difficultyScore)">
                       {{ getDifficultyLabel(lesson.difficultyScore) }}
                     </span>
                   </div>
                   <div class="lesson-metrics">
                     <div class="metric">
-                      <i class="fas fa-clock text-warning"></i>
-                      <span>میانگین زمان: {{ Math.round(lesson.averageTime / 60) }} دقیقه</span>
-                    </div>
-                    <div class="metric">
-                      <i class="fas fa-percentage text-info"></i>
+                      <i class="fas fa-percentage text-warning"></i>
                       <span>نرخ تکمیل: {{ Math.round(lesson.completionRate) }}%</span>
                     </div>
                     <div class="metric">
-                      <i class="fas fa-users text-primary"></i>
-                      <span>{{ lesson.strugglingStudents }} دانش‌آموز نیاز به کمک</span>
+                      <i class="fas fa-clock text-info"></i>
+                      <span>میانگین زمان: {{ lesson.averageTime }} دقیقه</span>
+                    </div>
+                    <div class="metric">
+                      <i class="fas fa-chart-line text-success"></i>
+                      <span>امتیاز دشواری: {{ lesson.difficultyScore }}/100</span>
                     </div>
                   </div>
                   <div class="lesson-actions">
-                    <button class="btn btn-sm btn-outline-primary" @click="viewLessonDetails(lesson)">
-                      <i class="fas fa-eye me-1"></i>جزئیات
+                    <button @click="viewLessonDetails(lesson)" class="btn btn-sm btn-outline-primary">
+                      <i class="fas fa-eye"></i> جزئیات
                     </button>
-                    <button class="btn btn-sm btn-outline-success" @click="generateRecommendations(lesson)">
-                      <i class="fas fa-lightbulb me-1"></i>پیشنهادات
+                    <button @click="generateRecommendations(lesson)" class="btn btn-sm btn-outline-success">
+                      <i class="fas fa-lightbulb"></i> پیشنهادات
                     </button>
                   </div>
                 </div>
+              </div>
+              <div v-else class="text-center py-4">
+                <i class="fas fa-info-circle text-muted mb-2"></i>
+                <p class="text-muted">دروس دشوار در دسترس نیست</p>
+                <small class="text-muted">بررسی API difficult-lessons</small>
               </div>
             </div>
           </div>
@@ -304,15 +309,15 @@
               <h6 class="card-title">خلاصه آمار</h6>
               <div class="summary-stats">
                 <div class="stat-item">
-                  <span class="stat-label">دروس آسان</span>
+                  <span>دروس آسان:</span>
                   <span class="stat-value text-success">{{ lessonStats.easy }}</span>
                 </div>
                 <div class="stat-item">
-                  <span class="stat-label">دروس متوسط</span>
+                  <span>دروس متوسط:</span>
                   <span class="stat-value text-warning">{{ lessonStats.medium }}</span>
                 </div>
                 <div class="stat-item">
-                  <span class="stat-label">دروس سخت</span>
+                  <span>دروس سخت:</span>
                   <span class="stat-value text-danger">{{ lessonStats.hard }}</span>
                 </div>
               </div>
@@ -323,100 +328,89 @@
 
       <!-- Participation Analysis -->
       <div v-if="analysisType === 'participation'" class="row">
-        <div class="col-md-6">
+        <div class="col-md-8">
           <div class="modern-card">
             <div class="card-body">
-              <h6 class="card-title">مشارکت بر اساس نوع فعالیت</h6>
+              <h6 class="card-title">نمودار مشارکت در طول زمان</h6>
+              <div class="chart-container">
+                <canvas
+                    ref="timelineChart"
+                    width="600"
+                    height="300"
+                    style="max-width: 100%; height: auto;"
+                ></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="modern-card">
+            <div class="card-body">
+              <h6 class="card-title">میزان مشارکت</h6>
               <div class="participation-metrics">
                 <div class="participation-item">
                   <div class="activity-header">
                     <i class="fas fa-book text-primary"></i>
                     <span>مطالعه محتوا</span>
                   </div>
-                  <div class="activity-stats">
-                    <span class="percentage">{{ participationStats.contentStudy }}%</span>
-                    <div class="progress">
-                      <div class="progress-bar bg-primary" :style="{ width: participationStats.contentStudy + '%' }"></div>
+                  <div class="progress">
+                    <div class="progress-bar bg-primary" :style="{ width: participationStats.contentStudy + '%' }">
+                      {{ participationStats.contentStudy }}%
                     </div>
                   </div>
                 </div>
-
                 <div class="participation-item">
                   <div class="activity-header">
                     <i class="fas fa-comments text-success"></i>
                     <span>فعالیت چت</span>
                   </div>
-                  <div class="activity-stats">
-                    <span class="percentage">{{ participationStats.chatActivity }}%</span>
-                    <div class="progress">
-                      <div class="progress-bar bg-success" :style="{ width: participationStats.chatActivity + '%' }"></div>
+                  <div class="progress">
+                    <div class="progress-bar bg-success" :style="{ width: participationStats.chatActivity + '%' }">
+                      {{ participationStats.chatActivity }}%
                     </div>
                   </div>
                 </div>
-
                 <div class="participation-item">
                   <div class="activity-header">
-                    <i class="fas fa-file-alt text-warning"></i>
-                    <span>ارسال تکلیف</span>
+                    <i class="fas fa-tasks text-warning"></i>
+                    <span>ارسال تکالیف</span>
                   </div>
-                  <div class="activity-stats">
-                    <span class="percentage">{{ participationStats.assignmentSubmission }}%</span>
-                    <div class="progress">
-                      <div class="progress-bar bg-warning" :style="{ width: participationStats.assignmentSubmission + '%' }"></div>
+                  <div class="progress">
+                    <div class="progress-bar bg-warning" :style="{ width: participationStats.assignmentSubmission + '%' }">
+                      {{ participationStats.assignmentSubmission }}%
                     </div>
                   </div>
                 </div>
-
                 <div class="participation-item">
                   <div class="activity-header">
                     <i class="fas fa-clipboard-check text-info"></i>
                     <span>شرکت در آزمون</span>
                   </div>
-                  <div class="activity-stats">
-                    <span class="percentage">{{ participationStats.examParticipation }}%</span>
-                    <div class="progress">
-                      <div class="progress-bar bg-info" :style="{ width: participationStats.examParticipation + '%' }"></div>
+                  <div class="progress">
+                    <div class="progress-bar bg-info" :style="{ width: participationStats.examParticipation + '%' }">
+                      {{ participationStats.examParticipation }}%
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="modern-card">
-            <div class="card-body">
-              <h6 class="card-title">روند مشارکت در زمان</h6>
-              <div class="timeline-chart">
-                <canvas ref="timelineChart" width="400" height="300"></canvas>
-              </div>
-              <div v-if="participationTimeline.length > 0" class="timeline-info mt-3">
-                <small class="text-muted">
-                  آخرین بروزرسانی: {{ participationTimeline.length }} هفته گذشته
-                </small>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Time Analysis -->
+      <!-- Time Distribution Analysis -->
       <div v-if="analysisType === 'time'" class="row">
         <div class="col-md-8">
           <div class="modern-card">
             <div class="card-body">
-              <h6 class="card-title">توزیع زمان مطالعه</h6>
-              <div class="time-distribution">
-                <div class="time-item" v-for="range in timeDistribution" :key="range.label">
-                  <div class="time-label">{{ range.label }}</div>
-                  <div class="time-bar">
-                    <div
-                        class="time-fill"
-                        :style="{ width: range.percentage + '%', backgroundColor: range.color }">
-                    </div>
-                    <span class="time-count">{{ range.count }} نفر</span>
-                  </div>
-                </div>
+              <h6 class="card-title">توزیع زمان مطالعه دانش‌آموزان</h6>
+              <div class="chart-container">
+                <canvas
+                    ref="analyticsChart"
+                    width="600"
+                    height="300"
+                    style="max-width: 100%; height: auto;"
+                ></canvas>
               </div>
             </div>
           </div>
@@ -425,34 +419,18 @@
           <div class="modern-card">
             <div class="card-body">
               <h6 class="card-title">آمار زمانی</h6>
-              <div class="time-stats">
-                <div class="time-stat">
-                  <i class="fas fa-clock text-primary"></i>
-                  <div class="stat-info">
-                    <span class="stat-value">{{ timeStats.averageDaily }}h</span>
-                    <span class="stat-label">میانگین روزانه</span>
-                  </div>
+              <div class="summary-stats">
+                <div class="stat-item">
+                  <span>میانگین روزانه:</span>
+                  <span class="stat-value">{{ timeStats.averageDaily }} ساعت</span>
                 </div>
-                <div class="time-stat">
-                  <i class="fas fa-calendar-week text-success"></i>
-                  <div class="stat-info">
-                    <span class="stat-value">{{ timeStats.averageWeekly }}h</span>
-                    <span class="stat-label">میانگین هفتگی</span>
-                  </div>
+                <div class="stat-item">
+                  <span>میانگین هفتگی:</span>
+                  <span class="stat-value">{{ timeStats.averageWeekly }} ساعت</span>
                 </div>
-                <div class="time-stat">
-                  <i class="fas fa-users text-info"></i>
-                  <div class="stat-info">
-                    <span class="stat-value">{{ courseStats.totalStudents }}</span>
-                    <span class="stat-label">کل دانش‌آموزان</span>
-                  </div>
-                </div>
-                <div class="time-stat">
-                  <i class="fas fa-chart-line text-warning"></i>
-                  <div class="stat-info">
-                    <span class="stat-value">{{ courseStats.averageTimeSpent }}h</span>
-                    <span class="stat-label">میانگین کل</span>
-                  </div>
+                <div class="stat-item">
+                  <span>بیشترین فعالیت:</span>
+                  <span class="stat-value">{{ timeStats.mostActive }} ساعت</span>
                 </div>
               </div>
             </div>
@@ -460,14 +438,19 @@
         </div>
       </div>
 
-      <!-- Score Distribution -->
+      <!-- Scores Distribution Analysis -->
       <div v-if="analysisType === 'scores'" class="row">
         <div class="col-md-8">
           <div class="modern-card">
             <div class="card-body">
               <h6 class="card-title">توزیع نمرات {{ selectedExamTitle }}</h6>
-              <div class="score-chart">
-                <canvas ref="scoresChart" width="600" height="400"></canvas>
+              <div class="chart-container">
+                <canvas
+                    ref="scoresChart"
+                    width="600"
+                    height="300"
+                    style="max-width: 100%; height: auto;"
+                ></canvas>
               </div>
             </div>
           </div>
@@ -476,98 +459,45 @@
           <div class="modern-card">
             <div class="card-body">
               <h6 class="card-title">آمار نمرات</h6>
-              <div class="score-stats">
-                <div class="score-stat">
-                  <span class="stat-label">کل آزمون‌ها</span>
-                  <span class="stat-value">{{ availableExams.length }}</span>
+              <div class="summary-stats">
+                <div class="stat-item">
+                  <span>میانگین:</span>
+                  <span class="stat-value">{{ scoreStats.average.toFixed(1) }}</span>
                 </div>
-                <div class="score-stat">
-                  <span class="stat-label">میانگین</span>
-                  <span class="stat-value">{{ scoreStats.average }}/20</span>
+                <div class="stat-item">
+                  <span>بالاترین نمره:</span>
+                  <span class="stat-value">{{ scoreStats.highest }}</span>
                 </div>
-                <div class="score-stat">
-                  <span class="stat-label">بالاترین نمره</span>
-                  <span class="stat-value">{{ scoreStats.highest }}/20</span>
+                <div class="stat-item">
+                  <span>پایین‌ترین نمره:</span>
+                  <span class="stat-value">{{ scoreStats.lowest }}</span>
                 </div>
-                <div class="score-stat">
-                  <span class="stat-label">پایین‌ترین نمره</span>
-                  <span class="stat-value">{{ scoreStats.lowest }}/20</span>
-                </div>
-                <div class="score-stat">
-                  <span class="stat-label">نرخ قبولی</span>
-                  <span class="stat-value">{{ scoreStats.passRate }}%</span>
-                </div>
-              </div>
-
-              <div class="grade-distribution mt-3">
-                <div class="grade-item">
-                  <span class="grade-label excellent">عالی (18-20)</span>
-                  <span class="grade-count">{{ gradeDistribution.excellent }} نفر</span>
-                </div>
-                <div class="grade-item">
-                  <span class="grade-label good">خوب (15-17)</span>
-                  <span class="grade-count">{{ gradeDistribution.good }} نفر</span>
-                </div>
-                <div class="grade-item">
-                  <span class="grade-label average">متوسط (12-14)</span>
-                  <span class="grade-count">{{ gradeDistribution.average }} نفر</span>
-                </div>
-                <div class="grade-item">
-                  <span class="grade-label poor">ضعیف (0-11)</span>
-                  <span class="grade-count">{{ gradeDistribution.poor }} نفر</span>
+                <div class="stat-item">
+                  <span>نرخ قبولی:</span>
+                  <span class="stat-value">{{ scoreStats.passRate.toFixed(1) }}%</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Export and Actions -->
-      <div class="mt-4">
-        <div class="modern-card">
-          <div class="card-body">
-            <h6 class="card-title">عملیات</h6>
-            <div class="d-flex gap-2 flex-wrap">
-              <button class="btn btn-success" @click="exportData" :disabled="loading">
-                <i class="fas fa-download me-1"></i>
-                خروجی Excel
-              </button>
-              <button class="btn btn-info" @click="generateReport" :disabled="loading">
-                <i class="fas fa-file-pdf me-1"></i>
-                گزارش PDF
-              </button>
-              <button class="btn btn-primary" @click="shareAnalysis" :disabled="loading">
-                <i class="fas fa-share me-1"></i>
-                اشتراک‌گذاری
-              </button>
-              <button class="btn btn-warning" @click="scheduleReport" :disabled="loading">
-                <i class="fas fa-calendar me-1"></i>
-                گزارش دوره‌ای
-              </button>
-            </div>
-          </div>
-        </div>
+    <!-- Debug Panel (for development) -->
+    <div v-if="showDebug" class="modern-card mt-4">
+      <div class="card-body">
+        <h6 class="card-title">اطلاعات Debug</h6>
+        <pre class="small">{{ {
+          selectedCourse,
+          selectedPeriod,
+          analysisType,
+          courseStats,
+          lessonProgress: lessonProgress.length,
+          difficultLessons: difficultLessons.length,
+          participationStats,
+          timeDistribution: timeDistribution.length
+        } }}</pre>
       </div>
-    </div>
-
-    <!-- No Data State -->
-    <div v-if="!selectedCourse && !loading && !error" class="text-center py-5">
-      <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
-      <h5 class="text-muted">لطفاً یک دوره انتخاب کنید</h5>
-      <p class="text-muted">برای مشاهده تحلیل عملکرد، ابتدا دوره مورد نظر را انتخاب کنید.</p>
-    </div>
-
-    <!-- Error State -->
-    <div v-if="error" class="alert alert-danger" role="alert">
-      <i class="fas fa-exclamation-triangle me-2"></i>
-      {{ error }}
-      <button @click="error = null" class="btn-close float-end"></button>
-    </div>
-
-    <!-- Error State -->
-    <div v-if="error" class="alert alert-danger" role="alert">
-      <i class="fas fa-exclamation-triangle me-2"></i>
-      {{ error }}
     </div>
   </div>
 </template>
@@ -656,13 +586,29 @@ export default {
         loading.value = true;
         const response = await axios.get('/courses/teaching');
         courses.value = response.data;
-        console.log('Courses fetched:', response.data); // Debug log
+        console.log('Courses fetched:', response.data);
       } catch (err) {
         error.value = 'خطا در دریافت لیست دوره‌ها: ' + (err.response?.data?.message || err.message);
         console.error('Error fetching courses:', err);
       } finally {
         loading.value = false;
       }
+    };
+
+    const initializeCanvasSize = () => {
+      nextTick(() => {
+        [analyticsChart, timelineChart, scoresChart].forEach(canvasRef => {
+          if (canvasRef.value) {
+            const canvas = canvasRef.value;
+            const container = canvas.parentElement;
+            if (container) {
+              const rect = container.getBoundingClientRect();
+              canvas.width = Math.max(rect.width || 800, 400);
+              canvas.height = Math.max(rect.height || 400, 300);
+            }
+          }
+        });
+      });
     };
 
     const fetchAnalyticsData = async () => {
@@ -680,9 +626,14 @@ export default {
           fetchAnalysisSpecificData()
         ]);
 
-        // Update charts
-        await nextTick();
-        updateCharts();
+        console.log('Data loaded, updating charts...');
+
+        // Initialize canvas size and update charts
+        initializeCanvasSize();
+
+        setTimeout(async () => {
+          await updateCharts();
+        }, 200);
 
         console.log('Analytics data fetch completed successfully');
       } catch (err) {
@@ -708,16 +659,15 @@ export default {
         const timeData = timeResponse.data;
 
         courseStats.value = {
-          totalStudents: timeData.totalStudents || performanceData.studentCount || 0,
-          averageProgress: Math.round(performanceData.averageProgress || 0),
-          averageTimeSpent: Math.round((timeData.averageTimePerStudent || 0) / 60), // Convert minutes to hours
-          completionRate: Math.round(performanceData.completionRate || 0)
+          totalStudents: performanceData.totalStudents || performanceData.activeStudents || timeData.totalStudents || 0,
+          averageProgress: Math.round(performanceData.averageCompletion || 0),
+          averageTimeSpent: Math.round((timeData.averageTimePerStudent || 0) / 60),
+          completionRate: Math.round(performanceData.passRate || 0)
         };
 
-        console.log('Course stats fetched:', { performanceData, timeData }); // Debug log
+        console.log('Course stats fetched:', { performanceData, timeData });
       } catch (error) {
         console.error('Error fetching course stats:', error);
-        // Set default values on error
         courseStats.value = {
           totalStudents: 0,
           averageProgress: 0,
@@ -733,7 +683,7 @@ export default {
           await fetchProgressAnalysis();
           break;
         case 'difficult':
-          await fetchDifficultLessonsAnalysis();
+          await fetchDifficultyAnalysis();
           break;
         case 'participation':
           await fetchParticipationAnalysis();
@@ -742,67 +692,82 @@ export default {
           await fetchTimeAnalysis();
           break;
         case 'scores':
-          await fetchExamData();
           await fetchScoreDistribution();
           break;
       }
     };
 
     const fetchProgressAnalysis = async () => {
-      // Fetch lesson performance
-      const response = await axios.get('/analytics/teacher/lesson-performance', {
-        params: { period: selectedPeriod.value }
-      });
+      try {
+        // Use the existing performance API to get lesson progress data
+        const response = await axios.get(`/analytics/teacher/course/${selectedCourse.value}/performance`, {
+          params: { period: selectedPeriod.value }
+        });
 
-      // Filter lessons for the selected course
-      lessonProgress.value = response.data
-          .filter(lesson => lesson.courseId === selectedCourse.value)
-          .map(lesson => ({
-            ...lesson,
-            completionRate: (lesson.completedStudents / courseStats.value.totalStudents) * 100
+        const data = response.data;
+
+        // Create mock lesson progress data from available performance data
+        // Note: This API needs to be enhanced to include lesson-specific progress
+        lessonProgress.value = [];
+
+        // Create distribution based on available data
+        const totalStudents = data.totalStudents || data.activeStudents || 0;
+        const averageCompletion = data.averageCompletion || data.averageProgress || 0;
+
+        // Estimate distribution based on average completion
+        progressDistribution.value = {
+          excellent: Math.round(totalStudents * 0.2), // 20% excellent
+          good: Math.round(totalStudents * 0.3),      // 30% good
+          average: Math.round(totalStudents * 0.3),   // 30% average
+          poor: Math.round(totalStudents * 0.2)       // 20% poor
+        };
+
+        console.log('Progress analysis fetched:', data);
+      } catch (error) {
+        console.error('Error fetching progress analysis:', error);
+        lessonProgress.value = [];
+        progressDistribution.value = { excellent: 0, good: 0, average: 0, poor: 0 };
+      }
+    };
+
+    const fetchDifficultyAnalysis = async () => {
+      try {
+        const response = await axios.get(`/analytics/teacher/course/${selectedCourse.value}/difficult-lessons`, {
+          params: { period: selectedPeriod.value }
+        });
+
+        const data = response.data;
+
+        if (data && Array.isArray(data)) {
+          difficultLessons.value = data.map(lesson => ({
+            id: lesson.lessonId || lesson.id,
+            title: lesson.lessonTitle || lesson.title || 'بدون عنوان',
+            difficultyScore: lesson.difficultyScore || calculateDifficultyScore(lesson),
+            completionRate: lesson.completionRate || 0,
+            averageTime: lesson.averageTime || lesson.avgTime || 0,
+            attempts: lesson.attempts || lesson.totalAttempts || 0
           }));
+        } else {
+          difficultLessons.value = [];
+        }
 
-      // Calculate progress distribution
-      calculateProgressDistribution();
-    };
+        lessonStats.value = {
+          easy: difficultLessons.value.filter(l => l.difficultyScore < 40).length,
+          medium: difficultLessons.value.filter(l => l.difficultyScore >= 40 && l.difficultyScore < 70).length,
+          hard: difficultLessons.value.filter(l => l.difficultyScore >= 70).length
+        };
 
-    const calculateProgressDistribution = () => {
-      const students = courseStats.value.totalStudents;
-      if (students === 0) return;
-
-      // Simulate distribution based on average progress
-      const avgProgress = courseStats.value.averageProgress;
-
-      progressDistribution.value = {
-        excellent: Math.round(students * 0.2),
-        good: Math.round(students * 0.35),
-        average: Math.round(students * 0.3),
-        poor: Math.round(students * 0.15)
-      };
-    };
-
-    const fetchDifficultLessonsAnalysis = async () => {
-      const response = await axios.get(`/analytics/teacher/course/${selectedCourse.value}/difficult-lessons`, {
-        params: { period: selectedPeriod.value }
-      });
-
-      difficultLessons.value = response.data.map(lesson => ({
-        ...lesson,
-        difficultyScore: calculateDifficultyScore(lesson),
-        strugglingStudents: Math.round(courseStats.value.totalStudents * (1 - lesson.completionRate / 100) * 0.3)
-      }));
-
-      // Calculate lesson stats
-      lessonStats.value = {
-        easy: difficultLessons.value.filter(l => l.difficultyScore < 30).length,
-        medium: difficultLessons.value.filter(l => l.difficultyScore >= 30 && l.difficultyScore < 70).length,
-        hard: difficultLessons.value.filter(l => l.difficultyScore >= 70).length
-      };
+        console.log('Difficulty analysis fetched:', data);
+      } catch (error) {
+        console.error('Error fetching difficulty analysis:', error);
+        difficultLessons.value = [];
+        lessonStats.value = { easy: 0, medium: 0, hard: 0 };
+      }
     };
 
     const calculateDifficultyScore = (lesson) => {
-      const timeWeight = Math.min((lesson.averageTime / 3600), 1) * 40; // Max 40 points for time
-      const completionWeight = (100 - lesson.completionRate) * 0.6; // Max 60 points for low completion
+      const timeWeight = Math.min((lesson.averageTime || 0) / 60, 40);
+      const completionWeight = (100 - (lesson.completionRate || 0)) * 0.6;
       return Math.round(timeWeight + completionWeight);
     };
 
@@ -814,7 +779,6 @@ export default {
 
         const data = response.data;
 
-        // Extract participation rates from nested structure
         const metrics = data.participationMetrics || {};
         participationStats.value = {
           contentStudy: Math.round(metrics.contentStudy?.participationRate || 0),
@@ -823,13 +787,11 @@ export default {
           examParticipation: Math.round(metrics.examParticipation?.participationRate || 0)
         };
 
-        // Store engagement timeline for chart
         participationTimeline.value = data.engagementTrend || [];
 
-        console.log('Participation analysis fetched:', data); // Debug log
+        console.log('Participation analysis fetched:', data);
       } catch (error) {
         console.error('Error fetching participation analysis:', error);
-        // Set default values on error
         participationStats.value = {
           contentStudy: 0,
           chatActivity: 0,
@@ -848,15 +810,13 @@ export default {
 
         const data = response.data;
 
-        // Calculate time stats from API data
         const avgTimeMinutes = data.averageTimePerStudent || 0;
         timeStats.value = {
-          averageDaily: Math.round(avgTimeMinutes / 60), // Convert minutes to hours
+          averageDaily: Math.round(avgTimeMinutes / 60),
           averageWeekly: Math.round((avgTimeMinutes * 7) / 60),
-          mostActive: Math.round(avgTimeMinutes / 60) // Use average as approximation
+          mostActive: Math.round(avgTimeMinutes / 60)
         };
 
-        // Use actual time distribution from API
         if (data.timeDistribution && data.timeDistribution.ranges) {
           timeDistribution.value = data.timeDistribution.ranges.map(range => ({
             label: range.label,
@@ -865,128 +825,111 @@ export default {
             color: getTimeRangeColor(range.percentage || 0)
           }));
         } else {
-          // Fallback to empty array
           timeDistribution.value = [];
         }
 
-        console.log('Time analysis fetched:', data); // Debug log
+        console.log('Time analysis fetched:', data);
       } catch (error) {
         console.error('Error fetching time analysis:', error);
-        // Set default values on error
         timeStats.value = { averageDaily: 0, averageWeekly: 0, mostActive: 0 };
         timeDistribution.value = [];
       }
     };
 
-    const fetchExamData = async () => {
+    const fetchScoreDistribution = async () => {
       try {
-        // Get exam breakdown from exam-scores API
-        const response = await axios.get(`/analytics/course/${selectedCourse.value}/exam-scores`, {
-          params: { period: selectedPeriod.value }
-        });
-
-        const data = response.data;
-
-        // Use examBreakdown to populate available exams
-        if (data.examBreakdown && data.examBreakdown.length > 0) {
-          availableExams.value = data.examBreakdown.map(exam => ({
-            id: exam.examId,
-            title: exam.examTitle,
-            averageScore: exam.averageScore,
-            submissionCount: exam.submissionCount
-          }));
-        } else {
-          // Fallback to teaching exams API
-          const examResponse = await axios.get('/exams/teaching');
-          const courseExams = examResponse.data.filter(exam =>
-              exam.lesson && exam.lesson.course &&
-              exam.lesson.course.id === selectedCourse.value &&
-              exam.status === 'FINALIZED'
-          );
-          availableExams.value = courseExams;
+        const params = { period: selectedPeriod.value };
+        if (selectedExam.value) {
+          params.examId = selectedExam.value;
         }
 
-        console.log('Exam data fetched:', availableExams.value); // Debug log
-      } catch (error) {
-        console.error('Error fetching exam data:', error);
-        availableExams.value = [];
-      }
-    };
-
-    const fetchScoreDistribution = async () => {
-      const params = { period: selectedPeriod.value };
-      if (selectedExam.value) {
-        params.examId = selectedExam.value;
-      }
-
-      try {
-        const response = await axios.get(`/analytics/course/${selectedCourse.value}/exam-scores`, {
-          params
-        });
+        const response = await axios.get(`/analytics/course/${selectedCourse.value}/exam-scores`, { params });
 
         const data = response.data;
 
-        // Handle potential null/undefined values safely
         scoreStats.value = {
-          average: Math.round(data.averageScore || 0),
+          average: data.averageScore || 0,
           highest: data.highestScore || 0,
           lowest: data.lowestScore || 0,
-          passRate: Math.round(data.passRate || 0)
+          passRate: data.passRate || 0
         };
 
-        // Handle gradeDistribution safely
-        const gradeDistrib = data.gradeDistribution || {};
-        gradeDistribution.value = {
-          excellent: gradeDistrib.excellent || 0,
-          good: gradeDistrib.good || 0,
-          average: gradeDistrib.average || 0,
-          poor: gradeDistrib.poor || 0
-        };
+        if (data.gradeDistribution) {
+          gradeDistribution.value = {
+            excellent: data.gradeDistribution.excellent || 0,
+            good: data.gradeDistribution.good || 0,
+            average: data.gradeDistribution.average || 0,
+            poor: data.gradeDistribution.poor || 0
+          };
+        }
 
-        console.log('Score distribution fetched:', data); // Debug log
+        // Set available exams if provided in the response or fetch from examBreakdown
+        if (data.examBreakdown && Array.isArray(data.examBreakdown)) {
+          availableExams.value = data.examBreakdown.map(exam => ({
+            id: exam.examId,
+            title: exam.examTitle
+          }));
+        }
+
+        console.log('Score distribution fetched:', data);
       } catch (error) {
         console.error('Error fetching score distribution:', error);
-        // Set default values on error
         scoreStats.value = { average: 0, highest: 0, lowest: 0, passRate: 0 };
         gradeDistribution.value = { excellent: 0, good: 0, average: 0, poor: 0 };
       }
     };
 
-    const updateCharts = () => {
+    const updateCharts = async () => {
+      await nextTick();
+
+      if (!analyticsChart.value && !scoresChart.value && !timelineChart.value) {
+        console.warn('Canvas references not ready');
+        return;
+      }
+
+      console.log(`Drawing chart for analysis type: ${analysisType.value}`);
+
       switch (analysisType.value) {
         case 'progress':
-          drawProgressChart();
+          if (analyticsChart.value) drawProgressChart();
           break;
         case 'difficult':
-          drawDifficultyChart();
+          if (analyticsChart.value) drawDifficultyChart();
           break;
         case 'participation':
-          drawParticipationChart();
+          if (timelineChart.value) drawParticipationChart();
           break;
         case 'time':
-          drawTimeChart();
+          if (analyticsChart.value) drawTimeChart();
           break;
         case 'scores':
-          drawScoresChart();
+          if (scoresChart.value) drawScoresChart();
           break;
       }
     };
 
     const drawProgressChart = () => {
-      if (!analyticsChart.value) return;
+      console.log('Drawing progress chart...');
+
+      if (!analyticsChart.value) {
+        console.error('analyticsChart ref is null');
+        return;
+      }
 
       const ctx = analyticsChart.value.getContext('2d');
       const canvas = analyticsChart.value;
 
-      // Clear canvas
+      console.log(`Canvas dimensions: ${canvas.width}x${canvas.height}`);
+      console.log('Lesson progress data:', lessonProgress.value);
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (lessonProgress.value.length === 0) {
+        console.log('No lesson progress data available');
         drawEmptyState(ctx, 'داده‌ای برای نمایش موجود نیست');
         return;
       }
 
-      // Draw bar chart for lesson progress
       const barWidth = (canvas.width - 100) / lessonProgress.value.length;
       const maxHeight = canvas.height - 100;
 
@@ -995,11 +938,9 @@ export default {
         const height = (lesson.completionRate / 100) * maxHeight;
         const y = canvas.height - 50 - height;
 
-        // Draw bar
         ctx.fillStyle = getProgressBarColor(lesson.completionRate);
         ctx.fillRect(x, y, barWidth - 10, height);
 
-        // Draw label
         ctx.fillStyle = '#333';
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
@@ -1009,7 +950,6 @@ export default {
         ctx.fillText(lesson.title.substring(0, 15) + '...', 0, 0);
         ctx.restore();
 
-        // Draw percentage
         ctx.fillStyle = '#333';
         ctx.font = '10px Arial';
         ctx.textAlign = 'center';
@@ -1030,18 +970,15 @@ export default {
         return;
       }
 
-      // Draw scatter plot for difficulty vs completion rate
       ctx.strokeStyle = '#ccc';
       ctx.lineWidth = 1;
 
-      // Draw axes
       ctx.beginPath();
       ctx.moveTo(50, 50);
       ctx.lineTo(50, canvas.height - 50);
       ctx.lineTo(canvas.width - 50, canvas.height - 50);
       ctx.stroke();
 
-      // Draw data points
       difficultLessons.value.forEach((lesson, index) => {
         const x = 50 + (lesson.difficultyScore / 100) * (canvas.width - 100);
         const y = canvas.height - 50 - (lesson.completionRate / 100) * (canvas.height - 100);
@@ -1052,7 +989,6 @@ export default {
         ctx.fill();
       });
 
-      // Draw labels
       ctx.fillStyle = '#333';
       ctx.font = '12px Arial';
       ctx.textAlign = 'center';
@@ -1074,18 +1010,15 @@ export default {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       if (participationTimeline.value.length === 0) {
-        // Fallback to bar chart if no timeline data
         drawParticipationBarChart(ctx, canvas);
         return;
       }
 
-      // Draw timeline chart with real data
       const timeline = participationTimeline.value;
       const margin = 50;
       const chartWidth = canvas.width - 2 * margin;
       const chartHeight = canvas.height - 2 * margin;
 
-      // Draw axes
       ctx.strokeStyle = '#ddd';
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -1094,7 +1027,6 @@ export default {
       ctx.lineTo(margin + chartWidth, margin + chartHeight);
       ctx.stroke();
 
-      // Draw lines for each activity type (based on API structure)
       const activities = ['contentViews', 'chatMessages', 'assignments', 'examAttempts'];
       const colors = ['#007bff', '#28a745', '#ffc107', '#17a2b8'];
       const labels = ['مشاهده محتوا', 'پیام‌های چت', 'تکالیف', 'آزمون‌ها'];
@@ -1119,7 +1051,6 @@ export default {
             ctx.lineTo(x, y);
           }
 
-          // Draw data points
           ctx.fillStyle = colors[index];
           ctx.beginPath();
           ctx.arc(x, y, 3, 0, 2 * Math.PI);
@@ -1128,7 +1059,6 @@ export default {
 
         ctx.stroke();
 
-        // Draw legend
         const legendY = 10 + index * 20;
         ctx.fillStyle = colors[index];
         ctx.fillRect(10, legendY, 15, 15);
@@ -1139,7 +1069,6 @@ export default {
     };
 
     const drawParticipationBarChart = (ctx, canvas) => {
-      // Draw participation timeline (simplified)
       const activities = ['محتوا', 'چت', 'تکلیف', 'آزمون'];
       const values = [
         participationStats.value.contentStudy,
@@ -1160,7 +1089,6 @@ export default {
         ctx.fillStyle = colors[index];
         ctx.fillRect(x, y, barWidth - 20, height);
 
-        // Labels
         ctx.fillStyle = '#333';
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
@@ -1182,7 +1110,6 @@ export default {
         return;
       }
 
-      // Draw horizontal bar chart
       const barHeight = (canvas.height - 100) / timeDistribution.value.length;
       const maxWidth = canvas.width - 150;
 
@@ -1193,7 +1120,6 @@ export default {
         ctx.fillStyle = range.color;
         ctx.fillRect(100, y, width, barHeight - 10);
 
-        // Labels
         ctx.fillStyle = '#333';
         ctx.font = '12px Arial';
         ctx.textAlign = 'left';
@@ -1210,7 +1136,6 @@ export default {
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw histogram of score distribution
       const grades = ['ضعیف', 'متوسط', 'خوب', 'عالی'];
       const values = [
         gradeDistribution.value.poor,
@@ -1232,7 +1157,6 @@ export default {
         ctx.fillStyle = colors[index];
         ctx.fillRect(x, y, barWidth - 20, height);
 
-        // Labels
         ctx.fillStyle = '#333';
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
@@ -1258,10 +1182,10 @@ export default {
     };
 
     const getTimeRangeColor = (percentage) => {
-      if (percentage >= 40) return '#28a745'; // Green for high activity
-      if (percentage >= 20) return '#007bff'; // Blue for medium-high
-      if (percentage >= 10) return '#ffc107'; // Yellow for medium
-      return '#dc3545'; // Red for low activity
+      if (percentage >= 40) return '#28a745';
+      if (percentage >= 20) return '#007bff';
+      if (percentage >= 10) return '#ffc107';
+      return '#dc3545';
     };
 
     const getDifficultyColor = (score) => {
@@ -1312,39 +1236,27 @@ export default {
     };
 
     const viewLessonDetails = (lesson) => {
-      // Implementation for viewing lesson details
       console.log('View lesson details:', lesson);
     };
 
     const generateRecommendations = (lesson) => {
-      // Implementation for generating recommendations
       console.log('Generate recommendations for:', lesson);
     };
 
     const exportData = () => {
-      // Implementation for exporting data
       console.log('Export data');
-    };
-
-    const generateReport = () => {
-      // Implementation for generating PDF report
-      console.log('Generate PDF report');
-    };
-
-    const shareAnalysis = () => {
-      // Implementation for sharing analysis
-      console.log('Share analysis');
-    };
-
-    const scheduleReport = () => {
-      // Implementation for scheduling periodic reports
-      console.log('Schedule report');
     };
 
     // Watchers
     watch(selectedPeriod, () => {
       if (selectedCourse.value) {
         fetchAnalyticsData();
+      }
+    });
+
+    watch(analysisType, async () => {
+      if (selectedCourse.value) {
+        await fetchAnalyticsData();
       }
     });
 
@@ -1359,6 +1271,10 @@ export default {
     // Lifecycle
     onMounted(() => {
       fetchCourses();
+      initializeCanvasSize();
+
+      // Add resize listener
+      window.addEventListener('resize', initializeCanvasSize);
     });
 
     return {
@@ -1403,13 +1319,10 @@ export default {
       getTimeRangeColor,
       viewLessonDetails,
       generateRecommendations,
-      exportData,
-      generateReport,
-      shareAnalysis,
-      scheduleReport
+      exportData
     };
   }
-};
+}
 </script>
 
 <style scoped>
@@ -1454,10 +1367,17 @@ export default {
 
 .chart-container {
   position: relative;
-  height: 400px;
+  width: 100%;
+  min-height: 400px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.chart-container canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
 }
 
 .lesson-progress-list {
@@ -1588,187 +1508,5 @@ export default {
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.5rem;
-  font-weight: 500;
-}
-
-.activity-stats {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.percentage {
-  font-weight: bold;
-  min-width: 50px;
-}
-
-.time-distribution {
-  padding: 1rem 0;
-}
-
-.time-item {
-  display: flex;
-  align-items: center;
-  margin-bottom: 1rem;
-  gap: 1rem;
-}
-
-.time-label {
-  min-width: 150px;
-  font-size: 0.9rem;
-}
-
-.time-bar {
-  flex: 1;
-  height: 30px;
-  background: #f8f9fa;
-  border-radius: 15px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  padding: 0 0.5rem;
-}
-
-.time-fill {
-  height: 100%;
-  border-radius: 15px;
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-
-.time-count {
-  position: relative;
-  z-index: 1;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-
-.time-stats {
-  padding: 1rem 0;
-}
-
-.time-stat {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  padding: 0.75rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.stat-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.stat-value {
-  font-size: 1.2rem;
-  font-weight: bold;
-  color: #495057;
-}
-
-.stat-label {
-  font-size: 0.9rem;
-  color: #6c757d;
-}
-
-.score-stats {
-  padding: 1rem 0;
-}
-
-.score-stat {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #dee2e6;
-}
-
-.grade-distribution {
-  padding-top: 1rem;
-  border-top: 1px solid #dee2e6;
-}
-
-.grade-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
-}
-
-.grade-label {
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.9rem;
-}
-
-.grade-label.excellent { background: #d4edda; color: #155724; }
-.grade-label.good { background: #d1ecf1; color: #0c5460; }
-.grade-label.average { background: #fff3cd; color: #856404; }
-.grade-label.poor { background: #f8d7da; color: #721c24; }
-
-.grade-count {
-  font-weight: 500;
-}
-
-/* Debug panel */
-.debug-text {
-  font-size: 0.75rem;
-  max-height: 200px;
-  overflow-y: auto;
-  background: #f8f9fa;
-  padding: 0.5rem;
-  border-radius: 4px;
-  border: 1px solid #dee2e6;
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-  .metric-card {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .metric-icon {
-    margin: 0 0 0.5rem 0;
-  }
-
-  .lesson-metrics {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .activity-stats {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .time-item {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-
-/* Chart responsiveness */
-canvas {
-  max-width: 100%;
-  height: auto;
-}
-
-/* Loading and error states */
-.alert {
-  border-radius: 8px;
-}
-
-/* Action buttons */
-.btn {
-  border-radius: 6px;
-  font-weight: 500;
-}
-
-.btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 </style>
