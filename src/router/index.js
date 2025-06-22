@@ -218,7 +218,7 @@ const routes = [
   {
     path: '/exams/:id/results',
     name: 'ExamResults',
-    component: () => import(/* webpackChunkName: "exam-results" */ '../components/exams/ExamResultsTable.vue'),
+    component: () => import(/* webpackChunkName: "exam-results" */ '../components/exams/ExamResults.vue'),
     props: true,
     meta: {
       title: 'نتایج آزمون',
