@@ -400,36 +400,6 @@
                   </div>
                 </div>
 
-                <!-- Keyboard Shortcuts Help -->
-                <div class="mt-2">
-                  <button
-                      class="btn btn-link btn-sm text-muted p-0"
-                      type="button"
-                      data-bs-toggle="collapse"
-                      data-bs-target="#pdf-shortcuts"
-                      aria-expanded="false"
-                  >
-                    <i class="fas fa-keyboard me-1"></i>
-                    میانبرهای صفحه کلید
-                  </button>
-                  <div class="collapse mt-2" id="pdf-shortcuts">
-                    <div class="card card-body bg-light border-0">
-                      <div class="row g-2 small">
-                        <div class="col-md-6">
-                          <strong>پیمایش:</strong><br>
-                          ← / → : صفحه بعد/قبل<br>
-                          Home / End : اولین/آخرین صفحه
-                        </div>
-                        <div class="col-md-6">
-                          <strong>زوم:</strong><br>
-                          Ctrl + / Ctrl - : بزرگ/کوچک کردن<br>
-                          Ctrl F : تنظیم عرض
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
               </div>
 
               <!-- PDF Not Loaded State -->
