@@ -388,7 +388,7 @@ export default {
                   enrolledStudents: courseDetail.enrolledStudents || [],
                   lessons: courseDetail.lessons || [],
                   status: 'active',
-                  progress: courseStats.averageProgress || 0,
+                  progress: parseFloat((courseStats.averageCompletion || 0).toFixed(2)),
                   studentsTrend: courseStats.studentGrowth || 0,
                 };
               } catch (error) {
