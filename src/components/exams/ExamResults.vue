@@ -107,45 +107,12 @@ export default {
 
     async fetchSubmissions() {
       try {
-        this.loading = true;
-        this.error = null;
-
-        // API call صحیح برای دریافت submissions آزمون خاص
         const response = await axios.get(`/exams/${this.id}/submissions`);
-
-        // بررسی response
-        if (response.data && Array.isArray(response.data)) {
-          this.submissions = response.data;
-        } else {
-          // اگر response آرایه نباشد، آرایه خالی قرار دهیم
-          this.submissions = [];
-        }
-
-        console.log('Submissions fetched:', this.submissions.length);
-
+        this.submissions = response.data || [];
       } catch (error) {
         console.error('Error fetching submissions:', error);
-
-        // تشخیص نوع خطا
-        if (error.response) {
-          // خطای HTTP
-          if (error.response.status === 404) {
-            this.error = 'آزمون مورد نظر یافت نشد';
-          } else if (error.response.status === 403) {
-            this.error = 'شما اجازه مشاهده نتایج این آزمون را ندارید';
-          } else {
-            this.error = 'خطا در دریافت نتایج آزمون';
-          }
-        } else {
-          // خطای شبکه
-          this.error = 'مشکل در اتصال به سرور';
-        }
-
-        // در صورت خطا، آرایه خالی قرار دهیم
+        this.error = 'خطا در دریافت نتایج آزمون';
         this.submissions = [];
-
-      } finally {
-        this.loading = false;
       }
     }
   }

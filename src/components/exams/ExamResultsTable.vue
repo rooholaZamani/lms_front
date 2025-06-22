@@ -181,6 +181,24 @@ export default {
       if (!lesson || !lesson.course) return 'نامشخص';
       return lesson.course.title;
     },
+    getStudentName(student) {
+      if (!student) return 'نامشخص';
+
+      const firstName = student.firstName || '';
+      const lastName = student.lastName || '';
+
+      if (firstName && lastName) {
+        return `${firstName} ${lastName}`;
+      } else if (firstName) {
+        return firstName;
+      } else if (lastName) {
+        return lastName;
+      } else if (student.username) {
+        return student.username;
+      }
+
+      return 'نامشخص';
+    },
 
     getStudentInitials(student) {
       if (!student) return 'N';
