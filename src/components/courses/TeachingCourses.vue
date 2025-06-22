@@ -118,7 +118,7 @@
                 <th><i class="fas fa-list me-1"></i> دروس</th>
                 <th><i class="fas fa-chart-line me-1"></i> پیشرفت</th>
                 <th><i class="fas fa-info-circle me-1"></i> وضعیت</th>
-                <th><i class="fas fa-cogs me-1"></i> عملیات</th>
+                <th><i class="fas fa-cogs me-1"></i> مشاهده</th>
               </tr>
               </thead>
               <tbody>
@@ -180,21 +180,6 @@
                       <i class="fas fa-eye"></i>
                     </router-link>
 
-                    <button
-                        class="modern-btn modern-btn-success btn-sm"
-                        @click="navigateToCourseAnalytics(course.id)"
-                        title="تحلیل آماری"
-                    >
-                      <i class="fas fa-chart-bar"></i>
-                    </button>
-
-                    <button
-                        class="modern-btn modern-btn-secondary btn-sm"
-                        @click="navigateToCourseSettings(course.id)"
-                        title="تنظیمات"
-                    >
-                      <i class="fas fa-cog"></i>
-                    </button>
                   </div>
                 </td>
               </tr>
