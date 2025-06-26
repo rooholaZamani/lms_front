@@ -334,23 +334,53 @@
             <div class="tab-content" id="studentDetailsTabContent">
               <!-- تب پیشرفت -->
               <div class="tab-pane fade show active" id="progress" role="tabpanel">
-                <div v-if="selectedStudentProgress">
+                <div v-if="selectedStudentProgress && selectedStudentProgress.courses.length > 0">
+                  <!-- خلاصه کلی عملکرد -->
+                  <div class="row mb-4">
+                    <div class="col-md-3">
+                      <div class="card text-center">
+                        <div class="card-body">
+                          <h5 class="card-title text-primary">{{ selectedStudentProgress.averageCompletion }}%</h5>
+                          <p class="card-text">میانگین پیشرفت</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-3">
+                      <div class="card text-center">
+                        <div class="card-body">
+                          <h5 class="card-title text-success">{{ Math.round(selectedStudentProgress.totalStudyTime / 60) }}</h5>
+                          <p class="card-text">ساعت مطالعه</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="card">
+                        <div class="card-body">
+                          <p class="card-text"><strong>آخرین ورود:</strong></p>
+                          <p class="text-muted">{{ formatDate(selectedStudentProgress.lastAccessed) }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- جزئیات هر دوره -->
                   <div class="row">
-                    <div class="col-md-6 mb-3" v-for="course in selectedStudentProgress.courses" :key="course.id">
+                    <div class="col-md-6 mb-3" v-for="course in selectedStudentProgress.courses" :key="course.courseId">
                       <div class="card h-100">
                         <div class="card-body">
-                          <h6 class="card-title">{{ course.title }}</h6>
+                          <h6 class="card-title">{{ course.courseName }}</h6>
                           <div class="progress mb-2" style="height: 10px;">
                             <div class="progress-bar"
-                                 :class="getProgressClass(course.completionPercentage)"
+                                 :class="getProgressClass(course.completion)"
                                  role="progressbar"
-                                 :style="`width: ${course.completionPercentage}%`">
+                                 :style="`width: ${course.completion}%`">
                             </div>
                           </div>
                           <div class="d-flex justify-content-between text-small">
-                            <span>{{ course.completedLessons }}/{{ course.totalLessons }} درس</span>
-                            <span>{{ Math.round(course.completionPercentage) }}%</span>
+                            <span>{{ Math.round((course.studyTime || 0) / 60) }} ساعت مطالعه</span>
+                            <span>{{ Math.round(course.completion) }}%</span>
                           </div>
+                          <small class="text-muted">آخرین ورود: {{ formatDate(course.lastAccessed) }}</small>
                         </div>
                       </div>
                     </div>
@@ -362,76 +392,63 @@
               <!-- تب آزمون‌ها -->
               <div class="tab-pane fade" id="exams" role="tabpanel">
                 <div v-if="selectedStudentExams.length > 0">
-                  <div class="table-responsive">
-                    <table class="table table-sm">
-                      <thead>
-                      <tr>
-                        <th>آزمون</th>
-                        <th>دوره</th>
-                        <th>نمره</th>
-                        <th>وضعیت</th>
-                        <th>تاریخ</th>
-                      </tr>
-                      </thead>
-                      <tbody>
-                      <tr v-for="exam in selectedStudentExams" :key="exam.id">
-                        <td>{{ exam.title }}</td>
-                        <td>{{ exam.courseName }}</td>
-                        <td>
-                    <span class="badge" :class="exam.passed ? 'bg-success' : 'bg-danger'">
-                      {{ exam.score }}/{{ exam.totalScore }}
-                    </span>
-                        </td>
-                        <td>
-                    <span class="badge" :class="exam.passed ? 'bg-success' : 'bg-danger'">
-                      {{ exam.passed ? 'قبول' : 'مردود' }}
-                    </span>
-                        </td>
-                        <td>{{ formatDate(exam.submissionTime) }}</td>
-                      </tr>
-                      </tbody>
-                    </table>
+                  <div class="row mb-3">
+                    <div class="col-md-4">
+                      <div class="card text-center">
+                        <div class="card-body">
+                          <h5 class="card-title text-primary">{{ selectedStudentExams[0].examsTaken }}</h5>
+                          <p class="card-text">آزمون شرکت کرده</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="card text-center">
+                        <div class="card-body">
+                          <h5 class="card-title text-success">{{ Math.round(selectedStudentExams[0].averageScore) }}</h5>
+                          <p class="card-text">میانگین نمره</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <div class="card text-center">
+                        <div class="card-body">
+                          <h5 class="card-title text-info">{{ Math.round(selectedStudentExams[0].passRate) }}%</h5>
+                          <p class="card-text">درصد قبولی</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    جزئیات آزمون‌های انجام شده در حال توسعه است.
                   </div>
                 </div>
-                <div v-else class="text-center text-muted">هنوز آزمونی ارسال نشده است</div>
+                <div v-else class="text-center text-muted">آزمونی شرکت نکرده است</div>
               </div>
 
               <!-- تب تکالیف -->
-              <div class="tab-pane fade" id="assignments" role="tabpanel">
-                <div v-if="selectedStudentAssignments.length > 0">
-                  <div class="table-responsive">
-                    <table class="table table-sm">
-                      <thead>
-                      <tr>
-                        <th>تکلیف</th>
-                        <th>درس</th>
-                        <th>نمره</th>
-                        <th>وضعیت</th>
-                        <th>تاریخ ارسال</th>
-                      </tr>
-                      </thead>
-                      <tbody>
-                      <tr v-for="assignment in selectedStudentAssignments" :key="assignment.id">
-                        <td>{{ assignment.title }}</td>
-                        <td>{{ assignment.lessonTitle }}</td>
-                        <td>
-                    <span v-if="assignment.score !== null"
-                          class="badge bg-primary">{{ assignment.score }}/100</span>
-                          <span v-else class="text-muted">بدون نمره</span>
-                        </td>
-                        <td>
-                    <span class="badge"
-                          :class="getAssignmentStatusClass(assignment.status)">
-                      {{ getAssignmentStatusText(assignment.status) }}
-                    </span>
-                        </td>
-                        <td>{{ formatDate(assignment.submissionTime) }}</td>
-                      </tr>
-                      </tbody>
-                    </table>
+              <div class="tab-pane fade" id="activity" role="tabpanel">
+                <div v-if="selectedStudentActivity.length > 0">
+                  <div class="timeline">
+                    <div v-for="activity in selectedStudentActivity"
+                         :key="activity.id" class="timeline-item">
+                      <div class="timeline-marker" :class="getActivityIcon(activity.type)"></div>
+                      <div class="timeline-content">
+                        <h6 class="mb-1">{{ activity.description }}</h6>
+                        <small class="text-muted">
+                          {{ activity.courseName }} - {{ getTimeAgo(activity.timestamp) }}
+                        </small>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    سیستم ردیابی فعالیت‌های تفصیلی در حال توسعه است.
                   </div>
                 </div>
-                <div v-else class="text-center text-muted">هنوز تکلیفی ارسال نشده است</div>
+                <div v-else class="text-center text-muted">فعالیت اخیری ثبت نشده است</div>
               </div>
 
               <!-- تب فعالیت‌ها -->
@@ -756,13 +773,9 @@ export default {
       this.loadingStudentDetails = true;
 
       try {
-        // دریافت اطلاعات کامل دانش‌آموز
-        await Promise.all([
-          this.fetchStudentProgress(student.id),
-          this.fetchStudentExamResults(student.id),
-          this.fetchStudentAssignments(student.id),
-          this.fetchStudentRecentActivity(student.id)
-        ]);
+        // Use the new comprehensive analytics API
+        await this.fetchStudentPerformance(student.id);
+        await this.fetchStudentAssignments(student.id);
       } catch (error) {
         console.error('Error fetching student details:', error);
         this.$toast.error('خطا در دریافت جزئیات دانش‌آموز');
@@ -773,6 +786,44 @@ export default {
       const modal = new bootstrap.Modal(document.getElementById('studentDetailsModal'));
       modal.show();
     },
+    async fetchStudentPerformance(studentId) {
+      try {
+        const response = await axios.get(`/api/analytics/teacher/student/${studentId}/performance`);
+        const performanceData = response.data;
+
+        // Structure data for different tabs
+        this.selectedStudentProgress = {
+          courses: performanceData.courseDetails || [],
+          averageCompletion: performanceData.averageCompletion || 0,
+          totalStudyTime: performanceData.totalStudyTime || 0,
+          lastAccessed: performanceData.lastAccessed
+        };
+
+        // Create exam data from the performance data
+        this.selectedStudentExams = [{
+          examsTaken: performanceData.examsTaken || 0,
+          averageScore: performanceData.averageExamScore || 0,
+          passRate: performanceData.examPassRate || 0,
+          recentActivityCount: performanceData.recentActivityCount || 0
+        }];
+
+        // Create activity summary from performance data
+        this.selectedStudentActivity = [{
+          id: 1,
+          type: 'PERFORMANCE_SUMMARY',
+          description: `میانگین تکمیل: ${performanceData.averageCompletion || 0}% - زمان مطالعه کل: ${Math.round((performanceData.totalStudyTime || 0) / 60)} ساعت`,
+          courseName: `${performanceData.enrolledCourses || 0} دوره`,
+          timestamp: performanceData.lastAccessed || new Date().toISOString()
+        }];
+
+      } catch (error) {
+        console.error('Error fetching student performance:', error);
+        this.selectedStudentProgress = null;
+        this.selectedStudentExams = [];
+        this.selectedStudentActivity = [];
+      }
+    },
+
 
     async fetchStudentProgress(studentId) {
       try {
