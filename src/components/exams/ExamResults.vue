@@ -113,6 +113,8 @@ export default {
         console.error('Error fetching submissions:', error);
         this.error = 'خطا در دریافت نتایج آزمون';
         this.submissions = [];
+      } finally {
+        this.loading = false;
       }
     }
   }
