@@ -166,23 +166,7 @@
                         title="مشاهده جزئیات">
                       <i class="fas fa-eye"></i>
                     </button>
-                    <button
-                        class="modern-btn modern-btn-success btn-sm"
-                        @click="viewStudentProgress(student)"
-                        title="پیشرفت تحصیلی">
-                      <i class="fas fa-chart-line"></i>
-                    </button>
-                    <button
-                        class="modern-btn modern-btn-info btn-sm"
-                        @click="sendMessageToStudent(student)"
-                        title="ارسال پیام">
-                      <i class="fas fa-envelope"></i>
-                    </button>
                     <div class="dropdown">
-                      <button class="modern-btn modern-btn-secondary btn-sm dropdown-toggle"
-                              type="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-ellipsis-v"></i>
-                      </button>
                       <ul class="dropdown-menu">
                         <li><a class="dropdown-item" href="#" @click="viewStudentSubmissions(student)">
                           <i class="fas fa-file-alt me-2"></i> تکالیف ارسالی
@@ -264,56 +248,209 @@
           </h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
+        <!-- جایگزین کل محتوای modal-body شود -->
         <div class="modal-body" v-if="selectedStudent">
-          <div class="row">
-            <div class="col-md-4 text-center">
-              <div class="student-avatar-large mb-3">
-                {{ getStudentInitials(selectedStudent) }}
-              </div>
-              <h5>{{ getStudentName(selectedStudent) }}</h5>
-              <p class="text-muted">@{{ selectedStudent.username }}</p>
+          <div v-if="loadingStudentDetails" class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">در حال بارگذاری...</span>
             </div>
-            <div class="col-md-8">
-              <div class="student-info">
-                <div class="info-row">
-                  <strong>ایمیل:</strong>
-                  <span>{{ selectedStudent.email || 'نامشخص' }}</span>
+          </div>
+
+          <div v-else>
+            <!-- بخش اطلاعات پایه -->
+            <div class="row mb-4">
+              <div class="col-md-4 text-center">
+                <div class="student-avatar-large mb-3">
+                  {{ getStudentInitials(selectedStudent) }}
                 </div>
-                <div class="info-row">
-                  <strong>شماره تماس:</strong>
-                  <span>{{ selectedStudent.phoneNumber || 'نامشخص' }}</span>
-                </div>
-                <div class="info-row">
-                  <strong>کد ملی:</strong>
-                  <span>{{ selectedStudent.nationalId || 'نامشخص' }}</span>
-                </div>
-                <div class="info-row">
-                  <strong>سن:</strong>
-                  <span>{{ selectedStudent.age || 'نامشخص' }}</span>
-                </div>
-                <div class="info-row">
-                  <strong>تعداد دوره‌ها:</strong>
-                  <span>{{ selectedStudent.enrolledCourses?.length || 0 }}</span>
-                </div>
-                <div class="info-row">
-                  <strong>پیشرفت کلی:</strong>
-                  <span>{{ selectedStudent.overallProgress }}%</span>
-                </div>
-                <div class="info-row">
-                  <strong>آخرین فعالیت:</strong>
-                  <span>{{ formatDate(selectedStudent.lastActivity) }}</span>
+                <h5>{{ getStudentName(selectedStudent) }}</h5>
+                <p class="text-muted">@{{ selectedStudent.username }}</p>
+                <div class="d-flex justify-content-center gap-2 mb-3">
+                  <span class="badge bg-primary">{{ selectedStudent.enrolledCourses?.length || 0 }} دوره</span>
+                  <span class="badge bg-success" v-if="selectedStudentProgress">
+            {{ Math.round(selectedStudentProgress.averageProgress || 0) }}% پیشرفت
+          </span>
                 </div>
               </div>
 
-              <div class="mt-4">
-                <h6>دوره‌های ثبت‌نام شده:</h6>
-                <div class="d-flex flex-wrap gap-2">
-                  <span v-for="course in selectedStudent.enrolledCourses"
-                        :key="course.id"
-                        class="modern-badge modern-badge-info">
-                    {{ course.title }}
-                  </span>
+              <div class="col-md-8">
+                <div class="student-info">
+                  <div class="info-row">
+                    <strong>ایمیل:</strong>
+                    <span>{{ selectedStudent.email || 'نامشخص' }}</span>
+                  </div>
+                  <div class="info-row">
+                    <strong>شماره تماس:</strong>
+                    <span>{{ selectedStudent.phoneNumber || 'نامشخص' }}</span>
+                  </div>
+                  <div class="info-row">
+                    <strong>کد ملی:</strong>
+                    <span>{{ selectedStudent.nationalId || 'نامشخص' }}</span>
+                  </div>
+                  <div class="info-row">
+                    <strong>سن:</strong>
+                    <span>{{ selectedStudent.age || 'نامشخص' }}</span>
+                  </div>
+                  <div class="info-row">
+                    <strong>تاریخ ثبت‌نام:</strong>
+                    <span>{{ formatDate(selectedStudent.enrollmentDate) }}</span>
+                  </div>
+                  <div class="info-row">
+                    <strong>آخرین فعالیت:</strong>
+                    <span>{{ getTimeAgo(selectedStudent.lastActivity) }}</span>
+                  </div>
                 </div>
+              </div>
+            </div>
+
+            <!-- تب‌های اطلاعات تفصیلی -->
+            <ul class="nav nav-tabs mb-3" id="studentDetailsTabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="progress-tab" data-bs-toggle="tab"
+                        data-bs-target="#progress" type="button" role="tab">
+                  <i class="fas fa-chart-line me-1"></i>پیشرفت
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="exams-tab" data-bs-toggle="tab"
+                        data-bs-target="#exams" type="button" role="tab">
+                  <i class="fas fa-clipboard-check me-1"></i>آزمون‌ها
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="assignments-tab" data-bs-toggle="tab"
+                        data-bs-target="#assignments" type="button" role="tab">
+                  <i class="fas fa-tasks me-1"></i>تکالیف
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button class="nav-link" id="activity-tab" data-bs-toggle="tab"
+                        data-bs-target="#activity" type="button" role="tab">
+                  <i class="fas fa-history me-1"></i>فعالیت‌ها
+                </button>
+              </li>
+            </ul>
+
+            <div class="tab-content" id="studentDetailsTabContent">
+              <!-- تب پیشرفت -->
+              <div class="tab-pane fade show active" id="progress" role="tabpanel">
+                <div v-if="selectedStudentProgress">
+                  <div class="row">
+                    <div class="col-md-6 mb-3" v-for="course in selectedStudentProgress.courses" :key="course.id">
+                      <div class="card h-100">
+                        <div class="card-body">
+                          <h6 class="card-title">{{ course.title }}</h6>
+                          <div class="progress mb-2" style="height: 10px;">
+                            <div class="progress-bar"
+                                 :class="getProgressClass(course.completionPercentage)"
+                                 role="progressbar"
+                                 :style="`width: ${course.completionPercentage}%`">
+                            </div>
+                          </div>
+                          <div class="d-flex justify-content-between text-small">
+                            <span>{{ course.completedLessons }}/{{ course.totalLessons }} درس</span>
+                            <span>{{ Math.round(course.completionPercentage) }}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div v-else class="text-center text-muted">اطلاعات پیشرفت در دسترس نیست</div>
+              </div>
+
+              <!-- تب آزمون‌ها -->
+              <div class="tab-pane fade" id="exams" role="tabpanel">
+                <div v-if="selectedStudentExams.length > 0">
+                  <div class="table-responsive">
+                    <table class="table table-sm">
+                      <thead>
+                      <tr>
+                        <th>آزمون</th>
+                        <th>دوره</th>
+                        <th>نمره</th>
+                        <th>وضعیت</th>
+                        <th>تاریخ</th>
+                      </tr>
+                      </thead>
+                      <tbody>
+                      <tr v-for="exam in selectedStudentExams" :key="exam.id">
+                        <td>{{ exam.title }}</td>
+                        <td>{{ exam.courseName }}</td>
+                        <td>
+                    <span class="badge" :class="exam.passed ? 'bg-success' : 'bg-danger'">
+                      {{ exam.score }}/{{ exam.totalScore }}
+                    </span>
+                        </td>
+                        <td>
+                    <span class="badge" :class="exam.passed ? 'bg-success' : 'bg-danger'">
+                      {{ exam.passed ? 'قبول' : 'مردود' }}
+                    </span>
+                        </td>
+                        <td>{{ formatDate(exam.submissionTime) }}</td>
+                      </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div v-else class="text-center text-muted">هنوز آزمونی ارسال نشده است</div>
+              </div>
+
+              <!-- تب تکالیف -->
+              <div class="tab-pane fade" id="assignments" role="tabpanel">
+                <div v-if="selectedStudentAssignments.length > 0">
+                  <div class="table-responsive">
+                    <table class="table table-sm">
+                      <thead>
+                      <tr>
+                        <th>تکلیف</th>
+                        <th>درس</th>
+                        <th>نمره</th>
+                        <th>وضعیت</th>
+                        <th>تاریخ ارسال</th>
+                      </tr>
+                      </thead>
+                      <tbody>
+                      <tr v-for="assignment in selectedStudentAssignments" :key="assignment.id">
+                        <td>{{ assignment.title }}</td>
+                        <td>{{ assignment.lessonTitle }}</td>
+                        <td>
+                    <span v-if="assignment.score !== null"
+                          class="badge bg-primary">{{ assignment.score }}/100</span>
+                          <span v-else class="text-muted">بدون نمره</span>
+                        </td>
+                        <td>
+                    <span class="badge"
+                          :class="getAssignmentStatusClass(assignment.status)">
+                      {{ getAssignmentStatusText(assignment.status) }}
+                    </span>
+                        </td>
+                        <td>{{ formatDate(assignment.submissionTime) }}</td>
+                      </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div v-else class="text-center text-muted">هنوز تکلیفی ارسال نشده است</div>
+              </div>
+
+              <!-- تب فعالیت‌ها -->
+              <div class="tab-pane fade" id="activity" role="tabpanel">
+                <div v-if="selectedStudentActivity.length > 0">
+                  <div class="timeline">
+                    <div v-for="activity in selectedStudentActivity.slice(0, 10)"
+                         :key="activity.id" class="timeline-item">
+                      <div class="timeline-marker" :class="getActivityIcon(activity.type)"></div>
+                      <div class="timeline-content">
+                        <h6 class="mb-1">{{ activity.description }}</h6>
+                        <small class="text-muted">
+                          {{ activity.courseName }} - {{ getTimeAgo(activity.timestamp) }}
+                        </small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div v-else class="text-center text-muted">فعالیت اخیری ثبت نشده است</div>
               </div>
             </div>
           </div>
@@ -357,6 +494,11 @@ export default {
       courses: [],
       allStudents: [],
       selectedStudent: null,
+      loadingStudentDetails: false,
+      selectedStudentProgress: null,
+      selectedStudentExams: [],
+      selectedStudentAssignments: [],
+      selectedStudentActivity: [],
 
       stats: {
         totalStudents: 0,
@@ -443,9 +585,103 @@ export default {
         // Extract unique students from all courses
         this.extractStudentsFromCourses();
         this.calculateStats();
+        this.calculateStats();
       } catch (error) {
         console.error('Error fetching data:', error);
         throw error;
+      }
+    },
+    // متدهای کمکی جدید:
+    getAssignmentStatusClass(status) {
+      const statusClasses = {
+        'SUBMITTED': 'bg-warning',
+        'GRADED': 'bg-success',
+        'LATE': 'bg-danger',
+        'PENDING': 'bg-secondary'
+      };
+      return statusClasses[status] || 'bg-secondary';
+    },
+
+    getAssignmentStatusText(status) {
+      const statusTexts = {
+        'SUBMITTED': 'ارسال شده',
+        'GRADED': 'نمره‌گذاری شده',
+        'LATE': 'دیرکرد',
+        'PENDING': 'در انتظار'
+      };
+      return statusTexts[status] || 'نامشخص';
+    },
+
+    getActivityIcon(type) {
+      const icons = {
+        'LOGIN': 'fas fa-sign-in-alt text-success',
+        'LESSON_VIEW': 'fas fa-eye text-info',
+        'EXAM_SUBMIT': 'fas fa-clipboard-check text-primary',
+        'ASSIGNMENT_SUBMIT': 'fas fa-upload text-warning',
+        'CONTENT_COMPLETE': 'fas fa-check-circle text-success'
+      };
+      return icons[type] || 'fas fa-circle text-muted';
+    },
+    async showStudentDetails(student) {
+      this.selectedStudent = student;
+      this.loadingStudentDetails = true;
+
+      try {
+        // دریافت اطلاعات کامل دانش‌آموز
+        await Promise.all([
+          this.fetchStudentProgress(student.id),
+          this.fetchStudentExamResults(student.id),
+          this.fetchStudentAssignments(student.id),
+          this.fetchStudentRecentActivity(student.id)
+        ]);
+      } catch (error) {
+        console.error('Error fetching student details:', error);
+        this.$toast.error('خطا در دریافت جزئیات دانش‌آموز');
+      } finally {
+        this.loadingStudentDetails = false;
+      }
+
+      const modal = new bootstrap.Modal(document.getElementById('studentDetailsModal'));
+      modal.show();
+    },
+
+    async fetchStudentProgress(studentId) {
+      try {
+        const response = await axios.get(`/analytics/teacher/student/${studentId}/progress`);
+        this.selectedStudentProgress = response.data;
+      } catch (error) {
+        console.error('Error fetching student progress:', error);
+        this.selectedStudentProgress = null;
+      }
+    },
+
+    async fetchStudentExamResults(studentId) {
+      try {
+        const response = await axios.get(`/analytics/teacher/student/${studentId}/exam-results`);
+        this.selectedStudentExams = response.data;
+      } catch (error) {
+        console.error('Error fetching student exam results:', error);
+        this.selectedStudentExams = [];
+      }
+    },
+
+    async fetchStudentAssignments(studentId) {
+      try {
+        const response = await axios.get(`/assignments/submissions/student/${studentId}`);
+        this.selectedStudentAssignments = response.data;
+      } catch (error) {
+        console.error('Error fetching student assignments:', error);
+        this.selectedStudentAssignments = [];
+      }
+    },
+
+    async fetchStudentRecentActivity(studentId) {
+      try {
+        const response = await axios.get(`/analytics/teacher/student/${studentId}/recent-activity`);
+        this.selectedStudentActivity = response.data;
+      } catch (error) {
+        console.error('Error fetching student activity:', error);
+        this.selectedStudentActivity = [];
       }
     },
 
@@ -760,6 +996,59 @@ export default {
 
   .info-row {
     border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .student-avatar-large {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    margin: 0 auto;
+  }
+
+  .timeline {
+    position: relative;
+    padding-left: 30px;
+  }
+
+  .timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+  }
+
+  .timeline-marker {
+    position: absolute;
+    left: -35px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #007bff;
+  }
+
+  .timeline-content {
+    background: #f8f9fa;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border-left: 3px solid #007bff;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+  }
+
+  .info-row:last-child {
+    border-bottom: none;
   }
 
   .pagination-info {
