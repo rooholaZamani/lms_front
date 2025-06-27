@@ -145,7 +145,7 @@
                   />
                   <div v-else class="empty-chart-message">
                     <i class="fas fa-chart-line text-muted"></i>
-                    <p class="text-muted mt-2">هنوز آزمونی شرکت نکرده‌اید</p>
+                    <p class="text-muted mt-2">هنوز آزمونی شرکت نکرده‌ است</p>
                   </div>
                 </div>
               </div>
