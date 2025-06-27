@@ -1,420 +1,65 @@
 <template>
-  <div class="modern-page-bg primary-gradient">
-    <div class="modern-container large animate-slide-up">
-      <div class="modern-header">
-        <div class="modern-logo primary">
-          <i class="fas fa-user-graduate"></i>
+  <div class="student-activities-container">
+    <div class="page-header">
+      <h1 class="page-title">
+        <i class="fas fa-chart-bar me-3"></i>
+        گزارش فعالیت دانش‌آموزان
+      </h1>
+      <p class="page-description">
+        تحلیل جامع عملکرد و فعالیت‌های دانش‌آموزان در دوره‌های آموزشی
+      </p>
+    </div>
+
+    <!-- فیلترهای انتخاب -->
+    <div class="filters-section mb-4">
+      <div class="row">
+        <div class="col-md-4">
+          <div class="filter-group">
+            <label class="form-label">انتخاب دوره:</label>
+            <select v-model="selectedCourseId" @change="onCourseChange" class="form-select">
+              <option value="">دوره مورد نظر را انتخاب کنید</option>
+              <option v-for="course in teachingCourses" :key="course.id" :value="course.id">
+                {{ course.title }}
+              </option>
+            </select>
+          </div>
         </div>
-        <h1 class="modern-title">تحلیل فعالیت دانش‌آموزان</h1>
-        <p class="modern-subtitle">بررسی جامع و پیشرفت تحصیلی دانش‌آموزان منتخب</p>
+
+        <div class="col-md-4" v-if="selectedCourseId">
+          <div class="filter-group">
+            <label class="form-label">انتخاب دانش‌آموز:</label>
+            <select v-model="selectedStudentId" @change="fetchStudentAnalytics" class="form-select">
+              <option value="">دانش‌آموز مورد نظر را انتخاب کنید</option>
+              <option v-for="student in courseStudents" :key="student.studentId" :value="student.studentId">
+                {{ student.studentName }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="col-md-4" v-if="selectedStudentId">
+          <div class="filter-group">
+            <label class="form-label">بازه زمانی:</label>
+            <select v-model="selectedTimeFilter" @change="fetchStudentAnalytics" class="form-select">
+              <option v-for="filter in timeFilters" :key="filter.value" :value="filter.value">
+                {{ filter.label }}
+              </option>
+            </select>
+          </div>
+        </div>
       </div>
+    </div>
 
-      <!-- انتخاب دانش‌آموز -->
-      <div class="modern-card animate-fade-in mb-4">
-        <div class="modern-card-header bg-primary text-white">
-          <h5 class="mb-0">
-            <i class="fas fa-user-friends me-2"></i>
-            انتخاب دانش‌آموز
-          </h5>
-        </div>
-        <div class="modern-card-body">
-          <div class="row">
-            <div class="col-md-6 modern-form-group">
-              <label class="modern-form-label">دوره</label>
-              <select class="modern-form-control" v-model="selectedCourseId" @change="fetchStudentsForCourse">
-                <option value="">انتخاب دوره</option>
-                <option v-for="course in teachingCourses" :key="course.id" :value="course.id">
-                  {{ course.title }}
-                </option>
-              </select>
-            </div>
-            <div class="col-md-6 modern-form-group">
-              <label class="modern-form-label">دانش‌آموز</label>
-              <select class="modern-form-control" v-model="selectedStudentId" @change="fetchStudentAnalytics" :disabled="!selectedCourseId">
-                <option value="">انتخاب دانش‌آموز</option>
-                <option v-for="student in courseStudents" :key="student.studentId" :value="student.studentId">
-                  {{ student.studentName }}
-                </option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <loading-spinner :loading="loading">
-        <div v-if="selectedStudent && studentAnalytics" class="analytics-content">
-          <!-- خلاصه عملکرد دانش‌آموز -->
-          <div class="modern-card animate-fade-in mb-4" style="animation-delay: 0.1s;">
-            <div class="modern-card-header bg-success text-white">
-              <h5 class="mb-0">
-                <i class="fas fa-chart-line me-2"></i>
-                {{ selectedStudent.studentName }} - خلاصه عملکرد
-              </h5>
-            </div>
-            <div class="modern-card-body">
-              <div class="row">
-                <div class="col-lg-8">
-                  <div class="row">
-                    <div class="col-md-3 mb-3">
-                      <div class="modern-stat-card">
-                        <div class="modern-stat-icon text-primary">
-                          <i class="fas fa-percentage"></i>
-                        </div>
-                        <div class="modern-stat-value">{{ studentAnalytics.completionPercentage || 0 }}%</div>
-                        <div class="modern-stat-label">تکمیل دوره</div>
-                      </div>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                      <div class="modern-stat-card">
-                        <div class="modern-stat-icon text-success">
-                          <i class="fas fa-clipboard-check"></i>
-                        </div>
-                        <div class="modern-stat-value">{{ studentAnalytics.examsTaken || 0 }}</div>
-                        <div class="modern-stat-label">آزمون‌های گذرانده</div>
-                      </div>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                      <div class="modern-stat-card">
-                        <div class="modern-stat-icon text-warning">
-                          <i class="fas fa-star"></i>
-                        </div>
-                        <div class="modern-stat-value">{{ studentAnalytics.averageExamScore || 0 }}</div>
-                        <div class="modern-stat-label">میانگین نمره آزمون</div>
-                      </div>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                      <div class="modern-stat-card">
-                        <div class="modern-stat-icon text-info">
-                          <i class="fas fa-dumbbell"></i>
-                        </div>
-                        <div class="modern-stat-value">{{ studentAnalytics.exercisesTaken || 0 }}</div>
-                        <div class="modern-stat-label">تمرین‌های انجام شده</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-lg-4">
-                  <div class="progress-circle-container">
-                    <div class="progress-circle" :class="getProgressClass(studentAnalytics.completionPercentage)">
-                      <div class="progress-text">
-                        <div class="progress-number">{{ studentAnalytics.completionPercentage || 0 }}%</div>
-                        <div class="progress-label">تکمیل شده</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- نمودارهای عملکرد -->
-          <div class="row">
-            <div class="col-lg-6 mb-4">
-              <div class="modern-card animate-fade-in" style="animation-delay: 0.2s;">
-                <div class="modern-card-header bg-info text-white">
-                  <h6 class="mb-0">
-                    <i class="fas fa-chart-bar me-2"></i>
-                    روند عملکرد آزمون‌ها
-                  </h6>
-                </div>
-                <div class="modern-card-body">
-                  <div class="chart-container">
-                    <Charts
-                        type="activity"
-                        :data="examPerformanceData"
-                        height="300px"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-lg-6 mb-4">
-              <div class="modern-card animate-fade-in" style="animation-delay: 0.3s;">
-                <div class="modern-card-header bg-warning text-white">
-                  <h6 class="mb-0">
-                    <i class="fas fa-pie-chart me-2"></i>
-                    توزیع فعالیت‌ها
-                  </h6>
-                </div>
-                <div class="modern-card-body">
-                  <div class="chart-container">
-                    <Charts
-                        type="scores"
-                        :data="activityDistributionData"
-                        height="300px"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- مقایسه عملکرد دانش‌آموز با کلاس -->}
-          <div class="modern-card animate-fade-in mb-4" style="animation-delay: 0.4s;">
-            <div class="modern-card-header bg-secondary text-white">
-              <h5 class="mb-0">
-                <i class="fas fa-balance-scale me-2"></i>
-                مقایسه عملکرد با میانگین کلاس
-              </h5>
-            </div>
-            <div class="modern-card-body">
-              <div class="row">
-                <div class="col-lg-8">
-                  <div class="chart-container">
-                    <Charts
-                        type="activity"
-                        :data="progressTimelineData"
-                        height="350px"
-                        title="تایم‌لاین پیشرفت یادگیری"
-                    />
-                  </div>
-                </div>
-                <div class="col-lg-4">
-                  <div class="comparison-radar">
-                    <h6 class="text-center mb-3">
-                      <i class="fas fa-radar me-2"></i>
-                      نمودار مقایسه‌ای عملکرد
-                    </h6>
-                    <div class="radar-chart-placeholder">
-                      <!-- در اینجا می‌توان از کتابخانه Chart.js استفاده کرد -->
-                      <div class="radar-metrics">
-                        <div class="metric-item">
-                          <span class="metric-label">سرعت:</span>
-                          <div class="metric-bar">
-                            <div class="metric-fill" :style="`width: ${comparisonData.speed}%`"></div>
-                          </div>
-                          <span class="metric-value">{{ comparisonData.speed }}%</span>
-                        </div>
-                        <div class="metric-item">
-                          <span class="metric-label">دقت:</span>
-                          <div class="metric-bar">
-                            <div class="metric-fill" :style="`width: ${comparisonData.accuracy}%`"></div>
-                          </div>
-                          <span class="metric-value">{{ comparisonData.accuracy }}%</span>
-                        </div>
-                        <div class="metric-item">
-                          <span class="metric-label">مشارکت:</span>
-                          <div class="metric-bar">
-                            <div class="metric-fill" :style="`width: ${comparisonData.participation}%`"></div>
-                          </div>
-                          <span class="metric-value">{{ comparisonData.participation }}%</span>
-                        </div>
-                        <div class="metric-item">
-                          <span class="metric-label">ثبات:</span>
-                          <div class="metric-bar">
-                            <div class="metric-fill" :style="`width: ${comparisonData.consistency}%`"></div>
-                          </div>
-                          <span class="metric-value">{{ comparisonData.consistency }}%</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- تحلیل زمان و سختی -->
-          <div class="row mb-4">
-            <div class="col-lg-6">
-              <div class="modern-card animate-fade-in" style="animation-delay: 0.5s;">
-                <div class="modern-card-header bg-primary text-white">
-                  <h6 class="mb-0">
-                    <i class="fas fa-clock me-2"></i>
-                    تحلیل زمان بر اساس نوع محتوا
-                  </h6>
-                </div>
-                <div class="modern-card-body">
-                  <div class="chart-container">
-                    <Charts
-                        type="activity"
-                        :data="timeAnalysisData"
-                        height="300px"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-lg-6">
-              <div class="modern-card animate-fade-in" style="animation-delay: 0.6s;">
-                <div class="modern-card-header bg-danger text-white">
-                  <h6 class="mb-0">
-                    <i class="fas fa-brain me-2"></i>
-                    تحلیل سختی موضوعات
-                  </h6>
-                </div>
-                <div class="modern-card-body">
-                  <div class="chart-container">
-                    <Charts
-                        type="scores"
-                        :data="difficultyAnalysisData"
-                        height="300px"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- تحلیل تفصیلی عملکرد -->
-          <div class="modern-card animate-fade-in mb-4" style="animation-delay: 0.7s;">
-            <div class="modern-card-header bg-dark text-white">
-              <h5 class="mb-0">
-                <i class="fas fa-list-alt me-2"></i>
-                تحلیل تفصیلی عملکرد
-              </h5>
-            </div>
-            <div class="modern-card-body">
-              <div class="row">
-                <div class="col-lg-6">
-                  <h6 class="section-title">
-                    <i class="fas fa-clock me-2"></i>
-                    تحلیل زمان
-                  </h6>
-                  <div class="time-analysis">
-                    <div class="time-item">
-                      <div class="time-label">میانگین زمان هر درس</div>
-                      <div class="time-value">{{ formatTime(studentAnalytics.averageTimePerLesson) }}</div>
-                    </div>
-                    <div class="time-item">
-                      <div class="time-label">میانگین زمان هر آزمون</div>
-                      <div class="time-value">{{ formatTime(studentAnalytics.averageTimePerExam) }}</div>
-                    </div>
-                    <div class="time-item">
-                      <div class="time-label">کل زمان مطالعه</div>
-                      <div class="time-value">{{ formatTime(studentAnalytics.totalStudyTime) }}</div>
-                    </div>
-                    <div class="time-item">
-                      <div class="time-label">آخرین فعالیت</div>
-                      <div class="time-value">{{ formatDate(studentAnalytics.lastAccessed) }}</div>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-lg-6">
-                  <h6 class="section-title">
-                    <i class="fas fa-trophy me-2"></i>
-                    دستاوردها و پیشرفت
-                  </h6>
-                  <div class="achievements">
-                    <div class="achievement-item" :class="{ 'achieved': studentAnalytics.completedLessons >= studentAnalytics.totalLessons }">
-                      <i class="fas fa-medal"></i>
-                      <span>تمام درس‌ها تکمیل شده</span>
-                    </div>
-                    <div class="achievement-item" :class="{ 'achieved': studentAnalytics.averageExamScore >= 80 }">
-                      <i class="fas fa-star"></i>
-                      <span>عملکرد عالی (میانگین +80)</span>
-                    </div>
-                    <div class="achievement-item" :class="{ 'achieved': studentAnalytics.exercisesTaken >= 5 }">
-                      <i class="fas fa-dumbbell"></i>
-                      <span>علاقه‌مند به تمرین</span>
-                    </div>
-                    <div class="achievement-item" :class="{ 'achieved': studentAnalytics.streak >= 7 }">
-                      <i class="fas fa-fire"></i>
-                      <span>۷ روز پیاپی فعال</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- فعالیت‌های هفتگی و اخیر -->
-          <div class="row mb-4">
-            <div class="col-lg-6">
-              <div class="modern-card animate-fade-in" style="animation-delay: 0.8s;">
-                <div class="modern-card-header bg-info text-white">
-                  <h6 class="mb-0">
-                    <i class="fas fa-calendar-week me-2"></i>
-                    نمای کلی فعالیت هفتگی
-                  </h6>
-                </div>
-                <div class="modern-card-body">
-                  <div class="chart-container">
-                    <Charts
-                        type="activity"
-                        :data="weeklyActivityData"
-                        height="300px"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-lg-6">
-              <div class="modern-card animate-fade-in" style="animation-delay: 0.9s;">
-                <div class="modern-card-header bg-success text-white">
-                  <h6 class="mb-0">
-                    <i class="fas fa-history me-2"></i>
-                    فعالیت‌های اخیر
-                  </h6>
-                </div>
-                <div class="modern-card-body">
-                  <div class="activity-timeline">
-                    <div v-for="(activity, index) in recentActivities" :key="index" class="activity-item">
-                      <div class="activity-icon" :class="getActivityIconClass(activity.type)">
-                        <i :class="getActivityIcon(activity.type)"></i>
-                      </div>
-                      <div class="activity-content">
-                        <div class="activity-title">{{ activity.description }}</div>
-                        <div class="activity-time">{{ formatRelativeTime(activity.timestamp) }}</div>
-                      </div>
-                      <div class="activity-score" v-if="activity.score">
-                        <span class="modern-badge modern-badge-success">{{ activity.score }}%</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- رتبه‌بندی و موقعیت در کلاس -->
-          <div class="modern-card animate-fade-in" style="animation-delay: 1s;">
-            <div class="modern-card-header bg-warning text-white">
-              <h5 class="mb-0">
-                <i class="fas fa-ranking-star me-2"></i>
-                موقعیت در کلاس
-              </h5>
-            </div>
-            <div class="modern-card-body">
-              <div class="row align-items-center">
-                <div class="col-md-4 text-center">
-                  <div class="rank-display">
-                    <div class="rank-number">{{ studentAnalytics.classRank || 'N/A' }}</div>
-                    <div class="rank-label">رتبه در کلاس</div>
-                    <div class="rank-total">از {{ studentAnalytics.totalStudents || 0 }} نفر</div>
-                  </div>
-                </div>
-                <div class="col-md-8">
-                  <div class="rank-progress-container">
-                    <h6>توزیع رتبه در کلاس</h6>
-                    <div class="rank-progress-bar">
-                      <div class="rank-indicator" :style="`left: ${getRankPercentage()}%`">
-                        <div class="rank-tooltip">شما اینجا هستید!</div>
-                      </div>
-                    </div>
-                    <div class="rank-scale">
-                      <span>رتبه ۱</span>
-                      <span>میانه</span>
-                      <span>رتبه {{ studentAnalytics.totalStudents }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- حالت خالی -->
-        <div v-else-if="!loading" class="empty-state">
-          <div class="modern-logo large secondary mb-4">
+    <!-- محتوای اصلی -->
+    <div v-if="!selectedStudentId && !loading" class="empty-state">
+      <loading-spinner :loading="false" type="empty">
+        <div class="empty-state-content">
+          <div class="empty-state-icon">
             <i class="fas fa-user-graduate"></i>
           </div>
-          <h4 class="text-muted mb-3">انتخاب دانش‌آموز</h4>
-          <p class="text-muted mb-4">
-            یک دوره و دانش‌آموز انتخاب کنید تا تحلیل تفصیلی فعالیت و پیگیری پیشرفت نمایش داده شود.
+          <h3 class="empty-state-title">انتخاب دانش‌آموز</h3>
+          <p class="empty-state-description">
+            برای مشاهده گزارش عملکرد، ابتدا دوره و سپس دانش‌آموز مورد نظر را انتخاب کنید
           </p>
           <div class="empty-state-features">
             <div class="feature-list">
@@ -439,16 +84,308 @@
         </div>
       </loading-spinner>
     </div>
+
+    <!-- گزارش دانش‌آموز -->
+    <div v-else>
+      <loading-spinner :loading="loading">
+        <!-- هدر اطلاعات دانش‌آموز -->
+        <div v-if="selectedStudent && studentAnalytics" class="student-header mb-4">
+          <div class="modern-card">
+            <div class="modern-card-body">
+              <div class="row align-items-center">
+                <div class="col-md-8">
+                  <div class="student-info">
+                    <div class="student-avatar">
+                      <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <div class="student-details">
+                      <h4 class="student-name">{{ selectedStudent.studentName }}</h4>
+                      <p class="student-meta">
+                        <span class="badge bg-primary me-2">{{ selectedStudent.username }}</span>
+                        <span class="text-muted">عضو از: {{ formatDate(studentAnalytics.studentInfo?.enrollmentDate) }}</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-4 text-end">
+                  <div class="quick-stats">
+                    <div class="quick-stat">
+                      <span class="stat-value">{{ studentAnalytics.overallStats?.classRank || '-' }}</span>
+                      <span class="stat-label">رتبه کلاس</span>
+                    </div>
+                    <div class="quick-stat">
+                      <span class="stat-value">{{ studentAnalytics.overallStats?.averageScore?.toFixed(1) || '0' }}</span>
+                      <span class="stat-label">میانگین نمرات</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- نمودارهای اصلی -->
+        <div class="row mb-4" v-if="studentAnalytics">
+          <!-- نمودار عملکرد آزمون‌ها -->
+          <div class="col-lg-8">
+            <div class="modern-card animate-fade-in" style="animation-delay: 0.6s;">
+              <div class="modern-card-header bg-primary text-white">
+                <h6 class="mb-0">
+                  <i class="fas fa-chart-line me-2"></i>
+                  روند عملکرد آزمون‌ها
+                </h6>
+              </div>
+              <div class="modern-card-body">
+                <div class="chart-container" style="height: 300px;">
+                  <Charts
+                      v-if="examPerformanceChartData.length"
+                      type="activity"
+                      :data="examPerformanceChartData"
+                      height="280px"
+                  />
+                  <div v-else class="empty-chart-message">
+                    <i class="fas fa-chart-line text-muted"></i>
+                    <p class="text-muted mt-2">هنوز آزمونی شرکت نکرده‌اید</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- آمار کلی عملکرد -->
+          <div class="col-lg-4">
+            <div class="modern-card animate-fade-in" style="animation-delay: 0.7s;">
+              <div class="modern-card-header bg-success text-white">
+                <h6 class="mb-0">
+                  <i class="fas fa-trophy me-2"></i>
+                  خلاصه عملکرد
+                </h6>
+              </div>
+              <div class="modern-card-body">
+                <div class="performance-stats">
+                  <div class="stat-item">
+                    <div class="stat-value">{{ studentAnalytics.overallStats?.averageScore?.toFixed(1) || 0 }}</div>
+                    <div class="stat-label">میانگین نمرات</div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-value">{{ studentAnalytics.overallStats?.examsTaken || 0 }}</div>
+                    <div class="stat-label">آزمون‌های شرکت‌کرده</div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-value">{{ studentAnalytics.overallStats?.completionRate?.toFixed(0) || 0 }}%</div>
+                    <div class="stat-label">درصد تکمیل دروس</div>
+                  </div>
+                  <div class="stat-item">
+                    <div class="stat-value">{{ Math.floor((studentAnalytics.overallStats?.totalStudyHours || 0)) }}</div>
+                    <div class="stat-label">ساعات مطالعه</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ردیف دوم: توزیع نمرات و فعالیت هفتگی -->
+        <div class="row mb-4" v-if="studentAnalytics">
+          <div class="col-lg-6">
+            <div class="modern-card animate-fade-in" style="animation-delay: 0.8s;">
+              <div class="modern-card-header bg-warning text-white">
+                <h6 class="mb-0">
+                  <i class="fas fa-chart-pie me-2"></i>
+                  توزیع نمرات آزمون‌ها
+                </h6>
+              </div>
+              <div class="modern-card-body">
+                <div class="chart-container" style="height: 250px;">
+                  <Charts
+                      v-if="scoreDistributionData.length"
+                      type="pie"
+                      :data="scoreDistributionData"
+                      height="230px"
+                  />
+                  <div v-else class="empty-chart-message">
+                    <i class="fas fa-chart-pie text-muted"></i>
+                    <p class="text-muted mt-2">داده کافی برای نمایش وجود ندارد</p>
+                  </div>
+                </div>
+
+                <!-- لژند توزیع نمرات -->
+                <div class="score-legend mt-3" v-if="scoreDistributionData.length">
+                  <div v-for="range in scoreDistributionData" :key="range.range"
+                       class="legend-item">
+                    <span class="legend-color" :style="{backgroundColor: range.color}"></span>
+                    <span class="legend-label">{{ range.range }} ({{ range.count }} آزمون)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="modern-card animate-fade-in" style="animation-delay: 0.9s;">
+              <div class="modern-card-header bg-info text-white">
+                <h6 class="mb-0">
+                  <i class="fas fa-calendar-week me-2"></i>
+                  فعالیت ۷ روز گذشته
+                </h6>
+              </div>
+              <div class="modern-card-body">
+                <div class="chart-container" style="height: 250px;">
+                  <Charts
+                      v-if="weeklyActivityData.length"
+                      type="activity"
+                      :data="weeklyActivityData"
+                      height="230px"
+                  />
+                </div>
+
+                <!-- راهنمای نمودار فعالیت -->
+                <div class="activity-legend mt-3">
+                  <div class="legend-row">
+                    <span class="legend-dot" style="background-color: #667eea;"></span>
+                    <span>بازدیدها</span>
+                    <span class="legend-dot" style="background-color: #f093fb;"></span>
+                    <span>ارسال‌ها</span>
+                    <span class="legend-dot" style="background-color: #4facfe;"></span>
+                    <span>تکمیل‌ها</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ردیف سوم: تحلیل زمان و پیشرفت دوره -->
+        <div class="row mb-4" v-if="studentAnalytics">
+          <div class="col-lg-6">
+            <div class="modern-card animate-fade-in" style="animation-delay: 1.0s;">
+              <div class="modern-card-header bg-secondary text-white">
+                <h6 class="mb-0">
+                  <i class="fas fa-clock me-2"></i>
+                  تحلیل زمان مطالعه
+                </h6>
+              </div>
+              <div class="modern-card-body">
+                <div class="chart-container" style="height: 250px;">
+                  <Charts
+                      v-if="timeAnalysisChartData.length"
+                      type="pie"
+                      :data="timeAnalysisChartData"
+                      height="230px"
+                  />
+                  <div v-else class="empty-chart-message">
+                    <i class="fas fa-clock text-muted"></i>
+                    <p class="text-muted mt-2">داده‌ای برای نمایش وجود ندارد</p>
+                  </div>
+                </div>
+
+                <!-- جزئیات زمان مطالعه -->
+                <div class="time-details mt-3" v-if="timeAnalysisChartData.length">
+                  <div v-for="item in timeAnalysisChartData" :key="item.label"
+                       class="time-detail-item">
+                    <div class="time-activity">{{ item.label }}</div>
+                    <div class="time-value">{{ item.hours }} ساعت</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-lg-6">
+            <div class="modern-card animate-fade-in" style="animation-delay: 1.1s;">
+              <div class="modern-card-header bg-dark text-white">
+                <h6 class="mb-0">
+                  <i class="fas fa-trend-up me-2"></i>
+                  روند پیشرفت در دوره
+                </h6>
+              </div>
+              <div class="modern-card-body">
+                <div class="chart-container" style="height: 250px;">
+                  <Charts
+                      v-if="progressTimelineData.length"
+                      type="activity"
+                      :data="progressTimelineData"
+                      height="230px"
+                  />
+                  <div v-else class="empty-chart-message">
+                    <i class="fas fa-trend-up text-muted"></i>
+                    <p class="text-muted mt-2">داده‌ای برای نمایش وجود ندارد</p>
+                  </div>
+                </div>
+
+                <!-- نکات پیشرفت -->
+                <div class="progress-insights mt-3" v-if="studentAnalytics.overallStats">
+                  <div class="insight-item" v-if="studentAnalytics.overallStats.completionRate > 50">
+                    <i class="fas fa-arrow-up text-success"></i>
+                    <span>پیشرفت مناسب در دوره</span>
+                  </div>
+                  <div class="insight-item" v-if="studentAnalytics.overallStats.consistencyScore > 70">
+                    <i class="fas fa-medal text-warning"></i>
+                    <span>مطالعه منظم و مداوم</span>
+                  </div>
+                  <div class="insight-item" v-if="studentAnalytics.overallStats.classRank <= 3">
+                    <i class="fas fa-crown text-warning"></i>
+                    <span>در میان ۳ نفر برتر کلاس</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- بخش فعالیت‌های اخیر بهبود یافته -->
+        <div class="row mb-4" v-if="recentActivities.length">
+          <div class="col-12">
+            <div class="modern-card animate-fade-in" style="animation-delay: 1.2s;">
+              <div class="modern-card-header bg-success text-white">
+                <h6 class="mb-0">
+                  <i class="fas fa-history me-2"></i>
+                  آخرین فعالیت‌ها ({{ recentActivities.length }} فعالیت)
+                </h6>
+              </div>
+              <div class="modern-card-body">
+                <div class="activity-timeline">
+                  <div v-for="(activity, index) in displayedActivities"
+                       :key="index" class="activity-item">
+                    <div class="activity-icon" :class="getActivityIconClass(activity.type)">
+                      <i :class="getActivityIcon(activity.type)"></i>
+                    </div>
+                    <div class="activity-content">
+                      <div class="activity-title">{{ activity.description }}</div>
+                      <div class="activity-meta">
+                        <span class="activity-time">{{ formatRelativeTime(activity.timestamp) }}</span>
+                        <span v-if="activity.score" class="activity-score">
+                          نمره: {{ activity.score }}
+                        </span>
+                        <span v-if="activity.timeSpent" class="activity-duration">
+                          مدت: {{ Math.floor(activity.timeSpent / 60) }} دقیقه
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- دکمه مشاهده بیشتر -->
+                <div class="text-center mt-3" v-if="recentActivities.length > 5">
+                  <button class="btn btn-outline-primary btn-sm" @click="showMoreActivities = !showMoreActivities">
+                    <i class="fas" :class="showMoreActivities ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+                    {{ showMoreActivities ? 'نمایش کمتر' : 'نمایش بیشتر' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </loading-spinner>
+    </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
-// import formMixin from '@/mixins/formMixin.js';
 import Charts from '@/components/charts/Charts.vue';
 import { useFormatters } from '@/composables/useFormatters.js';
-
 
 export default {
   name: 'StudentActivities',
@@ -469,25 +406,77 @@ export default {
       selectedStudentId: '',
       selectedStudent: null,
       studentAnalytics: null,
+
+      // داده‌های نمودارهای جدید
+      examPerformanceChartData: [],
+      scoreDistributionData: [],
+      timeAnalysisChartData: [],
+      progressTimelineData: [],
+
+      // داده‌های موجود بهبود یافته
       examPerformanceData: [],
       activityDistributionData: [],
-      progressTimelineData: [],
       timeAnalysisData: [],
       difficultyAnalysisData: [],
-      comparisonData: {
-        speed: 88,
-        accuracy: 92,
-        participation: 85,
-        consistency: 79
-      },
       weeklyActivityData: [],
-      recentActivities: []
+      recentActivities: [],
+
+      // تنظیمات نمایش
+      showMoreActivities: false,
+
+      // فیلترهای زمانی
+      timeFilters: [
+        { label: 'هفته گذشته', value: '7' },
+        { label: 'ماه گذشته', value: '30' },
+        { label: 'سه ماه گذشته', value: '90' }
+      ],
+      selectedTimeFilter: '30'
     };
+  },
+  computed: {
+    displayedActivities() {
+      if (this.showMoreActivities) {
+        return this.recentActivities;
+      }
+      return this.recentActivities.slice(0, 5);
+    }
   },
   async created() {
     await this.fetchTeachingCourses();
   },
   methods: {
+    async fetchTeachingCourses() {
+      try {
+        const response = await axios.get('/courses/teaching');
+        this.teachingCourses = response.data;
+      } catch (error) {
+        console.error('Error fetching teaching courses:', error);
+        this.$toast.error('خطا در دریافت لیست دوره‌ها');
+      }
+    },
+
+    async onCourseChange() {
+      if (!this.selectedCourseId) {
+        this.courseStudents = [];
+        this.selectedStudentId = '';
+        return;
+      }
+
+      try {
+        const response = await axios.get(`/courses/${this.selectedCourseId}/students`);
+        this.courseStudents = response.data.map(student => ({
+          studentId: student.id,
+          studentName: `${student.firstName} ${student.lastName}`,
+          username: student.username
+        }));
+        this.selectedStudentId = '';
+        this.studentAnalytics = null;
+      } catch (error) {
+        console.error('Error fetching course students:', error);
+        this.$toast.error('خطا در دریافت لیست دانش‌آموزان');
+      }
+    },
+
     async fetchStudentAnalytics() {
       if (!this.selectedStudentId || !this.selectedCourseId) return;
 
@@ -495,318 +484,399 @@ export default {
       try {
         this.selectedStudent = this.courseStudents.find(s => s.studentId === this.selectedStudentId);
 
-        // Use the correct API endpoints from documentation
-        const [detailedResponse, timelineResponse] = await Promise.all([
-          axios.get(`/analytics/student/${this.selectedStudentId}/course/${this.selectedCourseId}/detailed`),
-          axios.get(`/analytics/student/${this.selectedStudentId}/activity-timeline`)
-        ]);
+        // استفاده از API جدید جامع
+        const response = await axios.get(`/analytics/student/${this.selectedStudentId}/course/${this.selectedCourseId}/comprehensive-report`, {
+          params: {
+            days: this.selectedTimeFilter
+          }
+        });
 
-        this.studentAnalytics = {
-          ...this.selectedStudent,
-          ...detailedResponse.data
-        };
+        this.studentAnalytics = response.data;
+        this.recentActivities = response.data.recentActivities || [];
 
-        this.recentActivities = timelineResponse.data || [];
+        // آماده‌سازی داده‌ها برای نمودارها
+        this.prepareChartData();
 
-        await this.generateChartData();
       } catch (error) {
-        console.error('خطا در دریافت تحلیل‌های دانش‌آموز:', error);
-        this.showErrorToast('خطا در بارگذاری تحلیل‌های دانش‌آموز');
+        console.error('Error fetching student analytics:', error);
+        this.$toast.error('خطا در دریافت آمار دانش‌آموز');
       } finally {
         this.loading = false;
       }
     },
 
-    async fetchTeachingCourses() {
-      try {
-        const response = await axios.get('/courses/teaching');
-        this.teachingCourses = response.data;
-      } catch (error) {
-        console.error('خطا در دریافت دوره‌های تدریس:', error);
-        this.showErrorToast('خطا در بارگذاری دوره‌ها');
-      }
-    },
-    showErrorToast(message) {
-      this.$toast?.error(message);
-    },
+    prepareChartData() {
+      if (!this.studentAnalytics) return;
 
-    showSuccessToast(message) {
-      this.$toast?.success(message);
-    },
-    async fetchStudentsForCourse() {
-      if (!this.selectedCourseId) {
-        this.courseStudents = [];
-        return;
-      }
+      // 1. نمودار عملکرد آزمون‌ها
+      this.examPerformanceChartData = this.studentAnalytics.recentActivities
+          ?.filter(activity => activity.type === 'EXAM_SUBMISSION' && activity.score)
+          .map(exam => ({
+            label: exam.description.replace('شرکت در آزمون ', ''),
+            score: exam.score,
+            date: exam.timestamp
+          })) || [];
 
-      try {
-        const response = await axios.get(`/analytics/teacher/course/${this.selectedCourseId}/participation`);
-        this.courseStudents = response.data;
-      } catch (error) {
-        console.error('خطا در دریافت دانش‌آموزان دوره:', error);
-        this.showErrorToast('خطا در بارگذاری دانش‌آموزان');
-      }
-    },
-    async generateChartData() {
-      // تولید داده‌های نمودار عملکرد آزمون‌ها
-      this.examPerformanceData = [
-        { date: '1403/09/01', views: 15, submissions: 8, completions: 6 },
-        { date: '1403/09/08', views: 22, submissions: 12, completions: 10 },
-        { date: '1403/09/15', views: 18, submissions: 15, completions: 12 },
-        { date: '1403/09/22', views: 28, submissions: 18, completions: 16 },
-        { date: '1403/09/29', views: 32, submissions: 22, completions: 20 }
-      ];
+      // 2. نمودار توزیع نمرات
+      this.scoreDistributionData = this.studentAnalytics.scoreDistribution || [];
 
-      // تولید داده‌های توزیع فعالیت
-      this.activityDistributionData = [
-        { range: '90-100', count: 8 },
-        { range: '80-89', count: 12 },
-        { range: '70-79', count: 6 },
-        { range: '60-69', count: 4 },
-        { range: '0-59', count: 2 }
-      ];
+      // 3. نمودار فعالیت هفتگی
+      this.weeklyActivityData = this.studentAnalytics.weeklyActivity || [];
 
-      // تولید تایم‌لاین پیشرفت
-      this.progressTimelineData = this.generateProgressTimeline();
+      // 4. نمودار تحلیل زمان
+      this.timeAnalysisChartData = this.studentAnalytics.timeAnalysis?.map(item => ({
+        label: item.label,
+        value: item.value,
+        count: item.hours
+      })) || [];
 
-      // تولید داده‌های تحلیل زمان
-      this.timeAnalysisData = [
-        { date: '1403/09/01', views: 45, submissions: 28, completions: 22 },
-        { date: '1403/09/08', views: 52, submissions: 35, completions: 30 },
-        { date: '1403/09/15', views: 38, submissions: 32, completions: 28 },
-        { date: '1403/09/22', views: 48, submissions: 38, completions: 35 },
-        { date: '1403/09/29', views: 55, submissions: 42, completions: 38 }
-      ];
-
-      // تولید داده‌های تحلیل سختی
-      this.difficultyAnalysisData = [
-        { range: 'آسان', count: 15 },
-        { range: 'متوسط', count: 18 },
-        { range: 'سخت', count: 8 },
-        { range: 'خیلی سخت', count: 3 }
-      ];
-
-      // تولید داده‌های فعالیت هفتگی
-      this.weeklyActivityData = [
-        { date: 'هفته ۱', views: 120, submissions: 85, completions: 72 },
-        { date: 'هفته ۲', views: 135, submissions: 92, completions: 80 },
-        { date: 'هفته ۳', views: 148, submissions: 105, completions: 88 },
-        { date: 'هفته ۴', views: 162, submissions: 118, completions: 95 }
-      ];
+      // 5. نمودار پیشرفت زمانی
+      this.progressTimelineData = this.studentAnalytics.progressTrend?.map(trend => ({
+        month: trend.month,
+        progress: (trend.lessons + trend.exams + trend.exercises) * 10, // تبدیل به درصد تقریبی
+        lessons: trend.lessons,
+        exams: trend.exams
+      })) || [];
     },
 
-    generateProgressTimeline() {
-      const timeline = [];
-      const today = new Date();
-
-      for (let i = 30; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-
-        timeline.push({
-          date: this.formatDate(date.toISOString()),
-          views: Math.min(100, (30 - i) * 3 + Math.random() * 10),
-          submissions: Math.min(80, (30 - i) * 2.5 + Math.random() * 8),
-          completions: Math.min(60, (30 - i) * 2 + Math.random() * 6)
-        });
-      }
-
-      return timeline;
-    },
-
-    async fetchRecentActivities() {
-      try {
-        const response = await axios.get(`/analytics/student/${this.selectedStudentId}/activity-timeline`);
-        this.recentActivities = response.data || [];
-      } catch (error) {
-        console.error('Error fetching student activities:', error);
-        // Fallback to mock data if needed
-        this.recentActivities = [];
-      }
-    },
-    async fetchStudentExamPerformance() {
-      try {
-        const response = await axios.get(`/analytics/student/${this.selectedStudentId}/exam-performance`);
-        return response.data || [];
-      } catch (error) {
-        console.error('Error fetching exam performance:', error);
-        return [];
-      }
-    },
-    async fetchStudentTimeAnalysis() {
-      try {
-        const response = await axios.get(`/analytics/student/${this.selectedStudentId}/time-analysis`);
-        return response.data || [];
-      } catch (error) {
-        console.error('Error fetching time analysis:', error);
-        return [];
-      }
-    },
-    getProgressClass(percentage) {
-      if (percentage >= 90) return 'excellent';
-      if (percentage >= 70) return 'good';
-      if (percentage >= 50) return 'average';
-      return 'poor';
-    },
-
-    getActivityIconClass(type) {
-      switch (type) {
-        case 'LESSON_COMPLETION': return 'activity-lesson';
-        case 'EXAM_SUBMISSION': return 'activity-exam';
-        case 'EXERCISE_COMPLETION': return 'activity-exercise';
-        case 'CONTENT_VIEW': return 'activity-content';
-        default: return 'activity-default';
-      }
-    },
-
+    // متد کمکی برای آیکون نوع فعالیت
     getActivityIcon(type) {
-      switch (type) {
-        case 'LESSON_COMPLETION': return 'fas fa-book-open';
-        case 'EXAM_SUBMISSION': return 'fas fa-clipboard-check';
-        case 'EXERCISE_COMPLETION': return 'fas fa-dumbbell';
-        case 'CONTENT_VIEW': return 'fas fa-eye';
-        default: return 'fas fa-circle';
-      }
+      const icons = {
+        'CONTENT_VIEW': 'fas fa-eye',
+        'LESSON_COMPLETION': 'fas fa-check-circle',
+        'EXAM_SUBMISSION': 'fas fa-file-alt',
+        'EXERCISE_SUBMISSION': 'fas fa-dumbbell',
+        'CHAT_MESSAGE_SEND': 'fas fa-comments'
+      };
+      return icons[type] || 'fas fa-circle';
     },
 
+    // متد کمکی برای کلاس CSS آیکون فعالیت
+    getActivityIconClass(type) {
+      const classes = {
+        'CONTENT_VIEW': 'activity-content',
+        'LESSON_COMPLETION': 'activity-lesson',
+        'EXAM_SUBMISSION': 'activity-exam',
+        'EXERCISE_SUBMISSION': 'activity-exercise',
+        'CHAT_MESSAGE_SEND': 'activity-chat'
+      };
+      return classes[type] || 'activity-default';
+    },
+
+    // متد کمکی برای فرمت زمان نسبی
     formatRelativeTime(timestamp) {
       const now = new Date();
-      const diff = now - new Date(timestamp);
-      const hours = Math.floor(diff / (1000 * 60 * 60));
-      const days = Math.floor(hours / 24);
+      const activityTime = new Date(timestamp);
+      const diffInHours = Math.floor((now - activityTime) / (1000 * 60 * 60));
 
-      if (days > 0) return `${days} روز قبل`;
-      if (hours > 0) return `${hours} ساعت قبل`;
-      return 'همین الان';
-    },
-    getRankPercentage() {
-      if (!this.studentAnalytics.classRank || !this.studentAnalytics.totalStudents) return 50;
-      return ((this.studentAnalytics.classRank - 1) / (this.studentAnalytics.totalStudents - 1)) * 100;
+      if (diffInHours < 1) return 'کمتر از یک ساعت پیش';
+      if (diffInHours < 24) return `${diffInHours} ساعت پیش`;
+
+      const diffInDays = Math.floor(diffInHours / 24);
+      if (diffInDays === 1) return 'دیروز';
+      if (diffInDays < 7) return `${diffInDays} روز پیش`;
+
+      return this.formatDate(timestamp);
     }
   }
 }
 </script>
 
 <style scoped>
-.progress-circle-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
+/* استایل‌های اصلی کامپوننت */
+.student-activities-container {
+  padding: 2rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
 }
 
-.progress-circle {
-  width: 120px;
-  height: 120px;
+.page-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.page-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 1rem;
+}
+
+.page-description {
+  font-size: 1.1rem;
+  color: #6c757d;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* فیلترها */
+.filters-section {
+  background: white;
+  padding: 2rem;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.filter-group {
+  margin-bottom: 1rem;
+}
+
+.filter-group label {
+  font-weight: 600;
+  color: #495057;
+  margin-bottom: 0.5rem;
+}
+
+.form-select {
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+  padding: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.form-select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* کارت‌ها */
+.modern-card {
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  border: none;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  margin-bottom: 1.5rem;
+}
+
+.modern-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.modern-card-header {
+  padding: 1rem 1.5rem;
+  border-bottom: none;
+  font-weight: 600;
+}
+
+.modern-card-body {
+  padding: 1.5rem;
+}
+
+/* هدر دانش‌آموز */
+.student-header {
+  margin-bottom: 2rem;
+}
+
+.student-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.student-avatar {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 8px solid;
-  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1.5rem;
 }
 
-.progress-circle.excellent {
-  border-color: #27ae60;
-  color: #27ae60;
+.student-name {
+  margin: 0;
+  color: #2c3e50;
+  font-weight: 700;
 }
 
-.progress-circle.good {
-  border-color: #3498db;
-  color: #3498db;
+.student-meta {
+  margin: 0.5rem 0 0 0;
+  color: #6c757d;
 }
 
-.progress-circle.average {
-  border-color: #f39c12;
-  color: #f39c12;
+.quick-stats {
+  display: flex;
+  gap: 2rem;
 }
 
-.progress-circle.poor {
-  border-color: #e74c3c;
-  color: #e74c3c;
-}
-
-.progress-text {
+.quick-stat {
   text-align: center;
 }
 
-.progress-number {
-  font-size: 1.8rem;
+.quick-stat .stat-value {
+  font-size: 1.5rem;
   font-weight: 700;
-  line-height: 1;
+  color: #2c3e50;
+  display: block;
 }
 
-.progress-label {
-  font-size: 0.8rem;
-  font-weight: 500;
-  margin-top: 0.25rem;
+.quick-stat .stat-label {
+  font-size: 0.85rem;
+  color: #6c757d;
 }
 
-.chart-container {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-  overflow-x: auto;
-}
-
-.time-analysis {
+/* نمودارهای خالی */
+.empty-chart-message {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #6c757d;
 }
 
-.time-item {
+.empty-chart-message i {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.3;
+}
+
+/* آمار عملکرد */
+.performance-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+/* لژند نمودارها */
+.score-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-label {
+  color: #495057;
+  font-weight: 500;
+}
+
+/* راهنمای فعالیت */
+.activity-legend {
+  background: rgba(248, 249, 250, 0.8);
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: 0.85rem;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* تحلیل زمان */
+.time-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.time-detail-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem;
-  background: rgba(102, 126, 234, 0.05);
-  border-radius: 8px;
-  border-right: 4px solid #667eea;
+  background: rgba(248, 249, 250, 0.6);
+  border-radius: 6px;
+  border-right: 3px solid #667eea;
 }
 
-.time-label {
-  font-weight: 600;
+.time-activity {
+  font-weight: 500;
   color: #495057;
 }
 
 .time-value {
-  font-weight: 700;
+  font-weight: 600;
   color: #667eea;
 }
 
-.achievements {
+/* نکات پیشرفت */
+.progress-insights {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
-.achievement-item {
+.insight-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: rgba(108, 117, 125, 0.1);
-  border-radius: 8px;
-  color: #6c757d;
-  transition: all 0.3s ease;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(248, 249, 250, 0.6);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #495057;
 }
 
-.achievement-item.achieved {
-  background: rgba(39, 174, 96, 0.1);
-  color: #27ae60;
-  border-right: 4px solid #27ae60;
+.insight-item i {
+  font-size: 1rem;
 }
 
-.achievement-item i {
-  font-size: 1.2rem;
-}
-
+/* تایم‌لاین فعالیت‌ها */
 .activity-timeline {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-height: 300px;
+  max-height: 400px;
   overflow-y: auto;
 }
 
@@ -853,6 +923,10 @@ export default {
   background: linear-gradient(135deg, #43e97b, #38f9d7);
 }
 
+.activity-icon.activity-chat {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
 .activity-icon.activity-default {
   background: linear-gradient(135deg, #a8edea, #fed6e3);
 }
@@ -867,202 +941,144 @@ export default {
   margin-bottom: 0.25rem;
 }
 
+.activity-meta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
 .activity-time {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #6c757d;
 }
 
 .activity-score {
-  margin-right: auto;
-}
-
-.comparison-radar {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  padding: 1.5rem;
-  height: 100%;
-}
-
-.radar-metrics {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.metric-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.metric-label {
-  min-width: 80px;
-  font-size: 0.9rem;
-  color: white;
-}
-
-.metric-bar {
-  flex: 1;
-  height: 8px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.metric-fill {
-  height: 100%;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  border-radius: 4px;
-  transition: width 0.3s ease;
-}
-
-.metric-value {
-  min-width: 50px;
-  font-weight: 600;
-  color: white;
-  text-align: left;
-}
-
-.rank-display {
-  text-align: center;
-}
-
-.rank-number {
-  font-size: 3rem;
-  font-weight: 700;
-  color: #667eea;
-  line-height: 1;
-}
-
-.rank-label {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #333;
-  margin-top: 0.5rem;
-}
-
-.rank-total {
-  font-size: 0.9rem;
-  color: #666;
-  margin-top: 0.25rem;
-}
-
-.rank-progress-container {
-  padding: 1rem;
-}
-
-.rank-progress-bar {
-  position: relative;
-  height: 8px;
-  background: linear-gradient(to left, #e74c3c, #f39c12, #f1c40f, #2ecc71, #27ae60);
-  border-radius: 4px;
-  margin: 1rem 0;
-}
-
-.rank-indicator {
-  position: absolute;
-  top: -8px;
-  width: 24px;
-  height: 24px;
-  background: #667eea;
-  border-radius: 50%;
-  border: 3px solid white;
-  transform: translateX(-50%);
-  cursor: pointer;
-}
-
-.rank-tooltip {
-  position: absolute;
-  top: -35px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #333;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  font-size: 0.7rem;
-  white-space: nowrap;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.rank-indicator:hover .rank-tooltip {
-  opacity: 1;
-}
-
-.rank-scale {
-  display: flex;
-  justify-content: space-between;
   font-size: 0.8rem;
-  color: #666;
+  color: #28a745;
+  font-weight: 600;
+  background: rgba(40, 167, 69, 0.1);
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
 }
 
+.activity-duration {
+  font-size: 0.8rem;
+  color: #17a2b8;
+  font-weight: 500;
+  background: rgba(23, 162, 184, 0.1);
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+}
+
+/* انیمیشن‌ها */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+/* Empty State */
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
 }
 
-.empty-state-features {
-  max-width: 400px;
+.empty-state-content {
+  max-width: 500px;
   margin: 0 auto;
 }
 
+.empty-state-icon i {
+  font-size: 4rem;
+  color: #667eea;
+  margin-bottom: 2rem;
+}
+
+.empty-state-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 1rem;
+}
+
+.empty-state-description {
+  font-size: 1.1rem;
+  color: #6c757d;
+  margin-bottom: 2rem;
+}
+
 .feature-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 1rem;
-  text-align: right;
+  margin-top: 2rem;
 }
 
 .feature-item {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.75rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 0.75rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  text-align: left;
 }
 
 .feature-item i {
-  font-size: 1.25rem;
-  width: 24px;
-  text-align: center;
+  font-size: 1.5rem;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .chart-container {
-    overflow-x: scroll;
+  .student-activities-container {
+    padding: 1rem;
   }
 
-  .time-item,
-  .activity-item {
+  .page-title {
+    font-size: 2rem;
+  }
+
+  .performance-stats {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .legend-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .activity-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .score-legend {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .quick-stats {
+    justify-content: space-around;
+    gap: 1rem;
+  }
+
+  .student-info {
     flex-direction: column;
     text-align: center;
-    gap: 0.5rem;
-  }
-
-  .progress-circle {
-    width: 100px;
-    height: 100px;
-  }
-
-  .progress-number {
-    font-size: 1.5rem;
-  }
-
-  .rank-progress-container {
-    padding: 0.5rem;
-  }
-
-  .metric-item {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .metric-bar {
-    width: 100%;
   }
 }
 </style>

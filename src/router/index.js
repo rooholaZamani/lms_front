@@ -293,16 +293,16 @@ const routes = [
       showSidebar: true
     }
   },
-  {
-    path: '/teacher/student-activities',
-    name: 'StudentActivities',
-    component: () => import('../components/analytics/StudentActivities.vue'),
-    meta: {
-      requiresAuth: true,
-      requiresTeacher: true,
-      showSidebar: true
-    }
-  },
+  // {
+  //   path: '/teacher/student-activities',
+  //   name: 'StudentActivities',
+  //   component: () => import('../components/analytics/StudentActivities.vue'),
+  //   meta: {
+  //     requiresAuth: true,
+  //     requiresTeacher: true,
+  //     showSidebar: true
+  //   }
+  // },
   {
     path: '/student/exam-results',
     name: 'StudentExamResults',
