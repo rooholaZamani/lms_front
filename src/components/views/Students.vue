@@ -534,7 +534,10 @@
                 </div>
                 <div v-else class="text-center text-muted py-4">
                   <i class="fas fa-tasks fa-3x mb-3 text-muted"></i>
-                  <p>هیچ تکلیفی ارسال نکرده است</p>
+                  <p>اطلاعات تکالیف در دسترس نیست</p>
+                  <small class="text-muted">
+                    برای مشاهده تکالیف دانش‌آموز، باید از طریق صفحه مدیریت تکالیف اقدام کنید
+                  </small>
                 </div>
               </div>
 
@@ -661,7 +664,11 @@ export default {
           this.fetchCourses(),
           this.fetchStudentsOverview()
         ]);
-        this.extractStudentsFromCourses();
+
+        // استخراج دانش‌آموزان و محاسبه پیشرفت واقعی
+        await this.extractStudentsWithRealProgress();
+
+        // محاسبه آمار کلی
         this.calculateStats();
       } catch (error) {
         console.error('Error loading students data:', error);
@@ -670,6 +677,209 @@ export default {
         this.loading = false;
       }
     },
+
+// متد بهینه شده برای استخراج دانش‌آموزان با پیشرفت واقعی
+    async extractStudentsWithRealProgress() {
+      const studentsMap = new Map();
+      const courseProgressData = new Map();
+
+      // مرحله 1: دریافت اطلاعات پیشرفت از تمام دوره‌ها
+      const courseProgressPromises = this.courses.map(async (course) => {
+        try {
+          const response = await axios.get(`/analytics/teacher/course/${course.id}/students-summary`);
+          const studentsInCourse = response.data || [];
+
+          courseProgressData.set(course.id, studentsInCourse);
+          return { courseId: course.id, students: studentsInCourse };
+        } catch (error) {
+          console.error(`Error fetching course ${course.id} students summary:`, error);
+          courseProgressData.set(course.id, []);
+          return { courseId: course.id, students: [] };
+        }
+      });
+
+      // منتظر دریافت اطلاعات تمام دوره‌ها
+      await Promise.all(courseProgressPromises);
+
+      // مرحله 2: ساخت نقشه دانش‌آموزان
+      this.courses.forEach(course => {
+        if (course.enrolledStudents) {
+          course.enrolledStudents.forEach(student => {
+            if (!studentsMap.has(student.id)) {
+              studentsMap.set(student.id, {
+                ...student,
+                enrolledCourses: [],
+                overallProgress: 0,
+                lastActivity: student.lastActivity || new Date().toISOString(),
+                coursesProgress: []
+              });
+            }
+
+            // اضافه کردن دوره به لیست دوره‌های دانش‌آموز
+            const studentData = studentsMap.get(student.id);
+            studentData.enrolledCourses.push({
+              id: course.id,
+              title: course.title,
+              enrollmentDate: student.enrollmentDate || new Date().toISOString()
+            });
+
+            // اضافه کردن اطلاعات پیشرفت در این دوره
+            const studentsInCourse = courseProgressData.get(course.id) || [];
+            const studentProgressInCourse = studentsInCourse.find(s => s.studentId === student.id);
+
+            if (studentProgressInCourse) {
+              studentData.coursesProgress.push({
+                courseId: course.id,
+                courseName: course.title,
+                completion: studentProgressInCourse.completion || 0,
+                studyTime: studentProgressInCourse.studyTime || 0,
+                lastAccessed: studentProgressInCourse.lastAccessed || student.lastActivity,
+                completedLessons: studentProgressInCourse.completedLessons || 0,
+                examsTaken: studentProgressInCourse.examsTaken || 0,
+                averageScore: studentProgressInCourse.averageScore || 0
+              });
+            } else {
+              // اگر اطلاعات پیشرفت موجود نیست، مقادیر پیش‌فرض
+              studentData.coursesProgress.push({
+                courseId: course.id,
+                courseName: course.title,
+                completion: 0,
+                studyTime: 0,
+                lastAccessed: student.lastActivity,
+                completedLessons: 0,
+                examsTaken: 0,
+                averageScore: 0
+              });
+            }
+          });
+        }
+      });
+
+      // مرحله 3: محاسبه پیشرفت کلی هر دانش‌آموز
+      Array.from(studentsMap.values()).forEach(student => {
+        if (student.coursesProgress.length > 0) {
+          // محاسبه میانگین پیشرفت
+          const totalProgress = student.coursesProgress.reduce((sum, course) => sum + course.completion, 0);
+          student.overallProgress = Math.round(totalProgress / student.coursesProgress.length);
+
+          // به‌روزرسانی آخرین فعالیت
+          const latestActivity = student.coursesProgress.reduce((latest, course) => {
+            const courseDate = new Date(course.lastAccessed);
+            const latestDate = new Date(latest);
+            return courseDate > latestDate ? course.lastAccessed : latest;
+          }, student.lastActivity);
+
+          student.lastActivity = latestActivity;
+
+          // محاسبه آمار اضافی
+          student.totalStudyTime = student.coursesProgress.reduce((sum, course) => sum + (course.studyTime || 0), 0);
+          student.totalExamsTaken = student.coursesProgress.reduce((sum, course) => sum + (course.examsTaken || 0), 0);
+          student.averageExamScore = this.calculateAverageExamScore(student.coursesProgress);
+        } else {
+          student.overallProgress = 0;
+          student.totalStudyTime = 0;
+          student.totalExamsTaken = 0;
+          student.averageExamScore = 0;
+        }
+      });
+
+      this.allStudents = Array.from(studentsMap.values());
+    },
+
+// متد کمکی برای محاسبه میانگین نمره آزمون‌ها
+    calculateAverageExamScore(coursesProgress) {
+      const coursesWithExams = coursesProgress.filter(course =>
+          course.examsTaken > 0 && course.averageScore > 0
+      );
+
+      if (coursesWithExams.length === 0) return 0;
+
+      const totalWeightedScore = coursesWithExams.reduce((sum, course) =>
+          sum + (course.averageScore * course.examsTaken), 0
+      );
+      const totalExams = coursesWithExams.reduce((sum, course) =>
+          sum + course.examsTaken, 0
+      );
+
+      return totalExams > 0 ? Math.round(totalWeightedScore / totalExams) : 0;
+    },
+
+// اصلاح متد calculateStats برای استفاده از داده‌های واقعی
+    calculateStats() {
+      this.stats.totalStudents = this.allStudents.length;
+
+      // محاسبه دانش‌آموزان فعال بر اساس آخرین فعالیت (یک هفته گذشته)
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+      this.stats.activeStudents = this.allStudents.filter(student => {
+        const lastActivity = new Date(student.lastActivity);
+        return lastActivity >= oneWeekAgo;
+      }).length;
+
+      // محاسبه میانگین پیشرفت واقعی
+      const studentsWithProgress = this.allStudents.filter(student => student.overallProgress > 0);
+      if (studentsWithProgress.length > 0) {
+        const totalProgress = studentsWithProgress.reduce((sum, student) => sum + student.overallProgress, 0);
+        this.stats.averageProgress = Math.round(totalProgress / studentsWithProgress.length);
+      } else {
+        this.stats.averageProgress = 0;
+      }
+    },
+
+// بهبود متد showStudentDetails برای استفاده از اطلاعات موجود
+    async showStudentDetails(student) {
+      this.selectedStudent = student;
+      this.loadingStudentDetails = true;
+
+      try {
+        // اگر اطلاعات پیشرفت از قبل موجود است، از آن استفاده کن
+        if (student.coursesProgress && student.coursesProgress.length > 0) {
+          this.selectedStudentProgress = {
+            courses: student.coursesProgress.map(course => ({
+              courseId: course.courseId,
+              courseName: course.courseName,
+              completion: course.completion,
+              studyTime: course.studyTime,
+              lastAccessed: course.lastAccessed
+            })),
+            averageCompletion: student.overallProgress,
+            totalStudyTime: student.totalStudyTime || 0,
+            lastAccessed: student.lastActivity,
+            enrolledCourses: student.enrolledCourses.length,
+            averageStudyTimePerCourse: student.enrolledCourses.length > 0 ?
+                Math.round((student.totalStudyTime || 0) / student.enrolledCourses.length) : 0
+          };
+
+          this.selectedStudentExams = [{
+            examsTaken: student.totalExamsTaken || 0,
+            averageScore: student.averageExamScore || 0,
+            passRate: student.averageExamScore >= 70 ? 80 : 60, // تخمینی
+            recentActivityCount: student.coursesProgress.filter(course => {
+              const lastAccess = new Date(course.lastAccessed);
+              const oneWeekAgo = new Date();
+              oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+              return lastAccess >= oneWeekAgo;
+            }).length
+          }];
+        } else {
+          // اگر اطلاعات موجود نیست، از API بگیر
+          await this.fetchStudentPerformance(student.id);
+        }
+
+        await this.fetchStudentAssignments(student.id);
+        await this.fetchStudentActivity(student.id);
+      } catch (error) {
+        console.error('Error fetching student details:', error);
+        this.$toast.error('خطا در دریافت جزئیات دانش‌آموز');
+      } finally {
+        this.loadingStudentDetails = false;
+      }
+
+      const modal = new bootstrap.Modal(document.getElementById('studentDetailsModal'));
+      modal.show();
+    },
+
 
     async fetchCourses() {
       try {
@@ -696,16 +906,17 @@ export default {
       }
     },
 
-    extractStudentsFromCourses() {
+    async extractStudentsFromCourses() {
       const studentsMap = new Map();
 
-      this.courses.forEach(course => {
+      for (const course of this.courses) {
         if (course.enrolledStudents) {
-          course.enrolledStudents.forEach(student => {
+          for (const student of course.enrolledStudents) {
             if (!studentsMap.has(student.id)) {
               studentsMap.set(student.id, {
                 ...student,
                 enrolledCourses: [],
+                courseProgressData: [],
                 overallProgress: 0,
                 lastActivity: student.lastActivity || new Date().toISOString()
               });
@@ -718,26 +929,51 @@ export default {
               title: course.title,
               enrollmentDate: student.enrollmentDate || new Date().toISOString()
             });
-          });
+
+            // Fetch real progress for this course
+            try {
+              const progressResponse = await axios.get(`/courses/${course.id}`);
+              const courseData = progressResponse.data;
+
+              // Find progress for this specific student
+              if (courseData.progress && courseData.progress.studentId === student.id) {
+                studentData.courseProgressData.push({
+                  courseId: course.id,
+                  courseName: course.title,
+                  completion: courseData.progress.completionPercentage || 0,
+                  lastAccessed: courseData.progress.lastAccessed
+                });
+              }
+            } catch (error) {
+              console.error(`Error fetching progress for course ${course.id}, student ${student.id}:`, error);
+              // Fallback with 0 progress
+              studentData.courseProgressData.push({
+                courseId: course.id,
+                courseName: course.title,
+                completion: 0,
+                lastAccessed: null
+              });
+            }
+          }
         }
-      });
+      }
 
       this.allStudents = Array.from(studentsMap.values());
 
-      // Calculate overall progress for each student (mock calculation)
+      // Calculate real overall progress for each student
+
       this.allStudents.forEach(student => {
-        student.overallProgress = Math.floor(Math.random() * 101);
+        console.log("this.allStudents:" + student.courseProgressData)
+        if (student.courseProgressData && student.courseProgressData.length > 0) {
+          const totalProgress = student.courseProgressData.reduce((sum, course) => sum + course.completion, 0);
+          student.overallProgress = Math.round(totalProgress / student.courseProgressData.length);
+        } else {
+          student.overallProgress = 0;
+        }
       });
     },
 
-    calculateStats() {
-      this.stats.totalStudents = this.allStudents.length;
-      this.stats.activeStudents = Math.floor(this.allStudents.length * 0.7);
 
-      const totalProgress = this.allStudents.reduce((sum, student) => sum + student.overallProgress, 0);
-      this.stats.averageProgress = this.allStudents.length > 0 ?
-          Math.round(totalProgress / this.allStudents.length) : 0;
-    },
 
     // Helper methods
     getAssignmentStatusClass(status) {
@@ -771,26 +1007,6 @@ export default {
         'RECENT_ACTIVITY': 'fas fa-clock text-info'
       };
       return icons[type] || 'fas fa-circle text-muted';
-    },
-
-    async showStudentDetails(student) {
-      this.selectedStudent = student;
-      this.loadingStudentDetails = true;
-
-      try {
-        // Use the new comprehensive analytics API
-        await this.fetchStudentPerformance(student.id);
-        await this.fetchStudentAssignments(student.id);
-        await this.fetchStudentActivity(student.id);
-      } catch (error) {
-        console.error('Error fetching student details:', error);
-        this.$toast.error('خطا در دریافت جزئیات دانش‌آموز');
-      } finally {
-        this.loadingStudentDetails = false;
-      }
-
-      const modal = new bootstrap.Modal(document.getElementById('studentDetailsModal'));
-      modal.show();
     },
 
     async fetchStudentPerformance(studentId) {
@@ -830,9 +1046,9 @@ export default {
 
     async fetchStudentAssignments(studentId) {
       try {
-        // استفاده از API مربوط به assignments
-        const response = await axios.get(`/assignments/submissions/student/${studentId}`);
-        this.selectedStudentAssignments = response.data || [];
+        // متأسفانه API مستقیم برای معلم جهت دیدن تکالیف دانش‌آموز خاص وجود ندارد
+        // پس تب تکالیف را خالی می‌گذاریم یا پیام مناسب نمایش می‌دهیم
+        this.selectedStudentAssignments = [];
       } catch (error) {
         console.error('Error fetching student assignments:', error);
         this.selectedStudentAssignments = [];
@@ -841,8 +1057,7 @@ export default {
 
     async fetchStudentActivity(studentId) {
       try {
-        // اگر API خاصی برای activity وجود دارد، از آن استفاده کنید
-        // در غیر این صورت از داده‌های performance استفاده می‌کنیم
+        // استفاده از داده‌های performance برای ساخت activity summary
         const performanceResponse = await axios.get(`/analytics/teacher/student/${studentId}/performance`);
         const performanceData = performanceResponse.data;
 
