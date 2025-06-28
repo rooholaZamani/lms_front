@@ -47,7 +47,11 @@
           </th>
           <th>
             <i class="fas fa-cogs me-1"></i>
-            میانگین نمره
+            میانگین نمره آزمون
+          </th>
+          <th>
+            <i class="fas fa-cogs me-1"></i>
+             میانگین نمره تکلیف
           </th>
         </tr>
         </thead>
@@ -93,8 +97,18 @@
           </td>
           <td>
             <div class="d-flex gap-2">
-                  <i class=" fa-cogs me-1"></i>
-                   میانگین نمره
+
+              <span class="score-value" :class="getScoreClass(getStudentAverageScore(student.id))">
+                 {{ getStudentAverageScore(student.id) }}
+             </span>
+            </div>
+          </td>
+          <td>
+            <div class="d-flex gap-2">
+
+              <span >
+                 0
+             </span>
             </div>
           </td>
         </tr>
@@ -149,7 +163,32 @@ export default {
       if (progress >= 40) return 'bg-warning';
       return 'bg-danger';
     },
+    getStudentAverageScore(studentId) {
+      // اگر دیتای آزمون‌های دانش‌آموز موجود است
+      if (this.course.examResults) {
+        const studentExams = this.course.examResults.filter(exam => exam.studentId === studentId);
+        if (studentExams.length === 0) return 0;
 
+        const totalScore = studentExams.reduce((sum, exam) => sum + (exam.score || 0), 0);
+        return Math.round(totalScore / studentExams.length);
+      }
+
+      // اگر دیتا در قالب دیگر موجود است
+      if (this.course.progress) {
+        const studentProgress = this.course.progress.find(p => p.studentId === studentId);
+        return studentProgress?.averageExamScore || 0;
+      }
+
+      return 0;
+    },
+
+    getScoreClass(score) {
+      if (score >= 17) return 'score-excellent';
+      if (score >= 14) return 'score-good';
+      if (score >= 10) return 'score-average';
+      if (score >= 7) return 'score-poor';
+      return 'score-fail';
+    },
     getTimeAgo(dateString) {
       if (!dateString) return '';
 
@@ -164,11 +203,7 @@ export default {
       return `${Math.floor(diffDays / 30)} ماه قبل`;
     },
 
-    sendMessage(student) {
-      // ارسال پیام به دانش‌آموز
-      console.log('Send message to:', student);
-      this.$toast.info('قابلیت ارسال پیام به زودی اضافه می‌شود');
-    },
+
 
     viewAnalytics(student) {
       // مشاهده آمار دانش‌آموز

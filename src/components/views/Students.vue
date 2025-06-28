@@ -854,7 +854,7 @@ export default {
           this.selectedStudentExams = [{
             examsTaken: student.totalExamsTaken || 0,
             averageScore: student.averageExamScore || 0,
-            passRate: student.averageExamScore >= 70 ? 80 : 60, // تخمینی
+            passRate: this.calculatePassRate(student), // تخمینی
             recentActivityCount: student.coursesProgress.filter(course => {
               const lastAccess = new Date(course.lastAccessed);
               const oneWeekAgo = new Date();
@@ -880,7 +880,29 @@ export default {
       modal.show();
     },
 
+    calculatePassRate(student) {
+      if (!student.coursesProgress || student.coursesProgress.length === 0) {
+        return 0;
+      }
 
+      let totalExams = 0;
+      let passedExams = 0;
+
+      student.coursesProgress.forEach(course => {
+        const courseExams = course.examsTaken || 0;
+        const courseAverage = course.averageScore || 0;
+        const passingScore = 70; // نمره قبولی (می‌توانید از API دریافت کنید)
+
+        totalExams += courseExams;
+
+        // اگر میانگین دوره >= نمره قبولی باشد، آن دوره را قبول حساب می‌کنیم
+        if (courseExams > 0 && courseAverage >= passingScore) {
+          passedExams += courseExams;
+        }
+      });
+
+      return totalExams > 0 ? Math.round((passedExams / totalExams) * 100) : 0;
+    },
     async fetchCourses() {
       try {
         const response = await axios.get('/courses/teaching');
@@ -1024,11 +1046,32 @@ export default {
           averageStudyTimePerCourse: performanceData.averageStudyTimePerCourse || 0
         };
 
+        let passRate = 0;
+        if (performanceData.examPassRate !== undefined) {
+          passRate = performanceData.examPassRate;
+        } else if (performanceData.courseDetails && performanceData.courseDetails.length > 0) {
+          // محاسبه بر اساس جزئیات دوره‌ها
+          let totalExams = 0;
+          let passedExams = 0;
+
+          performanceData.courseDetails.forEach(course => {
+            const courseExams = course.examsTaken || 0;
+            const courseAverage = course.averageScore || 0;
+            const passingScore = course.passingScore || 70;
+
+            totalExams += courseExams;
+            if (courseExams > 0 && courseAverage >= passingScore) {
+              passedExams += courseExams;
+            }
+          });
+
+          passRate = totalExams > 0 ? Math.round((passedExams / totalExams) * 100) : 0;
+        }
         // ساخت داده‌های آزمون برای تب Exams
         this.selectedStudentExams = [{
           examsTaken: performanceData.examsTaken || 0,
           averageScore: performanceData.averageExamScore || 0,
-          passRate: performanceData.examPassRate || 0,
+          passRate: performanceData.passRate ,
           recentActivityCount: performanceData.recentActivityCount || 0
         }];
 
