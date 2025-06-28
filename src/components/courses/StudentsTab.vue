@@ -45,10 +45,10 @@
             <i class="fas fa-chart-line me-1"></i>
             پیشرفت
           </th>
-<!--          <th>-->
-<!--            <i class="fas fa-cogs me-1"></i>-->
-<!--            عملیات-->
-<!--          </th>-->
+          <th>
+            <i class="fas fa-cogs me-1"></i>
+            میانگین نمره
+          </th>
         </tr>
         </thead>
         <tbody>
@@ -93,24 +93,8 @@
           </td>
           <td>
             <div class="d-flex gap-2">
-              <button
-                  class="modern-btn modern-btn-primary btn-sm"
-                  @click="$emit('view-student-progress', student)"
-                  title="مشاهده جزئیات">
-                <i class="fas fa-eye"></i>
-              </button>
-              <button
-                  class="modern-btn modern-btn-success btn-sm"
-                  @click="sendMessage(student)"
-                  title="ارسال پیام">
-                <i class="fas fa-envelope"></i>
-              </button>
-              <button
-                  class="modern-btn modern-btn-warning btn-sm"
-                  @click="viewAnalytics(student)"
-                  title="آمارها">
-                <i class="fas fa-chart-bar"></i>
-              </button>
+                  <i class=" fa-cogs me-1"></i>
+                   میانگین نمره
             </div>
           </td>
         </tr>

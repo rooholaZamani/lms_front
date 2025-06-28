@@ -748,7 +748,9 @@ export default defineComponent({
           data: pdfArrayBuffer,
           verbosity: 0, // کاهش لاگ‌ها
           disableAutoFetch: false,
-          disableStream: false
+          disableStream: false,
+          standardFontDataUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/',
+          useSystemFonts: true
         })
 
         // Wait for PDF to load
@@ -1546,6 +1548,13 @@ export default defineComponent({
   height: auto;
   cursor: grab;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  text-rendering: optimizeLegibility;
+  -webkit-font-feature-settings: "liga", "kern";
+  font-feature-settings: "liga", "kern";
+
+  /* پشتیبانی بهتر از RTL */
+  direction: rtl;
+  unicode-bidi: embed;
 }
 
 .pdf-display-canvas:hover {

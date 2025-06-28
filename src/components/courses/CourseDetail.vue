@@ -82,7 +82,7 @@
                         </div>
                         <div class="teacher-details">
                           <h6>{{ getTeacherName() }}</h6>
-                          <p>{{ course.teacher?.description || 'اطلاعات بیشتری در دسترس نیست.' }}</p>
+<!--                          <p>{{ course.teacher?.description || 'اطلاعات بیشتری در دسترس نیست.' }}</p>-->
                         </div>
                       </div>
                     </div>

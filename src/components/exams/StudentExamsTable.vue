@@ -187,14 +187,14 @@
             <td>
               <div class="duration-info">
                 <div class="actual-duration">{{ formatDuration(exam.actualDuration) }}</div>
-                <div class="duration-comparison" v-if="exam.exam?.timeLimit">
+                <div class="duration-comparison" v-if="exam?.timeLimit">
                   <div class="progress" style="height: 4px;">
                     <div class="progress-bar"
                          :class="getDurationClass(exam)"
                          :style="`width: ${getDurationPercentage(exam)}%`"></div>
                   </div>
                   <small class="text-muted">
-                    از {{ exam.exam.timeLimit }} دقیقه
+                    از {{ exam.timeLimit }} دقیقه
                   </small>
                 </div>
               </div>
@@ -227,11 +227,11 @@
                         title="مشاهده پاسخ‌ها">
                   <i class="fas fa-list-alt"></i>
                 </button>
-                <button class="modern-btn modern-btn-secondary modern-btn-sm"
-                        @click="downloadResult(exam)"
-                        title="دانلود نتیجه">
-                  <i class="fas fa-download"></i>
-                </button>
+<!--                <button class="modern-btn modern-btn-secondary modern-btn-sm"-->
+<!--                        @click="downloadResult(exam)"-->
+<!--                        title="دانلود نتیجه">-->
+<!--                  <i class="fas fa-download"></i>-->
+<!--                </button>-->
                 <button v-if="canRetakeExam(exam)"
                         class="modern-btn modern-btn-warning modern-btn-sm"
                         @click="retakeExam(exam)"
@@ -389,7 +389,8 @@ export default {
       sortDirection: 'desc',
       currentPage: 1,
       itemsPerPage: 10,
-      selectedExam: null
+      selectedExam: null,
+      // isDevelopment: process.env.NODE_ENV === 'development'
     };
   },
   computed: {
@@ -494,15 +495,21 @@ export default {
   },
   methods: {
     getExamTitle(exam) {
-      return exam.exam?.title || 'نامشخص';
+      return exam.exam?.title || exam.title || exam.examTitle || 'نامشخص';
     },
 
     getCourseTitle(exam) {
-      return exam.exam?.lesson?.course?.title || 'نامشخص';
+      return exam.exam?.lesson?.course?.title ||
+          exam.course?.title ||
+          exam.courseTitle ||
+          exam.courseName || 'نامشخص';
     },
 
     getLessonTitle(exam) {
-      return exam.exam?.lesson?.title;
+      return exam.exam?.lesson?.title ||
+          exam.lesson?.title ||
+          exam.lessonTitle ||
+          exam.lessonName;
     },
 
     getScorePercentage(exam) {

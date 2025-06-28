@@ -204,6 +204,12 @@ const routes = [
     }
   },
   {
+    path: '/exam-answers/:submissionId',
+    name: 'ExamAnswers',
+    component: () => import('../components/exams/ExamAnswers.vue'),
+    props: true
+  },
+  {
     path: '/exams/:id/edit',
     name: 'ExamEditor',
     component: () => import(/* webpackChunkName: "exam-creator" */ '../components/exams/ExamCreator.vue'),
