@@ -204,6 +204,18 @@ const routes = [
     }
   },
   {
+    path: '/exercises/:id/take',
+    name: 'ExerciseTake',
+    component: () => import(/* webpackChunkName: "exercise-taker" */ '../components/exercises/ExerciseTaker.vue'),
+    props: true,
+    meta: {
+      title: 'انجام تمرین',
+      requiresAuth: true,
+      requiresStudent: true,
+      hideSidebar: true
+    }
+  },
+  {
     path: '/exam-answers/:submissionId',
     name: 'ExamAnswers',
     component: () => import('../components/exams/ExamAnswers.vue'),
@@ -276,6 +288,17 @@ const routes = [
       requiresAuth: true,
       requiresStudent: true,
       showSidebar: true
+    }
+  },
+  {
+    path: '/assignments/:id',
+    name: 'AssignmentDetail',
+    component: () => import(/* webpackChunkName: "assignment-detail" */ '../components/assignments/AssignmentDetail.vue'),
+    props: true,
+    meta: {
+      title: 'جزئیات تکلیف',
+      requiresAuth: true,
+      hideSidebar: true
     }
   },
   // Error pages

@@ -63,7 +63,7 @@
                 <i class="fas fa-clipboard-check me-1"></i>
                 آزمون
               </span>
-              <span v-if="lesson.hasExercise || (lesson.exercises && lesson.exercises.length > 0) || lessonExercises[lesson.id]"
+              <span v-if="lesson.hasExercise || (lesson.exercises && lesson.exercises.length > 0) || lessonAssignments[lesson.id]"
                     class="modern-badge modern-badge-warning me-1">
                 <i class="fas fa-dumbbell me-1"></i>
                 تمرین
@@ -186,42 +186,42 @@
           </div>
 
           <!-- Lesson Exercises -->
-          <div v-if="lesson.hasExercise || (lesson.exercises && lesson.exercises.length > 0)" class="lesson-section">
-            <h6 class="section-title">
-              <i class="fas fa-dumbbell text-warning me-2"></i>
-              <i class="fas fa-dumbbell text-warning me-2"></i>
-              تمرین‌های درس
-            </h6>
-            <div class="assessment-item">
-              <div class="assessment-icon bg-warning">
-                <i class="fas fa-dumbbell"></i>
-              </div>
-              <div class="assessment-details">
-                <h6>تمرین درس</h6>
-                <p class="text-muted">تمرین برای تقویت یادگیری</p>
-                <div class="assessment-meta">
-                  <span class="meta-badge">
-                    <i class="fas fa-clock me-1"></i>
-                    ۱۵ دقیقه
-                  </span>
-                  <span class="meta-badge">
-                    <i class="fas fa-star me-1"></i>
-                    تطبیقی
-                  </span>
-                </div>
-              </div>
-              <div class="assessment-actions">
-                <button v-if="isEnrolled && !isTeacher" class="modern-btn modern-btn-warning">
-                  <i class="fas fa-play me-1"></i>
-                  شروع تمرین
-                </button>
-                <button v-if="isTeacher && isTeacherOfCourse" class="modern-btn modern-btn-secondary">
-                  <i class="fas fa-cog me-1"></i>
-                  مدیریت
-                </button>
-              </div>
-            </div>
-          </div>
+<!--          <div v-if="lesson.hasExercise || (lesson.exercises && lesson.exercises.length > 0)" class="lesson-section">-->
+<!--            <h6 class="section-title">-->
+<!--              <i class="fas fa-dumbbell text-warning me-2"></i>-->
+<!--              <i class="fas fa-dumbbell text-warning me-2"></i>-->
+<!--              تمرین‌های درس-->
+<!--            </h6>-->
+<!--            <div class="assessment-item">-->
+<!--              <div class="assessment-icon bg-warning">-->
+<!--                <i class="fas fa-dumbbell"></i>-->
+<!--              </div>-->
+<!--              <div class="assessment-details">-->
+<!--                <h6>تمرین درس</h6>-->
+<!--                <p class="text-muted">تمرین برای تقویت یادگیری</p>-->
+<!--                <div class="assessment-meta">-->
+<!--                  <span class="meta-badge">-->
+<!--                    <i class="fas fa-clock me-1"></i>-->
+<!--                    ۱۵ دقیقه-->
+<!--                  </span>-->
+<!--                  <span class="meta-badge">-->
+<!--                    <i class="fas fa-star me-1"></i>-->
+<!--                    تطبیقی-->
+<!--                  </span>-->
+<!--                </div>-->
+<!--              </div>-->
+<!--              <div class="assessment-actions">-->
+<!--                <button v-if="isEnrolled && !isTeacher" class="modern-btn modern-btn-warning" @click="startAssignment(lesson)">-->
+<!--                  <i class="fas fa-play me-1"></i>-->
+<!--                  شروع تمرین-->
+<!--                </button>-->
+<!--                <button v-if="isTeacher && isTeacherOfCourse" class="modern-btn modern-btn-secondary" @click="manageAssignment(lesson)">-->
+<!--                  <i class="fas fa-cog me-1"></i>-->
+<!--                  مدیریت-->
+<!--                </button>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
 
           <!-- Lesson Assignments -->
           <div v-if="lesson.hasAssignment || (lesson.assignments && lesson.assignments.length > 0)" class="lesson-section">
@@ -248,11 +248,11 @@
                 </div>
               </div>
               <div class="assessment-actions">
-                <button v-if="isEnrolled && !isTeacher" class="modern-btn modern-btn-info">
+                <button v-if="isEnrolled && !isTeacher" class="modern-btn modern-btn-info" @click="startAssignment(lesson)">
                   <i class="fas fa-upload me-1"></i>
                   ارسال تکلیف
                 </button>
-                <button v-if="isTeacher && isTeacherOfCourse" class="modern-btn modern-btn-secondary">
+                <button v-if="isTeacher && isTeacherOfCourse" class="modern-btn modern-btn-secondary" @click="manageAssignment(lesson)">
                   <i class="fas fa-cog me-1"></i>
                   مدیریت
                 </button>
@@ -321,7 +321,7 @@ export default {
       contentModal: null,
       showContentModal: false,
       lessonExams: {},
-      lessonExercises: {}
+      lessonAssignments: {}
     };
   },
   watch: {
@@ -331,7 +331,7 @@ export default {
         if (newLessons.length > 0) {
           this.fetchAllLessonsContent();
           this.fetchLessonExams();
-          this.fetchLessonExercises();
+          this.fetchLessonAssignments();
         }
 
         // Still fetch detailed content when expanded
@@ -351,13 +351,13 @@ export default {
 
     if (this.lessons && this.lessons.length > 0) {
       await this.fetchAllLessonsContent();
-      await this.fetchLessonExercises();
+      await this.fetchLessonAssignments();
     } else {
       // Wait for lessons to be available
       this.$watch('lessons', async (newLessons) => {
         if (newLessons && newLessons.length > 0) {
           await this.fetchAllLessonsContent();
-          await this.fetchLessonExercises();
+          await this.fetchLessonAssignments();
         }
       }, { immediate: true });
     }
@@ -396,63 +396,87 @@ export default {
 
       await Promise.all(examPromises);
     },
-    async fetchLessonExercises() {
-      console.log('Starting to fetch exercises for lessons:', this.lessons.map(l => l.id));
+    async manageAssignment(lesson) {
+      try {
+        if (this.lessonAssignments[lesson.id]) {
+          const assignment = Array.isArray(this.lessonAssignments[lesson.id])
+              ? this.lessonAssignments[lesson.id][0]
+              : this.lessonAssignments[lesson.id];
 
-      const exercisePromises = this.lessons.map(async (lesson) => {
+          this.$router.push({
+            name: 'AssignmentManager', // یا route مناسب برای مدیریت
+            params: { id: assignment.id }
+          });
+        } else {
+          this.$toast?.error('این درس تکلیف ندارد');
+        }
+      } catch (error) {
+        console.error('Error managing assignment:', error);
+        this.$toast?.error('خطا در دسترسی به تکلیف');
+      }
+    },
+    async fetchLessonAssignments() {
+      console.log('Starting to fetch assignments for lessons:', this.lessons.map(l => l.id));
+
+      const assignmentPromises = this.lessons.map(async (lesson) => {
         try {
-          console.log(`Fetching exercises for lesson ${lesson.id}`);
+          console.log(`Fetching assignments for lesson ${lesson.id}`);
           const response = await axios.get(`/assignments/lesson/${lesson.id}`);
 
           console.log(`Response for lesson ${lesson.id}:`, response.data);
 
-          // More robust data checking
           if (response.data && (Array.isArray(response.data) ? response.data.length > 0 : response.data.id)) {
-            this.lessonExercises[lesson.id] = response.data;
-            lesson.hasExercise = true;
+            this.lessonAssignments[lesson.id] = response.data;
+            lesson.hasAssignment = true; // تغییر از hasExercise به hasAssignment
 
-            // Handle both single exercise and array of exercises
-            const exercises = Array.isArray(response.data) ? response.data : [response.data];
+            // Handle both single assignment and array of assignments
+            const assignments = Array.isArray(response.data) ? response.data : [response.data];
 
-            if (!lesson.exercises) {
-              lesson.exercises = [];
+            if (!lesson.assignments) {
+              lesson.assignments = [];
             }
 
-            exercises.forEach(exercise => {
-              if (!lesson.exercises.find(ex => ex.id === exercise.id)) {
-                lesson.exercises.push(exercise);
+            assignments.forEach(assignment => {
+              if (!lesson.assignments.find(ex => ex.id === assignment.id)) {
+                lesson.assignments.push(assignment);
               }
             });
 
-            console.log(`Successfully loaded ${exercises.length} exercise(s) for lesson ${lesson.id}`);
+            console.log(`Successfully loaded ${assignments.length} assignment(s) for lesson ${lesson.id}`);
           } else {
-            console.log(`No valid exercise data for lesson ${lesson.id}:`, response.data);
-            this.lessonExercises[lesson.id] = null;
-            lesson.hasExercise = false;
+            console.log(`No valid assignment data for lesson ${lesson.id}:`, response.data);
+            this.lessonAssignments[lesson.id] = null;
+            lesson.hasAssignment = false;
           }
         } catch (error) {
-          console.error(`Error fetching exercises for lesson ${lesson.id}:`, error.response?.status, error.response?.data);
-          this.lessonExercises[lesson.id] = null;
-          lesson.hasExercise = false;
+          console.error(`Error fetching assignments for lesson ${lesson.id}:`, error.response?.status, error.response?.data);
+          this.lessonAssignments[lesson.id] = null;
+          lesson.hasAssignment = false;
         }
       });
 
-      await Promise.all(exercisePromises);
-      console.log('Finished fetching all exercises. Final state:', this.lessonExercises);
+      await Promise.all(assignmentPromises);
+      console.log('Finished fetching all assignments. Final state:', this.lessonAssignments);
     },
-    async startExercise(lesson) {
+    async startAssignment(lesson) {
       try {
-        if (this.lessonExercises[lesson.id]) {
+        if (this.lessonAssignments[lesson.id]) {
+          // دریافت اولین assignment برای درس
+          const assignment = Array.isArray(this.lessonAssignments[lesson.id])
+              ? this.lessonAssignments[lesson.id][0]
+              : this.lessonAssignments[lesson.id];
+
+          // هدایت به صفحه assignment با استفاده از assignment ID
           this.$router.push({
-            name: 'Exercise',
-            params: { id: this.lessonExercises[lesson.id].id }
+            name: 'AssignmentDetail', // یا هر route name که برای assignment دارید
+            params: { id: assignment.id }
           });
         } else {
-          this.$toast?.error('این درس تمرین ندارد');
+          this.$toast?.error('این درس تکلیف ندارد');
         }
       } catch (error) {
-        console.error('Error starting exercise:', error);
-        this.$toast?.error('خطا در دسترسی به تمرین');
+        console.error('Error starting assignment:', error);
+        this.$toast?.error('خطا در دسترسی به تکلیف');
       }
     },
     async startExam(lesson) {
