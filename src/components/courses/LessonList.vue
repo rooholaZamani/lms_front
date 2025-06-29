@@ -63,11 +63,6 @@
                 <i class="fas fa-clipboard-check me-1"></i>
                 آزمون
               </span>
-              <span v-if="lesson.hasExercise || (lesson.exercises && lesson.exercises.length > 0) || lessonAssignments[lesson.id]"
-                    class="modern-badge modern-badge-warning me-1">
-                <i class="fas fa-dumbbell me-1"></i>
-                تمرین
-              </span>
               <span v-if="lesson.hasAssignment || (lesson.assignments && lesson.assignments.length > 0)"
                     class="modern-badge modern-badge-secondary me-1">
                 <i class="fas fa-tasks me-1"></i>
@@ -184,45 +179,6 @@
               </div>
             </div>
           </div>
-
-          <!-- Lesson Exercises -->
-<!--          <div v-if="lesson.hasExercise || (lesson.exercises && lesson.exercises.length > 0)" class="lesson-section">-->
-<!--            <h6 class="section-title">-->
-<!--              <i class="fas fa-dumbbell text-warning me-2"></i>-->
-<!--              <i class="fas fa-dumbbell text-warning me-2"></i>-->
-<!--              تمرین‌های درس-->
-<!--            </h6>-->
-<!--            <div class="assessment-item">-->
-<!--              <div class="assessment-icon bg-warning">-->
-<!--                <i class="fas fa-dumbbell"></i>-->
-<!--              </div>-->
-<!--              <div class="assessment-details">-->
-<!--                <h6>تمرین درس</h6>-->
-<!--                <p class="text-muted">تمرین برای تقویت یادگیری</p>-->
-<!--                <div class="assessment-meta">-->
-<!--                  <span class="meta-badge">-->
-<!--                    <i class="fas fa-clock me-1"></i>-->
-<!--                    ۱۵ دقیقه-->
-<!--                  </span>-->
-<!--                  <span class="meta-badge">-->
-<!--                    <i class="fas fa-star me-1"></i>-->
-<!--                    تطبیقی-->
-<!--                  </span>-->
-<!--                </div>-->
-<!--              </div>-->
-<!--              <div class="assessment-actions">-->
-<!--                <button v-if="isEnrolled && !isTeacher" class="modern-btn modern-btn-warning" @click="startAssignment(lesson)">-->
-<!--                  <i class="fas fa-play me-1"></i>-->
-<!--                  شروع تمرین-->
-<!--                </button>-->
-<!--                <button v-if="isTeacher && isTeacherOfCourse" class="modern-btn modern-btn-secondary" @click="manageAssignment(lesson)">-->
-<!--                  <i class="fas fa-cog me-1"></i>-->
-<!--                  مدیریت-->
-<!--                </button>-->
-<!--              </div>-->
-<!--            </div>-->
-<!--          </div>-->
-
           <!-- Lesson Assignments -->
           <div v-if="lesson.hasAssignment || (lesson.assignments && lesson.assignments.length > 0)" class="lesson-section">
             <h6 class="section-title">
@@ -309,7 +265,6 @@ export default {
     'edit-lesson',
     'add-content',
     'add-exam',
-    'add-exercise',
     'add-assignment',
     'mark-complete'
   ],
@@ -427,7 +382,7 @@ export default {
 
           if (response.data && (Array.isArray(response.data) ? response.data.length > 0 : response.data.id)) {
             this.lessonAssignments[lesson.id] = response.data;
-            lesson.hasAssignment = true; // تغییر از hasExercise به hasAssignment
+            lesson.hasAssignment = true;
 
             // Handle both single assignment and array of assignments
             const assignments = Array.isArray(response.data) ? response.data : [response.data];

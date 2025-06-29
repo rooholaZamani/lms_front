@@ -14,7 +14,6 @@
               @enroll-course="enrollInCourse"
               @view-progress="viewStudentOwnProgress"
           />
-
           <!-- Tabs for different sections -->
           <div class="modern-card course-content-tabs animate-slide-up" style="animation-delay: 0.1s;">
             <ul class="nav nav-tabs modern-nav-tabs" id="courseTab" role="tablist">
