@@ -1071,7 +1071,7 @@ export default {
         this.selectedStudentExams = [{
           examsTaken: performanceData.examsTaken || 0,
           averageScore: performanceData.averageExamScore || 0,
-          passRate: performanceData.passRate ,
+          passRate: performanceData.passRate  || 0,
           recentActivityCount: performanceData.recentActivityCount || 0
         }];
 
