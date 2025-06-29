@@ -533,7 +533,7 @@ export default {
       // 5. نمودار پیشرفت زمانی
       this.progressTimelineData = this.studentAnalytics.progressTrend?.map(trend => ({
         month: trend.month,
-        progress: (trend.lessons + trend.exams + trend.exercises) * 10, // تبدیل به درصد تقریبی
+        progress: (trend.lessons + trend.exams + trend.assignments) * 10, // تبدیل به درصد تقریبی
         lessons: trend.lessons,
         exams: trend.exams
       })) || [];
