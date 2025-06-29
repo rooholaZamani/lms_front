@@ -204,18 +204,6 @@ const routes = [
     }
   },
   {
-    path: '/exercises/:id/take',
-    name: 'ExerciseTake',
-    component: () => import(/* webpackChunkName: "exercise-taker" */ '../components/exercises/ExerciseTaker.vue'),
-    props: true,
-    meta: {
-      title: 'انجام تمرین',
-      requiresAuth: true,
-      requiresStudent: true,
-      hideSidebar: true
-    }
-  },
-  {
     path: '/exam-answers/:submissionId',
     name: 'ExamAnswers',
     component: () => import('../components/exams/ExamAnswers.vue'),
@@ -352,17 +340,6 @@ const routes = [
       requiresAuth: true,
       requiresTeacher: true,
       showSidebar: true
-    }
-  },
-  {
-    path: '/exercises/:id',
-    name: 'Exercise',
-    component: () => import(/* webpackChunkName: "exercise" */ '../components/exercises/Exercise.vue'),
-    props: true,
-    meta: {
-      title: 'تمرین',
-      requiresAuth: true,
-      hideSidebar: true
     }
   },
 
