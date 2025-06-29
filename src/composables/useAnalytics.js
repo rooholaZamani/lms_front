@@ -17,8 +17,8 @@ export function useAnalytics() {
         examsTaken: 0,
         passedExams: 0,
         averageExamScore: 0,
-        exercisesTaken: 0,
-        averageExerciseScore: 0,
+        assignmentsTaken: 0,
+        averageAssignmentsScore: 0,
         recentActivity: []
     });
 
@@ -70,8 +70,8 @@ export function useAnalytics() {
                 examsTaken: response.data.examsTaken || 0,
                 passedExams: response.data.passedExams || 0,
                 averageExamScore: response.data.averageExamScore || 0,
-                exercisesTaken: response.data.exercisesTaken || 0,
-                averageExerciseScore: response.data.averageExerciseScore || 0,
+                assignmentsTaken: response.data.assignmentsTaken || 0,
+                averageAssignmentsScore: response.data.averageAssignmentsScore || 0,
                 recentActivity: response.data.recentActivity || []
             };
             return studentPerformance.value;
@@ -262,9 +262,9 @@ export function useAnalytics() {
         }
     };
 
-    // Exercise Analytics
-    const fetchExerciseDifficulty = async (exerciseId) => {
-        if (!exerciseId) return null;
+
+    const fetchAssignmentDifficulty = async (Id) => {
+        if (!AssignmentsId) return null;
 
         loading.value = true;
         error.value = null;
@@ -272,7 +272,7 @@ export function useAnalytics() {
         try {
             const response = await axios.get(`/exercises/${exerciseId}/difficulty`);
             return {
-                exerciseId: response.data.exerciseId,
+                Id: response.data.assignmentId,
                 totalSubmissions: response.data.totalSubmissions || 0,
                 passRate: response.data.passRate || 0,
                 averageScore: response.data.averageScore || 0,
@@ -282,7 +282,7 @@ export function useAnalytics() {
             };
         } catch (err) {
             error.value = 'خطا در دریافت تحلیل سختی تمرین';
-            console.error('Error fetching exercise difficulty:', err);
+            console.error('Error fetching assignment difficulty:', err);
             throw err;
         } finally {
             loading.value = false;
@@ -582,8 +582,8 @@ export function useAnalytics() {
             examsTaken: 0,
             passedExams: 0,
             averageExamScore: 0,
-            exercisesTaken: 0,
-            averageExerciseScore: 0,
+            assignmentsTaken: 0,
+            averageAssignmentsScore: 0,
             recentActivity: []
         };
 
@@ -651,8 +651,8 @@ export function useAnalytics() {
         fetchDifficultLessons,
         fetchParticipationMetrics,
 
-        // Exercise Methods
-        fetchExerciseDifficulty,
+        // Assignments Methods
+        fetchAssignmentDifficulty,
 
         // Comprehensive Methods
         fetchStudentAnalytics,
