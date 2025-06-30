@@ -116,13 +116,13 @@
                           <div class="stat-value">{{ getTotalDuration() }}</div>
                           <div class="stat-label">دقیقه</div>
                         </div>
-                        <div class="stat-item">
-                          <div class="stat-icon text-danger">
-                            <i class="fas fa-calendar"></i>
-                          </div>
-                          <div class="stat-value">{{ formatDate(course.createdAt) || 'نامشخص' }}</div>
-                          <div class="stat-label">تاریخ ایجاد</div>
-                        </div>
+<!--                        <div class="stat-item">-->
+<!--                          <div class="stat-icon text-danger">-->
+<!--                            <i class="fas fa-calendar"></i>-->
+<!--                          </div>-->
+<!--                          <div class="stat-value">{{ formatDate(course.createdAt) || 'نامشخص' }}</div>-->
+<!--                          <div class="stat-label">تاریخ ایجاد</div>-->
+<!--                        </div>-->
                       </div>
                     </div>
 
@@ -310,6 +310,10 @@
               <div class="modern-form-group">
                 <label for="lessonOrder" class="modern-form-label">ترتیب نمایش</label>
                 <input type="number" class="modern-form-control" id="lessonOrder" v-model="lessonForm.orderIndex" min="0">
+              </div>
+              <div class="modern-form-group">
+                <label for="lessonDuration" class="modern-form-label">مدت زمان (دقیقه)</label>
+                <input type="number" class="modern-form-control" id="lessonDuration" v-model="lessonForm.duration" min="1" placeholder="مدت زمان به دقیقه">
               </div>
               <div class="d-flex justify-content-end gap-2">
                 <button type="button" class="modern-btn modern-btn-secondary" data-bs-dismiss="modal">انصراف</button>
@@ -970,7 +974,8 @@ export default {
         id: null,
         title: '',
         description: '',
-        orderIndex: this.course.lessons ? this.course.lessons.length : 0
+        orderIndex: this.course.lessons ? this.course.lessons.length : 0,
+        duration: 30
       };
 
       const modal = new bootstrap.Modal(document.getElementById('lessonModal'));
@@ -982,7 +987,8 @@ export default {
         id: lesson.id,
         title: lesson.title,
         description: lesson.description,
-        orderIndex: lesson.orderIndex || 0
+        orderIndex: lesson.orderIndex || 0,
+        duration: lesson.duration || 30
       };
 
       const modal = new bootstrap.Modal(document.getElementById('lessonModal'));

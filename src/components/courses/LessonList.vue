@@ -106,7 +106,7 @@
                 </div>
                 <div class="content-details">
                   <h6 class="content-title">{{ content.title }}</h6>
-                  <p v-if="content.textContent" class="content-preview">
+                  <p v-if="content.textContent" class="content-preview" >
                     {{ content.textContent.substring(0, 100) }}...
                   </p>
                   <span class="content-type">{{ getContentTypeText(content.type) }}</span>

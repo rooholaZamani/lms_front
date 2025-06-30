@@ -83,7 +83,7 @@
           <!-- Text Content -->
           <div v-if="content.type === 'TEXT'" class="text-content-section">
             <div class="modern-card animate-slide-up">
-              <div class="content-text" v-html="content.textContent"></div>
+              <div class="content-text" v-html="formattedContent"></div>
             </div>
           </div>
 
@@ -448,13 +448,17 @@
 <script>
 import { defineComponent, ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useTextFormatter } from '@/composables/useTextFormatter'
+
 
 export default defineComponent({
   name: 'ContentViewer',
 
   setup() {
+
     const route = useRoute()
     const router = useRouter()
+    const { formatText } = useTextFormatter()
 
     // State
     const loading = ref(true)
@@ -497,14 +501,18 @@ export default defineComponent({
     const fileId = computed(() => {
       return content.value?.fileId || content.value?.file?.id
     })
-
+    // const formattedContent = computed(() => {
+    //   return formatText(content.value?.textContent || '')
+    // })
     const videoUrl = computed(() => {
       if (fileId.value) {
         return `/api/content/files/${fileId.value}?timeSpent=${timeSpent.value}`
       }
       return null
     })
-
+    const formattedContent = computed(() => {
+      return formatText(content.value?.textContent || '')
+    })
     // Helper Functions
     const formatTime = (seconds) => {
       if (!seconds || seconds < 0) return '00:00:00'
@@ -1212,7 +1220,8 @@ export default defineComponent({
 
       // Computed
       contentId,
-      fileId
+      fileId,
+      formattedContent
     }
   }
 })
@@ -1698,6 +1707,29 @@ export default defineComponent({
 
   .video-controls {
     background: rgba(45, 55, 72, 0.8);
+  }
+
+  .content-text :deep(a) {
+    color: #007bff;
+    text-decoration: underline;
+    transition: color 0.2s ease;
+    word-wrap: break-word;
+  }
+
+  .content-text :deep(a:hover) {
+    color: #0056b3;
+    text-decoration: none;
+  }
+
+  .content-text :deep(a:visited) {
+    color: #6f42c1;
+  }
+
+  /* بهبود نمایش برای خطوط جدید */
+  .content-text {
+    white-space: pre-wrap; /* حفظ فاصله‌ها و خطوط جدید */
+    word-wrap: break-word;
+    line-height: 1.6;
   }
 
   .time-display {

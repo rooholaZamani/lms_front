@@ -6,47 +6,48 @@
         <div class="row align-items-center">
           <div class="col-md-3">
             <label class="form-label">انتخاب درس:</label>
-            <select v-model="selectedCourse" @change="updateAnalysisView" class="form-select">
-              <option value="">انتخاب کنید</option>
-              <option v-for="course in courses" :key="course.id" :value="course.id">
+            <select
+                v-model="selectedCourse"
+                @change="updateAnalysisView"
+                class="form-select"
+            >
+              <option value="">انتخاب کنید...</option>
+              <option
+                  v-for="course in courses"
+                  :key="course.id"
+                  :value="course.id"
+              >
                 {{ course.title }}
               </option>
             </select>
           </div>
           <div class="col-md-2">
             <label class="form-label">دوره زمانی:</label>
-            <select v-model="selectedPeriod" class="form-select">
-              <option value="week">هفته گذشته</option>
-              <option value="month">ماه گذشته</option>
-              <option value="quarter">سه ماه گذشته</option>
-              <option value="semester">ترم جاری</option>
+            <select
+                v-model="selectedPeriod"
+                @change="updateAnalysisView"
+                class="form-select"
+            >
+              <option value="week">هفته</option>
+              <option value="month">ماه</option>
+              <option value="semester">ترم</option>
             </select>
           </div>
           <div class="col-md-3">
             <label class="form-label">نوع تحلیل:</label>
-            <select v-model="analysisType" class="form-select">
-              <option value="progress">پیشرفت دانش‌آموزان</option>
-              <option value="difficult">دروس دشوار</option>
-              <option value="participation">میزان مشارکت</option>
-              <option value="time">توزیع زمان مطالعه</option>
-              <option value="scores">توزیع نمرات</option>
+            <select
+                v-model="analysisType"
+                @change="updateAnalysisView"
+                class="form-select"
+            >
+              <option value="progress">پیشرفت دروس</option>
               <option value="challenging-questions">سوالات چالش‌برانگیز</option>
               <option value="at-risk-students">دانش‌آموزان در معرض خطر</option>
               <option value="trend-analysis">تحلیل روند زمانی</option>
             </select>
           </div>
-          <div class="col-md-2" v-if="analysisType === 'scores'">
-            <label class="form-label">آزمون:</label>
-            <select v-model="selectedExam" class="form-select">
-              <option value="">همه آزمون‌ها</option>
-              <option v-for="exam in availableExams" :key="exam.id" :value="exam.id">
-                {{ exam.title }}
-              </option>
-            </select>
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">&nbsp;</label>
-            <div class="d-flex gap-2">
+          <div class="col-md-4">
+            <div class="btn-group mt-4">
               <button @click="refreshData" class="btn btn-outline-primary" :disabled="loading">
                 <i class="fas fa-sync-alt" :class="{ 'fa-spin': loading }"></i>
               </button>
@@ -116,9 +117,18 @@
         <div class="col-md-8">
           <div class="modern-card">
             <div class="card-body">
-              <h6 class="card-title">{{ getChartTitle() }}</h6>
+              <h6 class="card-title">پیشرفت دانش‌آموزان در دروس</h6>
               <div class="chart-container">
-                <canvas ref="analyticsChart" style="width: 100%; height: 400px;"></canvas>
+                <Charts
+                    v-if="progressChartData.length > 0"
+                    type="scores"
+                    :data="progressChartData"
+                    height="400px"
+                />
+                <div v-else class="text-center py-4">
+                  <i class="fas fa-chart-bar text-muted"></i>
+                  <p class="text-muted mt-2">داده‌ای برای نمایش وجود ندارد</p>
+                </div>
               </div>
             </div>
           </div>
@@ -167,31 +177,31 @@
                     <div class="question-stats">
                       <span class="stat-item">
                         <i class="fas fa-times text-danger"></i>
-                        نرخ خطا: {{ question.errorRate }}%
+                        پاسخ اشتباه: {{ question.wrongAnswers }}
                       </span>
                       <span class="stat-item">
                         <i class="fas fa-clock text-warning"></i>
-                        میانگین زمان: {{ question.averageTime }}s
+                        زمان متوسط: {{ question.averageTime }}s
                       </span>
                       <span class="stat-item">
                         <i class="fas fa-users text-info"></i>
-                        تعداد پاسخ: {{ question.totalAnswers }}
+                        تعداد پاسخ: {{ question.totalAttempts }}
                       </span>
                     </div>
                   </div>
                   <div class="question-actions">
                     <button @click="viewQuestionAnalysis(question)" class="btn btn-sm btn-outline-primary">
-                      <i class="fas fa-chart-bar"></i> تحلیل تفصیلی
+                      <i class="fas fa-chart-line"></i> تحلیل تفصیلی
                     </button>
                     <button @click="generateQuestionHelp(question)" class="btn btn-sm btn-outline-success">
-                      <i class="fas fa-lightbulb"></i> راهنمایی
+                      <i class="fas fa-lightbulb"></i> راهنمای تدریس
                     </button>
                   </div>
                 </div>
               </div>
               <div v-else class="text-center py-4">
-                <i class="fas fa-info-circle text-muted mb-2"></i>
-                <p class="text-muted">سوال چالش‌برانگیز در دسترس نیست</p>
+                <i class="fas fa-question-circle text-muted mb-2"></i>
+                <p class="text-muted">سوال چالش‌برانگیزی یافت نشد</p>
               </div>
             </div>
           </div>
@@ -199,19 +209,19 @@
         <div class="col-md-4">
           <div class="modern-card">
             <div class="card-body">
-              <h6 class="card-title">آمار سوالات</h6>
+              <h6 class="card-title">خلاصه سوالات</h6>
               <div class="question-summary">
                 <div class="stat-item">
                   <span>سخت‌ترین سوال:</span>
-                  <span class="stat-value text-danger">{{ questionStats.mostDifficult }}%</span>
+                  <span class="badge bg-danger">{{ questionStats.mostDifficult }}%</span>
                 </div>
                 <div class="stat-item">
                   <span>میانگین دشواری:</span>
-                  <span class="stat-value text-warning">{{ questionStats.averageDifficulty }}%</span>
+                  <span class="badge bg-warning">{{ questionStats.averageDifficulty }}%</span>
                 </div>
                 <div class="stat-item">
                   <span>نیاز به بازنگری:</span>
-                  <span class="stat-value text-info">{{ questionStats.needsReview }}</span>
+                  <span class="badge bg-info">{{ questionStats.needsReview }}</span>
                 </div>
               </div>
             </div>
@@ -227,30 +237,18 @@
               <h6 class="card-title">دانش‌آموزان در معرض خطر</h6>
               <div v-if="atRiskStudents.length > 0" class="students-list">
                 <div v-for="student in atRiskStudents" :key="student.id" class="student-item">
-                  <div class="student-info">
+                  <div class="student-content">
                     <div class="student-header">
-                      <h6 class="student-name">{{ student.firstName }} {{ student.lastName }}</h6>
+                      <h6 class="student-name">{{ student.name }}</h6>
                       <span class="badge" :class="getRiskLevelClass(student.riskLevel)">
                         {{ getRiskLevelText(student.riskLevel) }}
                       </span>
                     </div>
                     <div class="risk-factors">
-                      <div v-if="student.factors.lowAttendance" class="risk-factor">
-                        <i class="fas fa-calendar-times text-danger"></i>
-                        حضور پایین: {{ student.factors.attendanceRate }}%
-                      </div>
-                      <div v-if="student.factors.poorPerformance" class="risk-factor">
-                        <i class="fas fa-chart-line text-warning"></i>
-                        عملکرد ضعیف: {{ student.factors.averageScore }}%
-                      </div>
-                      <div v-if="student.factors.inactivity" class="risk-factor">
-                        <i class="fas fa-user-slash text-info"></i>
-                        عدم فعالیت: {{ student.factors.daysSinceLastActivity }} روز
-                      </div>
-                      <div v-if="student.factors.behavioralIssues" class="risk-factor">
-                        <i class="fas fa-exclamation-triangle text-danger"></i>
-                        مشکلات رفتاری
-                      </div>
+                      <span v-for="factor in student.riskFactors" :key="factor" class="risk-factor">
+                        <i class="fas fa-exclamation-triangle text-warning"></i>
+                        {{ factor }}
+                      </span>
                     </div>
                   </div>
                   <div class="student-actions">
@@ -258,7 +256,7 @@
                       <i class="fas fa-user"></i> جزئیات
                     </button>
                     <button @click="createInterventionPlan(student)" class="btn btn-sm btn-outline-warning">
-                      <i class="fas fa-clipboard-list"></i> برنامه مداخله
+                      <i class="fas fa-hands-helping"></i> طرح مداخله
                     </button>
                     <button @click="notifyParents(student)" class="btn btn-sm btn-outline-info">
                       <i class="fas fa-envelope"></i> اطلاع والدین
@@ -307,15 +305,21 @@
             <div class="card-body">
               <h6 class="card-title">تحلیل روند زمانی عملکرد</h6>
               <div class="chart-container">
-                <canvas ref="trendChart" style="width: 100%; height: 500px;"></canvas>
+                <Charts
+                    v-if="trendChartData.length > 0"
+                    type="activity"
+                    :data="trendChartData"
+                    height="500px"
+                />
+                <div v-else class="text-center py-4">
+                  <i class="fas fa-chart-line text-muted"></i>
+                  <p class="text-muted mt-2">داده‌ای برای نمایش روند وجود ندارد</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      <!-- Existing sections for other analysis types -->
-      <!-- (keep existing difficult, participation, time, scores sections as they were) -->
 
     </div>
 
@@ -329,14 +333,16 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, nextTick, watch } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
+import Charts from '@/components/charts/Charts.vue';
 import axios from 'axios';
 
 export default {
   name: 'PerformanceAnalysis',
   components: {
-    LoadingSpinner
+    LoadingSpinner,
+    Charts
   },
   setup() {
     // Reactive state
@@ -345,9 +351,6 @@ export default {
     const selectedCourse = ref('');
     const selectedPeriod = ref('month');
     const analysisType = ref('progress');
-    const selectedExam = ref('');
-    const analyticsChart = ref(null);
-    const trendChart = ref(null);
 
     // Data state
     const courses = ref([]);
@@ -387,52 +390,28 @@ export default {
     // Trend analysis data
     const trendData = ref([]);
 
-    // Other existing data
-    const difficultLessons = ref([]);
-    const lessonStats = ref({
-      easy: 0,
-      medium: 0,
-      hard: 0
+    // Computed chart data
+    const progressChartData = computed(() => {
+      return lessonProgress.value.map(lesson => ({
+        label: lesson.lessonTitle,
+        count: lesson.completionRate
+      }));
     });
-    const participationStats = ref({
-      contentStudy: 0,
-      chatActivity: 0,
-      assignmentSubmission: 0,
-      examParticipation: 0
-    });
-    const timeDistribution = ref([]);
-    const timeStats = ref({
-      averageDaily: 0,
-      averageWeekly: 0,
-      mostActive: 0
-    });
-    const scoreStats = ref({
-      average: 0,
-      highest: 0,
-      lowest: 0,
-      passRate: 0
-    });
-    const gradeDistribution = ref({
-      excellent: 0,
-      good: 0,
-      average: 0,
-      poor: 0
-    });
-    const availableExams = ref([]);
-    const participationTimeline = ref([]);
 
-    // Computed properties
-    const selectedExamTitle = computed(() => {
-      if (!selectedExam.value) return 'همه آزمون‌ها';
-      const exam = availableExams.value.find(e => e.id === selectedExam.value);
-      return exam ? exam.title : 'نامشخص';
+    const trendChartData = computed(() => {
+      return trendData.value.map(item => ({
+        label: item.date,
+        views: item.averageScore || 0,
+        submissions: item.attendanceRate || 0,
+        completions: item.activityLevel || 0
+      }));
     });
 
     // API Methods
     const fetchCourses = async () => {
       try {
         const response = await axios.get('/courses/teaching');
-        courses.value = response.data.courses || [];
+        courses.value = response.data || [];
       } catch (err) {
         console.error('Error fetching courses:', err);
         error.value = 'خطا در دریافت لیست دروس';
@@ -446,38 +425,32 @@ export default {
       error.value = null;
 
       try {
-        const promises = [];
-
         // Course stats
-        promises.push(
-            axios.get(`/analytics/course/${selectedCourse.value}/stats?period=${selectedPeriod.value}`)
-                .then(response => {
-                  courseStats.value = response.data;
-                })
-        );
+        const statsResponse = await axios.get(`/analytics/course/${selectedCourse.value}/activity-stats?period=${selectedPeriod.value}`);
+        const activityData = statsResponse.data;
+
+        courseStats.value = {
+          totalStudents: activityData.totalStudents || 0,
+          averageProgress: Math.round((activityData.participationMetrics?.contentStudy?.completionRate || 0)),
+          averageTimeSpent: 0, // محاسبه از داده‌های موجود
+          completionRate: activityData.participationMetrics?.contentStudy?.completionRate || 0
+        };
 
         // Analysis type specific data
         switch (analysisType.value) {
           case 'progress':
-            promises.push(fetchProgressData());
+            await fetchProgressData();
             break;
           case 'challenging-questions':
-            promises.push(fetchChallengingQuestions());
+            await fetchChallengingQuestions();
             break;
           case 'at-risk-students':
-            promises.push(fetchAtRiskStudents());
+            await fetchAtRiskStudents();
             break;
           case 'trend-analysis':
-            promises.push(fetchTrendData());
+            await fetchTrendData();
             break;
-            // Add other existing cases...
         }
-
-        await Promise.all(promises);
-
-        // Draw charts after data is loaded
-        await nextTick();
-        drawCharts();
 
       } catch (err) {
         console.error('Error fetching analytics data:', err);
@@ -510,141 +483,6 @@ export default {
       trendData.value = response.data.trends || [];
     };
 
-    // Chart drawing methods
-    const drawCharts = () => {
-      switch (analysisType.value) {
-        case 'progress':
-          drawProgressChart();
-          break;
-        case 'trend-analysis':
-          drawTrendChart();
-          break;
-          // Add other chart drawing methods...
-      }
-    };
-
-    const drawProgressChart = () => {
-      if (!analyticsChart.value || lessonProgress.value.length === 0) return;
-
-      const ctx = analyticsChart.value.getContext('2d');
-
-      // Clear any existing chart
-      if (window.progressChartInstance) {
-        window.progressChartInstance.destroy();
-      }
-
-      // Set canvas size properly
-      const container = analyticsChart.value.parentElement;
-      analyticsChart.value.width = container.offsetWidth;
-      analyticsChart.value.height = 400;
-
-      window.progressChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: lessonProgress.value.map(lesson => lesson.lessonTitle),
-          datasets: [{
-            label: 'نرخ تکمیل (%)',
-            data: lessonProgress.value.map(lesson => lesson.completionRate),
-            backgroundColor: '#3b82f6',
-            borderColor: '#1d4ed8',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: true,
-              position: 'top'
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              max: 100,
-              ticks: {
-                callback: function(value) {
-                  return value + '%';
-                }
-              }
-            }
-          }
-        }
-      });
-    };
-
-    const drawTrendChart = () => {
-      if (!trendChart.value || trendData.value.length === 0) return;
-
-      const ctx = trendChart.value.getContext('2d');
-
-      // Clear any existing chart
-      if (window.trendChartInstance) {
-        window.trendChartInstance.destroy();
-      }
-
-      // Set canvas size properly
-      const container = trendChart.value.parentElement;
-      trendChart.value.width = container.offsetWidth;
-      trendChart.value.height = 500;
-
-      window.trendChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: trendData.value.map(item => item.date),
-          datasets: [
-            {
-              label: 'میانگین نمرات',
-              data: trendData.value.map(item => item.averageScore),
-              borderColor: '#10b981',
-              backgroundColor: 'rgba(16, 185, 129, 0.1)',
-              tension: 0.4
-            },
-            {
-              label: 'نرخ حضور',
-              data: trendData.value.map(item => item.attendanceRate),
-              borderColor: '#3b82f6',
-              backgroundColor: 'rgba(59, 130, 246, 0.1)',
-              tension: 0.4
-            },
-            {
-              label: 'میزان فعالیت',
-              data: trendData.value.map(item => item.activityLevel),
-              borderColor: '#f59e0b',
-              backgroundColor: 'rgba(245, 158, 11, 0.1)',
-              tension: 0.4
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: {
-            intersect: false,
-            mode: 'index'
-          },
-          plugins: {
-            legend: {
-              display: true,
-              position: 'top'
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              max: 100,
-              ticks: {
-                callback: function(value) {
-                  return value + '%';
-                }
-              }
-            }
-          }
-        }
-      });
-    };
-
     // Utility methods
     const getRiskLevelClass = (level) => {
       const classes = {
@@ -664,20 +502,6 @@ export default {
       return texts[level] || 'نامشخص';
     };
 
-    const getChartTitle = () => {
-      const titles = {
-        progress: 'پیشرفت دانش‌آموزان در دروس',
-        'challenging-questions': 'سوالات چالش‌برانگیز',
-        'at-risk-students': 'دانش‌آموزان در معرض خطر',
-        'trend-analysis': 'روند زمانی عملکرد',
-        difficult: 'تحلیل سطح دشواری دروس',
-        participation: 'میزان مشارکت در فعالیت‌ها',
-        time: 'توزیع زمان مطالعه دانش‌آموزان',
-        scores: 'توزیع نمرات آزمون‌ها'
-      };
-      return titles[analysisType.value] || 'تحلیل عملکرد';
-    };
-
     // Action handlers
     const updateAnalysisView = () => {
       if (selectedCourse.value) {
@@ -693,7 +517,6 @@ export default {
       console.log('Export data functionality');
     };
 
-    // New action handlers for new features
     const viewQuestionAnalysis = (question) => {
       console.log('View question analysis:', question);
     };
@@ -721,26 +544,15 @@ export default {
       }
     });
 
-    watch(analysisType, async () => {
+    watch(analysisType, () => {
       if (selectedCourse.value) {
-        await fetchAnalyticsData();
+        fetchAnalyticsData();
       }
     });
-
-    // Handle window resize for charts
-    const handleResize = () => {
-      if (window.progressChartInstance) {
-        window.progressChartInstance.resize();
-      }
-      if (window.trendChartInstance) {
-        window.trendChartInstance.resize();
-      }
-    };
 
     // Lifecycle
     onMounted(() => {
       fetchCourses();
-      window.addEventListener('resize', handleResize);
     });
 
     return {
@@ -750,9 +562,6 @@ export default {
       selectedCourse,
       selectedPeriod,
       analysisType,
-      selectedExam,
-      analyticsChart,
-      trendChart,
 
       // Data
       courses,
@@ -764,18 +573,10 @@ export default {
       atRiskStudents,
       riskFactors,
       trendData,
-      difficultLessons,
-      lessonStats,
-      participationStats,
-      timeDistribution,
-      timeStats,
-      scoreStats,
-      gradeDistribution,
-      availableExams,
-      participationTimeline,
 
       // Computed
-      selectedExamTitle,
+      progressChartData,
+      trendChartData,
 
       // Methods
       fetchAnalyticsData,
@@ -783,7 +584,6 @@ export default {
       refreshData,
       getRiskLevelClass,
       getRiskLevelText,
-      getChartTitle,
       exportData,
       viewQuestionAnalysis,
       generateQuestionHelp,
@@ -837,11 +637,6 @@ export default {
   position: relative;
   width: 100%;
   max-width: 100%;
-}
-
-.chart-container canvas {
-  max-width: 100% !important;
-  height: auto !important;
 }
 
 .distribution-item,

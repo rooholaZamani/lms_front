@@ -25,6 +25,7 @@
           </p>
           <div class="course-description" v-if="course.description">
             <p>{{ course.description }}</p>
+<!--            <p v-html="formatText(course.description)"></p>-->
           </div>
         </div>
       </div>
@@ -125,6 +126,10 @@
 </template>
 
 <script>
+import { useTextFormatter } from '@/composables/useTextFormatter'
+
+
+
 export default {
   name: 'CourseHeader',
   props: {
@@ -146,6 +151,7 @@ export default {
     }
   },
   methods: {
+    formatText: useTextFormatter().formatText,
     getTeacherName() {
       if (!this.course.teacher) return 'نامشخص';
       return this.course.teacher.firstName && this.course.teacher.lastName
@@ -238,6 +244,8 @@ export default {
   border-radius: 8px;
   padding: 1rem;
   border: 1px solid rgba(102, 126, 234, 0.1);
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .course-description p {
