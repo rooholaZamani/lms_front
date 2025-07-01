@@ -113,7 +113,7 @@
                           <div class="stat-icon text-warning">
                             <i class="fas fa-clock"></i>
                           </div>
-                          <div class="stat-value">{{ getTotalDuration() }}</div>
+                          <div class="stat-value">{{ course.totalDuration || 0 }}</div>
                           <div class="stat-label">دقیقه</div>
                         </div>
 <!--                        <div class="stat-item">-->
