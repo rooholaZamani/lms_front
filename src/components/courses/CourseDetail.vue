@@ -117,13 +117,13 @@
                           <div class="stat-value">{{ course.totalDuration || 0 }}</div>
                           <div class="stat-label">دقیقه</div>
                         </div>
-<!--                        <div class="stat-item">-->
-<!--                          <div class="stat-icon text-danger">-->
-<!--                            <i class="fas fa-calendar"></i>-->
-<!--                          </div>-->
-<!--                          <div class="stat-value">{{ formatDate(course.createdAt) || 'نامشخص' }}</div>-->
-<!--                          <div class="stat-label">تاریخ ایجاد</div>-->
-<!--                        </div>-->
+                        <div class="stat-item">
+                          <div class="stat-icon text-danger">
+                            <i class="fas fa-calendar"></i>
+                          </div>
+                          <div class="stat-value">{{ formatDate(course.createdAt) || 'نامشخص' }}</div>
+                          <div class="stat-label">تاریخ ایجاد</div>
+                        </div>
                       </div>
                     </div>
 
@@ -230,10 +230,7 @@
                         >
                       </div>
                     </div>
-<!--                    <span class="modern-badge" :class="course.active ? 'modern-badge-success' : 'modern-badge-warning'">-->
-<!--    <i class="fas" :class="course.active ? 'fa-check-circle' : 'fa-pause-circle'" ></i>-->
-<!--    {{ course.active ? 'فعال' : 'غیرفعال' }}-->
-<!--  </span>-->
+
                     <div class="col-md-6">
 
                       <div class="modern-form-group">
@@ -546,6 +543,7 @@ import StudentsTab from '@/components/courses/StudentsTab.vue';
 import LessonManager from '@/components/courses/LessonManager.vue';
 import CourseChat from '@/components/courses/CourseChat.vue';
 
+
 export default {
   name: 'CourseDetail',
   components: {
@@ -697,7 +695,10 @@ export default {
         this.showProgressModal();
       }
     },
-
+    formatDate(dateString) {
+      const { formatDate } = useFormatters()
+      return formatDate(dateString)
+    },
     async showProgressModal() {
       this.loadingProgress = true;
 
