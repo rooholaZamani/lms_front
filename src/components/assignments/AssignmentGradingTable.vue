@@ -718,7 +718,7 @@ export default {
         submissions.value = allSubmissions;
       } catch (error) {
         console.error('Error fetching data:', error);
-        window.toast?.error('خطا در دریافت اطلاعات');
+        this.$toast.error('خطا در دریافت اطلاعات');
       } finally {
         loading.value = false;
       }
@@ -892,7 +892,7 @@ export default {
 
       const numericScore = parseInt(score);
       if (isNaN(numericScore) || numericScore < 0 || numericScore > 100) {
-        window.toast?.error('لطفاً نمره معتبری بین 0 تا 100 وارد کنید.');
+        this.$toast.error('لطفاً نمره معتبری بین 0 تا 100 وارد کنید.');
         return;
       }
 
@@ -904,11 +904,11 @@ export default {
           feedback: feedback
         });
 
-        window.toast?.success('تکلیف با موفقیت نمره‌گذاری شد.');
+        this.$toast.success('تکلیف با موفقیت نمره‌گذاری شد.');
         await fetchData();
       } catch (error) {
         console.error('Error grading submission:', error);
-        window.toast?.error('خطا در نمره‌گذاری');
+        this.$toast.error('خطا در نمره‌گذاری');
       }
     };
 
@@ -927,7 +927,7 @@ export default {
           status: gradingForm.value.status
         });
 
-        window.toast?.success('نمره‌گذاری با موفقیت انجام شد.');
+        this.$toast.success('نمره‌گذاری با موفقیت انجام شد.');
 
         // Close modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('submissionModal'));
@@ -937,7 +937,7 @@ export default {
         await fetchData();
       } catch (error) {
         console.error('Error submitting grade:', error);
-        window.toast?.error('خطا در ثبت نمره');
+        this.$toast.error('خطا در ثبت نمره');
       } finally {
         submitting.value = false;
       }
@@ -945,7 +945,7 @@ export default {
 
     const bulkGrade = () => {
       if (selectedSubmissions.value.length === 0) {
-        window.toast?.warning('لطفاً حداقل یک ارسالی انتخاب کنید.');
+        this.$toast.warning('لطفاً حداقل یک ارسالی انتخاب کنید.');
         return;
       }
 
@@ -972,7 +972,7 @@ export default {
 
         await Promise.all(promises);
 
-        window.toast?.success(`${selectedSubmissions.value.length} ارسالی با موفقیت نمره‌گذاری شد.`);
+        this.$toast.success(`${selectedSubmissions.value.length} ارسالی با موفقیت نمره‌گذاری شد.`);
 
         // Close modal and clear selections
         const modal = bootstrap.Modal.getInstance(document.getElementById('bulkGradingModal'));
@@ -983,7 +983,7 @@ export default {
         await fetchData();
       } catch (error) {
         console.error('Error bulk grading:', error);
-        window.toast?.error('خطا در نمره‌گذاری گروهی');
+        this.$toast.error('خطا در نمره‌گذاری گروهی');
       } finally {
         submitting.value = false;
       }
@@ -1003,16 +1003,16 @@ export default {
         link.click();
         document.body.removeChild(link);
 
-        window.toast?.success('فایل با موفقیت دانلود شد.');
+        this.$toast.success('فایل با موفقیت دانلود شد.');
       } catch (error) {
         console.error('Error downloading file:', error);
-        window.toast?.error('خطا در دانلود فایل.');
+        this.$toast.error('خطا در دانلود فایل.');
       }
     };
 
     const downloadSubmissionFiles = async (submission) => {
       if (!submission.files || submission.files.length === 0) {
-        window.toast?.warning('فایلی برای دانلود وجود ندارد.');
+        this.$toast.warning('فایلی برای دانلود وجود ندارد.');
         return;
       }
 
@@ -1061,7 +1061,7 @@ export default {
       link.click();
       document.body.removeChild(link);
 
-      window.toast?.success('فایل CSV با موفقیت دانلود شد.');
+      this.$toast.success('فایل CSV با موفقیت دانلود شد.');
     };
 
     const getSubmissionStudentName = (submissionId) => {
@@ -1075,7 +1075,7 @@ export default {
     };
 
     const saveAsDraft = () => {
-      window.toast?.info('پیش‌نویس ذخیره شد.');
+      this.$toast.info('پیش‌نویس ذخیره شد.');
     };
 
     const resetGradingForm = () => {
@@ -1089,7 +1089,7 @@ export default {
 
     const previewFile = async (file) => {
       // This would implement file preview functionality
-      window.toast?.info('پیش‌نمایش فایل در نسخه آینده اضافه خواهد شد.');
+      this.$toast.info('پیش‌نمایش فایل در نسخه آینده اضافه خواهد شد.');
     };
 
     onMounted(() => {

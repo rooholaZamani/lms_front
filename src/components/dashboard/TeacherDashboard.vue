@@ -304,7 +304,7 @@ export default {
       isSubmitting.value = true;
       try {
         await axios.post('/courses', newCourse);
-        window.toast?.success('دوره جدید با موفقیت ایجاد شد.');
+        this.$toast.success('دوره جدید با موفقیت ایجاد شد.');
         hideCreateCourseModal();
 
         // Reset form
@@ -316,7 +316,7 @@ export default {
         calculateStats();
       } catch (error) {
         console.error('Error creating course:', error);
-        window.toast?.error('خطا در ایجاد دوره. لطفاً دوباره تلاش کنید.');
+        this.$toast.error('خطا در ایجاد دوره. لطفاً دوباره تلاش کنید.');
       } finally {
         isSubmitting.value = false;
       }

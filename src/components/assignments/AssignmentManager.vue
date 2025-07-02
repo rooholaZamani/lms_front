@@ -670,7 +670,7 @@ export default {
 
       } catch (error) {
         console.error('Error fetching data:', error);
-        window.toast?.error('خطا در دریافت اطلاعات');
+        this.$toast.error('خطا در دریافت اطلاعات');
       } finally {
         loading.value = false;
       }
@@ -825,12 +825,12 @@ export default {
           await axios.put(`/assignments/${assignmentForm.value.id}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
           });
-          window.toast?.success('تکلیف با موفقیت ویرایش شد.');
+          this.$toast.success('تکلیف با موفقیت ویرایش شد.');
         } else {
           await axios.post(`/assignments/lesson/${assignmentForm.value.lessonId}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
           });
-          window.toast?.success('تکلیف با موفقیت ایجاد شد.');
+          this.$toast.success('تکلیف با موفقیت ایجاد شد.');
         }
 
         // Close modal
@@ -841,7 +841,7 @@ export default {
         await fetchData();
       } catch (error) {
         console.error('Error saving assignment:', error);
-        window.toast?.error('خطا در ذخیره تکلیف');
+        this.$toast.error('خطا در ذخیره تکلیف');
       } finally {
         submitting.value = false;
       }
@@ -859,11 +859,11 @@ export default {
             headers: { 'Content-Type': 'multipart/form-data' }
           });
 
-          window.toast?.success('تکلیف با موفقیت کپی شد.');
+          this.$toast.success('تکلیف با موفقیت کپی شد.');
           await fetchData();
         } catch (error) {
           console.error('Error duplicating assignment:', error);
-          window.toast?.error('خطا در کپی تکلیف');
+          this.$toast.error('خطا در کپی تکلیف');
         }
       }
     };
@@ -872,11 +872,11 @@ export default {
       if (confirm(`آیا می‌خواهید تکلیف "${assignment.title}" را حذف کنید؟ این عمل قابل بازگشت نیست.`)) {
         try {
           await axios.delete(`/assignments/${assignment.id}`);
-          window.toast?.success('تکلیف با موفقیت حذف شد.');
+          this.$toast.success('تکلیف با موفقیت حذف شد.');
           await fetchData();
         } catch (error) {
           console.error('Error deleting assignment:', error);
-          window.toast?.error('خطا در حذف تکلیف');
+          this.$toast.error('خطا در حذف تکلیف');
         }
       }
     };

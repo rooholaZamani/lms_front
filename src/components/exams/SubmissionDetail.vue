@@ -331,7 +331,7 @@ export default {
         document.body.removeChild(link);
       } catch (error) {
         console.error('Error downloading file:', error);
-        this.showErrorToast('خطا در دانلود فایل. لطفاً دوباره تلاش کنید.');
+        this.$toast.error('خطا در دانلود فایل. لطفاً دوباره تلاش کنید.');
       }
     },
 

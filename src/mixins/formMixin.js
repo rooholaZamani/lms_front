@@ -28,11 +28,11 @@ export default {
             this.isSubmitting = false;
             if (successMessage) {
                 this.success = successMessage;
-                this.showSuccessToast(successMessage);
+                this.$toast.success(successMessage);
             }
             if (errorMessage) {
                 this.error = errorMessage;
-                this.showErrorToast(errorMessage);
+                this.$toast.error(errorMessage);
             }
         },
 

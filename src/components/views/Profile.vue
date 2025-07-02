@@ -260,7 +260,7 @@ export default {
         };
       } catch (error) {
         console.error('Error fetching user data:', error);
-        this.showErrorToast('مشکلی در دریافت اطلاعات کاربر رخ داد.');
+        this.$toast.error('مشکلی در دریافت اطلاعات کاربر رخ داد.');
       }
     },
 
@@ -314,7 +314,7 @@ export default {
 
     async changePassword() {
       if (this.passwordData.newPassword !== this.passwordData.confirmPassword) {
-        this.showErrorToast('رمز عبور جدید و تکرار آن مطابقت ندارند.');
+        this.$toast.error('رمز عبور جدید و تکرار آن مطابقت ندارند.');
         return;
       }
 
@@ -332,10 +332,10 @@ export default {
           confirmPassword: ''
         };
 
-        this.showSuccessToast('رمز عبور شما با موفقیت تغییر یافت.');
+        this.$toast.success('رمز عبور شما با موفقیت تغییر یافت.');
       } catch (error) {
         console.error('Error changing password:', error);
-        this.showErrorToast('مشکلی در تغییر رمز عبور رخ داد. لطفاً اطمینان حاصل کنید که رمز عبور فعلی صحیح است.');
+        this.$toast.error('مشکلی در تغییر رمز عبور رخ داد. لطفاً اطمینان حاصل کنید که رمز عبور فعلی صحیح است.');
       } finally {
         this.isPasswordSubmitting = false;
       }

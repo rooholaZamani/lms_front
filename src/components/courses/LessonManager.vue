@@ -68,18 +68,18 @@
             <i class="fas fa-clipboard-check"></i>
             آزمون
           </button>
-          <button
-              class="modern-btn modern-btn-secondary btn-sm me-1"
-              @click="editLesson(lesson)"
-              title="ویرایش درس">
-            <i class="fas fa-edit"></i>
-          </button>
-          <button
-              class="modern-btn modern-btn-outline btn-sm"
-              @click="confirmDeleteLesson(lesson)"
-              title="حذف درس">
-            <i class="fas fa-trash text-danger"></i>
-          </button>
+<!--          <button-->
+<!--              class="modern-btn modern-btn-secondary btn-sm me-1"-->
+<!--              @click="editLesson(lesson)"-->
+<!--              title="ویرایش درس">-->
+<!--            <i class="fas fa-edit"></i>-->
+<!--          </button>-->
+<!--          <button-->
+<!--              class="modern-btn modern-btn-outline btn-sm"-->
+<!--              @click="confirmDeleteLesson(lesson)"-->
+<!--              title="حذف درس">-->
+<!--            <i class="fas fa-trash text-danger"></i>-->
+<!--          </button>-->
         </div>
       </div>
     </div>
@@ -98,24 +98,31 @@
     <!-- Lesson Modal -->
     <base-modal
         modal-id="lessonModal"
-        :title="selectedLesson.id ? 'ویرایش درس' : 'افزودن درس جدید'"
+        :title="selectedLesson.id ? 'ویرایش درس' : 'افزودن درس'"
         icon="book"
         header-class="bg-primary"
         modal-size="modal-lg"
         ref="lessonModal">
 
-      <!-- محتوای فرم همان باقی می‌ماند -->
+      <!-- محتوای فرم -->
       <form @submit.prevent="saveLesson">
-        <!-- فرم موجود -->
+        <div class="mb-3">
+          <label class="form-label">عنوان درس</label>
+          <input type="text" class="form-control" v-model="selectedLesson.title" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">توضیحات</label>
+          <textarea class="form-control" v-model="selectedLesson.description"></textarea>
+        </div>
       </form>
 
+      <!-- Footer -->
       <template #footer>
-        <button type="button" class="modern-btn modern-btn-secondary" @click="$refs.lessonModal.hide()">
+        <button type="button" class="btn btn-secondary" @click="$refs.lessonModal.hide()">
           انصراف
         </button>
-        <button type="button" class="modern-btn modern-btn-success" @click="saveLesson" :disabled="isSaving">
+        <button type="button" class="btn btn-primary" @click="saveLesson" :disabled="isSaving">
           <span v-if="isSaving" class="spinner-border spinner-border-sm me-2"></span>
-          <i class="fas fa-save me-1"></i>
           ذخیره
         </button>
       </template>
@@ -123,32 +130,24 @@
 
     <!-- Confirmation Modal -->
     <base-modal
-        modal-id="confirmationModal"
+        modal-id="confirmModal"
         title="تأیید حذف"
         icon="exclamation-triangle"
         header-class="bg-danger"
-        ref="confirmationModal">
+        ref="confirmModal">
 
-      <div class="modern-alert modern-alert-warning">
+      <div class="alert alert-warning">
         <i class="fas fa-exclamation-triangle me-2"></i>
         آیا از حذف درس "<strong>{{ selectedLesson.title }}</strong>" اطمینان دارید؟
       </div>
-      <p class="text-muted mb-0">
-        این عمل قابل بازگشت نیست و تمامی محتوای مرتبط با این درس نیز حذف خواهد شد.
-      </p>
 
       <template #footer>
-        <button type="button" class="modern-btn modern-btn-secondary" @click="$refs.confirmationModal.hide()">
+        <button type="button" class="btn btn-secondary" @click="$refs.confirmModal.hide()">
           انصراف
         </button>
-        <button
-            type="button"
-            class="modern-btn modern-btn-danger"
-            @click="deleteLesson"
-            :disabled="isDeleting">
+        <button type="button" class="btn btn-danger" @click="deleteLesson" :disabled="isDeleting">
           <span v-if="isDeleting" class="spinner-border spinner-border-sm me-2"></span>
-          <i class="fas fa-trash me-1"></i>
-          حذف درس
+          حذف
         </button>
       </template>
     </base-modal>

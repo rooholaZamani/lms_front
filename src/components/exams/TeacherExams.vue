@@ -377,14 +377,14 @@ export default {
           this.exams = this.exams.filter(e => e.id !== this.selectedExam.id);
 
           // نمایش پیام موفقیت
-          this.$toast?.success(response.data.message || 'آزمون با موفقیت حذف شد.');
+          this.$toast.success(response.data.message || 'آزمون با موفقیت حذف شد.');
 
           // پاک کردن آزمون انتخاب شده
           this.selectedExam = null;
 
         } else {
           // نمایش پیام خطای دریافتی از سرور
-          this.$toast?.error(response.data?.message || 'خطا در حذف آزمون');
+          this.$toast.error(response.data?.message || 'خطا در حذف آزمون');
         }
 
       } catch (error) {
