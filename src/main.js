@@ -24,8 +24,8 @@ import UserGuide from './plugins/userGuide'
 import ToastPlugin from './plugins/toast'
 
 
-import VuePersianDatetimePicker from 'vue-persian-datetime-picker'
-
+import VuePersianDatetimePicker from 'vue3-persian-datetime-picker'
+// console.log(VuePersianDatetimePicker)
 
 // اضافه کردن ماژول notification به store
 import notification from './store/notification'
