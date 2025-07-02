@@ -7,6 +7,7 @@ import { useRouter } from 'vue-router'
 
 export function useUser() {
     const store = useStore();
+    const router = useRouter();
 
     /**
      * دریافت اطلاعات کاربر فعلی

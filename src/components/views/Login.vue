@@ -93,9 +93,20 @@ export default {
         });
 
         if (result.success) {
-          // اگر کاربر از URL دیگری منتقل شده بود، به آن صفحه برگردد
-          const redirectPath = this.$route.query.redirect || '/dashboard';
-          this.$router.push(redirectPath);
+          // صبر کنیم تا state کامل آپدیت شود
+          await this.$nextTick();
+
+          // دوباره بررسی کنیم که واقعاً لاگین شده
+          if (this.$store.getters.isLoggedIn) {
+            const redirectPath = this.$route.query.redirect || '/dashboard';
+            this.$router.push(redirectPath);
+          } else {
+            // اگر state آپدیت نشده، یک delay کوچک اضافه کنیم
+            setTimeout(() => {
+              const redirectPath = this.$route.query.redirect || '/dashboard';
+              this.$router.push(redirectPath);
+            }, 100);
+          }
         } else {
           this.finishSubmitting(null, result.message || 'نام کاربری یا رمز عبور اشتباه است');
         }
