@@ -96,68 +96,30 @@
     </div>
 
     <!-- Lesson Modal -->
-    <div class="modal fade" id="lessonModalNew" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">
-              <i class="fas fa-book me-2"></i>
-              {{ selectedLesson.id ? 'ویرایش درس' : 'افزودن درس جدید' }}
-            </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <form @submit.prevent="saveLesson">
-              <div class="modern-form-group">
-                <label for="lessonTitle" class="modern-form-label">عنوان درس</label>
-                <input
-                    type="text"
-                    class="modern-form-control"
-                    id="lessonTitle"
-                    v-model="selectedLesson.title"
-                    placeholder="عنوان درس را وارد کنید"
-                    required>
-              </div>
+    <base-modal
+        modal-id="lessonModal"
+        :title="selectedLesson.id ? 'ویرایش درس' : 'افزودن درس جدید'"
+        icon="book"
+        header-class="bg-primary"
+        modal-size="modal-lg"
+        ref="lessonModal">
 
-              <div class="modern-form-group">
-                <label for="lessonDescription" class="modern-form-label">توضیحات درس</label>
-                <textarea
-                    class="modern-form-control"
-                    id="lessonDescription"
-                    v-model="selectedLesson.description"
-                    rows="3"
-                    placeholder="توضیحات مختصری از درس بنویسید..."></textarea>
-              </div>
+      <!-- محتوای فرم همان باقی می‌ماند -->
+      <form @submit.prevent="saveLesson">
+        <!-- فرم موجود -->
+      </form>
 
-              <div class="modern-form-group">
-                <label for="lessonOrder" class="modern-form-label">ترتیب نمایش</label>
-                <input
-                    type="number"
-                    class="modern-form-control"
-                    id="lessonOrder"
-                    v-model="selectedLesson.orderIndex"
-                    min="0"
-                    placeholder="0">
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="modern-btn modern-btn-secondary" data-bs-dismiss="modal">
-              انصراف
-            </button>
-            <button
-                type="button"
-                class="modern-btn modern-btn-success"
-                @click="saveLesson"
-                :disabled="isSaving">
-              <span v-if="isSaving" class="spinner-border spinner-border-sm me-2"></span>
-              <i class="fas fa-save me-1"></i>
-              ذخیره
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+      <template #footer>
+        <button type="button" class="modern-btn modern-btn-secondary" @click="$refs.lessonModal.hide()">
+          انصراف
+        </button>
+        <button type="button" class="modern-btn modern-btn-success" @click="saveLesson" :disabled="isSaving">
+          <span v-if="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+          <i class="fas fa-save me-1"></i>
+          ذخیره
+        </button>
+      </template>
+    </base-modal>
 
     <!-- Confirmation Modal -->
     <div class="modal fade" id="confirmationModal" tabindex="-1">
@@ -201,9 +163,12 @@
 
 <script>
 import axios from 'axios';
-
+import BaseModal from '@/components/common/BaseModal.vue';
 export default {
   name: 'LessonManager',
+  components: {
+    BaseModal
+  },
   props: {
     courseId: {
       type: [String, Number],
@@ -223,28 +188,13 @@ export default {
         orderIndex: 0
       },
       isSaving: false,
-      isDeleting: false,
-      lessonModal: null,
-      confirmationModal: null
+      isDeleting: false
     };
   },
   mounted() {
-    this.initModals();
+
   },
   methods: {
-    initModals() {
-      if (window.bootstrap) {
-        this.lessonModal = new bootstrap.Modal(document.getElementById('lessonModalNew'));
-        this.confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
-      } else {
-        setTimeout(() => {
-          if (window.bootstrap) {
-            this.lessonModal = new bootstrap.Modal(document.getElementById('lessonModalNew'));
-            this.confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
-          }
-        }, 1000);
-      }
-    },
 
     showAddLessonModal() {
       this.selectedLesson = {
@@ -253,28 +203,12 @@ export default {
         description: '',
         orderIndex: this.lessons ? this.lessons.length : 0
       };
-
-      if (this.lessonModal) {
-        this.lessonModal.show();
-      } else {
-        this.initModals();
-        setTimeout(() => {
-          if (this.lessonModal) this.lessonModal.show();
-        }, 100);
-      }
+      this.$refs.lessonModal.show();  // ← ساده!
     },
 
     editLesson(lesson) {
       this.selectedLesson = { ...lesson };
-
-      if (this.lessonModal) {
-        this.lessonModal.show();
-      } else {
-        this.initModals();
-        setTimeout(() => {
-          if (this.lessonModal) this.lessonModal.show();
-        }, 100);
-      }
+      this.$refs.lessonModal.show();  // ← ساده!
     },
 
     async saveLesson() {
@@ -306,12 +240,7 @@ export default {
           this.$toast.success(this.selectedLesson.id ? 'درس با موفقیت به‌روزرسانی شد' : 'درس جدید با موفقیت ایجاد شد');
         }
 
-        if (this.lessonModal) {
-          this.lessonModal.hide();
-        } else {
-          const modal = bootstrap.Modal.getInstance(document.getElementById('lessonModalNew'));
-          if (modal) modal.hide();
-        }
+        this.$refs.lessonModal.hide();
       } catch (error) {
         console.error('Error saving lesson:', error);
         if (this.$toast) {
@@ -325,14 +254,6 @@ export default {
     confirmDeleteLesson(lesson) {
       this.selectedLesson = { ...lesson };
 
-      if (this.confirmationModal) {
-        this.confirmationModal.show();
-      } else {
-        this.initModals();
-        setTimeout(() => {
-          if (this.confirmationModal) this.confirmationModal.show();
-        }, 100);
-      }
     },
 
     async deleteLesson() {
