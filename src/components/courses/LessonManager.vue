@@ -373,7 +373,11 @@ export default {
     },
 
     addExam(lesson) {
-      this.$emit('add-exam', lesson);
+      this.$router.push({
+        name: 'ExamCreator',
+        query: { lessonId: lesson.id, lessonTitle: lesson.title }
+      });
+
     }
   }
 };

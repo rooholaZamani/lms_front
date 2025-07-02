@@ -34,10 +34,10 @@
               سوالات آزمون
             </h5>
             <div class="d-flex gap-2 flex-wrap">
-              <button class="modern-btn modern-btn-info" @click="importFromQuestionBank">
-                <i class="fas fa-database me-2"></i>
-                استفاده از بانک سوالات
-              </button>
+<!--              <button class="modern-btn modern-btn-info" @click="importFromQuestionBank">-->
+<!--                <i class="fas fa-database me-2"></i>-->
+<!--                استفاده از بانک سوالات-->
+<!--              </button>-->
               <button class="modern-btn modern-btn-success" @click="showAddQuestionModal">
                 <i class="fas fa-plus me-2"></i>
                 افزودن سوال

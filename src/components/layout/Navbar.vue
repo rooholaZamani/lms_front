@@ -74,21 +74,16 @@
                       پروفایل من
                     </router-link>
 
-                    <router-link to="/settings" class="dropdown-item">
-                      <i class="fas fa-cog me-2"></i>
-                      تنظیمات
-                    </router-link>
-
                     <div class="dropdown-divider"></div>
 
-                    <router-link v-if="isTeacher" to="/teacher/courses" class="dropdown-item">
+                    <router-link v-if="isTeacher" :to="{ name: 'TeachingCourses' }" class="dropdown-item">
                       <i class="fas fa-chalkboard-teacher me-2"></i>
                       دوره‌های من
                     </router-link>
 
-                    <router-link v-if="isStudent" to="/student/dashboard" class="dropdown-item">
+                    <router-link v-if="isStudent" :to="{ name: 'Dashboard' }" class="dropdown-item">
                       <i class="fas fa-graduation-cap me-2"></i>
-                      داشبورد دانش‌آموزی
+                      داشبورد دانش‌آموز
                     </router-link>
 
                     <div class="dropdown-divider"></div>

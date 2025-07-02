@@ -63,10 +63,10 @@
             </div>
           </td>
           <td>
-              <span class="modern-badge modern-badge-success">
-                <i class="fas fa-check-circle me-1"></i>
-                فعال
-              </span>
+            <span class="modern-badge" :class="course.active ? 'modern-badge-success' : 'modern-badge-warning'">
+              <i class="fas" :class="course.active ? 'fa-check-circle' : 'fa-pause-circle'" ></i>
+              {{ course.active ? 'فعال' : 'غیرفعال' }}
+            </span>
           </td>
           <td>
             <div class="action-buttons">

@@ -14,6 +14,7 @@
               @enroll-course="enrollInCourse"
               @view-progress="viewStudentOwnProgress"
           />
+
           <!-- Tabs for different sections -->
           <div class="modern-card course-content-tabs animate-slide-up" style="animation-delay: 0.1s;">
             <ul class="nav nav-tabs modern-nav-tabs" id="courseTab" role="tablist">
@@ -229,14 +230,24 @@
                         >
                       </div>
                     </div>
+<!--                    <span class="modern-badge" :class="course.active ? 'modern-badge-success' : 'modern-badge-warning'">-->
+<!--    <i class="fas" :class="course.active ? 'fa-check-circle' : 'fa-pause-circle'" ></i>-->
+<!--    {{ course.active ? 'فعال' : 'غیرفعال' }}-->
+<!--  </span>-->
                     <div class="col-md-6">
+
                       <div class="modern-form-group">
                         <label for="courseStatus" class="modern-form-label">وضعیت دوره</label>
-                        <select id="courseStatus" class="modern-form-control">
-                          <option value="active">فعال</option>
-                          <option value="inactive">غیرفعال</option>
-                          <option value="archived">آرشیو شده</option>
-                        </select>
+                        <div class="form-check form-switch">
+                          <input
+                              class="form-check-input"
+                              type="checkbox"
+                              v-model="editCourseForm.active"
+                              id="courseActiveSwitch">
+                          <label class="form-check-label" for="courseActiveSwitch">
+                            {{ editCourseForm.active ? 'فعال' : 'غیرفعال' }}
+                          </label>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -456,68 +467,6 @@
       </div>
     </div>
 
-    <!-- Exam Modal -->
-    <div class="modal fade" id="examModal" tabindex="-1" aria-labelledby="examModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
-        <div class="modal-content modern-modal">
-          <div class="modal-header">
-            <h5 class="modal-title" id="examModalLabel">
-              <i class="fas fa-clipboard-check me-2"></i>
-              افزودن آزمون به درس: {{ selectedLesson.title }}
-            </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <form @submit.prevent="saveExam">
-              <div class="modern-card">
-                <h6 class="modern-title">
-                  <i class="fas fa-cog text-primary me-2"></i>
-                  مشخصات آزمون
-                </h6>
-                <div class="row">
-                  <div class="col-md-6 modern-form-group">
-                    <label for="examTitle" class="modern-form-label">عنوان آزمون</label>
-                    <input type="text" class="modern-form-control" id="examTitle" v-model="examForm.title" required>
-                  </div>
-                  <div class="col-md-6 modern-form-group">
-                    <label for="examDuration" class="modern-form-label">مدت زمان (دقیقه)</label>
-                    <input type="number" class="modern-form-control" id="examDuration" v-model="examForm.duration" min="5" required>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col-md-6 modern-form-group">
-                    <label for="examPassingScore" class="modern-form-label">نمره قبولی</label>
-                    <input type="number" class="modern-form-control" id="examPassingScore" v-model="examForm.passingScore" min="0" max="100" required>
-                  </div>
-                  <div class="col-md-6 modern-form-group">
-                    <div class="form-check mt-4">
-                      <input class="form-check-input" type="checkbox" id="shuffleQuestions" v-model="examForm.shuffleQuestions">
-                      <label class="form-check-label" for="shuffleQuestions">
-                        تغییر ترتیب تصادفی سوالات
-                      </label>
-                    </div>
-                  </div>
-                </div>
-                <div class="modern-form-group">
-                  <label for="examDescription" class="modern-form-label">توضیحات آزمون</label>
-                  <textarea class="modern-form-control" id="examDescription" v-model="examForm.description" rows="3"></textarea>
-                </div>
-              </div>
-
-              <div class="d-flex justify-content-end gap-2">
-                <button type="button" class="modern-btn modern-btn-secondary" data-bs-dismiss="modal">انصراف</button>
-                <button type="submit" class="modern-btn modern-btn-success" :disabled="isExamSubmitting">
-                  <span v-if="isExamSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  <i v-else class="fas fa-plus me-1"></i>
-                  ایجاد آزمون
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Confirmation Dialog -->
     <confirmation-dialog
         ref="confirmDialog"
@@ -651,7 +600,8 @@ export default {
 
       editCourseForm: {
         title: '',
-        description: ''
+        description: '',
+        active: true
       },
 
       assignmentForm: {
@@ -945,13 +895,13 @@ export default {
     showEditCourseModal() {
       this.editCourseForm = {
         title: this.course.title,
-        description: this.course.description
+        description: this.course.description,
+        active: this.course.active !== false
       };
     },
 
     async updateCourseInfo() {
       if (this.updatingCourse) return;
-
       this.updatingCourse = true;
 
       try {
@@ -960,10 +910,11 @@ export default {
           courseData: this.editCourseForm
         });
 
-        this.$toast.success('اطلاعات دوره با موفقیت به‌روزرسانی شد.');
+        Object.assign(this.course, this.editCourseForm);
+
+        this.$toast.success('اطلاعات دوره به‌روزرسانی شد');
       } catch (error) {
-        console.error('Error updating course:', error);
-        this.$toast.error('خطا در به‌روزرسانی اطلاعات دوره');
+        this.$toast.error('خطا در به‌روزرسانی');
       } finally {
         this.updatingCourse = false;
       }

@@ -326,7 +326,7 @@
                 </select>
               </div>
               <div class="col-md-2">
-                <button type="button" class="modern-btn modern-btn-danger" @click="removeCategorizationitem(index)">
+                <button type="button" class="modern-btn modern-btn-danger" @click="removeCategorizationItem(index)">
                   <i class="fas fa-trash"></i>
                 </button>
               </div>
