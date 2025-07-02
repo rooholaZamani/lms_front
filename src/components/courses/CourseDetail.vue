@@ -372,7 +372,17 @@
                 <div class="col-md-6">
                   <div class="modern-form-group">
                     <label for="assignmentDueDate" class="modern-form-label">تاریخ تحویل</label>
-                    <input type="date" class="modern-form-control" id="assignmentDueDate" v-model="assignmentForm.dueDate" required>
+                    <DatePicker
+                        v-model="assignmentForm.dueDate"
+                        format="YYYY-MM-DD"
+                        display-format="jYYYY/jMM/jDD"
+                        :editable="false"
+                        :clearable="false"
+                        placeholder="انتخاب تاریخ تحویل"
+                        class="modern-form-control"
+                        locale="fa"
+                        :auto-submit="true"
+                    />
                   </div>
                 </div>
                 <div class="col-md-6">
@@ -696,8 +706,14 @@ export default {
       }
     },
     formatDate(dateString) {
-      const { formatDate } = useFormatters()
-      return formatDate(dateString)
+      if (!dateString) return 'نامشخص'
+
+      const date = new Date(dateString)
+      return new Intl.DateTimeFormat('fa-IR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }).format(date)
     },
     async showProgressModal() {
       this.loadingProgress = true;

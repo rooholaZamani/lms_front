@@ -23,6 +23,10 @@ import ErrorHandler from './plugins/errorHandler'
 import UserGuide from './plugins/userGuide'
 import ToastPlugin from './plugins/toast'
 
+
+import VuePersianDatetimePicker from 'vue-persian-datetime-picker'
+
+
 // اضافه کردن ماژول notification به store
 import notification from './store/notification'
 store.registerModule('notification', notification)
@@ -49,6 +53,7 @@ axios.interceptors.request.use(
 // ایجاد نمونه Vue
 const app = createApp(App)
 
+app.component('DatePicker', VuePersianDatetimePicker)
 // ثبت پلاگین‌ها
 app.use(router)
 app.use(store)
