@@ -367,7 +367,10 @@
                 <label for="assignmentDescription" class="modern-form-label">توضیحات تکلیف</label>
                 <textarea class="modern-form-control" id="assignmentDescription" v-model="assignmentForm.description" rows="4" required></textarea>
               </div>
-
+              <div class="modern-form-group">
+                <label for="assignmentFile" class="modern-form-label">فایل پیوست (اختیاری)</label>
+                <input type="file" class="modern-form-control" id="assignmentFile" @change="handleAssignmentFileSelect">
+              </div>
               <div class="row">
                 <div class="col-md-6">
                   <div class="modern-form-group">
@@ -376,12 +379,15 @@
                         v-model="assignmentForm.dueDate"
                         format="YYYY-MM-DD"
                         display-format="jYYYY/jMM/jDD"
+                        :min="getTodayDate()"
                         :editable="false"
                         :clearable="false"
                         placeholder="انتخاب تاریخ تحویل"
-                        class="modern-form-control"
+                        class="modern-form-control datepicker-custom"
                         locale="fa"
                         :auto-submit="true"
+                        :wrapper-class="'datepicker-wrapper'"
+                        :popup-class="'datepicker-popup'"
                     />
                   </div>
                 </div>
@@ -393,10 +399,7 @@
                 </div>
               </div>
 
-              <div class="modern-form-group">
-                <label for="assignmentFile" class="modern-form-label">فایل پیوست (اختیاری)</label>
-                <input type="file" class="modern-form-control" id="assignmentFile" @change="handleAssignmentFileSelect">
-              </div>
+
 
               <div class="d-flex justify-content-end gap-2">
                 <button type="button" class="modern-btn modern-btn-secondary" data-bs-dismiss="modal">انصراف</button>
@@ -714,6 +717,13 @@ export default {
         month: '2-digit',
         day: '2-digit'
       }).format(date)
+    },
+    getTodayDate() {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
     },
     async showProgressModal() {
       this.loadingProgress = true;
@@ -1632,6 +1642,53 @@ export default {
   .modern-modal .modal-body {
     background: #2d3748;
     color: #e2e8f0;
+  }
+  .datepicker-wrapper {
+    position: relative;
+    z-index: 1000;
+  }
+  .datepicker-popup {
+    z-index: 9999 !important;
+    position: fixed !important;
+  }
+  :deep(.vpd-main) {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+
+  :deep(.vpd-day) {
+    color: #333 !important;
+    background: white;
+    border: 1px solid #f0f0f0;
+  }
+
+  :deep(.vpd-day:hover) {
+    background: #e3f2fd !important;
+    color: #1976d2 !important;
+  }
+
+  :deep(.vpd-selected) {
+    background: #1976d2 !important;
+    color: white !important;
+  }
+
+  :deep(.vpd-disabled) {
+    color: #ccc !important;
+    background: #f5f5f5 !important;
+    cursor: not-allowed;
+  }
+
+  :deep(.vpd-today) {
+    background: #fff3e0 !important;
+    color: #e65100 !important;
+    font-weight: bold;
+  }
+
+
+  .datepicker-custom {
+    position: relative;
   }
 }
 </style>
