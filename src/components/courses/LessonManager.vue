@@ -122,42 +122,36 @@
     </base-modal>
 
     <!-- Confirmation Modal -->
-    <div class="modal fade" id="confirmationModal" tabindex="-1">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title text-danger">
-              <i class="fas fa-exclamation-triangle me-2"></i>
-              تأیید حذف
-            </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <div class="modern-alert modern-alert-warning">
-              <i class="fas fa-exclamation-triangle me-2"></i>
-              آیا از حذف درس "<strong>{{ selectedLesson.title }}</strong>" اطمینان دارید؟
-            </div>
-            <p class="text-muted mb-0">
-              این عمل قابل بازگشت نیست و تمامی محتوای مرتبط با این درس نیز حذف خواهد شد.
-            </p>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="modern-btn modern-btn-secondary" data-bs-dismiss="modal">
-              انصراف
-            </button>
-            <button
-                type="button"
-                class="modern-btn modern-btn-danger"
-                @click="deleteLesson"
-                :disabled="isDeleting">
-              <span v-if="isDeleting" class="spinner-border spinner-border-sm me-2"></span>
-              <i class="fas fa-trash me-1"></i>
-              حذف درس
-            </button>
-          </div>
-        </div>
+    <base-modal
+        modal-id="confirmationModal"
+        title="تأیید حذف"
+        icon="exclamation-triangle"
+        header-class="bg-danger"
+        ref="confirmationModal">
+
+      <div class="modern-alert modern-alert-warning">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        آیا از حذف درس "<strong>{{ selectedLesson.title }}</strong>" اطمینان دارید؟
       </div>
-    </div>
+      <p class="text-muted mb-0">
+        این عمل قابل بازگشت نیست و تمامی محتوای مرتبط با این درس نیز حذف خواهد شد.
+      </p>
+
+      <template #footer>
+        <button type="button" class="modern-btn modern-btn-secondary" @click="$refs.confirmationModal.hide()">
+          انصراف
+        </button>
+        <button
+            type="button"
+            class="modern-btn modern-btn-danger"
+            @click="deleteLesson"
+            :disabled="isDeleting">
+          <span v-if="isDeleting" class="spinner-border spinner-border-sm me-2"></span>
+          <i class="fas fa-trash me-1"></i>
+          حذف درس
+        </button>
+      </template>
+    </base-modal>
   </div>
 </template>
 
@@ -253,6 +247,7 @@ export default {
 
     confirmDeleteLesson(lesson) {
       this.selectedLesson = { ...lesson };
+      this.$refs.confirmationModal.show();
 
     },
 
@@ -268,13 +263,8 @@ export default {
         if (this.$toast) {
           this.$toast.success('درس با موفقیت حذف شد');
         }
+        this.$refs.confirmationModal.hide();
 
-        if (this.confirmationModal) {
-          this.confirmationModal.hide();
-        } else {
-          const modal = bootstrap.Modal.getInstance(document.getElementById('confirmationModal'));
-          if (modal) modal.hide();
-        }
       } catch (error) {
         console.error('Error deleting lesson:', error);
         if (this.$toast) {
