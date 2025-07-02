@@ -71,18 +71,199 @@ export default {
   },
   data() {
     return {
-      modal: null
+      modal: null,
+      modalElement: null,
+      isInitialized: false
     }
   },
   mounted() {
-    this.modal = new bootstrap.Modal(document.getElementById(this.modalId));
+    this.initModal();
+  },
+  beforeUnmount() {
+    this.destroyModal();
   },
   methods: {
-    show() {
-      this.modal.show();
+    // مقداردهی اولیه Modal
+    initModal() {
+      try {
+        this.modalElement = document.getElementById(this.modalId);
+
+        if (!this.modalElement) {
+          console.error(`Modal element with id "${this.modalId}" not found`);
+          return;
+        }
+
+        // ایجاد Bootstrap Modal instance
+        this.modal = new bootstrap.Modal(this.modalElement, {
+          backdrop: 'static',  // جلوگیری از بسته شدن با کلیک خارج
+          keyboard: true,      // اجازه بسته شدن با Escape
+          focus: true
+        });
+
+        // اضافه کردن Event Listeners
+        this.addEventListeners();
+        this.isInitialized = true;
+
+      } catch (error) {
+        console.error('Error initializing modal:', error);
+        this.emergencyCleanup();
+      }
     },
+
+    // اضافه کردن Event Listeners
+    addEventListeners() {
+      if (!this.modalElement) return;
+
+      // قبل از نمایش
+      this.modalElement.addEventListener('show.bs.modal', this.onShow);
+
+      // بعد از نمایش
+      this.modalElement.addEventListener('shown.bs.modal', this.onShown);
+
+      // قبل از مخفی شدن
+      this.modalElement.addEventListener('hide.bs.modal', this.onHide);
+
+      // بعد از مخفی شدن - مهم‌ترین برای cleanup
+      this.modalElement.addEventListener('hidden.bs.modal', this.onHidden);
+    },
+
+    // Event Handlers
+    onShow() {
+      // قبل از نمایش Modal
+      this.$emit('show');
+    },
+
+    onShown() {
+      // بعد از نمایش کامل Modal
+      this.$emit('shown');
+    },
+
+    onHide() {
+      // قبل از مخفی شدن Modal
+      this.$emit('hide');
+    },
+
+    onHidden() {
+      // بعد از مخفی شدن کامل - cleanup اصلی اینجا
+      this.performCleanup();
+      this.$emit('hidden');
+    },
+
+    // نمایش Modal
+    show() {
+      if (!this.isInitialized) {
+        this.initModal();
+      }
+
+      if (this.modal && this.modalElement) {
+        try {
+          // پاکسازی قبل از نمایش
+          this.emergencyCleanup();
+
+          // نمایش Modal
+          this.modal.show();
+        } catch (error) {
+          console.error('Error showing modal:', error);
+          this.emergencyCleanup();
+        }
+      }
+    },
+
+    // مخفی کردن Modal
     hide() {
-      this.modal.hide();
+      if (this.modal && this.modalElement) {
+        try {
+          this.modal.hide();
+        } catch (error) {
+          console.error('Error hiding modal:', error);
+          this.emergencyCleanup();
+        }
+      }
+    },
+
+    // پاکسازی بعد از مخفی شدن
+    performCleanup() {
+      try {
+        // حذف backdrop های اضافی
+        const backdrops = document.querySelectorAll('.modal-backdrop');
+        backdrops.forEach(backdrop => {
+          if (backdrop) {
+            backdrop.remove();
+          }
+        });
+
+        // بازگرداندن حالت طبیعی body
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+
+        // حذف inline styles
+        if (document.body.hasAttribute('style')) {
+          const style = document.body.getAttribute('style');
+          if (style.includes('overflow') || style.includes('padding-right')) {
+            document.body.removeAttribute('style');
+          }
+        }
+
+      } catch (error) {
+        console.error('Error during cleanup:', error);
+        this.emergencyCleanup();
+      }
+    },
+
+    // پاکسازی اضطراری
+    emergencyCleanup() {
+      try {
+        // حذف تمام backdrop ها
+        const allBackdrops = document.querySelectorAll('.modal-backdrop');
+        allBackdrops.forEach(backdrop => backdrop.remove());
+
+        // بازگرداندن body
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+        document.body.removeAttribute('style');
+
+      } catch (error) {
+        console.error('Emergency cleanup failed:', error);
+      }
+    },
+
+    // نابودی Modal
+    destroyModal() {
+      try {
+        // پاکسازی نهایی
+        this.performCleanup();
+
+        // حذف Event Listeners
+        if (this.modalElement) {
+          this.modalElement.removeEventListener('show.bs.modal', this.onShow);
+          this.modalElement.removeEventListener('shown.bs.modal', this.onShown);
+          this.modalElement.removeEventListener('hide.bs.modal', this.onHide);
+          this.modalElement.removeEventListener('hidden.bs.modal', this.onHidden);
+        }
+
+        // نابودی Bootstrap Modal instance
+        if (this.modal) {
+          this.modal.dispose();
+          this.modal = null;
+        }
+
+        this.modalElement = null;
+        this.isInitialized = false;
+
+      } catch (error) {
+        console.error('Error destroying modal:', error);
+        this.emergencyCleanup();
+      }
+    },
+
+    // متد عمومی برای reset
+    reset() {
+      this.hide();
+      setTimeout(() => {
+        this.performCleanup();
+      }, 300);
     }
   }
 }
@@ -248,5 +429,23 @@ export default {
     background: rgba(74, 85, 104, 0.8);
     border-top-color: rgba(255, 255, 255, 0.1);
   }
+}
+
+/* جلوگیری از مشکلات backdrop */
+.modal-backdrop {
+  z-index: 1040 !important;
+}
+
+.modal-backdrop + .modal-backdrop {
+  display: none !important;
+}
+
+/* اطمینان از z-index درست */
+.modal {
+  z-index: 1050 !important;
+}
+
+.modal-dialog {
+  z-index: 1060 !important;
 }
 </style>

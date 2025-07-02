@@ -1,7 +1,7 @@
 // src/main.js
 import { createApp } from 'vue'
-import Toast from "vue-toastification"
-import "vue-toastification/dist/index.css"
+
+import Vue3Toastify, { toast } from 'vue3-toastify'
 import App from './App.vue'
 import router from './router'
 import store from './store'
@@ -21,7 +21,7 @@ window.bootstrap = bootstrap
 import PerformancePlugin from './plugins/performance'
 import ErrorHandler from './plugins/errorHandler'
 import UserGuide from './plugins/userGuide'
-import ToastPlugin from './plugins/toast'
+
 
 
 import VuePersianDatetimePicker from 'vue3-persian-datetime-picker'
@@ -60,11 +60,21 @@ app.use(store)
 app.use(PerformancePlugin)
 app.use(ErrorHandler)
 app.use(UserGuide)
-app.use(ToastPlugin)
+
+app.use(Vue3Toastify, {
+    autoClose: 3000,
+    position: 'top-left',
+    rtl: true,
+    theme: 'auto',
+    transition: 'slide',
+    pauseOnHover: true,
+    closeOnClick: true,
+    hideProgressBar: false
+})
 
 // ثبت اشیا عمومی
 app.config.globalProperties.$http = axios
-
+app.config.globalProperties.$toast = toast
 // اضافه کردن فیلترهای عمومی
 app.config.globalProperties.$filters = {
     formatDate(date) {
@@ -102,35 +112,10 @@ app.config.globalProperties.$filters = {
     }
 }
 
-// اضافه کردن کامپوننت NotificationsContainer به app
-import NotificationsContainer from '@/components/common/NotificationsContainer.vue'
-app.component('NotificationsContainer', NotificationsContainer)
+// // اضافه کردن کامپوننت NotificationsContainer به app
+// import NotificationsContainer from '@/components/common/NotificationsContainer.vue'
+// app.component('NotificationsContainer', NotificationsContainer)
 
-// آماده‌سازی محیط برای توسعه‌دهندگان
-if (process.env.NODE_ENV === 'development') {
-    console.log('Running in development mode')
-    window.app = app
-    window.router = router
-    window.store = store
-    window.axios = axios
-}
-
-const options = {
-    position: "top-right",
-    timeout: 3000,
-    closeOnClick: true,
-    pauseOnFocusLoss: true,
-    pauseOnHover: true,
-    draggable: true,
-    draggablePercent: 0.6,
-    showCloseButtonOnHover: false,
-    hideProgressBar: false,
-    closeButton: "button",
-    icon: true,
-    rtl: true // برای پشتیبانی از راست به چپ
-}
-
-app.use(Toast, options)
 
 // نصب اپلیکیشن
 app.mount('#app')

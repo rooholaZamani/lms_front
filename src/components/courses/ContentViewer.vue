@@ -40,7 +40,7 @@
     <div v-else class="container content-wrapper">
       <div class="row justify-content-center">
         <div class="col-12 col-lg-10 col-xl-8">
-
+          <button @click="testToast" class="btn btn-primary">تست Toast</button>
           <!-- Content Header -->
           <div class="content-header mb-4 animate-slide-up">
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
@@ -449,7 +449,7 @@
 import { defineComponent, ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTextFormatter } from '@/composables/useTextFormatter'
-
+import { toast } from 'vue3-toastify'
 
 export default defineComponent({
   name: 'ContentViewer',
@@ -1222,6 +1222,15 @@ export default defineComponent({
       contentId,
       fileId,
       formattedContent
+    }
+  },
+  methods: {
+    testToast() {
+      this.$toast.success('تست موفق!')
+      // یا
+      toast.success('تست موفق!')
+      console.log(this.$toast)
+      console.log(toast)
     }
   }
 })
