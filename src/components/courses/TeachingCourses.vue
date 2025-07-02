@@ -166,9 +166,10 @@
                   <small class="text-muted">{{ getCourseProgress(course) }}%</small>
                 </td>
                 <td>
-                  <span class="modern-badge" :class="getStatusBadgeClass(course.status)">
-                    {{ getStatusText(course.status) }}
-                  </span>
+                    <span class="modern-badge" :class="course.active ? 'modern-badge-success' : 'modern-badge-warning'">
+                      <i class="fas" :class="course.active ? 'fa-check-circle' : 'fa-pause-circle'"></i>
+                      {{ course.active ? 'فعال' : 'غیرفعال' }}
+                    </span>
                 </td>
                 <td>
                   <div class="d-flex gap-1">
