@@ -384,20 +384,6 @@
               <option value="5">۵ - بسیار سخت</option>
             </select>
           </div>
-          <div class="col-md-6 modern-form-group">
-            <div class="form-check" style="margin-top: 2rem;">
-              <input
-                  class="form-check-input"
-                  type="checkbox"
-                  id="isRequired"
-                  v-model="questionData.isRequired"
-              >
-              <label class="form-check-label" for="isRequired">
-                <i class="fas fa-asterisk me-1 text-danger"></i>
-                سوال اجباری
-              </label>
-            </div>
-          </div>
         </div>
 
         <div class="modern-form-group">
@@ -462,6 +448,11 @@ export default {
   },
   methods: {
     validateQuestion() {
+      if (!this.questionData.text.trim()) {
+        this.showErrorToast('متن سوال الزامی است.');
+        return false;
+      }
+
       if (this.questionData.type === 'MULTIPLE_CHOICE') {
         const validOptions = this.questionData.options.filter(opt => opt.trim() !== '');
         if (validOptions.length < 2) {
@@ -476,20 +467,85 @@ export default {
           this.showErrorToast('لطفاً پاسخ درست را انتخاب کنید.');
           return false;
         }
-      } else if (this.questionData.type === 'TRUE_FALSE') {
+      }
+      else if (this.questionData.type === 'TRUE_FALSE') {
         if (this.questionData.correctOption !== 'true' && this.questionData.correctOption !== 'false') {
           this.showErrorToast('لطفاً پاسخ درست را انتخاب کنید.');
           return false;
         }
-      } else if (this.questionData.type === 'SHORT_ANSWER') {
+      }
+      else if (this.questionData.type === 'SHORT_ANSWER') {
         if (!this.questionData.correctOption || this.questionData.correctOption.trim() === '') {
           this.showErrorToast('لطفاً پاسخ صحیح را وارد کنید.');
           return false;
         }
-      } else if (this.questionData.type === 'ESSAY') {
+      }
+      else if (this.questionData.type === 'ESSAY') {
         if (!this.questionData.maxScore || this.questionData.maxScore < 1) {
           this.showErrorToast('لطفاً حداکثر نمره سوال را وارد کنید.');
           return false;
+        }
+      }
+      else if (this.questionData.type === 'FILL_IN_THE_BLANKS') {
+        if (!this.questionData.template || this.questionData.template.trim() === '') {
+          this.showErrorToast('لطفاً الگوی سوال را وارد کنید.');
+          return false;
+        }
+
+        if (!this.questionData.blankAnswers || this.questionData.blankAnswers.length === 0) {
+          this.showErrorToast('حداقل یک جای خالی تعریف کنید.');
+          return false;
+        }
+
+        for (let i = 0; i < this.questionData.blankAnswers.length; i++) {
+          if (!this.questionData.blankAnswers[i].correctAnswer.trim()) {
+            this.showErrorToast(`پاسخ جای خالی ${i + 1} الزامی است.`);
+            return false;
+          }
+        }
+      }
+      else if (this.questionData.type === 'MATCHING') {
+        if (!this.questionData.matchingPairs || this.questionData.matchingPairs.length === 0) {
+          this.showErrorToast('حداقل یک جفت تطبیق تعریف کنید.');
+          return false;
+        }
+
+        for (let i = 0; i < this.questionData.matchingPairs.length; i++) {
+          const pair = this.questionData.matchingPairs[i];
+          if (!pair.leftItem.trim() || !pair.rightItem.trim()) {
+            this.showErrorToast(`جفت تطبیق ${i + 1} کامل نیست.`);
+            return false;
+          }
+        }
+      }
+      else if (this.questionData.type === 'CATEGORIZATION') {
+        if (!this.questionData.categories || this.questionData.categories.length < 2) {
+          this.showErrorToast('حداقل دو دسته تعریف کنید.');
+          return false;
+        }
+
+        for (let i = 0; i < this.questionData.categories.length; i++) {
+          if (!this.questionData.categories[i].trim()) {
+            this.showErrorToast(`نام دسته ${i + 1} الزامی است.`);
+            return false;
+          }
+        }
+
+        if (!this.questionData.categorizationItems || this.questionData.categorizationItems.length === 0) {
+          this.showErrorToast('حداقل یک آیتم برای دسته‌بندی تعریف کنید.');
+          return false;
+        }
+
+        for (let i = 0; i < this.questionData.categorizationItems.length; i++) {
+          const item = this.questionData.categorizationItems[i];
+          if (!item.text.trim()) {
+            this.showErrorToast(`متن آیتم ${i + 1} الزامی است.`);
+            return false;
+          }
+          if (!item.correctCategory || !this.questionData.categories.includes(item.correctCategory)) {
+            this.showErrorToast(`دسته صحیح برای آیتم ${i + 1} انتخاب نشده.`);
+            return false;
+          }
         }
       }
 
@@ -509,6 +565,7 @@ export default {
       this.$emit('save', formattedData);
     },
 
+
     formatQuestionData() {
       const data = { ...this.questionData };
 
@@ -521,73 +578,61 @@ export default {
           points: index === parseInt(data.correctOption) ? (data.points || 10) : 0,
           orderIndex: index
         }));
-      } else if (data.type === 'TRUE_FALSE') {
+      }
+      else if (data.type === 'TRUE_FALSE') {
         data.options = [
           {
-            text: 'True',
+            text: 'درست',
             correct: data.correctOption === 'true',
             answerType: 'TEXT',
             points: data.correctOption === 'true' ? (data.points || 10) : 0,
             orderIndex: 0
           },
           {
-            text: 'False',
+            text: 'نادرست',
             correct: data.correctOption === 'false',
             answerType: 'TEXT',
             points: data.correctOption === 'false' ? (data.points || 10) : 0,
             orderIndex: 1
           }
         ];
-      } else if (data.type === 'SHORT_ANSWER') {
-        data.options = [
-          {
-            text: data.correctOption,
-            correct: true,
-            answerType: 'TEXT',
-            points: data.points || 10,
-            orderIndex: 0
-          }
-        ];
-      } else if (data.type === 'ESSAY') {
-        data.options = [
-          {
-            text: 'Essay Answer',
-            correct: true,
-            answerType: 'TEXT',
-            points: data.maxScore || data.points || 10,
-            orderIndex: 0
-          }
-        ];
       }
-
-      data.questionType = data.type;
-      delete data.type;
-      delete data.correctOption;
-      delete data.maxScore;
-
-      if (!data.points) {
-        data.points = 10;
-      }
-
-      if (data.type === 'FILL_IN_THE_BLANKS') {
-        data.blankAnswers = data.blankAnswers.map((blank, index) => ({
-          blankIndex: index,
-          correctAnswer: blank.correctAnswer,
-          acceptableAnswers: blank.acceptableAnswers ? blank.acceptableAnswers.split(',').map(s => s.trim()) : [],
+      else if (data.type === 'SHORT_ANSWER') {
+        data.correctAnswers = [{
+          text: data.correctOption,
           caseSensitive: false,
-          points: Math.floor((data.points || 10) / data.blankAnswers.length)
+          points: data.points || 10
+        }];
+      }
+      else if (data.type === 'ESSAY') {
+        data.maxScore = data.maxScore || 10;
+      }
+      else if (data.type === 'FILL_IN_THE_BLANKS') {
+        data.blankAnswers = data.blankAnswers.map(blank => ({
+          correctAnswer: blank.correctAnswer,
+          acceptableAnswers: blank.acceptableAnswers ?
+              blank.acceptableAnswers.split(',').map(s => s.trim()) : [],
+          caseSensitive: false,
+          points: Math.floor((data.points || 10) / data.blankAnswers.length),
+          blankIndex: blank.blankIndex
         }));
-      } else if (data.type === 'MATCHING') {
+      }
+      else if (data.type === 'MATCHING') {
         data.matchingPairs = data.matchingPairs.map(pair => ({
-          leftItem: pair.leftItem,
-          rightItem: pair.rightItem,
+          leftItem: pair.leftItem.trim(),
+          rightItem: pair.rightItem.trim(),
           leftItemType: 'TEXT',
           rightItemType: 'TEXT',
           points: Math.floor((data.points || 10) / data.matchingPairs.length)
         }));
-      } else if (data.type === 'CATEGORIZATION') {
+      }
+      else if (data.type === 'CATEGORIZATION') {
+        // پاک‌سازی دسته‌ها
+        data.categories = data.categories.filter(cat => cat.trim()).map(cat => cat.trim());
+
+        // فرمت‌دهی آیتم‌های دسته‌بندی
         data.categorizationItems = data.categorizationItems.map(item => ({
-          text: item.text,
+          text: item.text.trim(),
           correctCategory: item.correctCategory,
           itemType: 'TEXT',
           points: Math.floor((data.points || 10) / data.categorizationItems.length)
@@ -595,24 +640,59 @@ export default {
       }
 
       return data;
-    }
-
     },
-
-    addOption() {
-      if (!this.questionData.options) {
-        this.questionData.options = [];
+    handleTypeChange() {
+      if (this.questionData.type === 'MULTIPLE_CHOICE') {
+        if (!this.questionData.options || this.questionData.options.length < 2) {
+          this.questionData.options = ['', '', '', ''];
+          this.questionData.correctOption = 0;
+        }
       }
-
-      if (this.questionData.options.length < 6) {
-        this.questionData.options.push('');
+      else if (this.questionData.type === 'TRUE_FALSE') {
+        this.questionData.correctOption = 'true';
+      }
+      else if (this.questionData.type === 'SHORT_ANSWER') {
+        this.questionData.correctOption = '';
+      }
+      else if (this.questionData.type === 'ESSAY') {
+        this.questionData.maxScore = 10;
+      }
+      else if (this.questionData.type === 'FILL_IN_THE_BLANKS') {
+        this.questionData.template = '';
+        if (!this.questionData.blankAnswers) {
+          this.questionData.blankAnswers = [{
+            correctAnswer: '',
+            acceptableAnswers: '',
+            blankIndex: 0
+          }];
+        }
+      }
+      else if (this.questionData.type === 'MATCHING') {
+        if (!this.questionData.matchingPairs) {
+          this.questionData.matchingPairs = [{
+            leftItem: '',
+            rightItem: '',
+            leftItemType: 'TEXT',
+            rightItemType: 'TEXT'
+          }];
+        }
+      }
+      else if (this.questionData.type === 'CATEGORIZATION') {
+        if (!this.questionData.categories) {
+          this.questionData.categories = ['دسته ۱', 'دسته ۲'];
+        }
+        if (!this.questionData.categorizationItems) {
+          this.questionData.categorizationItems = [{
+            text: '',
+            correctCategory: '',
+            itemType: 'TEXT'
+          }];
+        }
       }
     },
-
     removeOption(index) {
       if (this.questionData.options.length > 2) {
         this.questionData.options.splice(index, 1);
-
         if (this.questionData.correctOption === index) {
           this.questionData.correctOption = 0;
         } else if (this.questionData.correctOption > index) {
@@ -623,30 +703,8 @@ export default {
       }
     },
 
-    handleTypeChange() {
-      if (this.questionData.type === 'MULTIPLE_CHOICE') {
-        if (!this.questionData.options || this.questionData.options.length < 2) {
-          this.questionData.options = ['', '', '', ''];
-          this.questionData.correctOption = 0;
-        }
-      } else if (this.questionData.type === 'TRUE_FALSE') {
-        this.questionData.correctOption = 'true';
-      } else if (this.questionData.type === 'SHORT_ANSWER') {
-        this.questionData.correctOption = '';
-      } else if (this.questionData.type === 'ESSAY') {
-        this.questionData.maxScore = 10;
-      }
-      if (this.questionData.type === 'FILL_IN_THE_BLANKS') {
-        this.questionData.template = '';
-        this.questionData.blankAnswers = [{ correctAnswer: '', acceptableAnswers: '', blankIndex: 0 }];
-      } else if (this.questionData.type === 'MATCHING') {
-        this.questionData.matchingPairs = [{ leftItem: '', rightItem: '', leftItemType: 'TEXT', rightItemType: 'TEXT' }];
-      } else if (this.questionData.type === 'CATEGORIZATION') {
-        this.questionData.categories = ['دسته ۱', 'دسته ۲'];
-        this.questionData.categorizationItems = [{ text: '', correctCategory: '', itemType: 'TEXT' }];
-      }
+    // },
 
-    },
     addBlank() {
       this.questionData.blankAnswers.push({
         correctAnswer: '',
@@ -695,7 +753,8 @@ export default {
       if (this.questionData.categorizationItems.length > 1) {
         this.questionData.categorizationItems.splice(index, 1);
       }
-    },
+    }
+     },
 }
 </script>
 
