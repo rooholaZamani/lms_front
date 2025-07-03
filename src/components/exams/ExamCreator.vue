@@ -314,7 +314,7 @@ export default {
 
         const questionData = {
           text: this.currentQuestion.text,
-          questionType: this.currentQuestion.type,  // Fixed: was currentquestion.questionType
+          questionType: this.currentQuestion.type,
           points: this.currentQuestion.points || 10,
           explanation: this.currentQuestion.explanation || '',
           hint: this.currentQuestion.hint || '',
@@ -323,7 +323,8 @@ export default {
           isRequired: this.currentQuestion.isRequired || false
         };
 
-        if (this.currentQuestion.type === 'MULTIPLE_CHOICE') {  // Fixed: was currentquestion.questionType
+        // اضافه کردن فیلدهای مخصوص هر نوع سوال
+        if (this.currentQuestion.type === 'MULTIPLE_CHOICE') {
           const options = this.currentQuestion.options.filter(opt => opt && opt.trim() !== '');
           questionData.options = options.map((text, index) => ({
             text: text,
@@ -332,62 +333,66 @@ export default {
             points: index === parseInt(this.currentQuestion.correctOption) ? questionData.points : 0,
             orderIndex: index
           }));
-        } else if (this.currentQuestion.type === 'TRUE_FALSE') {  // Fixed: was currentquestion.questionType
+        }
+        else if (this.currentQuestion.type === 'TRUE_FALSE') {
           questionData.options = [
             {
-              text: 'True',
+              text: 'درست',
               correct: this.currentQuestion.correctOption === 'true',
               answerType: 'TEXT',
               points: this.currentQuestion.correctOption === 'true' ? questionData.points : 0,
               orderIndex: 0
             },
             {
-              text: 'False',
+              text: 'نادرست',
               correct: this.currentQuestion.correctOption === 'false',
               answerType: 'TEXT',
               points: this.currentQuestion.correctOption === 'false' ? questionData.points : 0,
               orderIndex: 1
             }
           ];
-        } else if (this.currentQuestion.type === 'SHORT_ANSWER') {  // Fixed: was currentquestion.questionType
-          questionData.options = [
-            {
-              text: this.currentQuestion.correctOption,
-              correct: true,
-              answerType: 'TEXT',
-              points: questionData.points,
-              orderIndex: 0
-            }
-          ];
-        } else if (this.currentQuestion.type === 'ESSAY') {  // Fixed: was currentquestion.questionType
-          questionData.options = [
-            {
-              text: 'Essay Answer',
-              correct: true,
-              answerType: 'TEXT',
-              points: this.currentQuestion.maxScore || questionData.points,
-              orderIndex: 0
-            }
-          ];
+        }
+        else if (this.currentQuestion.type === 'SHORT_ANSWER') {
+          questionData.correctAnswer = this.currentQuestion.correctOption || '';
+        }
+        else if (this.currentQuestion.type === 'ESSAY') {
+          questionData.maxScore = this.currentQuestion.maxScore || questionData.points;
+        }
+        else if (this.currentQuestion.type === 'FILL_IN_THE_BLANKS') {
+          questionData.template = this.currentQuestion.template || '';
+          questionData.blankAnswers = this.currentQuestion.blankAnswers || [];
+        }
+        else if (this.currentQuestion.type === 'MATCHING') {
+          if (this.currentQuestion.matchingPairs && this.currentQuestion.matchingPairs.length > 0) {
+            questionData.matchingPairs = this.currentQuestion.matchingPairs.map((pair, index) => ({
+              leftItem: pair.leftItem,
+              rightItem: pair.rightItem,
+              leftItemType: pair.leftItemType || 'TEXT',
+              rightItemType: pair.rightItemType || 'TEXT',
+              points: pair.points || Math.floor(questionData.points / this.currentQuestion.matchingPairs.length)
+            }));
+          }
+        }
+        else if (this.currentQuestion.type === 'CATEGORIZATION') {
+          questionData.categories = this.currentQuestion.categories || [];
+          questionData.categorizationItems = this.currentQuestion.categorizationItems || [];
         }
 
         if (this.isEditingQuestion) {
-          response = await axios.put(`/questions/${this.selectedQuestionId}`, questionData);
-          const index = this.questions.findIndex(q => q.id === this.selectedQuestionId);
-          if (index !== -1) {
-            this.questions[index] = response.data;
-          }
-          this.showSuccessToast('سوال با موفقیت به‌روزرسانی شد.');
+          response = await this.$http.put(`/questions/${this.selectedQuestionId}`, questionData);
+          this.showSuccessToast('سوال با موفقیت ویرایش شد.');
         } else {
-          response = await axios.post(`/questions/exam/${this.examId}`, questionData);
-          this.questions.push(response.data);
-          this.showSuccessToast('سوال جدید با موفقیت افزوده شد.');
+          response = await this.$http.post(`/questions/exam/${this.$route.params.id}`, questionData);
+          this.showSuccessToast('سوال با موفقیت اضافه شد.');
         }
 
-        this.hideQuestionModal();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('questionModal'));
+        modal.hide();
+
+        await this.loadExamData();
       } catch (error) {
         console.error('Error saving question:', error);
-        this.showErrorToast(error.response?.data?.message || 'مشکلی در ذخیره سوال رخ داد. لطفاً دوباره تلاش کنید.');
+        this.showErrorToast('مشکلی در ذخیره سوال رخ داد. لطفاً دوباره تلاش کنید.');
       } finally {
         this.isQuestionSubmitting = false;
       }
