@@ -445,6 +445,79 @@ export default {
       type: Boolean,
       default: false
     }
+  },data() {
+    return {
+      questionData: {
+        text: '',
+        type: 'MULTIPLE_CHOICE',
+        points: 10,
+        explanation: '',
+        hint: '',
+        isRequired: false,
+
+        // برای سوالات چندگزینه‌ای
+        options: ['', '', '', ''],
+        correctOption: 0,
+
+        // برای سوالات درست/نادرست
+        // correctOption: 'true' یا 'false'
+
+        // برای سوالات پاسخ کوتاه
+        // correctOption: 'پاسخ صحیح'
+
+        // برای سوالات تشریحی
+        maxScore: 10,
+
+        // برای سوالات پر کردن جاهای خالی
+        template: '',
+        blankAnswers: [
+          {
+            correctAnswer: '',
+            acceptableAnswers: '',
+            blankIndex: 0
+          }
+        ],
+
+        // برای سوالات تطبیق
+        matchingPairs: [
+          {
+            leftItem: '',
+            rightItem: '',
+            leftItemType: 'TEXT',
+            rightItemType: 'TEXT'
+          }
+        ],
+
+        // برای سوالات دسته‌بندی
+        categories: ['دسته ۱', 'دسته ۲'],
+        categorizationItems: [
+          {
+            text: '',
+            correctCategory: '',
+            itemType: 'TEXT'
+          }
+        ]
+      }
+    }
+  },
+  watch: {
+    'questionData.type'(newType, oldType) {
+      if (newType !== oldType) {
+        this.handleTypeChange();
+      }
+    },
+    'questionData.categories': {
+      handler(newCategories, oldCategories) {
+        if (this.questionData.type === 'CATEGORIZATION' && this.questionData.categorizationItems) {
+          this.questionData.categorizationItems.forEach(item => {
+            if (item.correctCategory && !newCategories.includes(item.correctCategory)) {
+              item.correctCategory = '';
+            }
+          });
+        }
+      },
+      deep: true
+    }
   },
   methods: {
     validateQuestion() {
@@ -690,6 +763,16 @@ export default {
         }
       }
     },
+
+    addOption() {
+      if (!this.questionData.options) {
+        this.questionData.options = [];
+      }
+      if (this.questionData.options.length < 6) {
+        this.questionData.options.push('');
+      }
+    },
+
     removeOption(index) {
       if (this.questionData.options.length > 2) {
         this.questionData.options.splice(index, 1);
@@ -703,9 +786,11 @@ export default {
       }
     },
 
-    // },
-
+    // مدیریت جاهای خالی
     addBlank() {
+      if (!this.questionData.blankAnswers) {
+        this.questionData.blankAnswers = [];
+      }
       this.questionData.blankAnswers.push({
         correctAnswer: '',
         acceptableAnswers: '',
@@ -716,9 +801,20 @@ export default {
     removeBlank(index) {
       if (this.questionData.blankAnswers.length > 1) {
         this.questionData.blankAnswers.splice(index, 1);
+        // بروزرسانی اندیس‌ها
+        this.questionData.blankAnswers.forEach((blank, i) => {
+          blank.blankIndex = i;
+        });
+      } else {
+        this.showErrorToast('حداقل یک جای خالی لازم است.');
       }
     },
+
+    // مدیریت جفت‌های تطبیق
     addMatchingPair() {
+      if (!this.questionData.matchingPairs) {
+        this.questionData.matchingPairs = [];
+      }
       this.questionData.matchingPairs.push({
         leftItem: '',
         rightItem: '',
@@ -730,28 +826,54 @@ export default {
     removeMatchingPair(index) {
       if (this.questionData.matchingPairs.length > 1) {
         this.questionData.matchingPairs.splice(index, 1);
+      } else {
+        this.showErrorToast('حداقل یک جفت تطبیق لازم است.');
       }
     },
+
+    // مدیریت دسته‌ها
     addCategory() {
-      this.questionData.categories.push('');
+      if (!this.questionData.categories) {
+        this.questionData.categories = [];
+      }
+      this.questionData.categories.push(`دسته ${this.questionData.categories.length + 1}`);
     },
 
     removeCategory(index) {
       if (this.questionData.categories.length > 2) {
+        const removedCategory = this.questionData.categories[index];
         this.questionData.categories.splice(index, 1);
+
+        // حذف آیتم‌هایی که به این دسته تعلق داشتند
+        if (this.questionData.categorizationItems) {
+          this.questionData.categorizationItems.forEach(item => {
+            if (item.correctCategory === removedCategory) {
+              item.correctCategory = '';
+            }
+          });
+        }
+      } else {
+        this.showErrorToast('حداقل دو دسته لازم است.');
       }
     },
 
+    // مدیریت آیتم‌های دسته‌بندی
     addCategorizationItem() {
+      if (!this.questionData.categorizationItems) {
+        this.questionData.categorizationItems = [];
+      }
       this.questionData.categorizationItems.push({
         text: '',
         correctCategory: '',
         itemType: 'TEXT'
       });
     },
+
     removeCategorizationItem(index) {
       if (this.questionData.categorizationItems.length > 1) {
         this.questionData.categorizationItems.splice(index, 1);
+      } else {
+        this.showErrorToast('حداقل یک آیتم لازم است.');
       }
     }
      },
