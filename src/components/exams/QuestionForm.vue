@@ -466,6 +466,7 @@ export default {
   watch: {
     questionData: {
       handler(newData) {
+        console.log(newData);
         if (newData) {
           this.initializeQuestionData(newData);
         }
