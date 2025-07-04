@@ -53,15 +53,15 @@
             <h6 class="section-subtitle">گزینه‌ها:</h6>
             <div class="options-list">
               <div v-for="(option, optIndex) in question.options" :key="optIndex" class="option-item">
-                <div class="option-indicator" :class="{ 'correct': question.correctOption == optIndex }">
+                <div class="option-indicator" :class="{ 'correct': option.correct }">
                   {{ String.fromCharCode(65 + optIndex) }}
                 </div>
-                <span class="option-text" :class="{ 'correct-answer': question.correctOption == optIndex }">
-                  {{ option }}
-                </span>
-                <span v-if="question.correctOption == optIndex" class="correct-badge">
-                  <i class="fas fa-check"></i>
-                </span>
+                <span class="option-text" :class="{ 'correct-answer': option.correct }">
+        {{ option.text }}
+      </span>
+                <span v-if="option.correct" class="correct-badge">
+        <i class="fas fa-check"></i>
+      </span>
               </div>
             </div>
           </div>
@@ -70,17 +70,12 @@
           <div v-else-if="question.questionType === 'TRUE_FALSE'" class="options-section">
             <h6 class="section-subtitle">پاسخ صحیح:</h6>
             <div class="true-false-options">
-              <div class="option-item" :class="{ 'selected': question.correctOption === 'true' }">
-                <span class="option-text">درست</span>
-                <span v-if="question.correctOption === 'true'" class="correct-badge">
-                  <i class="fas fa-check"></i>
-                </span>
-              </div>
-              <div class="option-item" :class="{ 'selected': question.correctOption === 'false' }">
-                <span class="option-text">نادرست</span>
-                <span v-if="question.correctOption === 'false'" class="correct-badge">
-                  <i class="fas fa-check"></i>
-                </span>
+              <div v-for="option in question.options" :key="option.text"
+                   class="option-item" :class="{ 'selected': option.correct }">
+                <span class="option-text">{{ option.text }}</span>
+                <span v-if="option.correct" class="correct-badge">
+        <i class="fas fa-check"></i>
+      </span>
               </div>
             </div>
           </div>
@@ -122,13 +117,19 @@
             <h6 class="section-subtitle">دسته‌ها و آیتم‌ها:</h6>
             <div class="categories-preview">
               <div class="categories-list">
-                <strong>دسته‌ها:</strong> {{ question.categories ? question.categories.join(', ') : 'نامشخص' }}
+                <strong>دسته‌ها:</strong>
+                <span class="categories-text">{{
+                    question.categories ? question.categories.join(', ') : 'نامشخص'
+                  }}</span>
               </div>
-              <div class="items-list">
+              <div class="items-list" v-if="question.categorizationItems && question.categorizationItems.length">
                 <strong>آیتم‌ها:</strong>
-                <span v-for="(item, index) in question.categorizationItems" :key="index">
-        {{ item.text }}{{ index < question.categorizationItems.length - 1 ? ', ' : '' }}
-      </span>
+                <div class="categorization-items">
+                  <div v-for="(item, index) in question.categorizationItems" :key="index" class="categorization-item">
+                    <span class="item-text">{{ item.text }}</span>
+                    <span class="item-category">→ {{ item.correctCategory }}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -140,8 +141,8 @@
             <div v-if="question.blankAnswers" class="blank-answers">
               <strong>پاسخ‌ها:</strong>
               <span v-for="(blank, index) in question.blankAnswers" :key="index" class="blank-answer">
-      {{ blank.correctAnswer }}{{ index < question.blankAnswers.length - 1 ? ', ' : '' }}
-    </span>
+               {{ blank.correctAnswer }}{{ index < question.blankAnswers.length - 1 ? ', ' : '' }}
+              </span>
             </div>
           </div>
 
