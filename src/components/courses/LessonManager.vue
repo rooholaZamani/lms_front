@@ -105,7 +105,7 @@
         ref="lessonModal">
 
       <!-- محتوای فرم -->
-      <form @submit.prevent="saveLesson">
+      <form @submit.prevent="saveLesson" >
         <div class="mb-3">
           <label class="form-label">عنوان درس</label>
           <input type="text" class="form-control" v-model="selectedLesson.title" required>
@@ -130,14 +130,14 @@
 
     <!-- Modal: تأیید حذف سوال -->
     <confirmation-dialog
-        modal-id="confirmationModalId"
+        modal-id="deleteLessonModal"
         title="حذف سوال"
         :message="'آیا از حذف این سوال اطمینان دارید؟ این عمل قابل بازگشت نیست.'"
         :details="selectedLesson?.title"
         confirm-text="حذف سوال"
         confirm-button-type="danger"
         icon="trash-alt"
-        ref="confirmationModal"
+        ref="deleteLessonModal"
         @confirm="deleteLesson"
     />
   </div>
@@ -150,8 +150,9 @@ import ConfirmationDialog from "@/components/common/ConfirmationDialog.vue";
 export default {
   name: 'LessonManager',
   components: {
-    ConfirmationDialog,
-    BaseModal
+    BaseModal,
+    ConfirmationDialog
+
   },
   props: {
     courseId: {
@@ -237,7 +238,7 @@ export default {
 
     confirmDeleteLesson(lesson) {
       this.selectedLesson = { ...lesson };
-      this.$refs.confirmationModal.show();
+      this.$refs.deleteLessonModal.show();
     },
 
     async deleteLesson() {
@@ -387,6 +388,25 @@ export default {
 .modal-footer {
   border-top: 1px solid rgba(102, 126, 234, 0.1);
   background: rgba(102, 126, 234, 0.02);
+}
+
+/* اطمینان از اینکه modal قابل کلیک است */
+.modal.show {
+  pointer-events: auto !important;
+}
+
+.modal-dialog {
+  pointer-events: auto !important;
+}
+
+/* پاکسازی backdrop های اضافی */
+body.modal-open {
+  overflow: auto;
+}
+
+/* حل مشکل چندین backdrop */
+.modal-backdrop:nth-child(n+2) {
+  display: none !important;
 }
 
 /* Responsive */
