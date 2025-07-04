@@ -234,28 +234,6 @@ const routes = [
     }
   },
   {
-    path: '/question-bank',
-    name: 'QuestionBank',
-    component: () => import(/* webpackChunkName: "question-bank" */ '../components/exams/QuestionBank.vue'),
-    meta: {
-      title: 'بانک سوالات',
-      requiresAuth: true,
-      requiresTeacher: true,
-      showSidebar: true
-    }
-  },
-  {
-    path: '/question-bank',
-    name: 'QuestionBank',
-    component: () => import(/* webpackChunkName: "question-bank" */ '../components/exams/QuestionBank.vue'),
-    meta: {
-      title: 'بانک سوالات',
-      requiresAuth: true,
-      requiresTeacher: true,
-      showSidebar: true
-    }
-  },
-  {
     path: '/content/:contentId/view',
     name: 'ContentViewer',
     component: () => import(/* webpackChunkName: "content-viewer" */ '../components/courses/ContentViewer.vue'),
@@ -328,17 +306,6 @@ const routes = [
       title: 'نتایج آزمون‌ها',
       requiresAuth: true,
       requiresStudent: true,
-      showSidebar: true
-    }
-  },
-  {
-    path: '/question-bank',
-    name: 'QuestionBank',
-    component: () => import(/* webpackChunkName: "question-bank" */ '../components/exams/QuestionBank.vue'),
-    meta: {
-      title: 'بانک سوالات',
-      requiresAuth: true,
-      requiresTeacher: true,
       showSidebar: true
     }
   },

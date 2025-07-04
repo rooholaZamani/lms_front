@@ -165,23 +165,6 @@
                 </div>
               </router-link>
             </li>
-
-<!--            <li class="nav-item">-->
-<!--              <router-link-->
-<!--                  class="modern-nav-link"-->
-<!--                  :to="{ name: 'QuestionBank' }"-->
-<!--                  active-class="active"-->
-<!--                  :title="collapsed ? 'بانک سوالات' : ''"-->
-<!--              >-->
-<!--                <div class="nav-icon">-->
-<!--                  <i class="fas fa-question-circle"></i>-->
-<!--                </div>-->
-<!--                <span v-if="!collapsed" class="nav-text">بانک سوالات</span>-->
-<!--                <div v-if="!collapsed" class="nav-arrow">-->
-<!--                  <i class="fas fa-chevron-left"></i>-->
-<!--                </div>-->
-<!--              </router-link>-->
-<!--            </li>-->
           </template>
 
           <!-- Student-specific menu items -->
@@ -271,22 +254,6 @@
                 </router-link>
               </li>
 
-              <li class="nav-item">
-                <router-link
-                    class="modern-nav-link"
-                    :to="{ name: 'QuestionBank' }"
-                    active-class="active"
-                    :title="collapsed ? 'بانک سوالات' : ''"
-                >
-                  <div class="nav-icon">
-                    <i class="fas fa-question-circle"></i>
-                  </div>
-                  <span v-if="!collapsed" class="nav-text">بانک سوالات</span>
-                  <div v-if="!collapsed" class="nav-arrow">
-                    <i class="fas fa-chevron-left"></i>
-                  </div>
-                </router-link>
-              </li>
             </template>
 
             <template v-if="isStudent">

@@ -58,9 +58,6 @@
 
       <!-- دکمه‌های عملیات -->
       <div class="d-flex justify-content-end gap-2 mb-4">
-        <router-link :to="{ name: 'QuestionBank' }" class="modern-btn modern-btn-outline">
-          <i class="fas fa-database me-1"></i> بانک سوالات
-        </router-link>
         <router-link :to="{ name: 'ExamCreator' }" class="modern-btn modern-btn-success">
           <i class="fas fa-plus me-1"></i> ایجاد آزمون جدید
         </router-link>
