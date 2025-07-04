@@ -296,100 +296,237 @@ export default {
     editQuestion(question) {
       this.isEditingQuestion = true;
       this.selectedQuestionId = question.id;
-      this.currentQuestion = { ...question };
 
-      if (question.questionType === 'MULTIPLE_CHOICE' && (!question.options || !Array.isArray(question.options))) {
-        this.currentQuestion.options = ['', '', '', ''];
+      // فرمت‌دهی داده‌های سوال برای ویرایش
+      this.currentQuestion = {
+        text: question.text,
+        type: question.questionType,
+        points: question.points || 10,
+        explanation: question.explanation || '',
+        hint: question.hint || '',
+        timeLimit: question.timeLimit || null,
+        difficulty: question.difficulty || 3.0,
+        isRequired: question.isRequired || false
+      };
+
+      // فرمت‌دهی بر اساس نوع سوال
+      switch (question.questionType) {
+        case 'MULTIPLE_CHOICE':
+          if (question.options && Array.isArray(question.options)) {
+            this.currentQuestion.options = question.options.map(opt => opt.text);
+            const correctIndex = question.options.findIndex(opt => opt.correct);
+            this.currentQuestion.correctOption = correctIndex >= 0 ? correctIndex : 0;
+          } else {
+            this.currentQuestion.options = ['', '', '', ''];
+            this.currentQuestion.correctOption = 0;
+          }
+          break;
+
+        case 'TRUE_FALSE':
+          if (question.options && Array.isArray(question.options)) {
+            const correctOption = question.options.find(opt => opt.correct);
+            this.currentQuestion.correctOption =
+                correctOption && correctOption.text === 'صحیح' ? 'true' : 'false';
+          } else {
+            this.currentQuestion.correctOption = 'true';
+          }
+          break;
+
+        case 'SHORT_ANSWER':
+          this.currentQuestion.correctOption = question.correctOption || '';
+          break;
+
+        case 'ESSAY':
+          this.currentQuestion.maxScore = question.maxScore || question.points || 10;
+          break;
+
+        case 'FILL_IN_THE_BLANKS':
+          this.currentQuestion.template = question.template || question.text;
+          if (question.blankAnswers && Array.isArray(question.blankAnswers)) {
+            this.currentQuestion.blankAnswers = question.blankAnswers.map(blank => ({
+              correctAnswer: blank.correctAnswer || '',
+              acceptableAnswers: Array.isArray(blank.acceptableAnswers)
+                  ? blank.acceptableAnswers.join(', ')
+                  : blank.acceptableAnswers || '',
+              blankIndex: blank.blankIndex || 0
+            }));
+          } else {
+            this.currentQuestion.blankAnswers = [{
+              correctAnswer: '',
+              acceptableAnswers: '',
+              blankIndex: 0
+            }];
+          }
+          break;
+
+        case 'MATCHING':
+          if (question.matchingPairs && Array.isArray(question.matchingPairs)) {
+            this.currentQuestion.matchingPairs = question.matchingPairs.map(pair => ({
+              leftItem: pair.leftItem || '',
+              rightItem: pair.rightItem || '',
+              leftItemType: 'TEXT',
+              rightItemType: 'TEXT'
+            }));
+          } else {
+            this.currentQuestion.matchingPairs = [{
+              leftItem: '',
+              rightItem: '',
+              leftItemType: 'TEXT',
+              rightItemType: 'TEXT'
+            }];
+          }
+          break;
+
+        case 'CATEGORIZATION':
+          this.currentQuestion.categories = question.categories || ['دسته ۱', 'دسته ۲'];
+          if (question.categorizationItems && Array.isArray(question.categorizationItems)) {
+            this.currentQuestion.categorizationItems = question.categorizationItems.map(item => ({
+              text: item.text || '',
+              correctCategory: item.correctCategory || '',
+              itemType: 'TEXT'
+            }));
+          } else {
+            this.currentQuestion.categorizationItems = [{
+              text: '',
+              correctCategory: '',
+              itemType: 'TEXT'
+            }];
+          }
+          break;
       }
 
       const modal = new bootstrap.Modal(document.getElementById('questionModal'));
       modal.show();
     },
 
-    async saveQuestion() {
+    formatQuestionForBackend(questionData) {
+      const data = {
+        text: questionData.text,
+        questionType: questionData.type,
+        points: questionData.points || 10,
+        explanation: questionData.explanation || '',
+        hint: questionData.hint || '',
+        timeLimit: questionData.timeLimit || null,
+        difficulty: parseFloat(questionData.difficulty) || 3.0,
+        isRequired: questionData.isRequired || false
+      };
+
+      switch (questionData.type) {
+        case 'MULTIPLE_CHOICE':
+          data.options = questionData.options
+              .filter(opt => opt && opt.trim() !== '')
+              .map((text, index) => ({
+                text: text.trim(),
+                correct: index === parseInt(questionData.correctOption),
+                answerType: 'TEXT',
+                mediaUrl: null,
+                points: index === parseInt(questionData.correctOption) ? data.points : 0,
+                feedback: '',
+                orderIndex: index + 1
+              }));
+          break;
+
+        case 'TRUE_FALSE':
+          data.options = [
+            {
+              text: 'صحیح',
+              correct: questionData.correctOption === 'true',
+              answerType: 'TEXT',
+              mediaUrl: null,
+              points: questionData.correctOption === 'true' ? data.points : 0,
+              feedback: '',
+              orderIndex: 1
+            },
+            {
+              text: 'غلط',
+              correct: questionData.correctOption === 'false',
+              answerType: 'TEXT',
+              mediaUrl: null,
+              points: questionData.correctOption === 'false' ? data.points : 0,
+              feedback: '',
+              orderIndex: 2
+            }
+          ];
+          break;
+
+        case 'SHORT_ANSWER':
+          // برای SHORT_ANSWER فقط text کافی است - backend خودش handle می‌کند
+          break;
+
+        case 'ESSAY':
+          // برای ESSAY فقط اطلاعات اصلی کافی است
+          break;
+
+        case 'FILL_IN_THE_BLANKS':
+          data.template = questionData.template || questionData.text;
+          data.blankAnswers = questionData.blankAnswers.map((blank, index) => ({
+            blankIndex: index,
+            correctAnswer: blank.correctAnswer,
+            acceptableAnswers: blank.acceptableAnswers ?
+                blank.acceptableAnswers.split(',').map(s => s.trim()).filter(s => s) : [],
+            caseSensitive: false,
+            points: Math.floor(data.points / questionData.blankAnswers.length) || 1
+          }));
+          break;
+
+        case 'MATCHING':
+          data.matchingPairs = questionData.matchingPairs
+              .filter(pair => pair.leftItem.trim() && pair.rightItem.trim())
+              .map(pair => ({
+                leftItem: pair.leftItem.trim(),
+                rightItem: pair.rightItem.trim(),
+                leftItemType: 'TEXT',
+                rightItemType: 'TEXT',
+                leftItemUrl: null,
+                rightItemUrl: null,
+                points: Math.floor(data.points / questionData.matchingPairs.length) || 1
+              }));
+          break;
+
+        case 'CATEGORIZATION':
+          data.categories = questionData.categories
+              .filter(cat => cat && cat.trim())
+              .map(cat => cat.trim());
+
+          data.categorizationItems = questionData.categorizationItems
+              .filter(item => item.text.trim() && item.correctCategory)
+              .map(item => ({
+                text: item.text.trim(),
+                correctCategory: item.correctCategory,
+                itemType: 'TEXT',
+                mediaUrl: null,
+                points: Math.floor(data.points / questionData.categorizationItems.length) || 1
+              }));
+          break;
+      }
+
+      return data;
+    },
+    async saveQuestion(questionData) {
       this.isQuestionSubmitting = true;
 
       try {
+        const formattedData = this.formatQuestionForBackend(questionData);
         let response;
 
-        const questionData = {
-          text: this.currentQuestion.text,
-          questionType: this.currentQuestion.type,
-          points: this.currentQuestion.points || 10,
-          explanation: this.currentQuestion.explanation || '',
-          hint: this.currentQuestion.hint || '',
-          timeLimit: this.currentQuestion.timeLimit || null,
-          difficulty: this.currentQuestion.difficulty || 3.0,
-          isRequired: this.currentQuestion.isRequired || false
-        };
-
-        // اضافه کردن فیلدهای مخصوص هر نوع سوال
-        if (this.currentQuestion.type === 'MULTIPLE_CHOICE') {
-          const options = this.currentQuestion.options.filter(opt => opt && opt.trim() !== '');
-          questionData.options = options.map((text, index) => ({
-            text: text,
-            correct: index === parseInt(this.currentQuestion.correctOption),
-            answerType: 'TEXT',
-            points: index === parseInt(this.currentQuestion.correctOption) ? questionData.points : 0,
-            orderIndex: index
-          }));
-        }
-        else if (this.currentQuestion.type === 'TRUE_FALSE') {
-          questionData.options = [
-            {
-              text: 'درست',
-              correct: this.currentQuestion.correctOption === 'true',
-              answerType: 'TEXT',
-              points: this.currentQuestion.correctOption === 'true' ? questionData.points : 0,
-              orderIndex: 0
-            },
-            {
-              text: 'نادرست',
-              correct: this.currentQuestion.correctOption === 'false',
-              answerType: 'TEXT',
-              points: this.currentQuestion.correctOption === 'false' ? questionData.points : 0,
-              orderIndex: 1
-            }
-          ];
-        }
-        else if (this.currentQuestion.type === 'SHORT_ANSWER') {
-          questionData.correctAnswer = this.currentQuestion.correctOption || '';
-        }
-        else if (this.currentQuestion.type === 'ESSAY') {
-          questionData.maxScore = this.currentQuestion.maxScore || questionData.points;
-        }
-        else if (this.currentQuestion.type === 'FILL_IN_THE_BLANKS') {
-          questionData.template = this.currentQuestion.template || '';
-          questionData.blankAnswers = this.currentQuestion.blankAnswers || [];
-        }
-        else if (this.currentQuestion.type === 'MATCHING') {
-          if (this.currentQuestion.matchingPairs && this.currentQuestion.matchingPairs.length > 0) {
-            questionData.matchingPairs = this.currentQuestion.matchingPairs.map((pair, index) => ({
-              leftItem: pair.leftItem,
-              rightItem: pair.rightItem,
-              leftItemType: pair.leftItemType || 'TEXT',
-              rightItemType: pair.rightItemType || 'TEXT',
-              points: pair.points || Math.floor(questionData.points / this.currentQuestion.matchingPairs.length)
-            }));
-          }
-        }
-        else if (this.currentQuestion.type === 'CATEGORIZATION') {
-          questionData.categories = this.currentQuestion.categories || [];
-          questionData.categorizationItems = this.currentQuestion.categorizationItems || [];
-        }
-
         if (this.isEditingQuestion) {
-          response = await this.$http.put(`/questions/${this.selectedQuestionId}`, questionData);
-          this.showSuccessToast('سوال با موفقیت ویرایش شد.');
+          response = await this.$http.put(`/questions/${this.selectedQuestionId}`, formattedData);
         } else {
-          response = await this.$http.post(`/questions/exam/${this.$route.params.id}`, questionData);
-          this.showSuccessToast('سوال با موفقیت اضافه شد.');
+          if (!this.examId) {
+            await this.saveExamInfo();
+            if (!this.examId) {
+              this.showErrorToast('ابتدا باید اطلاعات آزمون را کامل کنید.');
+              return;
+            }
+          }
+          response = await this.$http.post(`/questions/exam/${this.examId}`, formattedData);
         }
 
-        const modal = bootstrap.Modal.getInstance(document.getElementById('questionModal'));
-        modal.hide();
-
-        await this.loadExamData();
+        if (response.data.success) {
+          this.showSuccessToast(this.isEditingQuestion ? 'سوال با موفقیت ویرایش شد.' : 'سوال با موفقیت اضافه شد.');
+          this.hideQuestionModal();
+          await this.fetchExamQuestions();
+        }
       } catch (error) {
         console.error('Error saving question:', error);
         this.showErrorToast('مشکلی در ذخیره سوال رخ داد. لطفاً دوباره تلاش کنید.');
@@ -397,6 +534,7 @@ export default {
         this.isQuestionSubmitting = false;
       }
     },
+
 
     confirmDeleteQuestion(question) {
       this.selectedQuestion = question;
