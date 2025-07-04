@@ -96,7 +96,7 @@
     </div>
 
     <!-- Lesson Modal -->
-    <teleport to="body">
+    <teleport v-if="showTeleport" to="body" >
     <base-modal
         modal-id="lessonModal"
         :title="selectedLesson.id ? 'ویرایش درس' : 'افزودن درس'"
@@ -174,7 +174,8 @@ export default {
         orderIndex: 0
       },
       isSaving: false,
-      isDeleting: false
+      isDeleting: false,
+      showTeleport: false
     };
   },
   mounted() {
@@ -194,8 +195,12 @@ export default {
     },
 
     async editLesson(lesson) {
+      console.log('Editing lesson:', lesson);
       this.selectedLesson = {...lesson};
-      this.$refs.lessonModal.show();  // ← ساده!
+      await this.$nextTick(() => {
+        this.$refs.lessonModal.show();
+      });
+        this.showTeleport=true;
     },
 
     async saveLesson() {
