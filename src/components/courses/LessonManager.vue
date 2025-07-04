@@ -6,10 +6,10 @@
         <i class="fas fa-list-ul text-primary me-2"></i>
         مدیریت دروس
       </h5>
-<!--      <button class="modern-btn modern-btn-success" @click="showAddLessonModal">-->
-<!--        <i class="fas fa-plus me-2"></i>-->
-<!--        افزودن درس جدید-->
-<!--      </button>-->
+      <button class="modern-btn modern-btn-success" @click="showAddLessonModal">
+        <i class="fas fa-plus me-2"></i>
+        افزودن درس جدید
+      </button>
     </div>
 
     <!-- Lessons List -->
@@ -101,7 +101,6 @@
         :title="selectedLesson.id ? 'ویرایش درس' : 'افزودن درس'"
         icon="book"
         header-class="bg-primary"
-
         ref="lessonModal">
 
       <!-- محتوای فرم -->
