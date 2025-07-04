@@ -67,55 +67,75 @@ export default {
     }
   },
   methods: {
-    // نمایش Modal - دقیقاً مثل HTML خالص
     show() {
-      this.forceCleanup(); // پاکسازی قبل از نمایش
+      // پاکسازی قبل از نمایش
+      this.forceCleanup();
 
       const modal = new bootstrap.Modal(document.getElementById(this.modalId), {
-        backdrop: 'static',
-        keyboard: true
+        backdrop: true,  // نگه داشتن backdrop
+        keyboard: true,
+        focus: true
       });
+
       modal.show();
+
+      // اطمینان از positioning درست
+      this.$nextTick(() => {
+        this.fixModalPosition();
+      });
     },
 
-    // مخفی کردن Modal - دقیقاً مثل HTML خالص
     hide() {
       const modal = bootstrap.Modal.getInstance(document.getElementById(this.modalId));
       if (modal) {
         modal.hide();
       }
 
-      // پاکسازی با delay برای اطمینان
+      // پاکسازی با delay
       setTimeout(() => {
         this.forceCleanup();
       }, 300);
     },
 
-    // پاکسازی فوری - حذف backdrop ها
+    // جدید: اصلاح position modal
+    fixModalPosition() {
+      const modalElement = document.getElementById(this.modalId);
+      if (modalElement) {
+        modalElement.style.display = 'flex';
+        modalElement.style.alignItems = 'center';
+        modalElement.style.justifyContent = 'center';
+
+        const modalDialog = modalElement.querySelector('.modal-dialog');
+        if (modalDialog) {
+          modalDialog.style.margin = '0';
+          modalDialog.style.width = 'auto';
+          modalDialog.style.maxWidth = '500px';
+        }
+      }
+    },
+
     forceCleanup() {
       try {
-        // حذف تمام backdrop های باقی‌مانده
+        // حذف backdrop های اضافی (نه همه)
         const backdrops = document.querySelectorAll('.modal-backdrop');
-        backdrops.forEach(backdrop => {
-          if (backdrop && backdrop.parentNode) {
-            backdrop.parentNode.removeChild(backdrop);
+        if (backdrops.length > 1) {
+          // فقط اضافی‌ها را حذف کن
+          for (let i = 1; i < backdrops.length; i++) {
+            backdrops[i].remove();
           }
-        });
+        }
 
-        // بازگرداندن حالت طبیعی body
-        document.body.classList.remove('modal-open');
-        document.body.style.overflow = '';
-        document.body.style.paddingRight = '';
-
-        // حذف style attribute اگر خالی است
-        if (document.body.getAttribute('style') === '') {
-          document.body.removeAttribute('style');
+        // اصلاح body classes
+        if (!document.querySelector('.modal.show')) {
+          document.body.classList.remove('modal-open');
+          document.body.style.overflow = '';
+          document.body.style.paddingRight = '';
         }
 
       } catch (error) {
         console.error('Cleanup error:', error);
       }
-    }
+    },
   },
 
   // پاکسازی هنگام نابودی کامپوننت

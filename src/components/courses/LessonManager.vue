@@ -101,7 +101,7 @@
         :title="selectedLesson.id ? 'ویرایش درس' : 'افزودن درس'"
         icon="book"
         header-class="bg-primary"
-        modal-size="modal-lg"
+
         ref="lessonModal">
 
       <!-- محتوای فرم -->
@@ -373,41 +373,8 @@ export default {
   white-space: nowrap;
 }
 
-/* Modal enhancements */
-.modal-content {
-  border-radius: 12px;
-  border: none;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-}
 
-.modal-header {
-  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
-  background: rgba(102, 126, 234, 0.02);
-}
 
-.modal-footer {
-  border-top: 1px solid rgba(102, 126, 234, 0.1);
-  background: rgba(102, 126, 234, 0.02);
-}
-
-/* اطمینان از اینکه modal قابل کلیک است */
-.modal.show {
-  pointer-events: auto !important;
-}
-
-.modal-dialog {
-  pointer-events: auto !important;
-}
-
-/* پاکسازی backdrop های اضافی */
-body.modal-open {
-  overflow: auto;
-}
-
-/* حل مشکل چندین backdrop */
-.modal-backdrop:nth-child(n+2) {
-  display: none !important;
-}
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -462,4 +429,5 @@ body.modal-open {
     color: #cbd5e0;
   }
 }
+
 </style>

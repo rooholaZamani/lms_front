@@ -12,8 +12,97 @@
 
 
 .modal-backdrop {
-    /* bug fix - no overlay */
-    display: none;}
+    display: none;
+}
+
+
+
+
+
+
+
+.modal-dialog {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-height: calc(100vh - 1rem) !important;
+    width: auto !important;
+    max-width: none !important;
+    margin: 0.5rem auto !important;
+}
+
+.modal-content {
+    width: auto !important;
+    min-width: 400px !important;
+    max-width: 90vw !important;
+    margin: 0 !important;
+}
+
+/* اندازه بر اساس محتوا */
+.modal-body {
+    width: max-content !important;
+    max-width: 100% !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .modal-content {
+        min-width: 350px !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .modal-content {
+        min-width: 300px !important;
+        max-width: 95vw !important;
+    }
+}
+.modal-dialog {
+    min-width: 500px !important;
+    max-width: 90vw !important;
+    width: auto !important;
+}
+
+.modal-content {
+    min-height: auto !important;
+    max-height: 90vh !important;
+}
+
+.modal-body {
+    min-height: 200px !important;
+    max-height: 70vh !important;
+    overflow-y: auto !important;
+    padding: 1.5rem !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .modal-dialog {
+        min-width: 350px !important;
+        max-width: 95vw !important;
+    }
+
+    .modal-body {
+        min-height: 150px !important;
+        max-height: 60vh !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .modal-dialog {
+        min-width: 300px !important;
+    }
+
+    .modal-body {
+        min-height: 120px !important;
+        padding: 1rem !important;
+    }
+}
+
+
+
+
+
 
 
 .modern-page-bg::before {
