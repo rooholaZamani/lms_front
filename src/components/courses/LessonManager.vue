@@ -68,18 +68,18 @@
             <i class="fas fa-clipboard-check"></i>
             آزمون
           </button>
-<!--          <button-->
-<!--              class="modern-btn modern-btn-secondary btn-sm me-1"-->
-<!--              @click="editLesson(lesson)"-->
-<!--              title="ویرایش درس">-->
-<!--            <i class="fas fa-edit"></i>-->
-<!--          </button>-->
-<!--          <button-->
-<!--              class="modern-btn modern-btn-outline btn-sm"-->
-<!--              @click="confirmDeleteLesson(lesson)"-->
-<!--              title="حذف درس">-->
-<!--            <i class="fas fa-trash text-danger"></i>-->
-<!--          </button>-->
+          <button
+              class="modern-btn modern-btn-secondary btn-sm me-1"
+              @click="editLesson(lesson)"
+              title="ویرایش درس">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button
+              class="modern-btn modern-btn-outline btn-sm"
+              @click="confirmDeleteLesson(lesson)"
+              title="حذف درس">
+            <i class="fas fa-trash text-danger"></i>
+          </button>
         </div>
       </div>
     </div>
@@ -128,38 +128,29 @@
       </template>
     </base-modal>
 
-    <!-- Confirmation Modal -->
-    <base-modal
-        modal-id="confirmModal"
-        title="تأیید حذف"
-        icon="exclamation-triangle"
-        header-class="bg-danger"
-        ref="confirmModal">
-
-      <div class="alert alert-warning">
-        <i class="fas fa-exclamation-triangle me-2"></i>
-        آیا از حذف درس "<strong>{{ selectedLesson.title }}</strong>" اطمینان دارید؟
-      </div>
-
-      <template #footer>
-        <button type="button" class="btn btn-secondary" @click="$refs.confirmModal.hide()">
-          انصراف
-        </button>
-        <button type="button" class="btn btn-danger" @click="deleteLesson" :disabled="isDeleting">
-          <span v-if="isDeleting" class="spinner-border spinner-border-sm me-2"></span>
-          حذف
-        </button>
-      </template>
-    </base-modal>
+    <!-- Modal: تأیید حذف سوال -->
+    <confirmation-dialog
+        modal-id="confirmationModalId"
+        title="حذف سوال"
+        :message="'آیا از حذف این سوال اطمینان دارید؟ این عمل قابل بازگشت نیست.'"
+        :details="selectedLesson?.title"
+        confirm-text="حذف سوال"
+        confirm-button-type="danger"
+        icon="trash-alt"
+        ref="confirmationModal"
+        @confirm="deleteLesson"
+    />
   </div>
 </template>
 
 <script>
 import axios from 'axios';
 import BaseModal from '@/components/common/BaseModal.vue';
+import ConfirmationDialog from "@/components/common/ConfirmationDialog.vue";
 export default {
   name: 'LessonManager',
   components: {
+    ConfirmationDialog,
     BaseModal
   },
   props: {
@@ -247,7 +238,6 @@ export default {
     confirmDeleteLesson(lesson) {
       this.selectedLesson = { ...lesson };
       this.$refs.confirmationModal.show();
-
     },
 
     async deleteLesson() {
