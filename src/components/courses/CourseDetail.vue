@@ -182,6 +182,7 @@
                       @add-assignment="showAddAssignmentModal"
                       @add-exam="showAddExamModal"
                       @show-questions-manager="showLessonQuestionsManager"
+                      @update-selected-lesson="updateSelectedLesson"
                   />
 
                   <!-- Questions Manager Section -->
@@ -540,6 +541,8 @@
       </div>
     </div>
   </div>
+
+  <LessonManager @data-sent="handleDataFromChild"  course-id=""/>
 </template>
 
 <script>
@@ -554,7 +557,6 @@ import CourseHeader from '@/components/courses/CourseHeader.vue';
 import LessonList from '@/components/courses/LessonList.vue';
 import StudentsTab from '@/components/courses/StudentsTab.vue';
 import LessonManager from '@/components/courses/LessonManager.vue';
-import CourseChat from '@/components/courses/CourseChat.vue';
 
 
 export default {
@@ -608,7 +610,6 @@ export default {
         description: '',
         orderIndex: 0
       },
-
       editCourseForm: {
         title: '',
         description: '',
@@ -626,7 +627,9 @@ export default {
 
       selectedLesson: {
         id: null,
-        title: ''
+        title: '',
+        description: '',
+        orderIndex: 0
       },
 
       exerciseForm: {
@@ -682,6 +685,9 @@ export default {
     this.setupBootstrapTabs();
   },
   methods: {
+    handleDataFromChild(message) {
+      console.log('داده دریافتی از فرزند:', message)
+    },
     setupBootstrapTabs() {
       const tabListEl = document.getElementById('courseTab');
       if (tabListEl) {
@@ -841,6 +847,7 @@ export default {
     },
 
     handleLessonUpdated(updatedLesson) {
+      console.log(updatedLesson);
       const index = this.course.lessons.findIndex(l => l.id === updatedLesson.id);
       if (index !== -1) {
         this.course.lessons[index] = updatedLesson;
@@ -959,6 +966,10 @@ export default {
       const modal = new bootstrap.Modal(document.getElementById('lessonModal'));
       modal.show();
     },
+    updateSelectedLesson(lesson){
+      this.selectedLesson = lesson;
+      console.log(this.selectedLesson);
+    },
 
     editLesson(lesson) {
       this.lessonForm = {
@@ -1007,20 +1018,6 @@ export default {
       }
     },
 
-    async deleteLesson(lesson) {
-      const confirmed = await this.$refs.confirmDialog.show();
-
-      if (!confirmed) return;
-
-      try {
-        await this.$http.delete(`/lessons/${lesson.id}`);
-        this.course.lessons = this.course.lessons.filter(l => l.id !== lesson.id);
-        this.$toast.success('درس با موفقیت حذف شد.');
-      } catch (error) {
-        console.error('Error deleting lesson:', error);
-        this.$toast.error('خطا در حذف درس');
-      }
-    },
 
     toggleLesson(index) {
       if (!this.course.lessons[index].expanded) {

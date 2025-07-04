@@ -96,6 +96,7 @@
     </div>
 
     <!-- Lesson Modal -->
+    <teleport to="body">
     <base-modal
         modal-id="lessonModal"
         :title="selectedLesson.id ? 'ویرایش درس' : 'افزودن درس'"
@@ -139,6 +140,7 @@
         ref="deleteLessonModal"
         @confirm="deleteLesson"
     />
+    </teleport>
   </div>
 </template>
 
@@ -190,8 +192,9 @@ export default {
       this.$refs.lessonModal.show();  // ← ساده!
     },
 
-    editLesson(lesson) {
-      this.selectedLesson = { ...lesson };
+    async editLesson(lesson) {
+      this.selectedLesson = {...lesson};
+      this.$emit('update-selected-lesson', this.selectedLesson);
       this.$refs.lessonModal.show();  // ← ساده!
     },
 
@@ -237,6 +240,8 @@ export default {
 
     confirmDeleteLesson(lesson) {
       this.selectedLesson = { ...lesson };
+
+      this.$emit('update-selected-lesson', this.selectedLesson);
       this.$refs.deleteLessonModal.show();
     },
 
@@ -252,7 +257,7 @@ export default {
         if (this.$toast) {
           this.$toast.success('درس با موفقیت حذف شد');
         }
-        this.$refs.confirmationModal.hide();
+        // this.$refs.confirmationModal.hide();
 
       } catch (error) {
         console.error('Error deleting lesson:', error);
