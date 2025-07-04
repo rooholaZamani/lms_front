@@ -191,6 +191,7 @@ export default {
     }
   },
   methods: {
+
     getQuestionTypeBadgeClass(type) {
       switch (type) {
         case 'MULTIPLE_CHOICE':
@@ -419,6 +420,124 @@ export default {
 .option-text.correct-answer {
   color: #28a745;
   font-weight: 600;
+}
+
+.blank-answers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.blank-answer-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.blank-number {
+  font-weight: 600;
+  color: #667eea;
+  min-width: 20px;
+}
+
+.blank-answer {
+  font-weight: 500;
+  color: #28a745;
+}
+
+.acceptable-answers {
+  font-size: 0.85rem;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.matching-pairs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.matching-pair-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 4px;
+}
+
+.left-item, .right-item {
+  font-weight: 500;
+}
+
+.left-item {
+  color: #495057;
+}
+
+.right-item {
+  color: #28a745;
+}
+
+.categories-preview {
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.categories-list {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.categories-text {
+  color: #667eea;
+  font-weight: 500;
+}
+
+.categorization-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.categorization-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(40, 167, 69, 0.05);
+  border-radius: 4px;
+}
+
+.item-text {
+  font-weight: 500;
+  color: #495057;
+}
+
+.item-category {
+  color: #28a745;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.template-text {
+  background: white;
+  padding: 1rem;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+  font-family: 'Courier New', monospace;
+  line-height: 1.6;
+  margin-bottom: 1rem;
 }
 
 .correct-badge {
