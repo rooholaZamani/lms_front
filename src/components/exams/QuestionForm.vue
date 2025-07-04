@@ -466,7 +466,6 @@ export default {
   watch: {
     questionData: {
       handler(newData) {
-        console.log(newData);
         if (newData) {
           this.initializeQuestionData(newData);
         }
@@ -557,13 +556,24 @@ export default {
 
         case 'CATEGORIZATION':
           this.localQuestionData.categories = data.categories || ['دسته ۱', 'دسته ۲'];
+
+          // بررسی دو حالت ممکن برای دریافت آیتم‌ها
           if (data.categorizationItems && Array.isArray(data.categorizationItems)) {
+            // حالت اول: مستقیم از categorizationItems
             this.localQuestionData.categorizationItems = data.categorizationItems.map(item => ({
               text: item.text || '',
               correctCategory: item.correctCategory || '',
               itemType: 'TEXT'
             }));
+          } else if (data.answers && Array.isArray(data.answers)) {
+            // حالت دوم: از answers (که معمولاً از backend می‌آید)
+            this.localQuestionData.categorizationItems = data.answers.map(answer => ({
+              text: answer.text || '',
+              correctCategory: answer.category || answer.correctCategory || '',
+              itemType: 'TEXT'
+            }));
           } else {
+            // حالت پیش‌فرض
             this.localQuestionData.categorizationItems = [{
               text: '',
               correctCategory: '',

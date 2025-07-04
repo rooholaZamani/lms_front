@@ -367,10 +367,12 @@ export default {
 
         case 'CATEGORIZATION':
           this.currentQuestion.categories = question.categories || ['دسته ۱', 'دسته ۲'];
-          if (question.categorizationItems && Array.isArray(question.categorizationItems)) {
-            this.currentQuestion.categorizationItems = question.categorizationItems.map(item => ({
-              text: item.text || '',
-              correctCategory: item.correctCategory || '',
+
+          // تبدیل answers به categorizationItems
+          if (question.answers && Array.isArray(question.answers) && question.answers.length > 0) {
+            this.currentQuestion.categorizationItems = question.answers.map(answer => ({
+              text: answer.text || '',
+              correctCategory: answer.category || '',
               itemType: 'TEXT'
             }));
           } else {
