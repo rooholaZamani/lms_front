@@ -133,7 +133,7 @@
         modal-id="deleteLessonModal"
         title="حذف سوال"
         :message="'آیا از حذف این سوال اطمینان دارید؟ این عمل قابل بازگشت نیست.'"
-        :details="selectedLesson?.title"
+        :details=selectedLesson?.title
         confirm-text="حذف سوال"
         confirm-button-type="danger"
         icon="trash-alt"
@@ -183,6 +183,7 @@ export default {
   methods: {
 
     showAddLessonModal() {
+
       this.selectedLesson = {
         id: null,
         title: '',
@@ -194,7 +195,6 @@ export default {
 
     async editLesson(lesson) {
       this.selectedLesson = {...lesson};
-      this.$emit('update-selected-lesson', this.selectedLesson);
       this.$refs.lessonModal.show();  // ← ساده!
     },
 
@@ -240,8 +240,6 @@ export default {
 
     confirmDeleteLesson(lesson) {
       this.selectedLesson = { ...lesson };
-
-      this.$emit('update-selected-lesson', this.selectedLesson);
       this.$refs.deleteLessonModal.show();
     },
 

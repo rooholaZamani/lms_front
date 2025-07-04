@@ -955,6 +955,7 @@ export default {
     },
 
     showAddLessonModal() {
+
       this.lessonForm = {
         id: null,
         title: '',
