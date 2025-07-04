@@ -122,15 +122,15 @@
                     question.categories ? question.categories.join(', ') : 'نامشخص'
                   }}</span>
               </div>
-              <div class="items-list" v-if="question.categorizationItems && question.categorizationItems.length">
-                <strong>آیتم‌ها:</strong>
-                <div class="categorization-items">
-                  <div v-for="(item, index) in question.categorizationItems" :key="index" class="categorization-item">
-                    <span class="item-text">{{ item.text }}</span>
-                    <span class="item-category">→ {{ item.correctCategory }}</span>
-                  </div>
+              <div class="items-list" v-if="question.answers && question.answers.length">
+              <strong>آیتم‌ها:</strong>
+              <div class="categorization-items">
+                <div v-for="(item, index) in question.answers" :key="index" class="categorization-item">
+                  <span class="item-text">{{ item.text }}</span>
+                  <span class="item-category">→ {{ item.category }}</span>
                 </div>
               </div>
+            </div>
             </div>
           </div>
 

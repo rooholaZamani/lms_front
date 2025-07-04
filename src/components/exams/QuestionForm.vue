@@ -465,13 +465,38 @@ export default {
   },
   watch: {
     questionData: {
+      immediate: true,
       handler(newData) {
         if (newData) {
-          this.initializeQuestionData(newData);
+          this.localQuestionData = { ...newData };
+
+          // Mapping برای CATEGORIZATION
+          if (newData.questionType === 'CATEGORIZATION') {
+            // تبدیل answers به categorizationItems
+            if (newData.answers && !newData.categorizationItems) {
+              this.localQuestionData.categorizationItems = newData.answers.map(answer => ({
+                text: answer.text,
+                correctCategory: answer.category,
+                itemType: 'TEXT'
+              }));
+            }
+
+            // اطمینان از وجود categories
+            if (!this.localQuestionData.categories || this.localQuestionData.categories.length === 0) {
+              this.localQuestionData.categories = ['دسته ۱', 'دسته ۲'];
+            }
+
+            // اطمینان از وجود categorizationItems
+            if (!this.localQuestionData.categorizationItems) {
+              this.localQuestionData.categorizationItems = [{
+                text: '',
+                correctCategory: '',
+                itemType: 'TEXT'
+              }];
+            }
+          }
         }
-      },
-      immediate: true,
-      deep: true
+      }
     }
   },
   methods: {
@@ -709,6 +734,17 @@ export default {
       if (!this.validateQuestion()) {
         return;
       }
+
+      // تبدیل categorizationItems به answers برای ارسال
+      if (this.localQuestionData.type === 'CATEGORIZATION') {
+        this.localQuestionData.answers = this.localQuestionData.categorizationItems.map(item => ({
+          text: item.text,
+          category: item.correctCategory,
+          correct: true,
+          answerType: 'TEXT'
+        }));
+      }
+
       this.$emit('save', this.localQuestionData);
     },
 
