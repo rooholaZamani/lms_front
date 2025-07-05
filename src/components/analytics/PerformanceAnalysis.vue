@@ -424,27 +424,34 @@ export default {
 
     // Computed chart data
     const progressChartData = computed(() => {
+      if (!lessonProgress.value || lessonProgress.value.length === 0) return [];
+
       return lessonProgress.value.map(lesson => ({
-        label: lesson.title || lesson.name,
-        score: lesson.averageScore || 0,
+        label: lesson.lesson || lesson.title || lesson.name,
+        score: lesson.avgScore || lesson.averageScore || 0,
         students: lesson.studentCount || 0,
         completed: lesson.completedCount || 0
       }));
     });
 
     const timeDistributionChartData = computed(() => {
+      if (!timeDistributionData.value || timeDistributionData.value.length === 0) return [];
+
       return timeDistributionData.value.map(item => ({
-        label: item.date || item.period,
-        value: item.totalTime || item.time || 0,
+        label: new Date(item.date).toLocaleDateString('fa-IR'),
+        value: Math.round(item.totalTime || 0),
         students: item.activeStudents || 0
       }));
     });
 
     const trendChartData = computed(() => {
+      if (!trendData.value || trendData.value.length === 0) return [];
+
       return trendData.value.map(item => ({
-        label: item.date || item.period,
-        value: item.averageScore || item.score || 0,
-        secondary: item.participation || 0
+        label: new Date(item.date).toLocaleDateString('fa-IR'),
+        contentViews: item.contentViews || 0,
+        logins: item.logins || 0,
+        avgSessionTime: item.avgSessionTime || 0
       }));
     });
 
@@ -519,24 +526,6 @@ export default {
       }
     };
 
-    const fetchTimeData = async (courseId) => {
-      try {
-        const response = await analytics.fetchTimeDistribution(courseId, selectedPeriod.value);
-
-        if (response) {
-          timeDistributionData.value = response.distribution || [];
-          timeStats.value = {
-            totalStudyTime: response.totalTime || 0,
-            averageDailyTime: response.averageDaily || 0,
-            maxDailyTime: response.maxDaily || 0,
-            minDailyTime: response.minDaily || 0
-          };
-        }
-      } catch (err) {
-        console.error('Error fetching time data:', err);
-      }
-    };
-
     const fetchQuestionData = async () => {
       try {
         const response = await analytics.fetchChallengingQuestions();
@@ -556,7 +545,8 @@ export default {
 
     const fetchRiskData = async (courseId) => {
       try {
-        const response = await analytics.fetchAtRiskStudents();
+
+        const response = await analytics.fetchAtRiskStudents(courseId);
 
         if (response) {
           atRiskStudents.value = response.students || [];
@@ -571,18 +561,52 @@ export default {
         console.error('Error fetching risk data:', err);
       }
     };
+    const fetchTimeData = async (courseId) => {
+      try {
+        // تصحیح: استفاده صحیح از API
+        const response = await analytics.fetchTimeDistribution(courseId, selectedPeriod.value);
+
+        if (response && response.timeline) {
+          // تبدیل timeline به format مناسب برای نمودار
+          timeDistributionData.value = response.timeline.map(item => ({
+            date: item.date,
+            totalTime: item.totalseconds / 60, // تبدیل ثانیه به دقیقه
+            activeStudents: item.activeStudents
+          }));
+
+          // محاسبه آمار زمانی
+          const totalMinutes = response.timeline.reduce((sum, item) => sum + (item.totalseconds / 60), 0);
+          const activeDays = response.timeline.filter(item => item.totalseconds > 0).length;
+
+          timeStats.value = {
+            totalStudyTime: totalMinutes,
+            averageDailyTime: activeDays > 0 ? totalMinutes / activeDays : 0,
+            maxDailyTime: Math.max(...response.timeline.map(item => item.totalseconds / 60)),
+            minDailyTime: Math.min(...response.timeline.map(item => item.totalseconds / 60))
+          };
+        }
+      } catch (err) {
+        console.error('Error fetching time data:', err);
+      }
+    };
 
     const fetchTrendData = async (courseId) => {
       try {
         const response = await analytics.fetchEngagementTrends();
 
-        if (response) {
-          trendData.value = response.trends || [];
+        if (response && Array.isArray(response)) {
+          // تبدیل engagement trends به format مناسب
+          trendData.value = response.map(item => ({
+            date: item.date,
+            averageScore: item.contentViews || 0, // یا هر متریک مناسب دیگر
+            participation: item.logins || 0
+          }));
         }
       } catch (err) {
         console.error('Error fetching trend data:', err);
       }
     };
+
 
     const fetchAnalyticsData = async () => {
       if (!selectedCourse.value) return;

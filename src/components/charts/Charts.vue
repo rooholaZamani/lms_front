@@ -4,7 +4,6 @@
   </div>
 </template>
 
-
 <script>
 export default {
   name: 'Charts',
@@ -45,12 +44,16 @@ export default {
   methods: {
     renderChart() {
       const canvas = this.$refs.chartCanvas;
-      const ctx = canvas.getContext('2d');
+      if (!canvas) return;
 
-      // Clear canvas
+      const ctx = canvas.getContext('2d');
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Simple chart implementation - replace with Chart.js for production
+      if (!this.data || this.data.length === 0) {
+        this.drawNoDataMessage(ctx, canvas);
+        return;
+      }
+
       if (this.type === 'activity') {
         this.drawLineChart(ctx, canvas);
       } else if (this.type === 'scores') {
@@ -60,39 +63,51 @@ export default {
       }
     },
 
-    drawLineChart(ctx, canvas) {
-      if (!this.data.length) return;
+    drawNoDataMessage(ctx, canvas) {
+      ctx.fillStyle = '#666';
+      ctx.font = '16px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('داده‌ای برای نمایش وجود ندارد', canvas.width / 2, canvas.height / 2);
+    },
 
-      const padding = 40;
+    drawLineChart(ctx, canvas) {
+      const padding = 60;
       const width = canvas.width - padding * 2;
       const height = canvas.height - padding * 2;
 
-      // Find max value for scaling
-      const maxValue = Math.max(...this.data.map(d => Math.max(d.views || 0, d.submissions || 0, d.completions || 0)));
+      // Extract values for scaling
+      let maxValue = 0;
+      this.data.forEach(item => {
+        const values = [
+          item.contentViews || item.views || 0,
+          item.logins || item.submissions || 0,
+          item.avgSessionTime || item.completions || 0
+        ];
+        maxValue = Math.max(maxValue, ...values);
+      });
+
+      if (maxValue === 0) maxValue = 1;
 
       // Draw grid
-      ctx.strokeStyle = '#e0e0e0';
-      ctx.lineWidth = 1;
-      for (let i = 0; i <= 5; i++) {
-        const y = padding + (height / 5) * i;
-        ctx.beginPath();
-        ctx.moveTo(padding, y);
-        ctx.lineTo(width + padding, y);
-        ctx.stroke();
-      }
+      this.drawGrid(ctx, canvas, padding, width, height);
 
       // Draw lines
       const colors = ['#667eea', '#f093fb', '#4facfe'];
-      const series = ['views', 'submissions', 'completions'];
+      const series = ['contentViews', 'logins', 'avgSessionTime'];
+      const labels = ['بازدید محتوا', 'ورود', 'زمان جلسه'];
 
       series.forEach((key, index) => {
         ctx.strokeStyle = colors[index];
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 3;
         ctx.beginPath();
 
+        let hasData = false;
         this.data.forEach((point, i) => {
-          const x = padding + (width / (this.data.length - 1)) * i;
-          const y = padding + height - ((point[key] || 0) / maxValue) * height;
+          const value = point[key] || 0;
+          if (value > 0) hasData = true;
+
+          const x = padding + (width / Math.max(1, this.data.length - 1)) * i;
+          const y = padding + height - ((value / maxValue) * height);
 
           if (i === 0) {
             ctx.moveTo(x, y);
@@ -101,68 +116,154 @@ export default {
           }
         });
 
-        ctx.stroke();
+        if (hasData) {
+          ctx.stroke();
+
+          // Draw points
+          ctx.fillStyle = colors[index];
+          this.data.forEach((point, i) => {
+            const value = point[key] || 0;
+            const x = padding + (width / Math.max(1, this.data.length - 1)) * i;
+            const y = padding + height - ((value / maxValue) * height);
+
+            ctx.beginPath();
+            ctx.arc(x, y, 4, 0, 2 * Math.PI);
+            ctx.fill();
+          });
+        }
       });
+
+      // Draw legend
+      this.drawLegend(ctx, canvas, colors, labels);
     },
 
     drawBarChart(ctx, canvas) {
-      if (!this.data.length) return;
-
-      const padding = 40;
+      const padding = 60;
       const width = canvas.width - padding * 2;
       const height = canvas.height - padding * 2;
-      const barWidth = width / this.data.length * 0.8;
-      const maxValue = Math.max(...this.data.map(d => d.count || 0));
 
+      if (!this.data.length) return;
+
+      const barWidth = width / this.data.length * 0.8;
+      const maxValue = Math.max(...this.data.map(d => Math.max(d.score || 0, d.count || 0, d.value || 0)));
+
+      if (maxValue === 0) return;
+
+      // Draw grid
+      this.drawGrid(ctx, canvas, padding, width, height);
+
+      // Draw bars
       this.data.forEach((item, index) => {
-        const barHeight = ((item.count || 0) / maxValue) * height;
-        const x = padding + (width / this.data.length) * index + (width / this.data.length - barWidth) / 2;
+        const value = item.score || item.count || item.value || 0;
+        const barHeight = (value / maxValue) * height;
+        const x = padding + index * (width / this.data.length) + (width / this.data.length - barWidth) / 2;
         const y = padding + height - barHeight;
 
+        // Bar
         ctx.fillStyle = '#667eea';
         ctx.fillRect(x, y, barWidth, barHeight);
 
-        // Draw labels
+        // Label
         ctx.fillStyle = '#333';
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(item.range || item.label || '', x + barWidth / 2, canvas.height - 10);
+        ctx.fillText(item.label || `آیتم ${index + 1}`, x + barWidth / 2, canvas.height - 20);
+
+        // Value
+        ctx.fillText(value.toString(), x + barWidth / 2, y - 5);
       });
     },
 
     drawPieChart(ctx, canvas) {
-      if (!this.data.length) return;
-
       const centerX = canvas.width / 2;
       const centerY = canvas.height / 2;
       const radius = Math.min(centerX, centerY) - 40;
-      const total = this.data.reduce((sum, item) => sum + (item.count || 0), 0);
 
+      const total = this.data.reduce((sum, item) => sum + (item.value || item.count || 0), 0);
+      if (total === 0) return;
+
+      const colors = ['#667eea', '#f093fb', '#4facfe', '#ffeaa7', '#fd79a8'];
       let currentAngle = -Math.PI / 2;
-      const colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#38f9d7'];
 
       this.data.forEach((item, index) => {
-        const sliceAngle = ((item.count || 0) / total) * 2 * Math.PI;
+        const value = item.value || item.count || 0;
+        const sliceAngle = (value / total) * 2 * Math.PI;
 
+        // Draw slice
         ctx.beginPath();
         ctx.moveTo(centerX, centerY);
         ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
         ctx.closePath();
         ctx.fillStyle = colors[index % colors.length];
         ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Draw label
+        const labelAngle = currentAngle + sliceAngle / 2;
+        const labelX = centerX + Math.cos(labelAngle) * (radius * 0.7);
+        const labelY = centerY + Math.sin(labelAngle) * (radius * 0.7);
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(`${Math.round((value / total) * 100)}%`, labelX, labelY);
 
         currentAngle += sliceAngle;
       });
+    },
+
+    drawGrid(ctx, canvas, padding, width, height) {
+      ctx.strokeStyle = '#e0e0e0';
+      ctx.lineWidth = 1;
+
+      // Horizontal lines
+      for (let i = 0; i <= 5; i++) {
+        const y = padding + (height / 5) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding, y);
+        ctx.lineTo(width + padding, y);
+        ctx.stroke();
+      }
+
+      // Vertical lines
+      for (let i = 0; i <= 4; i++) {
+        const x = padding + (width / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(x, padding);
+        ctx.lineTo(x, height + padding);
+        ctx.stroke();
+      }
+    },
+
+    drawLegend(ctx, canvas, colors, labels) {
+      const legendY = 20;
+      const legendX = 60;
+
+      labels.forEach((label, index) => {
+        // Color box
+        ctx.fillStyle = colors[index];
+        ctx.fillRect(legendX + index * 100, legendY, 15, 15);
+
+        // Label
+        ctx.fillStyle = '#333';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText(label, legendX + index * 100 + 20, legendY + 12);
+      });
     }
   }
-}
+};
 </script>
 
 <style scoped>
 .chart-wrapper {
-  position: relative;
   width: 100%;
   height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 canvas {
