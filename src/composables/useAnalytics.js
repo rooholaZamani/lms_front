@@ -484,7 +484,23 @@ export function useAnalytics() {
             loading.value = false;
         }
     };
+    const fetchAtRiskStudents = async (courseId) => {
+        if (!courseId) return [];
 
+        loading.value = true;
+        error.value = null;
+
+        try {
+            const response = await axios.get(`/analytics/course/${courseId}/at-risk-students`);
+            return response.data || [];
+        } catch (err) {
+            error.value = 'خطا در دریافت دانش‌آموزان در معرض خطر';
+            console.error('Error fetching at-risk students:', err);
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    };
     const fetchQuestionDifficultyAnalysis = async () => {
         loading.value = true;
         error.value = null;
@@ -526,7 +542,25 @@ export function useAnalytics() {
             loading.value = false;
         }
     };
+    const fetchTimeDistribution = async (courseId, period = 'month', granularity = 'daily') => {
+        if (!courseId) return null;
 
+        loading.value = true;
+        error.value = null;
+
+        try {
+            const response = await axios.get(`/analytics/course/${courseId}/time-distribution`, {
+                params: { period, granularity }
+            });
+            return response.data;
+        } catch (err) {
+            error.value = 'خطا در دریافت توزیع زمان مطالعه';
+            console.error('Error fetching time distribution:', err);
+            throw err;
+        } finally {
+            loading.value = false;
+        }
+    };
     const fetchChallengingQuestions = async () => {
         loading.value = true;
         error.value = null;
@@ -671,6 +705,8 @@ export function useAnalytics() {
         fetchLessonPerformanceAnalysis,
         fetchEngagementTrends,
         fetchChallengingQuestions,
-        fetchDailyEngagementStats
+        fetchDailyEngagementStats,
+        fetchAtRiskStudents,
+        fetchTimeDistribution
     };
 }

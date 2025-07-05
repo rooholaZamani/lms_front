@@ -44,6 +44,7 @@
               <option value="challenging-questions">سوالات چالش‌برانگیز</option>
               <option value="at-risk-students">دانش‌آموزان در معرض خطر</option>
               <option value="trend-analysis">تحلیل روند زمانی</option>
+              <option value="time-distribution">توزیع زمان مطالعه</option>
             </select>
           </div>
           <div class="col-md-4">
@@ -228,7 +229,120 @@
           </div>
         </div>
       </div>
+      <!-- Time Distribution Analysis -->
+      <div v-if="analysisType === 'time-distribution'" class="row">
+        <div class="col-lg-8">
+          <div class="modern-card">
+            <div class="card-body">
+              <h6 class="card-title">
+                <i class="fas fa-clock me-2"></i>
+                توزیع زمان مطالعه دانش‌آموزان
+              </h6>
+              <div class="chart-container">
+                <Charts
+                    v-if="timeDistributionData.length > 0"
+                    type="time-distribution"
+                    :data="timeDistributionData"
+                    height="400px"
+                />
+                <div v-else class="text-center py-4">
+                  <i class="fas fa-clock text-muted"></i>
+                  <p class="text-muted mt-2">داده‌ای برای نمایش توزیع زمان وجود ندارد</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
+        <div class="col-lg-4">
+          <div class="modern-card">
+            <div class="card-body">
+              <h6 class="card-title">آمار زمان مطالعه</h6>
+              <div class="time-stats">
+                <div class="stat-item">
+                  <span>کل زمان مطالعه:</span>
+                  <span class="badge bg-primary">{{ formatTotalTime(timeStats.totalStudyTime) }}</span>
+                </div>
+                <div class="stat-item">
+                  <span>میانگین روزانه:</span>
+                  <span class="badge bg-success">{{ formatTotalTime(timeStats.averageDailyTime) }}</span>
+                </div>
+                <div class="stat-item">
+                  <span>بیشترین زمان:</span>
+                  <span class="badge bg-info">{{ formatTotalTime(timeStats.maxDailyTime) }}</span>
+                </div>
+                <div class="stat-item">
+                  <span>کمترین زمان:</span>
+                  <span class="badge bg-warning">{{ formatTotalTime(timeStats.minDailyTime) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modern-card mt-3">
+            <div class="card-body">
+              <h6 class="card-title">پراکندگی ساعات مطالعه</h6>
+              <div class="time-distribution-pie">
+                <Charts
+                    v-if="hourlyDistribution.length > 0"
+                    type="pie"
+                    :data="hourlyDistribution"
+                    height="250px"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- جدول زمان‌بندی دانش‌آموزان -->
+        <div class="col-12 mt-4">
+          <div class="modern-card">
+            <div class="card-body">
+              <h6 class="card-title">
+                <i class="fas fa-users-clock me-2"></i>
+                زمان‌بندی دانش‌آموزان
+              </h6>
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                  <tr>
+                    <th>نام دانش‌آموز</th>
+                    <th>کل زمان مطالعه</th>
+                    <th>میانگین روزانه</th>
+                    <th>بیشترین جلسه</th>
+                    <th>آخرین فعالیت</th>
+                    <th>وضعیت</th>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  <tr v-for="student in studentTimeData" :key="student.studentId">
+                    <td>
+                      <div class="student-info">
+                        <i class="fas fa-user-circle me-2"></i>
+                        {{ student.studentName }}
+                      </div>
+                    </td>
+                    <td>
+                  <span class="badge bg-primary">
+                    {{ formatTotalTime(student.totalStudyTime) }}
+                  </span>
+                    </td>
+                    <td>{{ formatTotalTime(student.averageDailyTime) }}</td>
+                    <td>{{ formatTotalTime(student.maxSessionTime) }}</td>
+                    <td>{{ formatRelativeTime(student.lastActivity) }}</td>
+                    <td>
+                  <span class="badge" :class="getStudyStatusClass(student.status)">
+                    {{ getStudyStatusText(student.status) }}
+                  </span>
+                    </td>
+                  </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
       <!-- At-Risk Students Analysis -->
       <div v-if="analysisType === 'at-risk-students'" class="row">
         <div class="col-md-8">
@@ -352,6 +466,17 @@ export default {
     const selectedPeriod = ref('month');
     const analysisType = ref('progress');
 
+    const timeDistributionData = ref([]);
+    const timeStats = ref({
+      totalStudyTime: 0,
+      averageDailyTime: 0,
+      maxDailyTime: 0,
+      minDailyTime: 0
+    });
+
+    const hourlyDistribution = ref([]);
+    const studentTimeData = ref([]);
+
     // Data state
     const courses = ref([]);
     const courseStats = ref({
@@ -459,6 +584,30 @@ export default {
         loading.value = false;
       }
     };
+    const fetchTimeDistributionData = async () => {
+      if (!selectedCourse.value) return;
+
+      loading.value = true;
+      try {
+        const { fetchTimeDistribution } = useAnalytics();
+        const data = await fetchTimeDistribution(
+            selectedCourse.value,
+            selectedPeriod.value,
+            'daily'
+        );
+
+        timeDistributionData.value = data.dailyDistribution || [];
+        timeStats.value = data.statistics || {};
+        hourlyDistribution.value = data.hourlyDistribution || [];
+        studentTimeData.value = data.studentTimeData || [];
+
+      } catch (error) {
+        console.error('Error fetching time distribution:', error);
+        error.value = 'خطا در دریافت توزیع زمان مطالعه';
+      } finally {
+        loading.value = false;
+      }
+    };
 
     const fetchProgressData = async () => {
       const response = await axios.get(`/analytics/course/${selectedCourse.value}/lesson-progress?period=${selectedPeriod.value}`);
@@ -503,9 +652,42 @@ export default {
     };
 
     // Action handlers
-    const updateAnalysisView = () => {
+    const updateAnalysisView = async () => {
       if (selectedCourse.value) {
         fetchAnalyticsData();
+      }
+      if (analysisType.value === 'time-distribution') {
+        await fetchTimeDistributionData();
+      }
+    };
+
+    const formatTotalTime = (seconds) => {
+      if (!seconds) return '0 دقیقه';
+
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+
+      if (hours > 0) {
+        return `${hours} ساعت ${minutes > 0 ? `و ${minutes} دقیقه` : ''}`;
+      }
+      return `${minutes} دقیقه`;
+    };
+
+    const getStudyStatusClass = (status) => {
+      switch(status) {
+        case 'ACTIVE': return 'bg-success';
+        case 'MODERATE': return 'bg-warning';
+        case 'INACTIVE': return 'bg-danger';
+        default: return 'bg-secondary';
+      }
+    };
+
+    const getStudyStatusText = (status) => {
+      switch(status) {
+        case 'ACTIVE': return 'فعال';
+        case 'MODERATE': return 'متوسط';
+        case 'INACTIVE': return 'غیرفعال';
+        default: return 'نامشخص';
       }
     };
 
@@ -589,7 +771,15 @@ export default {
       generateQuestionHelp,
       viewStudentDetails,
       createInterventionPlan,
-      notifyParents
+      notifyParents,
+      timeDistributionData,
+      timeStats,
+      hourlyDistribution,
+      studentTimeData,
+      fetchTimeDistributionData,
+      formatTotalTime,
+      getStudyStatusClass,
+      getStudyStatusText
     };
   }
 }
@@ -740,6 +930,53 @@ export default {
   .question-stats,
   .risk-factors {
     flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+.time-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.stat-item:last-child {
+  border-bottom: none;
+}
+
+.time-distribution-pie {
+  margin-top: 1rem;
+}
+
+.student-info {
+  display: flex;
+  align-items: center;
+}
+
+.table th {
+  border-top: none;
+  font-weight: 600;
+  color: #495057;
+  background-color: #f8f9fa;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+@media (max-width: 768px) {
+  .table-responsive {
+    font-size: 0.875rem;
+  }
+
+  .time-stats {
     gap: 0.5rem;
   }
 }

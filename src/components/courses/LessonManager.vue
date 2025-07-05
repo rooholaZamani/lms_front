@@ -1,16 +1,16 @@
 <template>
-  <div class="modern-card lesson-manager animate-slide-up">
+<!--  <div class="modern-card lesson-manager animate-slide-up">-->
     <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h5 class="modern-title mb-0">
-        <i class="fas fa-list-ul text-primary me-2"></i>
-        مدیریت دروس
-      </h5>
-      <button class="modern-btn modern-btn-success" @click="showAddLessonModal">
-        <i class="fas fa-plus me-2"></i>
-        افزودن درس جدید
-      </button>
-    </div>
+<!--    <div class="d-flex justify-content-between align-items-center mb-4">-->
+<!--      <h5 class="modern-title mb-0">-->
+<!--        <i class="fas fa-list-ul text-primary me-2"></i>-->
+<!--        مدیریت دروس-->
+<!--      </h5>-->
+<!--      <button class="modern-btn modern-btn-success" @click="showAddLessonModal">-->
+<!--        <i class="fas fa-plus me-2"></i>-->
+<!--        افزودن درس جدید-->
+<!--      </button>-->
+<!--    </div>-->
 
     <!-- Lessons List -->
     <div v-if="lessons && lessons.length > 0" class="lesson-list">
@@ -85,15 +85,15 @@
     </div>
 
     <!-- Empty State -->
-    <div v-else class="text-center py-5">
-      <div class="modern-logo large secondary mb-4">
-        <i class="fas fa-book-open"></i>
-      </div>
-      <h5 class="mb-3">هنوز درسی اضافه نشده است</h5>
-      <p class="text-muted mb-4">
-        با استفاده از دکمه بالا، اولین درس خود را اضافه کنید
-      </p>
-    </div>
+<!--    <div v-else class="text-center py-5">-->
+<!--      <div class="modern-logo large secondary mb-4">-->
+<!--        <i class="fas fa-book-open"></i>-->
+<!--      </div>-->
+<!--      <h5 class="mb-3">هنوز درسی اضافه نشده است</h5>-->
+<!--      <p class="text-muted mb-4">-->
+<!--        با استفاده از دکمه بالا، اولین درس خود را اضافه کنید-->
+<!--      </p>-->
+<!--    </div>-->
 
     <!-- Lesson Modal -->
     <teleport to="body" >
@@ -141,7 +141,7 @@
         @confirm="deleteLesson"
     />
     </teleport>
-  </div>
+<!--  </div>-->
 </template>
 
 <script>
