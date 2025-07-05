@@ -508,6 +508,8 @@ export default {
     prepareChartData() {
       if (!this.studentAnalytics) return;
 
+      console.log('Preparing chart data for StudentActivities:', this.studentAnalytics);
+
       // 1. نمودار عملکرد آزمون‌ها
       this.examPerformanceChartData = this.studentAnalytics.recentActivities
           ?.filter(activity => activity.type === 'EXAM_SUBMISSION' && activity.score)
@@ -517,26 +519,64 @@ export default {
             date: exam.timestamp
           })) || [];
 
-      // 2. نمودار توزیع نمرات
-      this.scoreDistributionData = this.studentAnalytics.scoreDistribution || [];
+      // 2. نمودار توزیع نمرات - تبدیل به فرمت pie chart
+      if (this.studentAnalytics.scoreDistribution) {
+        this.scoreDistributionData = this.studentAnalytics.scoreDistribution.map((item, index) => ({
+          label: item.range || `بازه ${index + 1}`,
+          value: item.count || item.percentage || 0,
+          count: item.count || 0,
+          color: ['#667eea', '#f093fb', '#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24'][index % 6]
+        }));
+      } else {
+        this.scoreDistributionData = [];
+      }
 
-      // 3. نمودار فعالیت هفتگی
-      this.weeklyActivityData = this.studentAnalytics.weeklyActivity || [];
+      // 3. نمودار فعالیت هفتگی - تبدیل به فرمت activity chart
+      if (this.studentAnalytics.weeklyActivity) {
+        this.weeklyActivityData = this.studentAnalytics.weeklyActivity.map(day => ({
+          date: day.date,
+          contentViews: day.views || day.contentViews || 0,
+          logins: day.logins || 0,
+          examSubmissions: day.submissions || day.examSubmissions || 0,
+          assignmentSubmissions: day.completions || day.assignmentSubmissions || 0,
+          avgSessionTime: day.avgSessionTime || 0
+        }));
+      } else {
+        this.weeklyActivityData = [];
+      }
 
-      // 4. نمودار تحلیل زمان
-      this.timeAnalysisChartData = this.studentAnalytics.timeAnalysis?.map(item => ({
-        label: item.label,
-        value: item.value,
-        count: item.hours
-      })) || [];
+      // 4. نمودار تحلیل زمان - برای pie chart
+      if (this.studentAnalytics.timeAnalysis) {
+        this.timeAnalysisChartData = this.studentAnalytics.timeAnalysis.map((item, index) => ({
+          label: item.label || `فعالیت ${index + 1}`,
+          value: item.value || item.hours || item.count || 0,
+          count: item.hours || 0,
+          color: ['#667eea', '#f093fb', '#ff6b6b', '#4ecdc4'][index % 4]
+        }));
+      } else {
+        this.timeAnalysisChartData = [];
+      }
 
       // 5. نمودار پیشرفت زمانی
-      this.progressTimelineData = this.studentAnalytics.progressTrend?.map(trend => ({
-        month: trend.month,
-        progress: (trend.lessons + trend.exams + trend.assignments) * 10, // تبدیل به درصد تقریبی
-        lessons: trend.lessons,
-        exams: trend.exams
-      })) || [];
+      if (this.studentAnalytics.progressTrend) {
+        this.progressTimelineData = this.studentAnalytics.progressTrend.map(trend => ({
+          date: trend.month,
+          contentViews: trend.lessons || 0,
+          logins: trend.logins || 0,
+          examSubmissions: trend.exams || 0,
+          assignmentSubmissions: trend.assignments || 0,
+          progress: (trend.lessons + trend.exams + trend.assignments) * 10
+        }));
+      } else {
+        this.progressTimelineData = [];
+      }
+
+      console.log('Chart data prepared:');
+      console.log('- examPerformanceChartData:', this.examPerformanceChartData.length);
+      console.log('- scoreDistributionData:', this.scoreDistributionData.length);
+      console.log('- weeklyActivityData:', this.weeklyActivityData.length);
+      console.log('- timeAnalysisChartData:', this.timeAnalysisChartData.length);
+      console.log('- progressTimelineData:', this.progressTimelineData.length);
     },
 
     // متد کمکی برای آیکون نوع فعالیت
