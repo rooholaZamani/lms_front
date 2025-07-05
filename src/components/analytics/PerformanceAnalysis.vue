@@ -28,12 +28,6 @@
                 </option>
               </select>
 
-              <!-- انتخاب دوره زمانی -->
-              <select v-model="selectedPeriod" class="form-select" @change="fetchAnalyticsData">
-                <option value="week">هفته گذشته</option>
-                <option value="month">ماه گذشته</option>
-                <option value="quarter">سه ماه گذشته</option>
-              </select>
 
               <!-- نوع تحلیل -->
               <select v-model="analysisType" class="form-select">
@@ -43,6 +37,16 @@
                 <option value="risk">دانش‌آموزان در معرض خطر</option>
                 <option value="trend">روند کلی</option>
               </select>
+
+
+              <!-- انتخاب دوره زمانی -->
+              <select v-if="analysisType==='time'" v-model="selectedPeriod" class="form-select" @change="fetchAnalyticsData">
+                <option value="week">هفته گذشته</option>
+                <option value="month">ماه گذشته</option>
+                <option value="quarter">سه ماه گذشته</option>
+              </select>
+
+
             </div>
           </div>
         </div>
@@ -424,33 +428,51 @@ export default {
 
     // Computed chart data
     const progressChartData = computed(() => {
-      if (!lessonProgress.value || lessonProgress.value.length === 0) return [];
+      if (!lessonProgress.value || lessonProgress.value.length === 0) {
+        console.log('No lesson progress data available');
+        return [];
+      }
+
+      console.log('Processing lesson progress data:', lessonProgress.value);
 
       return lessonProgress.value.map(lesson => ({
         label: lesson.lesson || lesson.title || lesson.name,
         score: lesson.avgScore || lesson.averageScore || 0,
-        students: lesson.studentCount || 0,
-        completed: lesson.completedCount || 0
+        difficulty: lesson.difficulty || 'متوسط',
+        completionRate: lesson.completionRate || 0,
+        studentFeedback: lesson.studentFeedback || 0
       }));
     });
 
     const timeDistributionChartData = computed(() => {
-      if (!timeDistributionData.value || timeDistributionData.value.length === 0) return [];
+      if (!timeDistributionData.value || timeDistributionData.value.length === 0) {
+        console.log('No time distribution data available');
+        return [];
+      }
+
+      console.log('Processing time distribution data:', timeDistributionData.value);
 
       return timeDistributionData.value.map(item => ({
-        label: new Date(item.date).toLocaleDateString('fa-IR'),
-        value: Math.round(item.totalTime || 0),
-        students: item.activeStudents || 0
+        date: item.date,
+        activeStudents: item.activeStudents || 0,
+        totalseconds: item.totalseconds || 0
       }));
     });
 
     const trendChartData = computed(() => {
-      if (!trendData.value || trendData.value.length === 0) return [];
+      if (!trendData.value || trendData.value.length === 0) {
+        console.log('No trend data available');
+        return [];
+      }
+
+      console.log('Processing trend data:', trendData.value);
 
       return trendData.value.map(item => ({
-        label: new Date(item.date).toLocaleDateString('fa-IR'),
+        date: item.date,
         contentViews: item.contentViews || 0,
         logins: item.logins || 0,
+        examSubmissions: item.examSubmissions || 0,
+        assignmentSubmissions: item.assignmentSubmissions || 0,
         avgSessionTime: item.avgSessionTime || 0
       }));
     });
@@ -615,25 +637,93 @@ export default {
       error.value = null;
 
       try {
-        await fetchCourseStats(selectedCourse.value);
+        console.log(`Fetching analytics for course: ${selectedCourse.value}, type: ${analysisType.value}`);
 
-        switch (analysisType.value) {
-          case 'progress':
-            await fetchProgressData(selectedCourse.value);
-            break;
-          case 'time':
-            await fetchTimeData(selectedCourse.value);
-            break;
-          case 'questions':
-            await fetchQuestionData();
-            break;
-          case 'risk':
-            await fetchRiskData(selectedCourse.value);
-            break;
-          case 'trend':
-            await fetchTrendData(selectedCourse.value);
-            break;
+        // 1. دریافت آمار کلی درس
+        const courseStatsResponse = await axios.get(`/analytics/course/${selectedCourse.value}/activity-stats`);
+        courseStats.value = courseStatsResponse.data || {};
+
+        // 2. دریافت داده‌ها بر اساس نوع تحلیل
+        if (analysisType.value === 'progress') {
+          // تحلیل پیشرفت
+          const lessonResponse = await analytics.fetchLessonPerformanceAnalysis();
+          lessonProgress.value = lessonResponse || [];
+          console.log('Lesson progress data:', lessonProgress.value);
+
+          // محاسبه توزیع پیشرفت
+          const total = lessonProgress.value.length;
+          if (total > 0) {
+            progressDistribution.value = {
+              excellent: lessonProgress.value.filter(l => (l.avgScore || 0) >= 90).length,
+              good: lessonProgress.value.filter(l => (l.avgScore || 0) >= 70 && (l.avgScore || 0) < 90).length,
+              average: lessonProgress.value.filter(l => (l.avgScore || 0) >= 50 && (l.avgScore || 0) < 70).length,
+              poor: lessonProgress.value.filter(l => (l.avgScore || 0) < 50).length
+            };
+          }
+
+        } else if (analysisType.value === 'time') {
+          // تحلیل زمان
+          const timeResponse = await analytics.fetchTimeDistribution(selectedCourse.value, selectedPeriod.value);
+          console.log('Time distribution response:', timeResponse);
+
+          if (timeResponse && timeResponse.timeline) {
+            timeDistributionData.value = timeResponse.timeline.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            // محاسبه آمار زمانی
+            const totalActiveStudents = timeResponse.timeline.reduce((sum, day) => sum + (day.activeStudents || 0), 0);
+            timeStats.value = {
+              totalStudyTime: timeResponse.timeline.reduce((sum, day) => sum + (day.totalseconds || 0), 0),
+              averageDailyTime: totalActiveStudents > 0 ? Math.round(totalActiveStudents / timeResponse.timeline.length) : 0,
+              maxDailyTime: Math.max(...timeResponse.timeline.map(day => day.activeStudents || 0)),
+              minDailyTime: Math.min(...timeResponse.timeline.map(day => day.activeStudents || 0))
+            };
+          }
+
+        } else if (analysisType.value === 'questions') {
+          // تحلیل سوالات چالش‌برانگیز
+          const questionsResponse = await analytics.fetchChallengingQuestions();
+          challengingQuestions.value = questionsResponse || [];
+
+          if (challengingQuestions.value.length > 0) {
+            questionStats.value = {
+              mostDifficult: Math.max(...challengingQuestions.value.map(q => q.difficulty || 0)),
+              averageDifficulty: challengingQuestions.value.reduce((sum, q) => sum + (q.difficulty || 0), 0) / challengingQuestions.value.length,
+              needsReview: challengingQuestions.value.filter(q => (q.successRate || 0) < 60).length
+            };
+          }
+
+        } else if (analysisType.value === 'students') {
+          // دانش‌آموزان در معرض خطر
+          const riskResponse = await analytics.fetchAtRiskStudents(selectedCourse.value);
+          console.log('At-risk students response:', riskResponse);
+
+          if (riskResponse) {
+            atRiskStudents.value = riskResponse.students || [];
+            riskFactors.value = riskResponse.riskFactors || {
+              lowAttendance: 0,
+              poorPerformance: 0,
+              inactivity: 0,
+              behavioralIssues: 0
+            };
+          }
+
+        } else if (analysisType.value === 'trend') {
+          // تحلیل روند
+          const trendResponse = await analytics.fetchEngagementTrends();
+          console.log('Engagement trends response:', trendResponse);
+
+          if (trendResponse && Array.isArray(trendResponse)) {
+            // مرتب‌سازی بر اساس تاریخ
+            trendData.value = trendResponse.sort((a, b) => new Date(a.date) - new Date(b.date));
+          }
         }
+
+        console.log('Final data check:');
+        console.log('- lessonProgress:', lessonProgress.value.length);
+        console.log('- timeDistributionData:', timeDistributionData.value.length);
+        console.log('- trendData:', trendData.value.length);
+        console.log('- atRiskStudents:', atRiskStudents.value.length);
+
       } catch (err) {
         error.value = 'خطا در دریافت داده‌های تحلیل';
         console.error('Error fetching analytics data:', err);
