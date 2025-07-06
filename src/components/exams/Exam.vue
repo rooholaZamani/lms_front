@@ -53,7 +53,16 @@
                 </div>
                 <div class="rule-content">
                   <span class="rule-title">نمره قبولی</span>
-                  <span class="rule-value">{{ exam.passingScore || 60 }}%</span>
+                  <span class="rule-value">{{ exam.passingScore || 60 }}</span>
+                </div>
+              </div>
+              <div class="rule-item">
+                <div class="rule-icon">
+                  <i class="fas fa-percentage"></i>
+                </div>
+                <div class="rule-content">
+                  <span class="rule-title">حداکثر نمره</span>
+                  <span class="rule-value">{{ exam.totalPossibleScore || 100 }}</span>
                 </div>
               </div>
 
@@ -116,7 +125,7 @@
                 </div>
                 <div class="info-content">
                   <span class="info-label">درس</span>
-                  <span class="info-value">{{ exam.lesson?.title || 'نامشخص' }}</span>
+                  <span class="info-value">{{ exam.lessonTitle  || 'نامشخص' }}</span>
                 </div>
               </div>
 
@@ -125,8 +134,19 @@
                   <i class="fas fa-user-tie"></i>
                 </div>
                 <div class="info-content">
-                  <span class="info-label">مدرس</span>
-                  <span class="info-value">{{ exam.lesson?.course?.teacher?.name || 'نامشخص' }}</span>
+                  <span class="info-label">دوره</span>
+                  <span class="info-value">{{ exam.courseTitle  || 'نامشخص' }}</span>
+                </div>
+              </div>
+
+
+              <div class="info-item">
+                <div class="info-icon">
+                  <i class="fas fa-user-tie"></i>
+                </div>
+                <div class="info-content">
+                  <span class="info-label">ایجاد شده توسط</span>
+                  <span class="info-value">{{ exam.finalizedBy  || 'نامشخص' }}</span>
                 </div>
               </div>
 
@@ -136,7 +156,7 @@
                 </div>
                 <div class="info-content">
                   <span class="info-label">تاریخ ایجاد</span>
-                  <span class="info-value">{{ formatDateTime(exam.createdAt) }}</span>
+                  <span class="info-value">{{ formatDateTime(exam.finalizedAt) }}</span>
                 </div>
               </div>
 
