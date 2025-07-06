@@ -141,7 +141,7 @@
                 شروع آزمون
               </button>
 
-              <button class="modern-btn modern-btn-danger mt-3 w-100" @click="goBackToLesson">
+              <button class="modern-btn modern-btn-danger mt-3 w-100" @click="backToCourse">
                 <i class="fas fa-play me-2"></i>
                 بازگشت به درس
               </button>
@@ -162,6 +162,16 @@ export default {
       type: Object,
       required: true
     }
+  },
+  methods: {
+    backToCourse() {
+      if (this.exam && this.exam.courseId) {
+        this.$router.push({ name: 'CourseDetail', params: { id: this.exam.courseId } });
+      } else {
+        this.$router.push({ name: 'Dashboard' });
+      }
+    }
+
   }
 }
 </script>
