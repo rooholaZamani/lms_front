@@ -65,11 +65,6 @@
                   </button>
 
                   <div class="d-flex gap-2 flex-wrap">
-                    <button class="modern-btn modern-btn-outline" @click="markForReview">
-                      <i class="fas fa-bookmark me-2"></i>
-                      علامت‌گذاری برای بررسی
-                    </button>
-
                     <button
                         v-if="currentQuestionIndex < exam.questions.length - 1"
                         class="modern-btn modern-btn-primary"
@@ -247,7 +242,7 @@ export default {
       }
 
       this.examStarted = true;
-      this.remainingTime = (this.exam.duration || 60) * 60;
+      this.remainingTime = (this.exam.timeLimit || 60) * 60;
       this.startTimer();
     },
 

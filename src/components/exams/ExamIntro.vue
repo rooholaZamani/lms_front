@@ -30,7 +30,7 @@
                 </div>
                 <div class="rule-content">
                   <span class="rule-title">مدت زمان آزمون</span>
-                  <span class="rule-value">{{ exam.duration }} دقیقه</span>
+                  <span class="rule-value">{{ exam.timeLimit }} دقیقه</span>
                 </div>
               </div>
 
@@ -92,7 +92,7 @@
                 </div>
                 <div class="info-content">
                   <span class="info-label">درس</span>
-                  <span class="info-value">{{ exam.lesson ? exam.lesson.title : 'نامشخص' }}</span>
+                  <span class="info-value">{{ exam.lessonTitle || 'نامشخص' }}</span>
                 </div>
               </div>
 
@@ -102,7 +102,7 @@
                 </div>
                 <div class="info-content">
                   <span class="info-label">دوره</span>
-                  <span class="info-value">{{ exam.lesson && exam.lesson.course ? exam.lesson.course.title : 'نامشخص' }}</span>
+                  <span class="info-value">{{ exam.courseTitle || 'نامشخص' }}</span>
                 </div>
               </div>
 
@@ -112,7 +112,7 @@
                 </div>
                 <div class="info-content">
                   <span class="info-label">زمان آزمون</span>
-                  <span class="info-value">{{ exam.duration }} دقیقه</span>
+                  <span class="info-value">{{ exam.timeLimit || exam.duration || 0 }} دقیقه</span>
                 </div>
               </div>
 
