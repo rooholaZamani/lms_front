@@ -395,7 +395,7 @@ router.beforeEach(async (to, from, next) => {
     }
   } else {
     // صفحاتی که نیازی به احراز هویت ندارند
-    if (store.getters.isLoggedIn && (to.path === '/login' || to.path === '/register')) {
+    if (store.getters.isLoggedIn && (to.path === '/login' || to.path === '/register' || to.path === '/')) {
       // کاربر قبلاً وارد شده و می‌خواهد به صفحه ورود برود
       next({ name: 'Dashboard' });
     } else {
