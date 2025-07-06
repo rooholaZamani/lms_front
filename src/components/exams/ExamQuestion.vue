@@ -1,238 +1,190 @@
 <template>
   <div class="exam-question">
-    <div class="modern-card animate-slide-up">
-      <div class="modern-card-header bg-primary text-white">
-        <h5 class="mb-0">
-          <i class="fas fa-question-circle me-2"></i>
-          سوال {{ questionIndex + 1 }} از {{ totalQuestions }}
-        </h5>
+    <div class="modern-card">
+      <div class="question-text">
+        {{ question.text }}
       </div>
 
-      <div class="modern-card-body">
-        <div class="form-section">
-          <div class="question-text">{{ question.text }}</div>
-
-          <!-- Multiple Choice Questions -->
-          <div v-if="question.questionType === 'MULTIPLE_CHOICE'" class="options-section mt-4">
-            <h6 class="section-title">
-              <i class="fas fa-list-ul me-2"></i>
-              گزینه‌ها را انتخاب کنید
-            </h6>
-            <div class="options-container">
-              <div v-for="(answer, index) in question.answers" :key="answer.id" class="option-item">
-                <div class="form-check">
-                  <input class="form-check-input"
-                         type="radio"
-                         :id="`option-${questionIndex}-${index}`"
-                         :name="`question-${questionIndex}`"
-                         :value="answer.id"
-                         v-model="selectedAnswer">
-                  <label class="form-check-label" :for="`option-${questionIndex}-${index}`">
-                    <div class="option-content">
-                      <div class="option-marker">{{ String.fromCharCode(65 + index) }}</div>
-                      <div class="option-text">{{ answer.text }}</div>
-                    </div>
-                  </label>
+      <div class="question-content">
+        <!-- Multiple Choice Questions -->
+        <div v-if="question.questionType === 'MULTIPLE_CHOICE'" class="options-section">
+          <div class="options-container">
+            <div v-for="(option, index) in question.answers" :key="index"
+                 class="option-item"
+                 :class="{ selected: selectedAnswer === index }"
+                 @click="selectedAnswer = index">
+              <div class="option-content">
+                <div class="option-radio">
+                  <input type="radio"
+                         :value="index"
+                         v-model="selectedAnswer"
+                         :id="`option-${questionIndex}-${index}`">
+                  <label :for="`option-${questionIndex}-${index}`"></label>
+                </div>
+                <div class="option-text">
+                  <span class="option-letter">{{ String.fromCharCode(65 + index) }})</span>
+                  {{ option.text }}
                 </div>
               </div>
             </div>
           </div>
-          <!-- DEBUG: Add this temporarily to see the data structure -->
-          <div v-if="question.questionType === 'MULTIPLE_CHOICE'" style="background: yellow; padding: 10px; margin: 10px 0;">
-            <strong>DEBUG:</strong>
-            <pre>{{ JSON.stringify(question, null, 2) }}</pre>
-          </div>
+        </div>
 
-          <!-- True/False Questions -->
-          <div v-else-if="question.questionType === 'TRUE_FALSE'" class="options-section mt-4">
-            <h6 class="section-title">
-              <i class="fas fa-check-double me-2"></i>
-              یکی از گزینه‌های زیر را انتخاب کنید
-            </h6>
-            <div class="true-false-container">
-              <div v-for="(answer, index) in question.answers" :key="answer.id"
-                   class="option-item" :class="{ 'selected': selectedAnswer == answer.id }">
-                <div class="form-check">
-                  <input class="form-check-input"
-                         type="radio"
-                         :id="`option-${questionIndex}-${answer.id}`"
-                         :name="`question-${questionIndex}`"
-                         :value="answer.id"
-                         v-model="selectedAnswer">
-                  <label class="form-check-label" :for="`option-${questionIndex}-${answer.id}`">
-                    <div class="option-content" :class="answer.text === 'True' ? 'true-option' : 'false-option'">
-                      <div class="option-icon">
-                        <i :class="answer.text === 'True' ? 'fas fa-check' : 'fas fa-times'"></i>
-                      </div>
-                      <div class="option-text">{{ answer.text === 'True' ? 'درست' : 'نادرست' }}</div>
-                    </div>
-                  </label>
+        <!-- True/False Questions -->
+        <div v-else-if="question.questionType === 'TRUE_FALSE'" class="options-section">
+          <div class="options-container">
+            <div class="option-item"
+                 :class="{ selected: selectedAnswer === 'true' }"
+                 @click="selectedAnswer = 'true'">
+              <div class="option-content">
+                <div class="option-radio">
+                  <input type="radio" value="true" v-model="selectedAnswer" id="true-option">
+                  <label for="true-option"></label>
+                </div>
+                <div class="option-text">
+                  <span class="option-letter">الف)</span>
+                  صحیح
+                </div>
+              </div>
+            </div>
+            <div class="option-item"
+                 :class="{ selected: selectedAnswer === 'false' }"
+                 @click="selectedAnswer = 'false'">
+              <div class="option-content">
+                <div class="option-radio">
+                  <input type="radio" value="false" v-model="selectedAnswer" id="false-option">
+                  <label for="false-option"></label>
+                </div>
+                <div class="option-text">
+                  <span class="option-letter">ب)</span>
+                  نادرست
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Essay Questions -->
-          <div v-else-if="question.questionType === 'ESSAY'" class="essay-section mt-4">
-            <h6 class="section-title">
-              <i class="fas fa-edit me-2"></i>
-              پاسخ خود را بنویسید
-            </h6>
-            <div class="modern-form-group">
-              <label :for="`essay-${questionIndex}`" class="modern-form-label">
-                پاسخ تشریحی:
-              </label>
-              <textarea class="modern-form-control essay-textarea"
-                        :id="`essay-${questionIndex}`"
-                        v-model="selectedAnswer"
-                        rows="6"
-                        placeholder="پاسخ خود را اینجا بنویسید..."></textarea>
-              <small class="form-text text-muted">
-                <i class="fas fa-info-circle me-1"></i>
-                لطفاً پاسخ کامل و مفصل ارائه دهید
-              </small>
+        <!-- Short Answer Questions -->
+        <div v-else-if="question.questionType === 'SHORT_ANSWER'" class="short-answer-section">
+          <textarea
+              v-model="selectedAnswer"
+              class="modern-form-control"
+              rows="3"
+              placeholder="پاسخ خود را بنویسید..."
+              maxlength="500">
+          </textarea>
+          <small class="text-muted">حداکثر 500 کاراکتر</small>
+        </div>
+
+        <!-- Essay Questions -->
+        <div v-else-if="question.questionType === 'ESSAY'" class="essay-section">
+          <textarea
+              v-model="selectedAnswer"
+              class="modern-form-control"
+              rows="8"
+              placeholder="پاسخ تشریحی خود را بنویسید..."
+              maxlength="2000">
+          </textarea>
+          <small class="text-muted">حداکثر 2000 کاراکتر</small>
+        </div>
+
+        <!-- Fill in the Blanks Questions -->
+        <div v-else-if="question.questionType === 'FILL_IN_THE_BLANKS'" class="fill-blanks-section">
+          <div class="template-display">
+            <div v-html="getTemplateWithBlanks()"></div>
+          </div>
+        </div>
+
+        <!-- Matching Questions -->
+        <div v-else-if="question.questionType === 'MATCHING'" class="matching-section mt-4">
+          <h6 class="section-title">
+            <i class="fas fa-link me-2"></i>
+            آیتم‌های متناظر را به هم متصل کنید
+          </h6>
+          <div class="matching-container">
+            <div class="matching-columns">
+              <div class="left-column">
+                <h6>ستون اول</h6>
+                <div v-for="(pair, index) in question.matchingPairs" :key="'left-' + index"
+                     class="matching-item left-item">
+                  {{ pair.leftItem }}
+                </div>
+              </div>
+              <div class="right-column">
+                <h6>ستون دوم</h6>
+                <div v-for="(pair, index) in getShuffledRightItems()" :key="'right-' + index"
+                     class="matching-item right-item"
+                     @click="selectRightItem(pair, index)"
+                     :class="{ selected: isRightItemSelected(pair) }">
+                  {{ pair.rightItem }}
+                </div>
+              </div>
+            </div>
+            <div class="matching-answers">
+              <div v-for="(pair, index) in question.matchingPairs" :key="'answer-' + index"
+                   class="matching-answer-row">
+                <span class="left-text">{{ pair.leftItem }}</span>
+                <i class="fas fa-arrow-left mx-2"></i>
+                <select v-model="selectedAnswer[pair.leftItem]" class="modern-form-control matching-select">
+                  <option value="">انتخاب کنید</option>
+                  <option v-for="rightItem in getAllRightItems()" :key="rightItem.rightItem" :value="rightItem.rightItem">
+                    {{ rightItem.rightItem }}
+                  </option>
+                </select>
+              </div>
             </div>
           </div>
+        </div>
 
-          <!-- Short Answer Questions -->
-          <div v-else-if="question.questionType === 'SHORT_ANSWER'" class="short-answer-section mt-4">
-            <h6 class="section-title">
-              <i class="fas fa-pencil-alt me-2"></i>
-              پاسخ کوتاه
-            </h6>
-            <div class="modern-form-group">
-              <label :for="`short-answer-${questionIndex}`" class="modern-form-label">
-                پاسخ کوتاه:
-              </label>
-              <input type="text"
-                     class="modern-form-control"
-                     :id="`short-answer-${questionIndex}`"
-                     v-model="selectedAnswer"
-                     placeholder="پاسخ خود را وارد کنید...">
-              <small class="form-text text-muted">
-                <i class="fas fa-lightbulb me-1"></i>
-                پاسخ کوتاه و مستقیم ارائه دهید
-              </small>
-            </div>
-          </div>
-
-          <!-- Fill in the Blanks Questions -->
-          <div v-else-if="question.questionType === 'FILL_IN_THE_BLANKS'" class="fill-blanks-section mt-4">
-            <h6 class="section-title">
-              <i class="fas fa-puzzle-piece me-2"></i>
-              جاهای خالی را پر کنید
-            </h6>
-            <div class="modern-form-group">
-              <label class="modern-form-label">متن با جاهای خالی:</label>
-              <div class="blanks-container">
-                <p class="blanks-text">{{ question.template || question.text }}</p>
-                <div class="blanks-inputs">
-                  <div v-for="(blank, index) in getBlankCount()" :key="index" class="blank-input-group">
-                    <label :for="`blank-${questionIndex}-${index}`" class="modern-form-label">
-                      جای خالی {{ index + 1 }}:
-                    </label>
-                    <input type="text"
-                           class="modern-form-control"
-                           :id="`blank-${questionIndex}-${index}`"
-                           v-model="selectedAnswer[index]"
-                           :placeholder="`جای خالی ${index + 1}`">
+        <!-- Categorization Questions -->
+        <div v-else-if="question.questionType === 'CATEGORIZATION'" class="categorization-section mt-4">
+          <h6 class="section-title">
+            <i class="fas fa-layer-group me-2"></i>
+            آیتم‌ها را در دسته‌های مناسب قرار دهید
+          </h6>
+          <div class="categorization-container">
+            <div class="categories-display">
+              <div v-for="category in question.categories" :key="category" class="category-box">
+                <h6 class="category-title">{{ category }}</h6>
+                <div class="category-items">
+                  <div v-for="item in getItemsInCategory(category)" :key="item"
+                       class="categorized-item">
+                    {{ item }}
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-
-          <!-- Matching Questions -->
-          <div v-else-if="question.questionType === 'MATCHING'" class="matching-section mt-4">
-            <h6 class="section-title">
-              <i class="fas fa-arrows-alt-h me-2"></i>
-              آیتم‌ها را با هم تطبیق دهید
-            </h6>
-            <div class="matching-container">
-              <div class="matching-columns">
-                <div class="left-column">
-                  <h6>ستون اول</h6>
-                  <div v-for="(pair, index) in question.matchingPairs" :key="'left-' + index"
-                       class="matching-item left-item">
-                    {{ pair.leftItem }}
-                  </div>
-                </div>
-                <div class="right-column">
-                  <h6>ستون دوم</h6>
-                  <div v-for="(pair, index) in getShuffledRightItems()" :key="'right-' + index"
-                       class="matching-item right-item"
-                       @click="selectRightItem(pair, index)"
-                       :class="{ selected: isRightItemSelected(pair) }">
-                    {{ pair.rightItem }}
-                  </div>
-                </div>
-              </div>
-              <div class="matching-answers">
-                <div v-for="(pair, index) in question.matchingPairs" :key="'answer-' + index"
-                     class="matching-answer-row">
-                  <span class="left-text">{{ pair.leftItem }}</span>
-                  <i class="fas fa-arrow-left mx-2"></i>
-                  <select v-model="selectedAnswer[pair.leftItem]" class="modern-form-control matching-select">
-                    <option value="">انتخاب کنید</option>
-                    <option v-for="rightItem in getAllRightItems()" :key="rightItem.rightItem" :value="rightItem.rightItem">
-                      {{ rightItem.rightItem }}
-                    </option>
-                  </select>
-                </div>
+            <div class="items-to-categorize">
+              <h6>آیتم‌ها:</h6>
+              <div v-for="item in question.answers" :key="item.text"
+                   class="categorization-answer-row">
+                <span class="item-text">{{ item.text }}</span>
+                <select v-model="selectedAnswer[item.text]" class="modern-form-control category-select">
+                  <option value="">انتخاب دسته</option>
+                  <option v-for="category in question.categories" :key="category" :value="category">
+                    {{ category }}
+                  </option>
+                </select>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Categorization Questions -->
-          <div v-else-if="question.questionType === 'CATEGORIZATION'" class="categorization-section mt-4">
-            <h6 class="section-title">
-              <i class="fas fa-layer-group me-2"></i>
-              آیتم‌ها را در دسته‌های مناسب قرار دهید
-            </h6>
-            <div class="categorization-container">
-              <div class="categories-display">
-                <div v-for="category in question.categories" :key="category" class="category-box">
-                  <h6 class="category-title">{{ category }}</h6>
-                  <div class="category-items">
-                    <div v-for="item in getItemsInCategory(category)" :key="item"
-                         class="categorized-item">
-                      {{ item }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="items-to-categorize">
-                <h6>آیتم‌ها:</h6>
-                <div v-for="item in question.categorizationItems" :key="item.text"
-                     class="categorization-answer-row">
-                  <span class="item-text">{{ item.text }}</span>
-                  <select v-model="selectedAnswer[item.text]" class="modern-form-control category-select">
-                    <option value="">انتخاب دسته</option>
-                    <option v-for="category in question.categories" :key="category" :value="category">
-                      {{ category }}
-                    </option>
-                  </select>
-                </div>
-              </div>
-            </div>
+        <!-- Progress Indicator -->
+        <div class="question-progress mt-4">
+          <div class="progress-info">
+            <small class="text-muted">
+              <i class="fas fa-list-ol me-1"></i>
+              پیشرفت: {{ questionIndex + 1 }} از {{ totalQuestions }} سوال
+            </small>
           </div>
-
-          <!-- Progress Indicator -->
-          <div class="question-progress mt-4">
-            <div class="progress-info">
-              <small class="text-muted">
-                <i class="fas fa-list-ol me-1"></i>
-                پیشرفت: {{ questionIndex + 1 }} از {{ totalQuestions }} سوال
-              </small>
-            </div>
-            <div class="progress progress-sm">
-              <div class="progress-bar bg-primary"
-                   role="progressbar"
-                   :style="`width: ${((questionIndex + 1) / totalQuestions) * 100}%`"
-                   :aria-valuenow="((questionIndex + 1) / totalQuestions) * 100"
-                   aria-valuemin="0"
-                   aria-valuemax="100">
-              </div>
+          <div class="progress progress-sm">
+            <div class="progress-bar bg-primary"
+                 role="progressbar"
+                 :style="`width: ${((questionIndex + 1) / totalQuestions) * 100}%`"
+                 :aria-valuenow="((questionIndex + 1) / totalQuestions) * 100"
+                 aria-valuemin="0"
+                 aria-valuemax="100">
             </div>
           </div>
         </div>
@@ -264,7 +216,8 @@ export default {
   },
   data() {
     return {
-      selectedAnswer: this.initializeAnswer()
+      selectedAnswer: this.initializeAnswer(),
+      shuffledRightItems: []
     }
   },
   watch: {
@@ -281,6 +234,12 @@ export default {
       deep: true
     }
   },
+  mounted() {
+    // Initialize shuffled items for matching questions
+    if (this.question.questionType === 'MATCHING') {
+      this.shuffledRightItems = this.getShuffledRightItems();
+    }
+  },
   methods: {
     initializeAnswer() {
       if (this.answer !== null && this.answer !== undefined) {
@@ -290,15 +249,31 @@ export default {
       switch (this.question.questionType) {
         case 'FILL_IN_THE_BLANKS':
           return Array(this.getBlankCount()).fill('');
+
         case 'MATCHING':
-          return {};
+          const matchingAnswer = {};
+          if (this.question.matchingPairs && Array.isArray(this.question.matchingPairs)) {
+            this.question.matchingPairs.forEach(pair => {
+              matchingAnswer[pair.leftItem] = '';
+            });
+          }
+          return matchingAnswer;
+
         case 'CATEGORIZATION':
-          return {};
+          const categorizationAnswer = {};
+          if (this.question.answers && Array.isArray(this.question.answers)) {
+            this.question.answers.forEach(item => {
+              categorizationAnswer[item.text] = '';
+            });
+          }
+          return categorizationAnswer;
+
         case 'MULTIPLE_CHOICE':
         case 'TRUE_FALSE':
         case 'ESSAY':
         case 'SHORT_ANSWER':
           return null;
+
         default:
           return null;
       }
@@ -311,6 +286,32 @@ export default {
       return matches ? matches.length : 0;
     },
 
+    getTemplateWithBlanks() {
+      if (!this.question.template) return this.question.text;
+
+      let template = this.question.template;
+      const blanks = this.selectedAnswer || [];
+
+      blanks.forEach((blank, index) => {
+        const input = `<input type="text"
+                              class="blank-input"
+                              v-model="selectedAnswer[${index}]"
+                              placeholder="..."
+                              @input="updateBlank(${index}, $event.target.value)">`;
+        template = template.replace('{}', input);
+      });
+
+      return template;
+    },
+
+    updateBlank(index, value) {
+      if (!Array.isArray(this.selectedAnswer)) {
+        this.selectedAnswer = Array(this.getBlankCount()).fill('');
+      }
+      this.$set(this.selectedAnswer, index, value);
+    },
+
+    // Matching Methods
     getShuffledRightItems() {
       if (!this.question.matchingPairs) return [];
       const items = this.question.matchingPairs.map(pair => ({ rightItem: pair.rightItem }));
@@ -322,11 +323,23 @@ export default {
       return this.question.matchingPairs.map(pair => ({ rightItem: pair.rightItem }));
     },
 
+    selectRightItem(item, index) {
+      // Optional: Handle visual selection for matching
+      console.log('Selected right item:', item);
+    },
+
+    isRightItemSelected(item) {
+      if (!this.selectedAnswer || typeof this.selectedAnswer !== 'object') return false;
+      return Object.values(this.selectedAnswer).includes(item.rightItem);
+    },
+
+    // Categorization Methods
     getItemsInCategory(category) {
       if (!this.selectedAnswer || typeof this.selectedAnswer !== 'object') return [];
       return Object.keys(this.selectedAnswer).filter(key => this.selectedAnswer[key] === category);
     },
 
+    // Utility Methods
     shuffleArray(array) {
       const shuffled = [...array];
       for (let i = shuffled.length - 1; i > 0; i--) {
@@ -385,152 +398,287 @@ export default {
 .option-item:hover {
   border-color: #667eea;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
 }
 
-.form-check {
-  margin: 0;
-  width: 100%;
-}
-
-.form-check-input {
-  display: none;
-}
-
-.form-check-label {
-  display: block;
-  width: 100%;
-  padding: 1.5rem;
-  margin: 0;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.option-item.selected {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.05);
 }
 
 .option-content {
   display: flex;
   align-items: center;
+  padding: 1rem 1.5rem;
   gap: 1rem;
 }
 
-.option-marker {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.9rem;
+.option-radio {
+  position: relative;
   flex-shrink: 0;
 }
 
-.option-icon {
-  width: 30px;
-  height: 30px;
+.option-radio input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.option-radio label {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #667eea;
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  flex-shrink: 0;
+  cursor: pointer;
+  position: relative;
+  margin: 0;
 }
 
-.true-option .option-icon {
-  background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
-  color: white;
-}
-
-.false-option .option-icon {
-  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
-  color: white;
+.option-radio input[type="radio"]:checked + label::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #667eea;
 }
 
 .option-text {
   flex: 1;
-  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.option-letter {
+  font-weight: 600;
+  color: #667eea;
+  min-width: 30px;
+}
+
+/* Matching Questions */
+.matching-section {
+  padding: 1.5rem;
+  background: rgba(248, 249, 250, 0.5);
+  border-radius: 12px;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.section-title {
   color: #333;
-  font-size: 1rem;
-  line-height: 1.4;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
 }
 
-/* Selected state */
-.form-check-input:checked + .form-check-label {
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+.matching-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
 }
 
-.form-check-input:checked + .form-check-label .option-marker {
-  background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
-  transform: scale(1.1);
+.matching-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
 }
 
-.form-check-input:checked + .form-check-label .option-text {
+.left-column,
+.right-column {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.left-column h6,
+.right-column h6 {
+  text-align: center;
+  margin-bottom: 1rem;
   color: #667eea;
   font-weight: 600;
 }
 
-/* True/False container */
-.true-false-container {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-/* Essay textarea */
-.essay-textarea {
-  min-height: 150px;
-  resize: vertical;
-  font-family: inherit;
-  line-height: 1.6;
-}
-
-/* Fill in the blanks */
-.blanks-container {
-  background: rgba(248, 249, 250, 0.8);
-  border-radius: 12px;
-  padding: 1.5rem;
-  border: 1px solid #dee2e6;
-}
-
-.blanks-text {
-  font-size: 1.1rem;
-  line-height: 1.6;
-  margin-bottom: 1.5rem;
-  color: #495057;
-  background: white;
-  padding: 1rem;
-  border-radius: 8px;
+.matching-item {
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 6px;
   border: 1px solid #e9ecef;
+  background: #f8f9fa;
+  transition: all 0.2s ease;
 }
 
-.blanks-inputs {
+.matching-item.left-item {
+  background: rgba(102, 126, 234, 0.05);
+  border-color: rgba(102, 126, 234, 0.2);
+}
+
+.matching-item.right-item {
+  background: rgba(40, 167, 69, 0.05);
+  border-color: rgba(40, 167, 69, 0.2);
+  cursor: pointer;
+}
+
+.matching-item.right-item:hover {
+  background: rgba(40, 167, 69, 0.1);
+  transform: translateY(-1px);
+}
+
+.matching-item.right-item.selected {
+  background: rgba(40, 167, 69, 0.15);
+  border-color: #28a745;
+}
+
+.matching-answers {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.blank-input-group {
+.matching-answer-row {
   display: flex;
   align-items: center;
   gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.1);
 }
 
-.blank-input-group .modern-form-label {
-  min-width: 120px;
-  margin-bottom: 0;
-  font-size: 0.9rem;
-}
-
-.blank-input-group .modern-form-control {
+.left-text {
   flex: 1;
+  font-weight: 500;
+  color: #333;
+}
+
+.matching-select {
+  flex: 1;
+  max-width: 200px;
+}
+
+/* Categorization Questions */
+.categorization-section {
+  padding: 1.5rem;
+  background: rgba(248, 249, 250, 0.5);
+  border-radius: 12px;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.categorization-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.categories-display {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.category-box {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 2px dashed rgba(102, 126, 234, 0.3);
+  min-height: 120px;
+}
+
+.category-title {
+  text-align: center;
+  color: #667eea;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.category-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.categorized-item {
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.items-to-categorize {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.items-to-categorize h6 {
+  color: #333;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.categorization-answer-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: rgba(248, 249, 250, 0.5);
+  border-radius: 6px;
+}
+
+.item-text {
+  flex: 1;
+  font-weight: 500;
+  color: #333;
+}
+
+.category-select {
+  flex: 1;
+  max-width: 200px;
+}
+
+/* Fill in the blanks */
+.template-display {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  line-height: 1.8;
+}
+
+.blank-input {
+  display: inline-block;
+  width: 120px;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #667eea;
+  border-radius: 4px;
+  text-align: center;
+  font-weight: 500;
+  margin: 0 0.25rem;
+}
+
+.blank-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
 }
 
 /* Progress indicator */
 .question-progress {
-  border-top: 1px solid rgba(0,0,0,0.1);
+  margin-top: 2rem;
   padding-top: 1rem;
+  border-top: 1px solid rgba(102, 126, 234, 0.1);
 }
 
 .progress-info {
@@ -539,159 +687,33 @@ export default {
 
 .progress-sm {
   height: 6px;
-  border-radius: 3px;
 }
 
-/* Form text styling */
-.form-text {
-  margin-top: 0.5rem;
-  font-size: 0.85rem;
+.progress-bar {
+  transition: width 0.3s ease;
 }
 
-/* Responsive adjustments */
+/* Responsive design */
 @media (max-width: 768px) {
-  .question-text {
-    font-size: 1.1rem;
-    padding: 1rem;
-  }
-
-  .option-content {
-    gap: 0.75rem;
-  }
-
-  .option-marker,
-  .option-icon {
-    width: 25px;
-    height: 25px;
-    font-size: 0.8rem;
-  }
-
-  .option-text {
-    font-size: 0.9rem;
-  }
-
-  .form-check-label {
-    padding: 1rem;
-  }
-
-  .true-false-container {
+  .matching-columns {
     grid-template-columns: 1fr;
-    gap: 0.75rem;
+    gap: 1rem;
   }
 
-  .blank-input-group {
+  .categories-display {
+    grid-template-columns: 1fr;
+  }
+
+  .matching-answer-row,
+  .categorization-answer-row {
     flex-direction: column;
     align-items: stretch;
     gap: 0.5rem;
   }
 
-  .blank-input-group .modern-form-label {
-    min-width: auto;
+  .matching-select,
+  .category-select {
+    max-width: none;
   }
-}
-
-@media (max-width: 576px) {
-  .question-text {
-    font-size: 1rem;
-    padding: 0.75rem;
-  }
-
-  .essay-textarea {
-    min-height: 120px;
-  }
-
-  .blanks-container {
-    padding: 1rem;
-  }
-
-  .blanks-text {
-    padding: 0.75rem;
-    font-size: 1rem;
-  }
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .question-text {
-    background: rgba(102, 126, 234, 0.1);
-    color: #e2e8f0;
-  }
-
-  .option-item {
-    background: rgba(45, 55, 72, 0.8);
-    border-color: #4a5568;
-  }
-
-  .option-text {
-    color: #e2e8f0;
-  }
-
-  .form-check-input:checked + .form-check-label .option-text {
-    color: #90cdf4;
-  }
-
-  .blanks-container {
-    background: rgba(45, 55, 72, 0.8);
-    border-color: #4a5568;
-  }
-
-  .blanks-text {
-    background: rgba(74, 85, 104, 0.8);
-    border-color: #4a5568;
-    color: #e2e8f0;
-  }
-}
-
-/* Animations */
-.animate-slide-up {
-  animation: slideInUp 0.6s ease forwards;
-}
-
-/* Print styles */
-@media print {
-  .question-progress {
-    display: none;
-  }
-
-  .option-item {
-    break-inside: avoid;
-  }
-}
-/* Selected state for True/False */
-.option-item.selected {
-  border-color: #667eea !important;
-  background: rgba(102, 126, 234, 0.1) !important;
-  transform: translateY(-2px);
-}
-
-.option-item.selected .option-content {
-  color: #667eea;
-  font-weight: 600;
-}
-
-/* Make radio buttons visible for debugging */
-.form-check-input {
-  display: block !important;
-  margin-left: 0.75rem;
-}
-.form-check-input {
-  display: block !important;
-  margin-left: 0.75rem;
-  position: relative !important;
-}
-
-/* Selected state styling */
-.option-item.selected {
-  border-color: #667eea !important;
-  background: rgba(102, 126, 234, 0.1) !important;
-}
-
-.form-check-input:checked + .form-check-label {
-  background: rgba(102, 126, 234, 0.05);
-}
-
-.form-check-input:checked + .form-check-label .option-text {
-  color: #667eea;
-  font-weight: 600;
 }
 </style>
