@@ -117,13 +117,13 @@
                           <div class="stat-value">{{ course.totalDuration || 0 }}</div>
                           <div class="stat-label">دقیقه</div>
                         </div>
-                        <div class="stat-item">
-                          <div class="stat-icon text-danger">
-                            <i class="fas fa-calendar"></i>
-                          </div>
-                          <div class="stat-value">{{ formatDate(course.createdAt) || 'نامشخص' }}</div>
-                          <div class="stat-label">تاریخ ایجاد</div>
-                        </div>
+<!--                        <div class="stat-item">-->
+<!--                          <div class="stat-icon text-danger">-->
+<!--                            <i class="fas fa-calendar"></i>-->
+<!--                          </div>-->
+<!--                          <div class="stat-value">{{ formatDate(course.createdAt) || 'نامشخص' }}</div>-->
+<!--                          <div class="stat-label">تاریخ ایجاد</div>-->
+<!--                        </div>-->
                       </div>
                     </div>
 
