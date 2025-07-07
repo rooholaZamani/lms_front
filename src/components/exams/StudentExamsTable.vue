@@ -140,11 +140,11 @@
                 <div class="exam-meta">
                     <span class="exam-type">
                       <i class="fas fa-question-circle me-1"></i>
-                      {{ exam.exam?.questionCount || 0 }} سوال
+                      {{ exam.questionCount || 0 }} سوال
                     </span>
-                  <span class="exam-time-limit" v-if="exam.exam?.timeLimit">
+                  <span class="exam-time-limit" v-if="exam?.timeLimit">
                       <i class="fas fa-hourglass-half me-1"></i>
-                      {{ exam.exam.timeLimit }} دقیقه
+                      {{ exam.timeLimit }} دقیقه
                     </span>
                 </div>
               </div>
@@ -166,7 +166,7 @@
                     <span class="score-value" :class="getScoreClass(exam)">
                       {{ exam.score || 0 }}
                     </span>
-                  <span class="score-total">/ {{ exam.exam?.totalPossibleScore || 100 }}</span>
+                  <span class="score-total">/ {{ exam?.totalPossibleScore || 100 }}</span>
                 </div>
                 <div class="score-percentage" :class="getScoreClass(exam)">
                   {{ getScorePercentage(exam) }}%
@@ -186,7 +186,7 @@
             </td>
             <td>
               <div class="duration-info">
-                <div class="actual-duration">{{ formatDuration(exam.actualDuration) }}</div>
+                <div class="actual-duration">{{ formatDurationSecend(exam.actualDuration) }}</div>
                 <div class="duration-comparison" v-if="exam?.timeLimit">
                   <div class="progress" style="height: 4px;">
                     <div class="progress-bar"
@@ -274,13 +274,14 @@
     </div>
 
     <!-- Exam Details Modal -->
+    <teleport to="body">
     <div class="modal fade" id="examDetailsModal" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-lg">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">
               <i class="fas fa-clipboard-check me-2"></i>
-              جزئیات آزمون: {{ selectedExam?.exam?.title }}
+              جزئیات آزمون: {{ selectedExam?.courseTitle }}
             </h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
           </div>
@@ -291,7 +292,7 @@
                 <div class="detail-list">
                   <div class="detail-item">
                     <span class="detail-label">عنوان:</span>
-                    <span class="detail-value">{{ selectedExam.exam?.title }}</span>
+                    <span class="detail-value">{{ selectedExam?.courseTitle }}</span>
                   </div>
                   <div class="detail-item">
                     <span class="detail-label">دوره:</span>
@@ -303,15 +304,15 @@
                   </div>
                   <div class="detail-item">
                     <span class="detail-label">تعداد سوالات:</span>
-                    <span class="detail-value">{{ selectedExam.exam?.questionCount || 0 }}</span>
+                    <span class="detail-value">{{ selectedExam?.questionCount || 0 }}</span>
                   </div>
                   <div class="detail-item">
                     <span class="detail-label">حداکثر زمان:</span>
-                    <span class="detail-value">{{ selectedExam.exam?.timeLimit || 0 }} دقیقه</span>
+                    <span class="detail-value">{{ selectedExam?.timeLimit || 0 }} دقیقه</span>
                   </div>
                   <div class="detail-item">
                     <span class="detail-label">حد نصاب:</span>
-                    <span class="detail-value">{{ selectedExam.exam?.passingScore || 0 }}</span>
+                    <span class="detail-value">{{ selectedExam?.passingScore || 0 }}</span>
                   </div>
                 </div>
               </div>
@@ -322,7 +323,7 @@
                     <div class="score-circle" :class="getScoreClass(selectedExam)">
                       <div class="score-text">
                         <div class="score-number">{{ selectedExam.score || 0 }}</div>
-                        <div class="score-total">از {{ selectedExam.exam?.totalPossibleScore || 100 }}</div>
+                        <div class="score-total">از {{ selectedExam?.totalPossibleScore || 100 }}</div>
                       </div>
                     </div>
                   </div>
@@ -333,7 +334,7 @@
                     </div>
                     <div class="detail-item">
                       <span class="detail-label">زمان صرف شده:</span>
-                      <span class="detail-value">{{ formatDuration(selectedExam.actualDuration) }}</span>
+                      <span class="detail-value">{{ formatDurationSecend(selectedExam.actualDuration) }}</span>
                     </div>
                     <div class="detail-item">
                       <span class="detail-label">تاریخ شرکت:</span>
@@ -362,6 +363,7 @@
         </div>
       </div>
     </div>
+    </teleport>
   </div>
 </template>
 
@@ -499,6 +501,7 @@ export default {
     },
 
     getCourseTitle(exam) {
+      console.log(exam)
       return exam.exam?.lesson?.course?.title ||
           exam.course?.title ||
           exam.courseTitle ||
@@ -555,9 +558,23 @@ export default {
       return `${mins} دقیقه`;
     },
 
+    formatDurationSecend(secends) {
+
+      if (!secends) return '-';
+      const min = Math.floor(secends / 60);
+      const sec = secends % 60;
+      const hrs = Math.floor(min / 60);
+      const mins = min % 60;
+
+      if (min > 0) {
+        return `${hrs} ساعت و ${mins} دقیقه و ${sec} ثانیه`;
+      }
+      return `${mins} دقیقه`;
+    },
+
     getDurationPercentage(exam) {
-      if (!exam.actualDuration || !exam.exam?.timeLimit) return 0;
-      return Math.min(100, (exam.actualDuration / exam.exam.timeLimit) * 100);
+      if (!exam.actualDuration || !exam?.timeLimit) return 0;
+      return Math.min(100, ((exam.actualDuration/60) / exam.timeLimit) * 100);
     },
 
     getDurationClass(exam) {
@@ -614,7 +631,7 @@ export default {
       // Navigate to exam answers page
       this.$router.push({
         name: 'ExamAnswers',
-        params: { submissionId: exam.id }
+        params: { submissionId: exam.examId }
       });
     },
 

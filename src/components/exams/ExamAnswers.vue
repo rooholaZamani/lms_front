@@ -306,7 +306,7 @@ export default {
         this.error = null
 
         // استفاده از submissionId برای دریافت داده‌ها
-        const response = await axios.get(`/api/exams/${this.submissionId}/student-answers`)
+        const response = await axios.get(`/exams/${this.submissionId}/student-answers`)
         this.examData = response.data
 
       } catch (error) {

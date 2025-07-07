@@ -149,7 +149,7 @@
                 <div class="assessment-meta">
                   <span class="meta-badge bg-white">
                     <i class="fas fa-clock me-1"></i>
-                 {{ lessonExams[lesson.id]?.duration || 'نامشخص' }} دقیقه
+                 {{ lessonExams[lesson.id]?.timeLimit || 'نامشخص' }} دقیقه
                   </span>
                   <span class="meta-badge bg-white">
                     <i class="fas fa-question-circle me-1"></i>
