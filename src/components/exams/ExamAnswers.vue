@@ -260,6 +260,29 @@ export default {
 
       return [];
     },
+    isMatchingCorrect(answer, leftItem) {
+      if (!answer.studentAnswer || !answer.correctAnswer) return false;
+      return answer.studentAnswer[leftItem] === answer.correctAnswer[leftItem];
+    },
+
+    isBlankCorrect(answer, blankIndex) {
+      if (!answer.studentAnswer || !answer.correctAnswer) return false;
+      const studentBlanks = this.getBlankAnswers(answer.studentAnswer);
+      const correctBlanks = this.getBlankAnswers(answer.correctAnswer);
+      return studentBlanks[blankIndex] === correctBlanks[blankIndex];
+    },
+
+    getBlankAnswers(answers) {
+      if (Array.isArray(answers)) return answers;
+      if (typeof answers === 'string') {
+        try {
+          return JSON.parse(answers);
+        } catch {
+          return answers.split(',').map(s => s.trim());
+        }
+      }
+      return [];
+    },
     debugAnswersStructure() {
       console.log('=== ANSWERS DEBUG ===');
       console.log('submissionData:', this.submissionData);
