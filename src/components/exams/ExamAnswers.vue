@@ -1,278 +1,217 @@
 <template>
   <div class="exam-answers-page">
-    <div class="container-fluid">
-      <!-- Loading State -->
-      <div v-if="loading" class="loading-section">
-        <div class="text-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">در حال بارگذاری...</span>
+    <div class="container py-4">
+      <LoadingSpinner v-if="loading" />
+
+      <div v-else-if="error" class="alert alert-danger">
+        {{ error }}
+      </div>
+
+      <div v-else>
+        <!-- Header -->
+        <div class="page-header mb-4">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <h3 class="page-title">پاسخ‌های شما</h3>
+              <p class="text-muted">نتایج تفصیلی آزمون</p>
+            </div>
+            <button @click="goBack" class="btn btn-outline-secondary">
+              <i class="fas fa-arrow-right me-2"></i>
+              بازگشت
+            </button>
           </div>
-          <p class="mt-3 text-muted">در حال بارگذاری پاسخ‌های شما...</p>
         </div>
-      </div>
 
-      <!-- Error State -->
-      <div v-else-if="error" class="error-section">
-        <div class="alert alert-danger text-center">
-          <i class="fas fa-exclamation-triangle me-2"></i>
-          {{ error }}
+        <!-- Debug Info (حذفش کن بعد از تست) -->
+        <div class="alert alert-info">
+          <strong>Debug:</strong>
+          <p>تعداد سوالات: {{ getTotalQuestionsCount() }}</p>
+          <p>نوع داده answers: {{ typeof submissionData.answers }}</p>
+          <p>کلیدهای submissionData: {{ Object.keys(submissionData) }}</p>
         </div>
-      </div>
 
-      <!-- Main Content -->
-      <div v-else-if="examData" class="exam-answers-content">
-        <!-- Header Summary -->
-        <div class="summary-header">
-          <div class="row">
-            <div class="col-12">
-              <div class="summary-card">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                  <h2 class="page-title">
-                    <i class="fas fa-clipboard-list me-2"></i>
-                    پاسخ‌های شما
-                  </h2>
-                  <div class="status-badge" :class="examData.passed ? 'success' : 'danger'">
-                    <i :class="examData.passed ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
-                    {{ examData.passed ? 'قبول' : 'مردود' }}
+        <!-- Score Summary -->
+        <div class="row mb-4">
+          <div class="col-lg-8">
+            <div class="modern-card">
+              <div class="exam-summary">
+                <div class="summary-item">
+                  <div class="summary-icon">
+                    <i class="fas fa-calendar"></i>
+                  </div>
+                  <div class="summary-content">
+                    <span class="summary-label">تاریخ شرکت</span>
+                    <span class="summary-value">{{ formatDateTime(submissionData.submissionTime) }}</span>
                   </div>
                 </div>
-
-                <div class="row stats-row">
-                  <div class="col-md-3 col-6">
-                    <div class="stat-card primary">
-                      <div class="stat-icon">
-                        <i class="fas fa-percentage"></i>
-                      </div>
-                      <div class="stat-content">
-                        <div class="stat-value">{{ examData.score }}%</div>
-                        <div class="stat-label">نمره کلی</div>
-                      </div>
-                    </div>
+                <div class="summary-item">
+                  <div class="summary-icon">
+                    <i class="fas fa-clock"></i>
                   </div>
-
-                  <div class="col-md-3 col-6">
-                    <div class="stat-card success">
-                      <div class="stat-icon">
-                        <i class="fas fa-star"></i>
-                      </div>
-                      <div class="stat-content">
-                        <div class="stat-value">{{ getEarnedScore() }} / {{ examData.totalPossibleScore }}</div>
-                        <div class="stat-label">امتیاز کسب شده</div>
-                      </div>
-                    </div>
+                  <div class="summary-content">
+                    <span class="summary-label">زمان صرف شده</span>
+                    <span class="summary-value">{{ submissionData.timeSpent }} دقیقه</span>
                   </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-                  <div class="col-md-3 col-6">
-                    <div class="stat-card warning">
-                      <div class="stat-icon">
-                        <i class="fas fa-clock"></i>
-                      </div>
-                      <div class="stat-content">
-                        <div class="stat-value">{{ formatTime(examData.timeSpent) }}</div>
-                        <div class="stat-label">زمان صرف شده</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="col-md-3 col-6">
-                    <div class="stat-card info">
-                      <div class="stat-icon">
-                        <i class="fas fa-calendar-alt"></i>
-                      </div>
-                      <div class="stat-content">
-                        <div class="stat-value">{{ formatDate(examData.submissionTime) }}</div>
-                        <div class="stat-label">زمان ارسال</div>
-                      </div>
-                    </div>
-                  </div>
+          <div class="col-lg-4">
+            <div class="modern-card text-center">
+              <div class="score-display">
+                <div class="score-circle" :class="getScoreClass()">
+                  <div class="score-number">{{ submissionData.score || 0 }}</div>
+                  <div class="score-total">از {{ submissionData.totalPossibleScore || 100 }}</div>
+                </div>
+                <div class="score-percentage mt-2">
+                  {{ getScorePercentage() }}%
+                </div>
+                <div class="result-status mt-2">
+                  <span class="modern-badge" :class="submissionData.passed ? 'modern-badge-success' : 'modern-badge-danger'">
+                    <i :class="submissionData.passed ? 'fas fa-check' : 'fas fa-times'" class="me-1"></i>
+                    {{ submissionData.passed ? 'قبول' : 'مردود' }}
+                  </span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Questions and Answers -->
-        <div class="questions-section">
-          <div
-              v-for="(questionData, questionId, index) in examData.answers"
-              :key="questionId"
-              class="question-card"
-          >
-            <div>{{questionData}}</div>
-            <!-- Question Header -->
-            <div class="question-header">
-              <div class="d-flex justify-content-between align-items-start">
-                <div class="question-info">
-                  <div class="d-flex align-items-center mb-2">
-                    <div class="question-number">{{ index + 1 }}</div>
-                    <div class="question-badges">
-                      <span class="type-badge" :class="getQuestionTypeBadgeClass(questionData.questionType)">
-                        {{ getQuestionTypeLabel(questionData.questionType) }}
+        <!-- Questions and Answers Section -->
+        <div class="modern-card">
+          <h4 class="section-title mb-4">
+            <i class="fas fa-list-alt me-2"></i>
+            سوالات و پاسخ‌ها
+          </h4>
+
+          <!-- Check if we have answers -->
+          <div v-if="!submissionData.answers || getTotalQuestionsCount() === 0" class="alert alert-warning">
+            هیچ سوال و پاسخی یافت نشد
+          </div>
+
+          <!-- Loop through answers -->
+          <div v-else>
+            <!-- If answers is an object, convert to array -->
+            <div
+                v-for="(answer, index) in getAnswersArray()"
+                :key="index"
+                class="question-answer-item mb-4"
+            >
+              <!-- Question Header -->
+              <div class="question-card">
+                <div class="question-header">
+                  <div class="question-number">
+                    <span>{{ index + 1 }}</span>
+                  </div>
+                  <div class="question-meta">
+                    <div class="question-type">
+                      <span class="badge" :class="getQuestionTypeClass(answer.questionType)">
+                        {{ getQuestionTypeText(answer.questionType) }}
                       </span>
-                      <span class="result-badge" :class="questionData.isCorrect ? 'correct' : 'incorrect'">
-                        <i :class="questionData.isCorrect ? 'fas fa-check' : 'fas fa-times'"></i>
-                        {{ questionData.isCorrect ? 'صحیح' : 'غلط' }}
+                    </div>
+                    <div class="question-points">
+                      <span class="earned-points" :class="answer.isCorrect ? 'text-success' : 'text-danger'">
+                        {{ answer.earnedPoints || 0 }}
+                      </span>
+                      <span class="total-points">/ {{ answer.totalPoints || 10 }} امتیاز</span>
+                    </div>
+                    <div class="question-result-icon">
+                      <i :class="answer.isCorrect ? 'fas fa-check text-success' : 'fas fa-times text-danger'"></i>
+                    </div>
+                  </div>
+                </div>
+                <div class="question-text">{{ answer.questionText }}</div>
+              </div>
+
+              <!-- Question Answers based on type -->
+              <div class="answer-section">
+                <!-- Multiple Choice, True/False -->
+                <div v-if="['MULTIPLE_CHOICE', 'TRUE_FALSE'].includes(answer.questionType)" class="choices-answers">
+                  <div class="answer-row">
+                    <span class="answer-label">پاسخ شما:</span>
+                    <span class="answer-value" :class="answer.isCorrect ? 'correct-answer' : 'incorrect-answer'">
+                      {{ answer.studentAnswer || 'بدون پاسخ' }}
+                    </span>
+                  </div>
+                  <div class="answer-row">
+                    <span class="answer-label">پاسخ صحیح:</span>
+                    <span class="answer-value correct-answer">{{ answer.correctAnswer }}</span>
+                  </div>
+                </div>
+
+                <!-- Fill in the Blanks -->
+                <div v-else-if="answer.questionType === 'FILL_IN_THE_BLANKS'" class="blanks-answers">
+                  <div class="answer-row">
+                    <span class="answer-label">پاسخ‌های شما:</span>
+                    <div class="blanks-container">
+                      <span
+                          v-for="(blank, blankIndex) in getBlankAnswers(answer.studentAnswer)"
+                          :key="blankIndex"
+                          class="blank-answer"
+                          :class="isBlankCorrect(answer, blankIndex) ? 'correct' : 'incorrect'"
+                      >
+                        {{ blank || 'خالی' }}
                       </span>
                     </div>
                   </div>
-                  <h5 class="question-text">{{ questionData.questionText }}</h5>
-                </div>
-
-                <div class="points-info">
-                  <div class="points-earned" :class="questionData.isCorrect ? 'correct' : 'incorrect'">
-                    {{ questionData.earnedPoints }}
-                  </div>
-                  <div class="points-total">/ {{ questionData.totalPoints }}</div>
-                  <div class="points-label">امتیاز</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Answer Content -->
-            <div class="answer-content">
-              <!-- Multiple Choice / True False -->
-              <div v-if="['MULTIPLE_CHOICE', 'TRUE_FALSE'].includes(questionData.questionType)">
-                <div class="answer-comparison">
-                  <div class="answer-section student">
-                    <h6 class="answer-title">
-                      <i class="fas fa-user me-2"></i>
-                      پاسخ شما
-                    </h6>
-                    <div class="answer-box" :class="questionData.isCorrect ? 'correct' : 'incorrect'">
-                      {{ questionData.studentAnswer || 'پاسخی انتخاب نشده' }}
-                    </div>
-                  </div>
-
-                  <div class="answer-section correct">
-                    <h6 class="answer-title">
-                      <i class="fas fa-check-circle me-2"></i>
-                      پاسخ صحیح
-                    </h6>
-                    <div class="answer-box correct">
-                      {{ questionData.correctAnswer }}
+                  <div class="answer-row">
+                    <span class="answer-label">پاسخ‌های صحیح:</span>
+                    <div class="blanks-container">
+                      <span
+                          v-for="(blank, blankIndex) in getBlankAnswers(answer.correctAnswer)"
+                          :key="blankIndex"
+                          class="blank-answer correct"
+                      >
+                        {{ blank }}
+                      </span>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Matching Questions -->
-              <div v-else-if="questionData.questionType === 'MATCHING'">
-                <div class="matching-content">
-                  <div class="answer-comparison">
-                    <div class="answer-section student">
-                      <h6 class="answer-title">
-                        <i class="fas fa-user me-2"></i>
-                        تطبیق‌های شما
-                      </h6>
-                      <div class="matching-pairs">
-                        <div
-                            v-for="(rightItem, leftItem) in questionData.studentAnswer"
-                            :key="leftItem"
-                            class="matching-pair"
-                            :class="checkMatchingCorrectness(questionData, leftItem, rightItem)"
-                        >
-                          <span class="left-item">{{ leftItem }}</span>
-                          <i class="fas fa-arrow-left mx-2"></i>
-                          <span class="right-item">{{ rightItem }}</span>
-                        </div>
-                      </div>
+                <!-- Matching -->
+                <div v-else-if="answer.questionType === 'MATCHING'" class="matching-answers">
+                  <h6>تطبیق‌های شما:</h6>
+                  <div class="matching-pairs">
+                    <div
+                        v-for="(value, key) in answer.studentAnswer"
+                        :key="key"
+                        class="matching-pair"
+                        :class="isMatchingCorrect(answer, key) ? 'correct' : 'incorrect'"
+                    >
+                      <span class="left-item">{{ key }}</span>
+                      <i class="fas fa-arrow-left mx-2"></i>
+                      <span class="right-item">{{ value || 'انتخاب نشده' }}</span>
+                      <i :class="isMatchingCorrect(answer, key) ? 'fas fa-check text-success' : 'fas fa-times text-danger'" class="ms-2"></i>
                     </div>
+                  </div>
 
-                    <div class="answer-section correct">
-                      <h6 class="answer-title">
-                        <i class="fas fa-check-circle me-2"></i>
-                        تطبیق‌های صحیح
-                      </h6>
-                      <div class="matching-pairs">
-                        <div
-                            v-for="(rightItem, leftItem) in questionData.correctAnswer"
-                            :key="leftItem"
-                            class="matching-pair correct"
-                        >
-                          <span class="left-item">{{ leftItem }}</span>
-                          <i class="fas fa-arrow-left mx-2"></i>
-                          <span class="right-item">{{ rightItem }}</span>
-                        </div>
-                      </div>
+                  <h6 class="mt-3">تطبیق‌های صحیح:</h6>
+                  <div class="matching-pairs">
+                    <div
+                        v-for="(value, key) in answer.correctAnswer"
+                        :key="key"
+                        class="matching-pair correct"
+                    >
+                      <span class="left-item">{{ key }}</span>
+                      <i class="fas fa-arrow-left mx-2"></i>
+                      <span class="right-item">{{ value }}</span>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <!-- Categorization Questions -->
-              <div v-else-if="questionData.questionType === 'CATEGORIZATION'">
-                <div class="categorization-content">
-                  <div class="answer-comparison">
-                    <div class="answer-section student">
-                      <h6 class="answer-title">
-                        <i class="fas fa-user me-2"></i>
-                        دسته‌بندی شما
-                      </h6>
-                      <div class="category-items">
-                        <div
-                            v-for="(category, item) in questionData.studentAnswer"
-                            :key="item"
-                            class="category-item"
-                            :class="checkCategorizationCorrectness(questionData, item, category)"
-                        >
-                          <span class="item-name">{{ item }}</span>
-                          <span class="category-badge">{{ category }}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div class="answer-section correct">
-                      <h6 class="answer-title">
-                        <i class="fas fa-check-circle me-2"></i>
-                        دسته‌بندی صحیح
-                      </h6>
-                      <div class="category-items">
-                        <div
-                            v-for="(category, item) in questionData.correctAnswer"
-                            :key="item"
-                            class="category-item correct"
-                        >
-                          <span class="item-name">{{ item }}</span>
-                          <span class="category-badge">{{ category }}</span>
-                        </div>
-                      </div>
+                <!-- Essay and Short Answer -->
+                <div v-else-if="['ESSAY', 'SHORT_ANSWER'].includes(answer.questionType)" class="text-answers">
+                  <div class="answer-row">
+                    <span class="answer-label">پاسخ شما:</span>
+                    <div class="text-answer-content" :class="answer.isCorrect ? 'correct' : 'incorrect'">
+                      {{ answer.studentAnswer || 'بدون پاسخ' }}
                     </div>
                   </div>
-                </div>
-              </div>
-
-              <!-- Fill in the Blank -->
-              <div v-else-if="questionData.questionType === 'FILL_IN_THE_BLANK'">
-                <div class="answer-comparison">
-                  <div class="answer-section student">
-                    <h6 class="answer-title">
-                      <i class="fas fa-user me-2"></i>
-                      پاسخ شما
-                    </h6>
-                    <div class="answer-box" :class="questionData.isCorrect ? 'correct' : 'incorrect'">
-                      {{ questionData.studentAnswer || 'پاسخی وارد نشده' }}
-                    </div>
+                  <div class="answer-row">
+                    <span class="answer-label">پاسخ صحیح:</span>
+                    <div class="text-answer-content correct">{{ answer.correctAnswer }}</div>
                   </div>
-
-                  <div class="answer-section correct">
-                    <h6 class="answer-title">
-                      <i class="fas fa-check-circle me-2"></i>
-                      پاسخ‌های قابل قبول
-                    </h6>
-                    <div class="answer-box correct">
-                      {{ Array.isArray(questionData.correctAnswer) ?
-                        questionData.correctAnswer.join(' یا ') :
-                        questionData.correctAnswer }}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Unknown Question Type -->
-              <div v-else class="unknown-type">
-                <div class="alert alert-warning">
-                  <i class="fas fa-exclamation-triangle me-2"></i>
-                  نوع سوال پشتیبانی نشده: {{ questionData.questionType }}
                 </div>
               </div>
             </div>
@@ -305,6 +244,62 @@ export default {
     await this.fetchExamAnswers()
   },
   methods: {
+    getAnswersArray() {
+      if (!this.submissionData.answers) return [];
+
+      // اگر آرایه باشه، همون رو برگردون
+      if (Array.isArray(this.submissionData.answers)) {
+        return this.submissionData.answers;
+      }
+
+      // اگر object باشه، به آرایه تبدیل کن
+      if (typeof this.submissionData.answers === 'object') {
+        return Object.values(this.submissionData.answers);
+      }
+
+      return [];
+    },
+    debugAnswersStructure() {
+      console.log('=== ANSWERS DEBUG ===');
+      console.log('submissionData:', this.submissionData);
+      console.log('answers type:', typeof this.submissionData.answers);
+      console.log('is array:', Array.isArray(this.submissionData.answers));
+      console.log('answers:', this.submissionData.answers);
+      console.log('converted array:', this.getAnswersArray());
+    },
+    getTotalQuestionsCount() {
+      const answers = this.getAnswersArray();
+      return answers.length;
+    },
+    getCorrectAnswersCount() {
+      const answers = this.getAnswersArray();
+      return answers.filter(answer => answer.isCorrect).length;
+    },
+    async fetchData() {
+      try {
+        this.loading = true;
+        this.error = null;
+
+        console.log('=== DEBUG ExamAnswers ===');
+        console.log('submissionId:', this.submissionId);
+
+        const response = await axios.get(`/exams/${this.submissionId}/student-answers`);
+        this.submissionData = response.data;
+
+        // Debug logs
+        console.log('API Response:', response.data);
+        console.log('Answers structure:', this.submissionData.answers);
+
+        // اجرای debug method
+        this.debugAnswersStructure();
+
+      } catch (error) {
+        console.error('Error fetching submission answers:', error);
+        this.error = 'خطا در دریافت اطلاعات. لطفاً دوباره تلاش کنید.';
+      } finally {
+        this.loading = false;
+      }
+    },
     async fetchExamAnswers() {
       try {
         this.loading = true

@@ -183,6 +183,11 @@
                       @add-exam="showAddExamModal"
                       @show-questions-manager="showLessonQuestionsManager"
                       @update-selected-lesson="updateSelectedLesson"
+                      @edit-lesson-requested="editLesson"
+                      @delete-lesson-requested="confirmDeleteLesson"
+                      @add-lesson-requested="showAddLessonModal"
+
+
                   />
 
                   <!-- Questions Manager Section -->
@@ -542,7 +547,49 @@
     </div>
   </div>
 
-  <LessonManager @data-sent="handleDataFromChild"  course-id=""/>
+  <base-modal
+      modal-id="lessonModal"
+      :title="selectedLesson.id ? 'ویرایش درس' : 'افزودن درس'"
+      icon="book"
+      header-class="bg-primary"
+      ref="lessonModal">
+
+    <!-- محتوای فرم -->
+    <form @submit.prevent="saveLesson" >
+      <div class="mb-3">
+        <label class="form-label">عنوان درس</label>
+        <input type="text" class="form-control" v-model="selectedLesson.title" required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">توضیحات</label>
+        <textarea class="form-control" v-model="selectedLesson.description"></textarea>
+      </div>
+    </form>
+
+    <!-- Footer -->
+    <template #footer>
+      <button type="button" class="btn btn-secondary" @click="$refs.lessonModal.hide()">
+        انصراف
+      </button>
+      <button type="button" class="btn btn-primary" @click="saveLesson" :disabled="isSaving">
+        <span v-if="isSaving" class="spinner-border spinner-border-sm me-2"></span>
+        ذخیره
+      </button>
+    </template>
+  </base-modal>
+
+  <!-- Modal: تأیید حذف سوال -->
+  <confirmation-dialog
+      modal-id="deleteLessonModal"
+      title="حذف سوال"
+      :message="'آیا از حذف این سوال اطمینان دارید؟ این عمل قابل بازگشت نیست.'"
+      :details=selectedLesson?.title
+      confirm-text="حذف سوال"
+      confirm-button-type="danger"
+      icon="trash-alt"
+      ref="deleteLessonModal"
+      @confirm="deleteLesson"
+  />
 </template>
 
 <script>
@@ -557,11 +604,14 @@ import CourseHeader from '@/components/courses/CourseHeader.vue';
 import LessonList from '@/components/courses/LessonList.vue';
 import StudentsTab from '@/components/courses/StudentsTab.vue';
 import LessonManager from '@/components/courses/LessonManager.vue';
+import BaseModal from "@/components/common/BaseModal.vue";
+import axios from "axios";
 
 
 export default {
   name: 'CourseDetail',
   components: {
+    BaseModal,
     LoadingSpinner,
     ConfirmationDialog,
     ContentModal,
@@ -925,7 +975,29 @@ export default {
         this.enrolling = false;
       }
     },
+    async deleteLesson() {
+      if (this.isDeleting) return;
+      this.isDeleting = true;
 
+      try {
+        await axios.delete(`/lessons/${this.selectedLesson.id}`);
+
+        this.$emit('lesson-deleted', this.selectedLesson.id);
+
+        if (this.$toast) {
+          this.$toast.success('درس با موفقیت حذف شد');
+        }
+        // this.$refs.confirmationModal.hide();
+
+      } catch (error) {
+        console.error('Error deleting lesson:', error);
+        if (this.$toast) {
+          this.$toast.error('خطا در حذف درس');
+        }
+      } finally {
+        this.isDeleting = false;
+      }
+    },
     showEditCourseModal() {
       this.editCourseForm = {
         title: this.course.title,
@@ -980,11 +1052,13 @@ export default {
         orderIndex: lesson.orderIndex || 0,
         duration: lesson.duration || 30
       };
-
       const modal = new bootstrap.Modal(document.getElementById('lessonModal'));
       modal.show();
     },
-
+    confirmDeleteLesson(lesson) {
+      this.selectedLesson = { ...lesson };
+      this.$refs.deleteLessonModal.show();
+    },
     async saveLesson() {
       if (this.savingLesson) return;
 

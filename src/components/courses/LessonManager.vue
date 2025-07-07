@@ -1,16 +1,15 @@
 <template>
-<!--  <div class="modern-card lesson-manager animate-slide-up">-->
-    <!-- Header -->
-<!--    <div class="d-flex justify-content-between align-items-center mb-4">-->
-<!--      <h5 class="modern-title mb-0">-->
-<!--        <i class="fas fa-list-ul text-primary me-2"></i>-->
-<!--        مدیریت دروس-->
-<!--      </h5>-->
-<!--      <button class="modern-btn modern-btn-success" @click="showAddLessonModal">-->
-<!--        <i class="fas fa-plus me-2"></i>-->
-<!--        افزودن درس جدید-->
-<!--      </button>-->
-<!--    </div>-->
+  <div class="modern-card lesson-manager animate-slide-up">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h5 class="modern-title mb-0">
+        <i class="fas fa-list-ul text-primary me-2"></i>
+        مدیریت دروس
+      </h5>
+      <button class="modern-btn modern-btn-success" @click="showAddLessonModal">
+        <i class="fas fa-plus me-2"></i>
+        افزودن درس جدید
+      </button>
+    </div>
 
     <!-- Lessons List -->
     <div v-if="lessons && lessons.length > 0" class="lesson-list">
@@ -96,52 +95,8 @@
 <!--    </div>-->
 
     <!-- Lesson Modal -->
-    <teleport to="body" >
-    <base-modal
-        modal-id="lessonModal"
-        :title="selectedLesson.id ? 'ویرایش درس' : 'افزودن درس'"
-        icon="book"
-        header-class="bg-primary"
-        ref="lessonModal">
 
-      <!-- محتوای فرم -->
-      <form @submit.prevent="saveLesson" >
-        <div class="mb-3">
-          <label class="form-label">عنوان درس</label>
-          <input type="text" class="form-control" v-model="selectedLesson.title" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label">توضیحات</label>
-          <textarea class="form-control" v-model="selectedLesson.description"></textarea>
-        </div>
-      </form>
-
-      <!-- Footer -->
-      <template #footer>
-        <button type="button" class="btn btn-secondary" @click="$refs.lessonModal.hide()">
-          انصراف
-        </button>
-        <button type="button" class="btn btn-primary" @click="saveLesson" :disabled="isSaving">
-          <span v-if="isSaving" class="spinner-border spinner-border-sm me-2"></span>
-          ذخیره
-        </button>
-      </template>
-    </base-modal>
-
-    <!-- Modal: تأیید حذف سوال -->
-    <confirmation-dialog
-        modal-id="deleteLessonModal"
-        title="حذف سوال"
-        :message="'آیا از حذف این سوال اطمینان دارید؟ این عمل قابل بازگشت نیست.'"
-        :details=selectedLesson?.title
-        confirm-text="حذف سوال"
-        confirm-button-type="danger"
-        icon="trash-alt"
-        ref="deleteLessonModal"
-        @confirm="deleteLesson"
-    />
-    </teleport>
-<!--  </div>-->
+  </div>
 </template>
 
 <script>
@@ -182,92 +137,82 @@ export default {
   },
   methods: {
 
+    // showAddLessonModal() {
+    //
+    //   this.selectedLesson = {
+    //     id: null,
+    //     title: '',
+    //     description: '',
+    //     orderIndex: this.lessons ? this.lessons.length : 0
+    //   };
+    //   this.$refs.lessonModal.show();  // ← ساده!
+    // },
+
+    editLesson(lesson) {
+      this.$emit('edit-lesson-requested', lesson);
+    },
+
     showAddLessonModal() {
-
-      this.selectedLesson = {
-        id: null,
-        title: '',
-        description: '',
-        orderIndex: this.lessons ? this.lessons.length : 0
-      };
-      this.$refs.lessonModal.show();  // ← ساده!
-    },
-
-    async editLesson(lesson) {
-      console.log('Editing lesson:', lesson);
-      this.selectedLesson = {...lesson};
-      this.$refs.lessonModal.show();
-
-    },
-
-    async saveLesson() {
-      if (this.isSaving) return;
-      this.isSaving = true;
-
-      try {
-        let response;
-
-        if (this.selectedLesson.id) {
-          response = await axios.put(`/lessons/${this.selectedLesson.id}`, {
-            title: this.selectedLesson.title,
-            description: this.selectedLesson.description,
-            orderIndex: this.selectedLesson.orderIndex
-          });
-
-          this.$emit('lesson-updated', response.data);
-        } else {
-          response = await axios.post(`/lessons/course/${this.courseId}`, {
-            title: this.selectedLesson.title,
-            description: this.selectedLesson.description,
-            orderIndex: this.selectedLesson.orderIndex
-          });
-
-          this.$emit('lesson-added', response.data);
-        }
-
-        if (this.$toast) {
-          this.$toast.success(this.selectedLesson.id ? 'درس با موفقیت به‌روزرسانی شد' : 'درس جدید با موفقیت ایجاد شد');
-        }
-
-        this.$refs.lessonModal.hide();
-      } catch (error) {
-        console.error('Error saving lesson:', error);
-        if (this.$toast) {
-          this.$toast.error('خطا در ذخیره درس');
-        }
-      } finally {
-        this.isSaving = false;
-      }
+      this.$emit('add-lesson-requested');
     },
 
     confirmDeleteLesson(lesson) {
-      this.selectedLesson = { ...lesson };
-      this.$refs.deleteLessonModal.show();
+      this.$emit('delete-lesson-requested', lesson);
     },
 
-    async deleteLesson() {
-      if (this.isDeleting) return;
-      this.isDeleting = true;
+    // async editLesson(lesson) {
+    //   this.selectedLesson = {...lesson};
+    //   await this.$nextTick();
+    //   this.$refs.lessonModal.show();
+    //
+    // },
 
-      try {
-        await axios.delete(`/lessons/${this.selectedLesson.id}`);
+    // async saveLesson() {
+    //   if (this.isSaving) return;
+    //   this.isSaving = true;
+    //
+    //   try {
+    //     let response;
+    //
+    //     if (this.selectedLesson.id) {
+    //       response = await axios.put(`/lessons/${this.selectedLesson.id}`, {
+    //         title: this.selectedLesson.title,
+    //         description: this.selectedLesson.description,
+    //         orderIndex: this.selectedLesson.orderIndex
+    //       });
+    //
+    //       this.$emit('lesson-updated', response.data);
+    //     } else {
+    //       response = await axios.post(`/lessons/course/${this.courseId}`, {
+    //         title: this.selectedLesson.title,
+    //         description: this.selectedLesson.description,
+    //         orderIndex: this.selectedLesson.orderIndex
+    //       });
+    //
+    //       this.$emit('lesson-added', response.data);
+    //     }
+    //
+    //     if (this.$toast) {
+    //       this.$toast.success(this.selectedLesson.id ? 'درس با موفقیت به‌روزرسانی شد' : 'درس جدید با موفقیت ایجاد شد');
+    //     }
+    //
+    //     this.$refs.lessonModal.hide();
+    //   } catch (error) {
+    //     console.error('Error saving lesson:', error);
+    //     if (this.$toast) {
+    //       this.$toast.error('خطا در ذخیره درس');
+    //     }
+    //   } finally {
+    //     this.isSaving = false;
+    //   }
+    // },
 
-        this.$emit('lesson-deleted', this.selectedLesson.id);
+    // confirmDeleteLesson(lesson) {
+    //   this.selectedLesson = { ...lesson };
+    //   this.$refs.deleteLessonModal.show();
+    // },
 
-        if (this.$toast) {
-          this.$toast.success('درس با موفقیت حذف شد');
-        }
-        // this.$refs.confirmationModal.hide();
 
-      } catch (error) {
-        console.error('Error deleting lesson:', error);
-        if (this.$toast) {
-          this.$toast.error('خطا در حذف درس');
-        }
-      } finally {
-        this.isDeleting = false;
-      }
-    },
 
     addContent(lesson) {
       this.$emit('add-content', lesson);
