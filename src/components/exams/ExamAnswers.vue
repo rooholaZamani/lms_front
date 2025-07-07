@@ -235,13 +235,14 @@ export default {
   },
   data() {
     return {
-      examData: null,
+      submissionData : null,
       loading: true,
       error: null
     }
   },
   async mounted() {
     await this.fetchExamAnswers()
+    // await this.fetchData()
   },
   methods: {
     getAnswersArray() {
@@ -275,6 +276,54 @@ export default {
       const answers = this.getAnswersArray();
       return answers.filter(answer => answer.isCorrect).length;
     },
+    formatDateTime(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('fa-IR') + ' ' + date.toLocaleTimeString('fa-IR');
+    },
+    getScorePercentage() {
+      if (!this.submissionData?.score || !this.submissionData?.totalPossibleScore) return 0;
+      return Math.round((this.submissionData.score / this.submissionData.totalPossibleScore) * 100);
+    },
+
+    getScoreClass() {
+      const percentage = this.getScorePercentage();
+      if (percentage >= 90) return 'score-excellent';
+      if (percentage >= 80) return 'score-good';
+      if (percentage >= 70) return 'score-average';
+      if (percentage >= 60) return 'score-poor';
+      return 'score-fail';
+    },
+
+    getQuestionTypeText(type) {
+      const labels = {
+        'MULTIPLE_CHOICE': 'چند گزینه‌ای',
+        'TRUE_FALSE': 'درست/غلط',
+        'MATCHING': 'تطبیقی',
+        'CATEGORIZATION': 'دسته‌بندی',
+        'FILL_IN_THE_BLANK': 'جای خالی',
+        'ESSAY': 'تشریحی',
+        'SHORT_ANSWER': 'پاسخ کوتاه'
+      };
+      return labels[type] || type;
+    },
+
+    getQuestionTypeClass(type) {
+      const classes = {
+        'MULTIPLE_CHOICE': 'badge-primary',
+        'TRUE_FALSE': 'badge-secondary',
+        'MATCHING': 'badge-success',
+        'CATEGORIZATION': 'badge-warning',
+        'FILL_IN_THE_BLANK': 'badge-info',
+        'ESSAY': 'badge-danger',
+        'SHORT_ANSWER': 'badge-light'
+      };
+      return classes[type] || 'badge-secondary';
+    },
+
+    goBack() {
+      this.$router.go(-1);
+    },
     async fetchData() {
       try {
         this.loading = true;
@@ -307,7 +356,7 @@ export default {
 
         // استفاده از submissionId برای دریافت داده‌ها
         const response = await axios.get(`/exams/${this.submissionId}/student-answers`)
-        this.examData = response.data
+        this.submissionData  = response.data
 
       } catch (error) {
         console.error('Error fetching exam answers:', error)
