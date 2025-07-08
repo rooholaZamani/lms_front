@@ -222,7 +222,7 @@ export default {
         this.questions = response.data;
       } catch (error) {
         console.error('Error fetching exam questions:', error);
-        this.showErrorToast('مشکلی در دریافت سوالات آزمون رخ داد.');
+        this.$toast.error('مشکلی در دریافت سوالات آزمون رخ داد.');
       }
     },
 
@@ -232,7 +232,7 @@ export default {
         this.availableLessons = response.data;
       } catch (error) {
         console.error('Error fetching lessons:', error);
-        this.showErrorToast('مشکلی در دریافت لیست درس‌ها رخ داد.');
+        this.$toast.error('مشکلی در دریافت لیست درس‌ها رخ داد.');
       }
     },
 
@@ -254,10 +254,10 @@ export default {
           this.isEditMode = true;
         }
 
-        this.showSuccessToast('اطلاعات آزمون با موفقیت ذخیره شد.');
+        this.$toast.success('اطلاعات آزمون با موفقیت ذخیره شد.');
       } catch (error) {
         console.error('Error saving exam info:', error);
-        this.showErrorToast('مشکلی در ذخیره اطلاعات آزمون رخ داد. لطفاً دوباره تلاش کنید.');
+        this.$toast.error('مشکلی در ذخیره اطلاعات آزمون رخ داد. لطفاً دوباره تلاش کنید.');
       } finally {
         this.isInfoSubmitting = false;
       }
@@ -274,12 +274,40 @@ export default {
         hint: '',
         timeLimit: null,
         difficulty: 3.0,
-        isRequired: false
+        isRequired: false,
+        // فیلدهای اضافی برای انواع مختلف سوال
+        template: '', // برای FILL_IN_THE_BLANKS
+        blankAnswers: [{
+          blankIndex: 0,
+          correctAnswer: '',
+          acceptableAnswers: '',
+          caseSensitive: false,
+          points: 0
+        }],
+        matchingPairs: [{
+          leftItem: '',
+          rightItem: '',
+          leftItemType: 'TEXT',
+          rightItemType: 'TEXT',
+          leftItemUrl: null,
+          rightItemUrl: null,
+          points: 0
+        }],
+        categories: ['دسته ۱', 'دسته ۲'],
+        categorizationItems: [{
+          text: '',
+          correctCategory: '',
+          itemType: 'TEXT',
+          mediaUrl: null,
+          points: 0
+        }]
       };
 
       const modal = new bootstrap.Modal(document.getElementById('questionModal'));
       modal.show();
     },
+
+
 
     editQuestion(question) {
       this.isEditingQuestion = true;
@@ -314,7 +342,7 @@ export default {
           if (question.options && Array.isArray(question.options)) {
             const correctOption = question.options.find(opt => opt.correct);
             this.currentQuestion.correctOption =
-                correctOption && correctOption.text === 'صحیح' ? 'true' : 'false';
+                correctOption && correctOption.text.toLowerCase() === 'true' ? 'true' : 'false';
           } else {
             this.currentQuestion.correctOption = 'true';
           }
@@ -332,17 +360,21 @@ export default {
           this.currentQuestion.template = question.template || question.text;
           if (question.blankAnswers && Array.isArray(question.blankAnswers)) {
             this.currentQuestion.blankAnswers = question.blankAnswers.map(blank => ({
+              blankIndex: blank.blankIndex || 0,
               correctAnswer: blank.correctAnswer || '',
               acceptableAnswers: Array.isArray(blank.acceptableAnswers)
                   ? blank.acceptableAnswers.join(', ')
                   : blank.acceptableAnswers || '',
-              blankIndex: blank.blankIndex || 0
+              caseSensitive: blank.caseSensitive || false,
+              points: blank.points || 0
             }));
           } else {
             this.currentQuestion.blankAnswers = [{
+              blankIndex: 0,
               correctAnswer: '',
               acceptableAnswers: '',
-              blankIndex: 0
+              caseSensitive: false,
+              points: 0
             }];
           }
           break;
@@ -352,15 +384,21 @@ export default {
             this.currentQuestion.matchingPairs = question.matchingPairs.map(pair => ({
               leftItem: pair.leftItem || '',
               rightItem: pair.rightItem || '',
-              leftItemType: 'TEXT',
-              rightItemType: 'TEXT'
+              leftItemType: pair.leftItemType || 'TEXT',
+              rightItemType: pair.rightItemType || 'TEXT',
+              leftItemUrl: pair.leftItemUrl || null,
+              rightItemUrl: pair.rightItemUrl || null,
+              points: pair.points || 0
             }));
           } else {
             this.currentQuestion.matchingPairs = [{
               leftItem: '',
               rightItem: '',
               leftItemType: 'TEXT',
-              rightItemType: 'TEXT'
+              rightItemType: 'TEXT',
+              leftItemUrl: null,
+              rightItemUrl: null,
+              points: 0
             }];
           }
           break;
@@ -368,18 +406,21 @@ export default {
         case 'CATEGORIZATION':
           this.currentQuestion.categories = question.categories || ['دسته ۱', 'دسته ۲'];
 
-          // تبدیل answers به categorizationItems
-          if (question.answers && Array.isArray(question.answers) && question.answers.length > 0) {
-            this.currentQuestion.categorizationItems = question.answers.map(answer => ({
-              text: answer.text || '',
-              correctCategory: answer.category || '',
-              itemType: 'TEXT'
+          if (question.categorizationItems && Array.isArray(question.categorizationItems)) {
+            this.currentQuestion.categorizationItems = question.categorizationItems.map(item => ({
+              text: item.text || '',
+              correctCategory: item.correctCategory || '',
+              itemType: item.itemType || 'TEXT',
+              mediaUrl: item.mediaUrl || null,
+              points: item.points || 0
             }));
           } else {
             this.currentQuestion.categorizationItems = [{
               text: '',
               correctCategory: '',
-              itemType: 'TEXT'
+              itemType: 'TEXT',
+              mediaUrl: null,
+              points: 0
             }];
           }
           break;
@@ -411,64 +452,64 @@ export default {
                 answerType: 'TEXT',
                 mediaUrl: null,
                 points: index === parseInt(questionData.correctOption) ? data.points : 0,
-                feedback: '',
-                orderIndex: index + 1
+                feedback: index === parseInt(questionData.correctOption) ? 'پاسخ صحیح' : 'پاسخ نادرست',
+                orderIndex: index + 1,
+                category: null
               }));
           break;
 
         case 'TRUE_FALSE':
           data.options = [
             {
-              text: 'صحیح',
+              text: 'True',
               correct: questionData.correctOption === 'true',
               answerType: 'TEXT',
               mediaUrl: null,
               points: questionData.correctOption === 'true' ? data.points : 0,
-              feedback: '',
-              orderIndex: 1
+              feedback: questionData.correctOption === 'true' ? 'پاسخ صحیح' : 'پاسخ نادرست',
+              orderIndex: 1,
+              category: null
             },
             {
-              text: 'غلط',
+              text: 'False',
               correct: questionData.correctOption === 'false',
               answerType: 'TEXT',
               mediaUrl: null,
               points: questionData.correctOption === 'false' ? data.points : 0,
-              feedback: '',
-              orderIndex: 2
+              feedback: questionData.correctOption === 'false' ? 'پاسخ صحیح' : 'پاسخ نادرست',
+              orderIndex: 2,
+              category: null
             }
           ];
           break;
 
-        case 'SHORT_ANSWER':
-          // برای SHORT_ANSWER فقط text کافی است - backend خودش handle می‌کند
-          break;
-
-        case 'ESSAY':
-          // برای ESSAY فقط اطلاعات اصلی کافی است
-          break;
-
         case 'FILL_IN_THE_BLANKS':
           data.template = questionData.template || questionData.text;
-          data.blankAnswers = questionData.blankAnswers.map((blank, index) => ({
-            blankIndex: index,
-            correctAnswer: blank.correctAnswer,
-            acceptableAnswers: blank.acceptableAnswers ?
-                blank.acceptableAnswers.split(',').map(s => s.trim()).filter(s => s) : [],
-            caseSensitive: false,
-            points: Math.floor(data.points / questionData.blankAnswers.length) || 1
-          }));
+          data.blankAnswers = questionData.blankAnswers
+              .filter(blank => blank.correctAnswer && blank.correctAnswer.trim())
+              .map((blank, index) => ({
+                blankIndex: parseInt(blank.blankIndex) || index,
+                correctAnswer: blank.correctAnswer.trim(),
+                acceptableAnswers: Array.isArray(blank.acceptableAnswers)
+                    ? blank.acceptableAnswers.filter(ans => ans.trim())
+                    : typeof blank.acceptableAnswers === 'string'
+                        ? blank.acceptableAnswers.split(',').map(s => s.trim()).filter(s => s)
+                        : [blank.correctAnswer.trim()],
+                caseSensitive: blank.caseSensitive || false,
+                points: Math.floor(data.points / questionData.blankAnswers.length) || 1
+              }));
           break;
 
         case 'MATCHING':
           data.matchingPairs = questionData.matchingPairs
               .filter(pair => pair.leftItem.trim() && pair.rightItem.trim())
-              .map(pair => ({
+              .map((pair, index) => ({
                 leftItem: pair.leftItem.trim(),
                 rightItem: pair.rightItem.trim(),
-                leftItemType: 'TEXT',
-                rightItemType: 'TEXT',
-                leftItemUrl: null,
-                rightItemUrl: null,
+                leftItemType: pair.leftItemType || 'TEXT',
+                rightItemType: pair.rightItemType || 'TEXT',
+                leftItemUrl: pair.leftItemUrl || null,
+                rightItemUrl: pair.rightItemUrl || null,
                 points: Math.floor(data.points / questionData.matchingPairs.length) || 1
               }));
           break;
@@ -480,18 +521,25 @@ export default {
 
           data.categorizationItems = questionData.categorizationItems
               .filter(item => item.text.trim() && item.correctCategory)
-              .map(item => ({
+              .map((item, index) => ({
                 text: item.text.trim(),
                 correctCategory: item.correctCategory,
-                itemType: 'TEXT',
-                mediaUrl: null,
+                itemType: item.itemType || 'TEXT',
+                mediaUrl: item.mediaUrl || null,
                 points: Math.floor(data.points / questionData.categorizationItems.length) || 1
               }));
+          break;
+
+        case 'ESSAY':
+        case 'SHORT_ANSWER':
+          // این دو نوع سوال فقط فیلدهای عمومی نیاز دارند
           break;
       }
 
       return data;
     },
+
+
     async saveQuestion(questionData) {
       this.isQuestionSubmitting = true;
 
@@ -505,21 +553,21 @@ export default {
           if (!this.examId) {
             await this.saveExamInfo();
             if (!this.examId) {
-              this.showErrorToast('ابتدا باید اطلاعات آزمون را کامل کنید.');
+              this.$toast.error('ابتدا باید اطلاعات آزمون را کامل کنید.');
               return;
             }
           }
           response = await this.$http.post(`/questions/exam/${this.examId}`, formattedData);
         }
 
-        if (response.data.success) {
-          this.$toast.success(this.isEditingQuestion ? 'سوال با موفقیت ویرایش شد.' : 'سوال با موفقیت اضافه شد.');
-          this.hideQuestionModal();
-          await this.fetchExamQuestions();
-        }
+
+        this.$toast.success(this.isEditingQuestion ? 'سوال با موفقیت ویرایش شد.' : 'سوال با موفقیت اضافه شد.');
+        this.hideQuestionModal();
+        await this.fetchExamQuestions();
+
       } catch (error) {
         console.error('Error saving question:', error);
-        this.toast.error('مشکلی در ذخیره سوال رخ داد. لطفاً دوباره تلاش کنید.');
+        this.$toast.error('مشکلی در ذخیره سوال رخ داد. لطفاً دوباره تلاش کنید.');
       } finally {
         this.isQuestionSubmitting = false;
       }
@@ -539,10 +587,10 @@ export default {
       try {
         await axios.delete(`/questions/${this.selectedQuestion.id}`);
         this.questions = this.questions.filter(q => q.id !== this.selectedQuestion.id);
-        this.showSuccessToast('سوال با موفقیت حذف شد.');
+        this.$toast.success('سوال با موفقیت حذف شد.');
       } catch (error) {
         console.error('Error deleting question:', error);
-        this.showErrorToast('مشکلی در حذف سوال رخ داد. لطفاً دوباره تلاش کنید.');
+        this.$toast.error('مشکلی در حذف سوال رخ داد. لطفاً دوباره تلاش کنید.');
       } finally {
         this.isDeleting = false;
       }
@@ -550,13 +598,13 @@ export default {
 
     async finalizeExam() {
       if (this.questions.length === 0) {
-        this.showErrorToast('برای نهایی‌سازی آزمون، حداقل یک سوال باید اضافه کنید.');
+        this.$toast.error('برای نهایی‌سازی آزمون، حداقل یک سوال باید اضافه کنید.');
         return;
       }
 
       try {
         await axios.put(`/exams/${this.examId}/finalize`);
-        this.showSuccessToast('آزمون با موفقیت نهایی شد.');
+        this.$toast.success('آزمون با موفقیت نهایی شد.');
 
         if (this.examData.lessonId) {
           const lessonResponse = await axios.get(`/lessons/${this.examData.lessonId}`);
@@ -572,7 +620,7 @@ export default {
         }
       } catch (error) {
         console.error('Error finalizing exam:', error);
-        this.showErrorToast('مشکلی در نهایی‌سازی آزمون رخ داد. لطفاً دوباره تلاش کنید.');
+        this.$toast.error('مشکلی در نهایی‌سازی آزمون رخ داد. لطفاً دوباره تلاش کنید.');
       }
     }
   }

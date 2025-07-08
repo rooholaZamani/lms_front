@@ -88,21 +88,21 @@
               </div>
             </div>
 
-<!--            <div class="col-md-4">-->
-<!--              <div class="modern-form-group">-->
-<!--                <label class="modern-form-label">فیلتر وضعیت</label>-->
-<!--                <div class="form-check form-switch mt-2">-->
-<!--                  <input-->
-<!--                      class="form-check-input"-->
-<!--                      type="checkbox"-->
-<!--                      id="activeCoursesOnly"-->
-<!--                      v-model="activeCoursesOnly"-->
-<!--                      @change="filterCourses"-->
-<!--                  >-->
-<!--&lt;!&ndash;                  <label class="form-check-label" for="activeCoursesOnly">فقط دوره‌های فعال</label>&ndash;&gt;-->
-<!--                </div>-->
-<!--              </div>-->
-<!--            </div>-->
+            <div class="col-md-4">
+              <div class="modern-form-group">
+                <label class="modern-form-label">فیلتر وضعیت</label>
+                <div class="form-check form-switch mt-2">
+                  <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="activeCoursesOnly"
+                      v-model="activeCoursesOnly"
+                      @change="filterCourses"
+                  >
+                  <label class="form-check-label" for="activeCoursesOnly">فقط دوره‌های فعال</label>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 

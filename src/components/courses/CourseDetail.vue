@@ -928,7 +928,8 @@ export default {
 
         this.editCourseForm = {
           title: this.course.title,
-          description: this.course.description
+          description: this.course.description,
+          active: this.course.active
         };
 
         if (this.isStudent && this.isEnrolled) {
@@ -1002,8 +1003,9 @@ export default {
       this.editCourseForm = {
         title: this.course.title,
         description: this.course.description,
-        active: this.course.active !== false
+        active: this.course.active
       };
+      this.$toast.info("active: " + this.editCourseForm.active);
     },
 
     async updateCourseInfo() {

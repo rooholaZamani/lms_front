@@ -40,7 +40,7 @@
                     type="number"
                     class="modern-form-control"
                     id="examDuration"
-                    v-model="examData.duration"
+                    v-model="examData.timeLimit"
                     min="1"
                     required
                     placeholder="مثال: 60"
@@ -169,6 +169,14 @@ export default {
     return {
       formatDate
     };
+  },
+  mounted() {
+    if (this.examData.lessonTitle && !this.examData.lessonId) {
+      const lesson = this.availableLessons.find(l => l.title === this.examData.lessonTitle);
+      if (lesson) {
+        this.examData.lessonId = lesson.id;
+      }
+    }
   },
   methods: {
     saveExamInfo() {

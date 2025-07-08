@@ -324,7 +324,7 @@ export default {
           this.questions = [];
         } else {
           console.error('Error fetching exam data:', error);
-          this.showErrorToast('مشکلی در دریافت اطلاعات آزمون رخ داد.');
+          this.$toast.error('مشکلی در دریافت اطلاعات آزمون رخ داد.');
         }
       } finally {
         this.loading = false;
@@ -350,7 +350,7 @@ export default {
         }));
       } catch (error) {
         console.error('Error fetching exam questions:', error);
-        this.showErrorToast('مشکلی در دریافت سوالات آزمون رخ داد.');
+        this.$toast.error('مشکلی در دریافت سوالات آزمون رخ داد.');
       }
     },
 
@@ -375,14 +375,14 @@ export default {
         };
 
         this.$refs.createExamModal.hide();
-        this.showSuccessToast('آزمون با موفقیت ایجاد شد. اکنون می‌توانید سوالات را اضافه کنید.');
+        this.$toast.success('آزمون با موفقیت ایجاد شد. اکنون می‌توانید سوالات را اضافه کنید.');
 
         setTimeout(() => {
           this.showAddQuestionModal();
         }, 500);
       } catch (error) {
         console.error('Error creating exam:', error);
-        this.showErrorToast('مشکلی در ایجاد آزمون رخ داد. لطفاً دوباره تلاش کنید.');
+        this.$toast.error('مشکلی در ایجاد آزمون رخ داد. لطفاً دوباره تلاش کنید.');
       } finally {
         this.isCreatingExam = false;
       }
@@ -474,20 +474,20 @@ export default {
           if (index !== -1) {
             this.questions[index] = { ...this.currentQuestion };
           }
-          this.showSuccessToast('سوال با موفقیت به‌روزرسانی شد.');
+          this.$toast.success('سوال با موفقیت به‌روزرسانی شد.');
         } else {
           const newQuestion = {
             ...this.currentQuestion,
             id: this.questions.length + 1
           };
           this.questions.push(newQuestion);
-          this.showSuccessToast('سوال جدید با موفقیت افزوده شد.');
+          this.$toast.success('سوال جدید با موفقیت افزوده شد.');
         }
 
         this.$refs.questionModal.hide();
       } catch (error) {
         console.error('Error saving question:', error);
-        this.showErrorToast('مشکلی در ذخیره سوال رخ داد. لطفاً دوباره تلاش کنید.');
+        this.$toast.error('مشکلی در ذخیره سوال رخ داد. لطفاً دوباره تلاش کنید.');
       } finally {
         this.isQuestionSubmitting = false;
       }
@@ -503,10 +503,10 @@ export default {
 
       try {
         this.questions = this.questions.filter(q => q.id !== this.selectedQuestion.id);
-        this.showSuccessToast('سوال با موفقیت حذف شد.');
+        this.$toast.success('سوال با موفقیت حذف شد.');
       } catch (error) {
         console.error('Error deleting question:', error);
-        this.showErrorToast('مشکلی در حذف سوال رخ داد. لطفاً دوباره تلاش کنید.');
+        this.$toast.error('مشکلی در حذف سوال رخ داد. لطفاً دوباره تلاش کنید.');
       }
     }
   }
