@@ -442,7 +442,7 @@
           </div>
 
           <div class="result-actions">
-            <button class="modern-btn modern-btn-primary" @click="$router.push('/student/courses')">
+            <button class="modern-btn modern-btn-primary" @click="$router.push('/courses')">
               <i class="fas fa-home me-2"></i>
               بازگشت به دوره‌ها
             </button>

@@ -240,28 +240,28 @@ export default {
       this.$router.go(-1);
     },
 
-    async saveExamInfo() {
-      this.isInfoSubmitting = true;
-
-      try {
-        let response;
-
-        if (this.isEditMode) {
-          response = await axios.put(`/exams/${this.examId}`, this.examData);
-        } else {
-          response = await axios.post(`/exams/lesson/${this.examData.lessonId}`, this.examData);
-          this.examId = response.data.id;
-          this.isEditMode = true;
-        }
-
-        this.$toast.success('اطلاعات آزمون با موفقیت ذخیره شد.');
-      } catch (error) {
-        console.error('Error saving exam info:', error);
-        this.$toast.error('مشکلی در ذخیره اطلاعات آزمون رخ داد. لطفاً دوباره تلاش کنید.');
-      } finally {
-        this.isInfoSubmitting = false;
-      }
-    },
+    // async saveExamInfo() {
+    //   this.isInfoSubmitting = true;
+    //
+    //   try {
+    //     let response;
+    //
+    //     if (this.isEditMode) {
+    //       response = await axios.put(`/exams/${this.examId}`, this.examData);
+    //     } else {
+    //       response = await axios.post(`/exams/lesson/${this.examData.lessonId}`, this.examData);
+    //       this.examId = response.data.id;
+    //       this.isEditMode = true;
+    //     }
+    //
+    //     this.$toast.success('اطلاعات آزمون با موفقیت ذخیره شد.');
+    //   } catch (error) {
+    //     console.error('Error saving exam info:', error);
+    //     this.$toast.error('مشکلی در ذخیره اطلاعات آزمون رخ داد. لطفاً دوباره تلاش کنید.');
+    //   } finally {
+    //     this.isInfoSubmitting = false;
+    //   }
+    // },
     showAddQuestionModal() {
       this.isEditingQuestion = false;
       this.currentQuestion = {
@@ -622,6 +622,128 @@ export default {
         console.error('Error finalizing exam:', error);
         this.$toast.error('مشکلی در نهایی‌سازی آزمون رخ داد. لطفاً دوباره تلاش کنید.');
       }
+    },
+
+    async saveExamInfo() {
+      this.isInfoSubmitting = true;
+
+      try {
+        let response;
+
+        if (this.isEditMode) {
+          response = await axios.put(`/exams/${this.examId}`, this.examData);
+        } else {
+          // ایجاد آزمون جدید - ابتدا چک کردن وضعیت
+          response = await this.createNewExam();
+        }
+
+        this.$toast.success('اطلاعات آزمون با موفقیت ذخیره شد.');
+      } catch (error) {
+        console.error('Error saving exam info:', error);
+        if (error.response?.data?.errorType === 'EXAM_EXISTS_WITH_SUBMISSIONS') {
+          // این نباید اتفاق بیفتد چون قبلاً چک کردیم
+          this.$toast.error('خطای غیرمنتظره در ایجاد آزمون');
+        } else {
+          this.$toast.error('مشکلی در ذخیره اطلاعات آزمون رخ داد. لطفاً دوباره تلاش کنید.');
+        }
+      } finally {
+        this.isInfoSubmitting = false;
+      }
+    },
+
+    async createNewExam() {
+      try {
+        // ابتدا بررسی وضعیت درس
+        const statusResponse = await axios.get(`/exams/lesson/${this.examData.lessonId}/status`);
+
+        if (statusResponse.data.hasExam && statusResponse.data.submissionCount > 0) {
+          // نمایش تأیید برای حذف submissions
+          const confirmed = await this.showDeleteConfirmation(
+              statusResponse.data.examTitle,
+              statusResponse.data.submissionCount
+          );
+
+          if (!confirmed) {
+            throw new Error('عملیات لغو شد');
+          }
+
+          // ایجاد آزمون با forceReplace=true
+          return await this.createExamWithForce();
+        } else {
+          // ایجاد آزمون معمولی
+          return await this.createExamNormal();
+        }
+
+      } catch (error) {
+        console.error('Error in createNewExam:', error);
+        throw error;
+      }
+    },
+
+    async createExamNormal() {
+      try {
+        const response = await axios.post(`/exams/lesson/${this.examData.lessonId}`, this.examData);
+
+        if (response.data.success) {
+          this.examId = response.data.exam.id;
+          this.isEditMode = true;
+          return response;
+        } else {
+          throw new Error(response.data.message || 'خطا در ایجاد آزمون');
+        }
+      } catch (error) {
+        if (error.response?.data?.errorType === 'EXAM_EXISTS_WITH_SUBMISSIONS') {
+          // این نباید اتفاق بیفتد چون قبلاً چک کردیم
+          console.error('Unexpected exam exists error');
+        }
+        throw error;
+      }
+    },
+
+    async createExamWithForce() {
+      try {
+        const response = await axios.post(
+            `/exams/lesson/${this.examData.lessonId}?forceReplace=true`,
+            this.examData
+        );
+
+        if (response.data.success) {
+          this.examId = response.data.exam.id;
+          this.isEditMode = true;
+          this.$toast.success('آزمون جدید ایجاد شد (نتایج قبلی حذف شدند)');
+          return response;
+        } else {
+          throw new Error(response.data.message || 'خطا در ایجاد آزمون');
+        }
+      } catch (error) {
+        console.error('Error creating exam with force:', error);
+        throw error;
+      }
+    },
+
+    showDeleteConfirmation(examTitle, submissionCount) {
+      return new Promise((resolve) => {
+        const message = `این درس قبلاً آزمون "${examTitle}" دارد که ${submissionCount} دانش‌آموز در آن شرکت کرده‌اند.\n\nآیا می‌خواهید آزمون جدید ایجاد کنید؟\n⚠️ تمام نتایج قبلی حذف خواهد شد!`;
+
+        if (this.$swal) {
+          this.$swal({
+            title: 'هشدار!',
+            text: message,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'بله، آزمون جدید ایجاد کن',
+            cancelButtonText: 'انصراف',
+            reverseButtons: true
+          }).then((result) => {
+            resolve(result.isConfirmed);
+          });
+        } else {
+          // Fallback به confirm معمولی
+          resolve(confirm(message));
+        }
+      });
     }
   }
 }

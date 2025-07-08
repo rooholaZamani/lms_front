@@ -354,8 +354,111 @@ export default {
       }
     },
 
-    createNewExam() {
-      this.$refs.createExamModal.show();
+    async createNewExam() {
+      try {
+        // ابتدا بررسی وضعیت درس
+        const statusResponse = await axios.get(`/api/exams/lesson/${this.lessonId}/status`);
+
+        if (statusResponse.data.hasExam && statusResponse.data.submissionCount > 0) {
+          // نمایش تأیید برای حذف submissions
+          const confirmed = await this.showDeleteConfirmation(
+              statusResponse.data.examTitle,
+              statusResponse.data.submissionCount
+          );
+
+          if (!confirmed) {
+            return;
+          }
+
+          // ایجاد آزمون با forceReplace=true
+          await this.createExamWithForce();
+        } else {
+          // ایجاد آزمون معمولی
+          await this.createExamNormal();
+        }
+
+      } catch (error) {
+        console.error('Error creating exam:', error);
+        this.$toast?.error('خطا در ایجاد آزمون');
+      }
+    },
+    async createExamNormal() {
+      const examData = {
+        title: `آزمون ${this.lessonTitle}`,
+        description: `آزمون درس ${this.lessonTitle}`,
+        timeLimit: 60,
+        passingScore: 60
+      };
+
+      try {
+        const response = await axios.post(`/api/exams/lesson/${this.lessonId}`, examData);
+
+        if (response.data.success) {
+          this.currentExam = response.data.exam;
+          this.$toast?.success('آزمون جدید با موفقیت ایجاد شد');
+          await this.fetchExamData();
+        }
+      } catch (error) {
+        if (error.response?.data?.errorType === 'EXAM_EXISTS_WITH_SUBMISSIONS') {
+          // این نباید اتفاق بیفتد چون قبلاً چک کردیم
+          console.error('Unexpected exam exists error');
+        }
+        throw error;
+      }
+    },
+
+    async createExamWithForce() {
+      const examData = {
+        title: `آزمون ${this.lessonTitle}`,
+        description: `آزمون جدید درس ${this.lessonTitle}`,
+        timeLimit: 60,
+        passingScore: 60
+      };
+
+      try {
+        const response = await axios.post(
+            `/api/exams/lesson/${this.lessonId}?forceReplace=true`,
+            examData
+        );
+
+        if (response.data.success) {
+          this.currentExam = response.data.exam;
+          this.$toast?.success('آزمون جدید ایجاد شد (نتایج قبلی حذف شدند)');
+          await this.fetchExamData();
+        }
+      } catch (error) {
+        console.error('Error creating exam with force:', error);
+        throw error;
+      }
+    },
+    showDeleteConfirmation(examTitle, submissionCount) {
+      return new Promise((resolve) => {
+        const message = `
+      این درس قبلاً آزمون "${examTitle}" دارد که ${submissionCount} دانش‌آموز در آن شرکت کرده‌اند.
+
+      آیا می‌خواهید آزمون جدید ایجاد کنید؟
+      ⚠️ تمام نتایج قبلی حذف خواهد شد!
+    `;
+
+        if (this.$swal) {
+          this.$swal({
+            title: 'هشدار!',
+            text: message,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'بله، آزمون جدید ایجاد کن',
+            cancelButtonText: 'انصراف',
+            reverseButtons: true
+          }).then((result) => {
+            resolve(result.isConfirmed);
+          });
+        } else {
+          // Fallback به confirm معمولی
+          resolve(confirm(message));
+        }
+      });
     },
 
     async saveNewExam() {
