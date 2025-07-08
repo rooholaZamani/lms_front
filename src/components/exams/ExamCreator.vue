@@ -513,13 +513,13 @@ export default {
         }
 
         if (response.data.success) {
-          this.showSuccessToast(this.isEditingQuestion ? 'سوال با موفقیت ویرایش شد.' : 'سوال با موفقیت اضافه شد.');
+          this.$toast.success(this.isEditingQuestion ? 'سوال با موفقیت ویرایش شد.' : 'سوال با موفقیت اضافه شد.');
           this.hideQuestionModal();
           await this.fetchExamQuestions();
         }
       } catch (error) {
         console.error('Error saving question:', error);
-        this.showErrorToast('مشکلی در ذخیره سوال رخ داد. لطفاً دوباره تلاش کنید.');
+        this.toast.error('مشکلی در ذخیره سوال رخ داد. لطفاً دوباره تلاش کنید.');
       } finally {
         this.isQuestionSubmitting = false;
       }

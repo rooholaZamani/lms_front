@@ -22,13 +22,6 @@
           </div>
         </div>
 
-        <!-- Debug Info (حذفش کن بعد از تست) -->
-        <div class="alert alert-info">
-          <strong>Debug:</strong>
-          <p>تعداد سوالات: {{ getTotalQuestionsCount() }}</p>
-          <p>نوع داده answers: {{ typeof submissionData.answers }}</p>
-          <p>کلیدهای submissionData: {{ Object.keys(submissionData) }}</p>
-        </div>
 
         <!-- Score Summary -->
         <div class="row mb-4">
@@ -50,7 +43,7 @@
                   </div>
                   <div class="summary-content">
                     <span class="summary-label">زمان صرف شده</span>
-                    <span class="summary-value">{{ submissionData.timeSpent }} دقیقه</span>
+                    <span class="summary-value">{{ formatDurationSecend(submissionData.timeSpent) }} </span>
                   </div>
                 </div>
               </div>
@@ -283,14 +276,6 @@ export default {
       }
       return [];
     },
-    debugAnswersStructure() {
-      console.log('=== ANSWERS DEBUG ===');
-      console.log('submissionData:', this.submissionData);
-      console.log('answers type:', typeof this.submissionData.answers);
-      console.log('is array:', Array.isArray(this.submissionData.answers));
-      console.log('answers:', this.submissionData.answers);
-      console.log('converted array:', this.getAnswersArray());
-    },
     getTotalQuestionsCount() {
       const answers = this.getAnswersArray();
       return answers.length;
@@ -352,18 +337,8 @@ export default {
         this.loading = true;
         this.error = null;
 
-        console.log('=== DEBUG ExamAnswers ===');
-        console.log('submissionId:', this.submissionId);
-
         const response = await axios.get(`/exams/${this.submissionId}/student-answers`);
         this.submissionData = response.data;
-
-        // Debug logs
-        console.log('API Response:', response.data);
-        console.log('Answers structure:', this.submissionData.answers);
-
-        // اجرای debug method
-        this.debugAnswersStructure();
 
       } catch (error) {
         console.error('Error fetching submission answers:', error);
@@ -412,6 +387,19 @@ export default {
         hour: '2-digit',
         minute: '2-digit'
       })
+    },
+    formatDurationSecend(secends) {
+
+      if (!secends) return '-';
+      const min = Math.floor(secends / 60);
+      const sec = secends % 60;
+      const hrs = Math.floor(min / 60);
+      const mins = min % 60;
+
+      if (sec > 0) {
+        return `${hrs} ساعت و ${mins} دقیقه و ${sec} ثانیه`;
+      }
+      return `${mins} دقیقه`;
     },
 
     getQuestionTypeLabel(type) {

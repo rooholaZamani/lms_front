@@ -566,7 +566,7 @@ export default {
       const hrs = Math.floor(min / 60);
       const mins = min % 60;
 
-      if (min > 0) {
+      if (sec > 0) {
         return `${hrs} ساعت و ${mins} دقیقه و ${sec} ثانیه`;
       }
       return `${mins} دقیقه`;
