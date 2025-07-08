@@ -357,7 +357,7 @@ export default {
     async createNewExam() {
       try {
         // ابتدا بررسی وضعیت درس
-        const statusResponse = await axios.get(`/api/exams/lesson/${this.lessonId}/status`);
+        const statusResponse = await axios.get(`/exams/lesson/${this.lessonId}/status`);
 
         if (statusResponse.data.hasExam && statusResponse.data.submissionCount > 0) {
           // نمایش تأیید برای حذف submissions
@@ -391,7 +391,7 @@ export default {
       };
 
       try {
-        const response = await axios.post(`/api/exams/lesson/${this.lessonId}`, examData);
+        const response = await axios.post(`/exams/lesson/${this.lessonId}`, examData);
 
         if (response.data.success) {
           this.currentExam = response.data.exam;
@@ -417,7 +417,7 @@ export default {
 
       try {
         const response = await axios.post(
-            `/api/exams/lesson/${this.lessonId}?forceReplace=true`,
+            `/exams/lesson/${this.lessonId}?forceReplace=true`,
             examData
         );
 

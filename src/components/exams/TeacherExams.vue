@@ -367,7 +367,7 @@ export default {
 
       try {
         // فراخوانی API حذف آزمون
-        const response = await axios.delete(`/api/exams/${this.selectedExam.id}`);
+        const response = await axios.delete(`/exams/${this.selectedExam.id}`);
 
         if (response.data && response.data.success) {
           // حذف از state محلی

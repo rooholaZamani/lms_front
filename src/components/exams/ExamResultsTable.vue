@@ -61,32 +61,29 @@
                     {{ getStudentInitials(submission.student) }}
                   </div>
                   <div class="student-details">
-                    <div class="student-name">{{ getStudentName(submission.student) }}</div>
-                    <small class="student-username text-muted">
-                      @{{ submission.student?.username || 'نامشخص' }}
-                    </small>
+                    <div class="student-name text-info">{{ submission?.studentName || 'نامشخص'}}</div>
                   </div>
                 </div>
               </td>
               <td>
-                <div class="exam-info">
-                  <div class="exam-title">{{ submission.exam ? submission.exam.title : 'نامشخص' }}</div>
+                <div class="exam-info">?
+                  <div class="exam-title text-info">{{  submission?.examTitle || 'نامشخص'}}</div>
                   <small class="text-muted">
                     <i class="fas fa-question-circle me-1"></i>
-                    {{ submission.exam?.questionCount || 0 }} سوال
+                    {{ submission?.questionCount || 0 }} سوال
                   </small>
                 </div>
               </td>
               <td>
                 <div class="course-info">
                     <span class="modern-badge modern-badge-secondary">
-                      {{ getCourseTitle(submission.exam ? submission.exam.lesson : null) }}
+                      {{ submission?.lessonTitle	 || 'نامشخص' }}
                     </span>
                 </div>
               </td>
               <td>
                 <div class="score-container">
-                  <div class="score-circle" :class="getScoreClass(submission.score)">
+                  <div class="score-circle" :class="submission.score">
                     <span class="score-value">{{ submission.score }}</span>
                     <span class="score-unit">%</span>
                   </div>
@@ -100,7 +97,7 @@
               </td>
               <td>
                 <div class="date-info">
-                  <div class="submission-date">{{ formatDate(submission.submissionTime) }}</div>
+                  <div class="submission-date text-info">{{ formatDate(submission.submissionTime) }}</div>
                   <small class="text-muted">{{ formatTime(submission.submissionTime) }}</small>
                 </div>
               </td>
@@ -180,24 +177,6 @@ export default {
     getCourseTitle(lesson) {
       if (!lesson || !lesson.course) return 'نامشخص';
       return lesson.course.title;
-    },
-    getStudentName(student) {
-      if (!student) return 'نامشخص';
-
-      const firstName = student.firstName || '';
-      const lastName = student.lastName || '';
-
-      if (firstName && lastName) {
-        return `${firstName} ${lastName}`;
-      } else if (firstName) {
-        return firstName;
-      } else if (lastName) {
-        return lastName;
-      } else if (student.username) {
-        return student.username;
-      }
-
-      return 'نامشخص';
     },
 
     getStudentInitials(student) {
