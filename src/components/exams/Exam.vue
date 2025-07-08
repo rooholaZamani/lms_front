@@ -370,9 +370,11 @@ export default {
 
         // Initialize answers object
         if (this.exam.questions) {
+          const initialAnswers = {};
           this.exam.questions.forEach((_, index) => {
-            this.$set(this.answers, index, null);
+            initialAnswers[index] = null;
           });
+          this.answers = initialAnswers;
         }
 
         // Set time limit
@@ -398,7 +400,7 @@ export default {
 
           // Load previous answers
           if (response.data.answers) {
-            this.answers = response.data.answers;
+            this.answers = { ...response.data.answers };
           }
         }
       } catch (error) {
@@ -425,7 +427,11 @@ export default {
     },
 
     updateAnswer(answer) {
-      this.$set(this.answers, this.currentQuestionIndex, answer);
+      // Create a new object to ensure reactivity
+      this.answers = {
+        ...this.answers,
+        [this.currentQuestionIndex]: answer
+      };
     },
 
     toggleQuestionForReview() {
