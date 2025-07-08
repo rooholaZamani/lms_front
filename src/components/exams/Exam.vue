@@ -169,7 +169,7 @@
             :total-questions="exam.questions ? exam.questions.length : 0"
             :selected-answer="answers[currentQuestionIndex]"
             :is-marked-for-review="questionsForReview.includes(currentQuestionIndex)"
-            @answer-selected="updateAnswer"
+            @answer-changed="updateAnswer"
             @mark-for-review="toggleQuestionForReview"
         />
 
@@ -456,12 +456,17 @@ export default {
       }, 1000);
     },
 
-    updateAnswer(answer) {
+    updateAnswer(questionIndex, answer) {
+      console.log('Updating answer for question', questionIndex, 'with value:', answer);
+
       // Create a new object to ensure reactivity
       this.answers = {
         ...this.answers,
-        [this.currentQuestionIndex]: answer
+        [questionIndex]: answer
       };
+
+      // Debug: نمایش وضعیت answers
+      console.log('Current answers:', this.answers);
     },
 
     toggleQuestionForReview() {
@@ -497,11 +502,73 @@ export default {
       }
 
       try {
+        // تبدیل پاسخ‌ها از ایندکس به ID سوالات
+        const submissionAnswers = {};
+
+        this.exam.questions.forEach((question, index) => {
+          const answer = this.answers[index];
+          const questionId = question.id;
+
+          // بررسی نوع سوال و تنظیم پاسخ مناسب
+          switch (question.questionType) {
+            case 'MULTIPLE_CHOICE':
+            case 'TRUE_FALSE':
+              submissionAnswers[questionId] = answer;
+              break;
+
+            case 'SHORT_ANSWER':
+            case 'ESSAY':
+              submissionAnswers[questionId] = answer || '';
+              break;
+
+            case 'FILL_IN_THE_BLANKS':
+              submissionAnswers[questionId] = answer || [];
+              break;
+
+            case 'MATCHING':
+              // اگر پاسخ خالی است، object خالی ارسال کن
+              if (!answer || Object.keys(answer).length === 0) {
+                submissionAnswers[questionId] = {};
+              } else {
+                // فقط پاسخ‌های انتخاب شده را ارسال کن
+                const matchingAnswer = {};
+                Object.keys(answer).forEach(key => {
+                  if (answer[key] && answer[key].trim() !== '') {
+                    matchingAnswer[key] = answer[key];
+                  }
+                });
+                submissionAnswers[questionId] = matchingAnswer;
+              }
+              break;
+
+            case 'CATEGORIZATION':
+              // اگر پاسخ خالی است، object خالی ارسال کن
+              if (!answer || Object.keys(answer).length === 0) {
+                submissionAnswers[questionId] = {};
+              } else {
+                // فقط دسته‌بندی‌های انتخاب شده را ارسال کن
+                const categorizationAnswer = {};
+                Object.keys(answer).forEach(key => {
+                  if (answer[key] && answer[key].trim() !== '') {
+                    categorizationAnswer[key] = answer[key];
+                  }
+                });
+                submissionAnswers[questionId] = categorizationAnswer;
+              }
+              break;
+
+            default:
+              submissionAnswers[questionId] = answer;
+          }
+        });
+
         const submission = {
           examId: this.exam.id,
-          answers: this.answers,
+          answers: submissionAnswers,  // استفاده از submissionAnswers به جای this.answers
           submittedAt: new Date().toISOString()
         };
+
+        console.log('Submission data:', submission); // برای debug
 
         const response = await axios.post(`/exams/${this.id}/submit`, submission);
 
@@ -517,6 +584,7 @@ export default {
         this.$toast?.error('خطا در ارسال آزمون. لطفاً دوباره تلاش کنید.');
       }
     },
+
 
     viewAnswers() {
       this.showingAnswers = true;
