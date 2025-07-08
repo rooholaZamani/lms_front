@@ -1,192 +1,194 @@
 <template>
   <div class="exam-question">
-    <div class="modern-card">
-      <div class="question-text">
-        {{ question.text }}
+    <!-- Question Header -->
+    <div class="question-text">
+      <h5>{{ question.text }}</h5>
+      <div class="question-meta">
+        <span class="points-badge">{{ question.points }} امتیاز</span>
+        <span v-if="question.timeLimit" class="time-badge">{{ question.timeLimit }} دقیقه</span>
+      </div>
+    </div>
+
+    <!-- Question Content Based on Type -->
+    <div class="question-content">
+
+      <!-- Multiple Choice Questions -->
+      <div v-if="question.questionType === 'MULTIPLE_CHOICE'" class="options-section">
+        <div class="options-container">
+          <div v-for="(answer, index) in question.answers"
+               :key="answer.id"
+               class="option-item"
+               :class="{ selected: selectedAnswer === answer.id }"
+               @click="selectedAnswer = answer.id">
+            <div class="option-content">
+              <div class="option-radio">
+                <input type="radio" :value="answer.id" v-model="selectedAnswer" :id="'option-' + answer.id">
+                <label :for="'option-' + answer.id"></label>
+              </div>
+              <div class="option-text">
+                <span class="option-letter">{{ String.fromCharCode(65 + index) }})</span>
+                {{ answer.text }}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div class="question-content">
-        <!-- Multiple Choice Questions -->
-        <div v-if="question.questionType === 'MULTIPLE_CHOICE'" class="options-section">
-          <div class="options-container">
-            <div v-for="(option, index) in question.answers" :key="index"
-                 class="option-item"
-                 :class="{ selected: selectedAnswer === index }"
-                 @click="selectedAnswer = index">
-              <div class="option-content">
-                <div class="option-radio">
-                  <input type="radio"
-                         :value="index"
-                         v-model="selectedAnswer"
-                         :id="`option-${questionIndex}-${index}`">
-                  <label :for="`option-${questionIndex}-${index}`"></label>
-                </div>
-                <div class="option-text">
-                  <span class="option-letter">{{ String.fromCharCode(65 + index) }})</span>
-                  {{ option.text }}
-                </div>
+      <!-- True/False Questions -->
+      <div v-else-if="question.questionType === 'TRUE_FALSE'" class="true-false-section">
+        <div class="options-container">
+          <div class="option-item"
+               :class="{ selected: selectedAnswer === 'true' }"
+               @click="selectedAnswer = 'true'">
+            <div class="option-content">
+              <div class="option-radio">
+                <input type="radio" value="true" v-model="selectedAnswer" id="true-option">
+                <label for="true-option"></label>
+              </div>
+              <div class="option-text">
+                <span class="option-letter">الف)</span>
+                صحیح
+              </div>
+            </div>
+          </div>
+          <div class="option-item"
+               :class="{ selected: selectedAnswer === 'false' }"
+               @click="selectedAnswer = 'false'">
+            <div class="option-content">
+              <div class="option-radio">
+                <input type="radio" value="false" v-model="selectedAnswer" id="false-option">
+                <label for="false-option"></label>
+              </div>
+              <div class="option-text">
+                <span class="option-letter">ب)</span>
+                نادرست
               </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- True/False Questions -->
-        <div v-else-if="question.questionType === 'TRUE_FALSE'" class="options-section">
-          <div class="options-container">
-            <div class="option-item"
-                 :class="{ selected: selectedAnswer === 'true' }"
-                 @click="selectedAnswer = 'true'">
-              <div class="option-content">
-                <div class="option-radio">
-                  <input type="radio" value="true" v-model="selectedAnswer" id="true-option">
-                  <label for="true-option"></label>
-                </div>
-                <div class="option-text">
-                  <span class="option-letter">الف)</span>
-                  صحیح
-                </div>
+      <!-- Short Answer Questions -->
+      <div v-else-if="question.questionType === 'SHORT_ANSWER'" class="short-answer-section">
+        <textarea
+            v-model="selectedAnswer"
+            class="modern-form-control"
+            rows="3"
+            placeholder="پاسخ خود را بنویسید..."
+            maxlength="500">
+        </textarea>
+        <small class="text-muted">حداکثر 500 کاراکتر</small>
+      </div>
+
+      <!-- Essay Questions -->
+      <div v-else-if="question.questionType === 'ESSAY'" class="essay-section">
+        <textarea
+            v-model="selectedAnswer"
+            class="modern-form-control"
+            rows="8"
+            placeholder="پاسخ تشریحی خود را بنویسید..."
+            maxlength="2000">
+        </textarea>
+        <small class="text-muted">حداکثر 2000 کاراکتر</small>
+      </div>
+
+      <!-- Fill in the Blanks Questions -->
+      <div v-else-if="question.questionType === 'FILL_IN_THE_BLANKS'" class="fill-blanks-section">
+        <div class="template-display">
+          <div class="template-with-inputs">
+            <span v-for="(part, index) in getTemplateParts()" :key="index">
+              <span v-if="part.type === 'text'" v-html="part.content"></span>
+              <input
+                  v-else-if="part.type === 'blank'"
+                  type="text"
+                  class="blank-input"
+                  v-model="selectedAnswer[part.blankIndex]"
+                  placeholder="..."
+                  @input="updateBlank(part.blankIndex, $event.target.value)"
+              />
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Matching Questions -->
+      <div v-else-if="question.questionType === 'MATCHING'" class="matching-section mt-4">
+        <h6 class="section-title">
+          <i class="fas fa-link me-2"></i>
+          آیتم‌های متناظر را به هم متصل کنید
+        </h6>
+        <div class="matching-container">
+          <div class="matching-columns">
+            <div class="left-column">
+              <h6>ستون اول</h6>
+              <div v-for="(pair, index) in question.matchingPairs" :key="'left-' + index"
+                   class="matching-item left-item">
+                {{ pair.leftItem }}
               </div>
             </div>
-            <div class="option-item"
-                 :class="{ selected: selectedAnswer === 'false' }"
-                 @click="selectedAnswer = 'false'">
-              <div class="option-content">
-                <div class="option-radio">
-                  <input type="radio" value="false" v-model="selectedAnswer" id="false-option">
-                  <label for="false-option"></label>
-                </div>
-                <div class="option-text">
-                  <span class="option-letter">ب)</span>
-                  نادرست
+            <div class="right-column">
+              <h6>ستون دوم</h6>
+              <div v-for="(pair, index) in shuffledRightItems" :key="'right-' + index"
+                   class="matching-item right-item"
+                   @click="selectRightItem(pair, index)"
+                   :class="{ selected: isRightItemSelected(pair) }">
+                {{ pair.rightItem }}
+              </div>
+            </div>
+          </div>
+          <div class="matching-answers">
+            <div v-for="(pair, index) in question.matchingPairs" :key="'answer-' + index"
+                 class="matching-answer-row">
+              <span class="left-text">{{ pair.leftItem }}</span>
+              <i class="fas fa-arrow-left mx-2"></i>
+              <select v-model="selectedAnswer[pair.leftItem]" class="modern-form-control matching-select">
+                <option value="">انتخاب کنید</option>
+                <option v-for="rightItem in getAllRightItems()" :key="rightItem.rightItem" :value="rightItem.rightItem">
+                  {{ rightItem.rightItem }}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Categorization Questions -->
+      <div v-else-if="question.questionType === 'CATEGORIZATION'" class="categorization-section mt-4">
+        <h6 class="section-title">
+          <i class="fas fa-layer-group me-2"></i>
+          آیتم‌ها را در دسته‌های مناسب قرار دهید
+        </h6>
+        <div class="categorization-container">
+          <div class="categories-display">
+            <div v-for="category in question.categories" :key="category" class="category-box">
+              <h6 class="category-title">{{ category }}</h6>
+              <div class="category-items">
+                <div v-for="item in getItemsInCategory(category)" :key="item" class="categorized-item">
+                  {{ item }}
                 </div>
               </div>
             </div>
           </div>
-        </div>
-
-        <!-- Short Answer Questions -->
-        <div v-else-if="question.questionType === 'SHORT_ANSWER'" class="short-answer-section">
-          <textarea
-              v-model="selectedAnswer"
-              class="modern-form-control"
-              rows="3"
-              placeholder="پاسخ خود را بنویسید..."
-              maxlength="500">
-          </textarea>
-          <small class="text-muted">حداکثر 500 کاراکتر</small>
-        </div>
-
-        <!-- Essay Questions -->
-        <div v-else-if="question.questionType === 'ESSAY'" class="essay-section">
-          <textarea
-              v-model="selectedAnswer"
-              class="modern-form-control"
-              rows="8"
-              placeholder="پاسخ تشریحی خود را بنویسید..."
-              maxlength="2000">
-          </textarea>
-          <small class="text-muted">حداکثر 2000 کاراکتر</small>
-        </div>
-
-        <!-- Fill in the Blanks Questions -->
-        <div v-else-if="question.questionType === 'FILL_IN_THE_BLANKS'" class="fill-blanks-section">
-          <div class="template-display">
-            <div v-html="getTemplateWithBlanks()"></div>
-          </div>
-        </div>
-
-        <!-- Matching Questions -->
-        <div v-else-if="question.questionType === 'MATCHING'" class="matching-section mt-4">
-          <h6 class="section-title">
-            <i class="fas fa-link me-2"></i>
-            آیتم‌های متناظر را به هم متصل کنید
-          </h6>
-          <div class="matching-container">
-            <div class="matching-columns">
-              <div class="left-column">
-                <h6>ستون اول</h6>
-                <div v-for="(pair, index) in question.matchingPairs" :key="'left-' + index"
-                     class="matching-item left-item">
-                  {{ pair.leftItem }}
-                </div>
-              </div>
-              <div class="right-column">
-                <h6>ستون دوم</h6>
-                <div v-for="(pair, index) in getShuffledRightItems()" :key="'right-' + index"
-                     class="matching-item right-item"
-                     @click="selectRightItem(pair, index)"
-                     :class="{ selected: isRightItemSelected(pair) }">
-                  {{ pair.rightItem }}
-                </div>
-              </div>
-            </div>
-            <div class="matching-answers">
-              <div v-for="(pair, index) in question.matchingPairs" :key="'answer-' + index"
-                   class="matching-answer-row">
-                <span class="left-text">{{ pair.leftItem }}</span>
-                <i class="fas fa-arrow-left mx-2"></i>
-                <select v-model="selectedAnswer[pair.leftItem]" class="modern-form-control matching-select">
-                  <option value="">انتخاب کنید</option>
-                  <option v-for="rightItem in getAllRightItems()" :key="rightItem.rightItem" :value="rightItem.rightItem">
-                    {{ rightItem.rightItem }}
-                  </option>
-                </select>
-              </div>
+          <div class="items-to-categorize">
+            <h6>آیتم‌های قابل دسته‌بندی:</h6>
+            <div v-for="item in question.answers" :key="item.id" class="categorization-answer-row">
+              <span class="item-text">{{ item.text }}</span>
+              <select v-model="selectedAnswer[item.text]" class="modern-form-control category-select">
+                <option value="">انتخاب دسته</option>
+                <option v-for="category in question.categories" :key="category" :value="category">
+                  {{ category }}
+                </option>
+              </select>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Categorization Questions -->
-        <div v-else-if="question.questionType === 'CATEGORIZATION'" class="categorization-section mt-4">
-          <h6 class="section-title">
-            <i class="fas fa-layer-group me-2"></i>
-            آیتم‌ها را در دسته‌های مناسب قرار دهید
-          </h6>
-          <div class="categorization-container">
-            <div class="categories-display">
-              <div v-for="category in question.categories" :key="category" class="category-box">
-                <h6 class="category-title">{{ category }}</h6>
-                <div class="category-items">
-                  <div v-for="item in getItemsInCategory(category)" :key="item"
-                       class="categorized-item">
-                    {{ item }}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="items-to-categorize">
-              <h6>آیتم‌ها:</h6>
-              <div v-for="item in question.answers" :key="item.text"
-                   class="categorization-answer-row">
-                <span class="item-text">{{ item.text }}</span>
-                <select v-model="selectedAnswer[item.text]" class="modern-form-control category-select">
-                  <option value="">انتخاب دسته</option>
-                  <option v-for="category in question.categories" :key="category" :value="category">
-                    {{ category }}
-                  </option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Progress Indicator -->
-        <div class="question-progress mt-4">
-          <div class="progress-info">
-            <small class="text-muted">
-              <i class="fas fa-list-ol me-1"></i>
-              پیشرفت: {{ questionIndex + 1 }} از {{ totalQuestions }} سوال
-            </small>
-          </div>
-          <div class="progress progress-sm">
-            <div class="progress-bar bg-primary"
-                 role="progressbar"
-                 :style="`width: ${((questionIndex + 1) / totalQuestions) * 100}%`"
-                 :aria-valuenow="((questionIndex + 1) / totalQuestions) * 100"
-                 aria-valuemin="0"
-                 aria-valuemax="100">
-            </div>
-          </div>
+      <!-- Question Hint -->
+      <div v-if="question.hint" class="hint-section mt-3">
+        <div class="hint-box">
+          <i class="fas fa-lightbulb text-warning me-2"></i>
+          <span>{{ question.hint }}</span>
         </div>
       </div>
     </div>
@@ -194,8 +196,8 @@
 </template>
 
 <script>
+
 export default {
-  name: 'ExamQuestion',
   props: {
     question: {
       type: Object,
@@ -205,9 +207,9 @@ export default {
       type: Number,
       required: true
     },
-    totalQuestions: {
-      type: Number,
-      required: true
+    showCorrectAnswer: {
+      type: Boolean,
+      default: false
     },
     answer: {
       type: [String, Number, Boolean, Object, Array],
@@ -286,22 +288,47 @@ export default {
       return matches ? matches.length : 0;
     },
 
-    getTemplateWithBlanks() {
-      if (!this.question.template) return this.question.text;
+    // اصلاح متد getTemplateParts برای جای خالی
+    getTemplateParts() {
+      if (!this.question.template) return [{type: 'text', content: this.question.text}];
 
-      let template = this.question.template;
-      const blanks = this.selectedAnswer || [];
+      const template = this.question.template;
+      const parts = [];
+      let currentIndex = 0;
+      let blankIndex = 0;
 
-      blanks.forEach((blank, index) => {
-        const input = `<input type="text"
-                              class="blank-input"
-                              v-model="selectedAnswer[${index}]"
-                              placeholder="..."
-                              @input="updateBlank(${index}, $event.target.value)">`;
-        template = template.replace('{}', input);
-      });
+      while (currentIndex < template.length) {
+        const blankPosition = template.indexOf('{}', currentIndex);
 
-      return template;
+        if (blankPosition === -1) {
+          // No more blanks, add remaining text
+          if (currentIndex < template.length) {
+            parts.push({
+              type: 'text',
+              content: template.substring(currentIndex)
+            });
+          }
+          break;
+        }
+
+        // Add text before blank
+        if (blankPosition > currentIndex) {
+          parts.push({
+            type: 'text',
+            content: template.substring(currentIndex, blankPosition)
+          });
+        }
+
+        // Add blank input
+        parts.push({
+          type: 'blank',
+          blankIndex: blankIndex++
+        });
+
+        currentIndex = blankPosition + 2; // Skip '{}'
+      }
+
+      return parts;
     },
 
     updateBlank(index, value) {
@@ -359,15 +386,44 @@ export default {
 
 /* Question text styling */
 .question-text {
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 12px;
+  border-left: 4px solid #667eea;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.question-text h5 {
   font-size: 1.2rem;
   font-weight: 600;
   color: #333;
   line-height: 1.6;
-  margin-bottom: 2rem;
-  padding: 1.5rem;
-  background: rgba(102, 126, 234, 0.05);
-  border-radius: 12px;
-  border-left: 4px solid #667eea;
+  margin-bottom: 1rem;
+}
+
+.question-meta {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.points-badge, .time-badge {
+  font-size: 0.85rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.points-badge {
+  background: rgba(40, 167, 69, 0.1);
+  color: #28a745;
+  border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.time-badge {
+  background: rgba(255, 193, 7, 0.1);
+  color: #ffc107;
+  border: 1px solid rgba(255, 193, 7, 0.2);
 }
 
 /* Options section */
@@ -458,6 +514,56 @@ export default {
   font-weight: 600;
   color: #667eea;
   min-width: 30px;
+}
+
+/* Form controls */
+.modern-form-control {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.modern-form-control:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Fill in the blanks */
+.template-display {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  line-height: 2;
+  font-size: 1.1rem;
+}
+
+.template-with-inputs {
+  display: inline;
+}
+
+.blank-input {
+  display: inline-block;
+  width: 120px;
+  padding: 0.4rem 0.8rem;
+  border: 2px solid #667eea;
+  border-radius: 6px;
+  text-align: center;
+  font-weight: 500;
+  margin: 0 0.3rem;
+  font-size: 1rem;
+  vertical-align: baseline;
+}
+
+.blank-input:focus {
+  outline: none;
+  border-color: #4c63d2;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
 }
 
 /* Matching Questions */
@@ -648,49 +754,25 @@ export default {
   max-width: 200px;
 }
 
-/* Fill in the blanks */
-.template-display {
-  background: white;
-  padding: 1.5rem;
+/* Hint section */
+.hint-section {
+  margin-top: 1.5rem;
+}
+
+.hint-box {
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
   border-radius: 8px;
-  border: 1px solid rgba(102, 126, 234, 0.1);
-  line-height: 1.8;
+  padding: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
 }
 
-.blank-input {
-  display: inline-block;
-  width: 120px;
-  padding: 0.25rem 0.5rem;
-  border: 1px solid #667eea;
-  border-radius: 4px;
-  text-align: center;
-  font-weight: 500;
-  margin: 0 0.25rem;
-}
-
-.blank-input:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
-}
-
-/* Progress indicator */
-.question-progress {
-  margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid rgba(102, 126, 234, 0.1);
-}
-
-.progress-info {
-  margin-bottom: 0.5rem;
-}
-
-.progress-sm {
-  height: 6px;
-}
-
-.progress-bar {
-  transition: width 0.3s ease;
+.text-muted {
+  color: #6c757d;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
 }
 
 /* Responsive design */
@@ -714,6 +796,11 @@ export default {
   .matching-select,
   .category-select {
     max-width: none;
+  }
+
+  .blank-input {
+    width: 100px;
+    margin: 0.2rem;
   }
 }
 </style>
