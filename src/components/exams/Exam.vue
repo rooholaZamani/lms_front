@@ -155,7 +155,7 @@
               </div>
             </div>
           </div>
-          <div class="exam-timer">
+          <div class="exam-timer" :class="getTimerClass()">
             <i class="fas fa-clock me-2"></i>
             {{ formatTime(timeRemaining) }}
           </div>
@@ -336,7 +336,9 @@ export default {
       previousResult: null,
       studentScore: 0,
       studentPassed: false,
-      studentSubmissionTime: null
+      studentSubmissionTime: null,
+      warningShown: false,
+      finalWarningShown: false
     };
   },
   computed: {
@@ -362,6 +364,11 @@ export default {
     }
   },
   methods: {
+    getTimerClass() {
+      if (this.timeRemaining <= 60) return 'timer-critical';
+      if (this.timeRemaining <= 300) return 'timer-warning';
+      return '';
+    },
     async fetchExam() {
       try {
         this.loading = true;
@@ -426,7 +433,20 @@ export default {
       this.timer = setInterval(() => {
         if (this.timeRemaining > 0) {
           this.timeRemaining--;
+
+          // هشدار 5 دقیقه قبل از پایان
+          if (this.timeRemaining === 300 && !this.warningShown) {
+            this.warningShown = true;
+            this.$toast?.warning('5 دقیقه تا پایان آزمون باقی مانده است');
+          }
+
+          // هشدار 1 دقیقه قبل از پایان
+          if (this.timeRemaining === 60 && !this.finalWarningShown) {
+            this.finalWarningShown = true;
+            this.$toast?.error('1 دقیقه تا پایان آزمون باقی مانده است');
+          }
         } else {
+          this.$toast?.info('زمان آزمون به پایان رسید. آزمون خودکار ارسال می‌شود...');
           this.finishExam();
         }
       }, 1000);
@@ -946,6 +966,26 @@ export default {
   justify-content: center;
   gap: 1rem;
   flex-wrap: wrap;
+}
+
+.timer-warning {
+  color: #ffc107 !important;
+  animation: pulse 2s infinite;
+}
+
+.timer-critical {
+  color: #dc3545 !important;
+  animation: blink 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0.5; }
 }
 
 /* Responsive */
