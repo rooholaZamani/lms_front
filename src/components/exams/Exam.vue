@@ -162,17 +162,16 @@
         </div>
 
         <!-- Question Content Using ExamQuestion Component -->
-        <div class="question-container" v-if="currentQuestion">
-          <ExamQuestion
-              :question="currentQuestion"
-              :question-number="currentQuestionIndex + 1"
-              :total-questions="exam.questions ? exam.questions.length : 0"
-              :selected-answer="answers[currentQuestionIndex]"
-              :is-marked-for-review="questionsForReview.includes(currentQuestionIndex)"
-              @answer-selected="updateAnswer"
-              @mark-for-review="toggleQuestionForReview"
-          />
-        </div>
+        <ExamQuestion
+            :question="currentQuestion"
+            :question-number="currentQuestionIndex + 1"
+            :question-index="currentQuestionIndex"
+            :total-questions="exam.questions ? exam.questions.length : 0"
+            :selected-answer="answers[currentQuestionIndex]"
+            :is-marked-for-review="questionsForReview.includes(currentQuestionIndex)"
+            @answer-selected="updateAnswer"
+            @mark-for-review="toggleQuestionForReview"
+        />
 
         <!-- Navigation -->
         <div class="exam-navigation">
@@ -267,6 +266,7 @@
               <ExamQuestion
                   :question="question"
                   :question-number="index + 1"
+                  :question-index="index"
                   :total-questions="exam.questions.length"
                   :selected-answer="answers[index]"
                   :show-correct-answer="true"
@@ -390,17 +390,23 @@ export default {
 
     async checkPreviousSubmission() {
       try {
-        const response = await axios.get(`/exams/${this.id}/submission`);
-        if (response.data && response.data.id) {
+        const response = await axios.get(`/exams/${this.id}/submission-status`);
+
+        if (response.data && response.data.hasTaken) {
           this.previousResult = response.data;
           this.showingAnswers = true;
           this.studentScore = response.data.score;
           this.studentPassed = response.data.passed;
-          this.studentSubmissionTime = response.data.submittedAt;
+          this.studentSubmissionTime = response.data.submissionTime;
 
-          // Load previous answers
-          if (response.data.answers) {
-            this.answers = { ...response.data.answers };
+          // اگر نیاز به پاسخ‌های قبلی دارید، از endpoint جداگانه استفاده کنید
+          try {
+            const answersResponse = await axios.get(`/exams/${this.id}/student-answers`);
+            if (answersResponse.data && answersResponse.data.answers) {
+              this.answers = { ...answersResponse.data.answers };
+            }
+          } catch (answerError) {
+            console.log('Could not load previous answers:', answerError);
           }
         }
       } catch (error) {

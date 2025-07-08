@@ -335,7 +335,10 @@ export default {
       if (!Array.isArray(this.selectedAnswer)) {
         this.selectedAnswer = Array(this.getBlankCount()).fill('');
       }
-      this.$set(this.selectedAnswer, index, value);
+      const newAnswer = [...this.selectedAnswer];
+      newAnswer[index] = value;
+      this.selectedAnswer = newAnswer;
+      this.$emit('answer-selected', this.selectedAnswer);
     },
 
     // Matching Methods
