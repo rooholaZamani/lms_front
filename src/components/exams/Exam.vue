@@ -221,6 +221,10 @@
 
       <!-- Student Answers Display -->
       <div v-else-if="showingAnswers" class="student-answers-section">
+        <button class="modern-btn modern-btn-outline mb-3" @click="$router.go(-1)">
+          <i class="fas fa-arrow-right me-1"></i>
+          بازگشت
+        </button>
         <div class="modern-card">
           <h6 class="section-title">
             <i class="fas fa-clipboard-list me-2"></i>
