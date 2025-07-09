@@ -310,35 +310,35 @@
   </div>
   <!-- Student Answers Modal -->
   <div class="modal fade" id="studentAnswersModal" tabindex="-1">
-    <div v-if="selectedStudentAnswers" class="student-answers-content">
+    <div class="student-answers-content">
       <!-- Student Info -->
       <div class="student-info mb-4">
         <div class="row">
           <div class="col-md-4">
-            <strong>دانش‌آموز:</strong> {{ selectedStudentAnswers.studentName }}
+            <strong>دانش‌آموز:</strong> {{ selectedStudentAnswers?.studentName }}
           </div>
           <div class="col-md-4">
             <strong>نمره:</strong>
-            <span :class="selectedStudentAnswers.passed ? 'text-success' : 'text-danger'">
-            {{ selectedStudentAnswers.score }}/{{ selectedStudentAnswers.totalScore }}
+            <span :class="selectedStudentAnswers?.passed ? 'text-success' : 'text-danger'">
+            {{ selectedStudentAnswers?.score }}/{{ selectedStudentAnswers?.totalScore }}
           </span>
           </div>
           <div class="col-md-4">
             <strong>وضعیت:</strong>
-            <span :class="selectedStudentAnswers.passed ? 'badge bg-success' : 'badge bg-danger'">
-            {{ selectedStudentAnswers.passed ? 'قبول' : 'مردود' }}
+            <span :class="selectedStudentAnswers?.passed ? 'badge bg-success' : 'badge bg-danger'">
+            {{ selectedStudentAnswers?.passed ? 'قبول' : 'مردود' }}
           </span>
           </div>
         </div>
       </div>
 
       <!-- Questions and Answers -->
-      <div v-if="selectedStudentAnswers.answers" class="questions-list">
-        <div v-for="(answerData, index) in selectedStudentAnswers.answers"
-             :key="answerData.questionId" class="question-item mb-4 p-3 border rounded">
+      <div v-if="selectedStudentAnswers?.answers" class="questions-list">
+        <div v-for="(answerData, index) in selectedStudentAnswers?.answers"
+             :key="answerData?.questionId" class="question-item mb-4 p-3 border rounded">
           <div class="question-header mb-3">
-            <h6>سوال {{ index + 1 }}: {{ answerData.questionText }}</h6>
-            <small class="text-muted">نوع: {{ getQuestionTypeLabel(answerData.questionType) }}</small>
+            <h6>سوال {{ index + 1 }}: {{ answerData?.questionText }}</h6>
+            <small class="text-muted">نوع: {{ getQuestionTypeLabel(answerData?.questionType) }}</small>
           </div>
 
           <div class="answer-details">
@@ -357,11 +357,11 @@
               </div>
             </div>
             <div class="d-flex justify-content-between align-items-center mt-3">
-            <span :class="answerData.isCorrect ? 'badge bg-success' : 'badge bg-danger'">
-              {{ answerData.isCorrect ? 'درست' : 'نادرست' }}
+            <span :class="answerData?.isCorrect ? 'badge bg-success' : 'badge bg-danger'">
+              {{ answerData?.isCorrect ? 'درست' : 'نادرست' }}
             </span>
               <span class="text-muted">
-              امتیاز: {{ answerData.earnedPoints }}/{{ answerData.totalPoints }}
+              امتیاز: {{ answerData?.earnedPoints }}/{{ answerData?.totalPoints }}
             </span>
             </div>
           </div>
@@ -375,6 +375,7 @@
 import axios from 'axios'
 import Chart from 'chart.js/auto'
 import exams from "@/store/exams.js";
+import {nextTick} from "vue";
 
 export default {
   name: 'ExamResults',
@@ -582,6 +583,8 @@ export default {
           answers: answersArray
         };
         console.log("response.data:"+this.selectedStudentAnswers.studentName);
+
+        await nextTick(() => {
           const modalElement = document.getElementById('studentAnswersModal');
           if (modalElement) {
             const modal = new bootstrap.Modal(modalElement);
@@ -589,7 +592,7 @@ export default {
           } else {
             console.error('Modal element not found');
           }
-
+        })
 
       } catch (error) {
         console.error('Error fetching student answers:', error);
