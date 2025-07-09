@@ -299,6 +299,18 @@ const routes = [
   //   }
   // },
   {
+    path: '/teacher/manual-grading',
+    name: 'ExamManualGradingList',
+    component: () => import('../components/exams/ExamManualGradingList.vue'),
+    meta: {
+      title: 'نمره‌گذاری دستی آزمون‌ها',
+      requiresAuth: true,
+      requiresTeacher: true,
+      showSidebar: true
+    }
+  },
+
+  {
     path: '/student/exam-results',
     name: 'StudentExamResults',
     component: () => import(/* webpackChunkName: "student-exams-table" */ '../components/exams/StudentExamResults.vue'),

@@ -1,14 +1,11 @@
 <template>
   <div class="exam-manual-grading">
     <div class="container-fluid">
-      <!-- Header -->
+      <!-- Page Header -->
       <div class="page-header">
         <div class="d-flex justify-content-between align-items-center">
           <div>
-            <h2 class="page-title">
-              <i class="fas fa-clipboard-check me-2"></i>
-              نمره‌گذاری دستی آزمون
-            </h2>
+            <h1 class="page-title">نمره‌گذاری دستی آزمون</h1>
             <p class="page-subtitle" v-if="examData">{{ examData.examTitle }}</p>
           </div>
           <button class="modern-btn modern-btn-outline" @click="goBack">
@@ -18,22 +15,22 @@
         </div>
       </div>
 
-      <!-- Loading -->
+      <!-- Loading State -->
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">در حال بارگذاری...</span>
         </div>
       </div>
 
-      <!-- Error -->
+      <!-- Error State -->
       <div v-else-if="error" class="alert alert-danger">
         <i class="fas fa-exclamation-triangle me-2"></i>
         {{ error }}
       </div>
 
-      <!-- Content -->
-      <div v-else-if="examData" class="grading-content">
-        <!-- Statistics Cards -->
+      <!-- Main Content -->
+      <div v-else-if="examData">
+        <!-- Stats -->
         <div class="row mb-4">
           <div class="col-md-3">
             <div class="stat-card">
@@ -59,23 +56,23 @@
           </div>
           <div class="col-md-3">
             <div class="stat-card">
-              <div class="stat-icon bg-success">
-                <i class="fas fa-check"></i>
+              <div class="stat-icon bg-info">
+                <i class="fas fa-clipboard-list"></i>
               </div>
               <div class="stat-content">
-                <h3>{{ examData.totalSubmissions - examData.needsGradingCount }}</h3>
-                <p>نمره‌گذاری شده</p>
+                <h3>{{ manualQuestionsCount }}</h3>
+                <p>سوالات تشریحی</p>
               </div>
             </div>
           </div>
           <div class="col-md-3">
             <div class="stat-card">
-              <div class="stat-icon bg-info">
-                <i class="fas fa-question"></i>
+              <div class="stat-icon bg-success">
+                <i class="fas fa-check"></i>
               </div>
               <div class="stat-content">
-                <h3>{{ manualQuestionsCount }}</h3>
-                <p>سوالات تشریحی</p>
+                <h3>{{ examData.totalSubmissions - examData.needsGradingCount }}</h3>
+                <p>تکمیل شده</p>
               </div>
             </div>
           </div>
@@ -86,7 +83,7 @@
           <div class="modern-card-header">
             <h5 class="card-title mb-0">
               <i class="fas fa-list me-2"></i>
-              لیست ارسالی‌ها
+              ارسالی‌های نیازمند نمره‌گذاری
             </h5>
           </div>
           <div class="modern-card-body">
@@ -94,6 +91,7 @@
               <table class="table table-hover">
                 <thead>
                 <tr>
+                  <th>ردیف</th>
                   <th>دانش‌آموز</th>
                   <th>زمان ارسال</th>
                   <th>نمره فعلی</th>
@@ -102,47 +100,28 @@
                 </tr>
                 </thead>
                 <tbody>
-                <tr v-for="submission in examData.submissions" :key="submission.id">
+                <tr v-for="(submission, index) in examData.submissions" :key="submission.id">
+                  <td>{{ index + 1 }}</td>
                   <td>
                     <div class="student-info">
-                      <div class="student-name">{{ submission.studentName }}</div>
-                      <div class="student-username">{{ submission.studentUsername }}</div>
+                      <div class="student-name">{{ getStudentName(submission) }}</div>
+                      <div class="student-username">{{ submission.student.username }}</div>
                     </div>
                   </td>
+                  <td>{{ formatDateTime(submission.submissionTime) }}</td>
                   <td>
-                    <div class="submission-time">
-                      {{ formatDateTime(submission.submissionTime) }}
-                    </div>
+                    <span class="score-display">{{ submission.score || 0 }}</span>
                   </td>
                   <td>
-                    <div class="score-display">
-                      <span class="score-number">{{ submission.score || 0 }}</span>
-                      <span class="score-total">/ {{ examData.totalPossibleScore || 0 }}</span>
-                      <div :class="getScoreStatusClass(submission)" class="score-status">
-                        {{ submission.passed ? 'قبول' : 'مردود' }}
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                      <span v-if="submission.gradedManually" class="badge badge-success">
-                        <i class="fas fa-check me-1"></i>
-                        نمره‌گذاری شده
-                      </span>
-                    <span v-else-if="submission.needsManualGrading" class="badge badge-warning">
-                        <i class="fas fa-clock me-1"></i>
-                        نیاز به نمره‌گذاری
-                      </span>
-                    <span v-else class="badge badge-info">
-                        <i class="fas fa-robot me-1"></i>
-                        خودکار
-                      </span>
+                    <span class="badge" :class="getGradingStatusClass(submission)">
+                      {{ getGradingStatusText(submission) }}
+                    </span>
                   </td>
                   <td>
                     <div class="action-buttons">
                       <button
-                          class="modern-btn modern-btn-sm modern-btn-primary me-2"
+                          class="modern-btn modern-btn-sm modern-btn-primary"
                           @click="gradeSubmission(submission)"
-                          :disabled="!submission.needsManualGrading && submission.gradedManually"
                       >
                         <i class="fas fa-edit me-1"></i>
                         {{ submission.gradedManually ? 'ویرایش نمره' : 'نمره‌گذاری' }}
@@ -302,6 +281,73 @@
           </div>
         </div>
       </div>
+
+      <!-- View Modal -->
+      <div class="modal fade" id="viewModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">
+                <i class="fas fa-eye me-2"></i>
+                مشاهده ارسالی
+              </h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div v-if="viewData">
+                <div class="row">
+                  <div class="col-md-6">
+                    <h6>اطلاعات دانش‌آموز</h6>
+                    <div class="detail-list">
+                      <div class="detail-item">
+                        <span class="detail-label">نام:</span>
+                        <span class="detail-value">{{ viewData.studentName }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">زمان ارسال:</span>
+                        <span class="detail-value">{{ formatDateTime(viewData.submissionTime) }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <h6>نتایج</h6>
+                    <div class="detail-list">
+                      <div class="detail-item">
+                        <span class="detail-label">نمره:</span>
+                        <span class="detail-value">{{ viewData.currentScore || 0 }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="detail-label">وضعیت نمره‌گذاری:</span>
+                        <span class="detail-value">
+                          <span class="badge" :class="viewData.gradedManually ? 'bg-success' : 'bg-warning'">
+                            {{ viewData.gradedManually ? 'تکمیل شده' : 'در انتظار' }}
+                          </span>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="viewData.currentFeedback" class="mt-4">
+                  <h6>بازخورد</h6>
+                  <div class="feedback-display">
+                    {{ viewData.currentFeedback }}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                بستن
+              </button>
+              <button type="button" class="btn btn-primary" @click="editFromView" v-if="viewData && !viewData.gradedManually">
+                <i class="fas fa-edit me-2"></i>
+                شروع نمره‌گذاری
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -324,6 +370,7 @@ export default {
       examData: null,
       selectedSubmission: null,
       gradingData: null,
+      viewData: null,
       manualGrades: {},
       feedback: '',
       submitting: false,
@@ -382,24 +429,71 @@ export default {
 
       } catch (error) {
         console.error('Error loading grading detail:', error);
-        this.$toast?.error('خطا در بارگذاری جزئیات');
+        this.$toast?.error('خطا در دریافت جزئیات نمره‌گذاری');
       }
     },
 
+    async viewSubmission(submission) {
+      try {
+        const response = await axios.get(`/exams/submissions/${submission.id}/grading-detail`);
+        this.viewData = response.data;
+
+        // Show view modal
+        const modal = new bootstrap.Modal(document.getElementById('viewModal'));
+        modal.show();
+
+      } catch (error) {
+        console.error('Error loading submission detail:', error);
+        this.$toast?.error('خطا در دریافت جزئیات ارسالی');
+      }
+    },
+
+    editFromView() {
+      // Close view modal
+      const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewModal'));
+      viewModal.hide();
+
+      // Open grading modal with the same data
+      this.selectedSubmission = { id: this.viewData.submissionId };
+      this.gradingData = this.viewData;
+
+      // Initialize manual grades
+      this.manualGrades = {};
+      this.feedback = this.gradingData.currentFeedback || '';
+
+      Object.keys(this.gradingData.questions).forEach(questionId => {
+        const question = this.gradingData.questions[questionId];
+        if (question.needsManualGrading) {
+          this.manualGrades[questionId] = question.manualGrade || 0;
+        }
+      });
+
+      this.calculateTotalScore();
+
+      // Show grading modal
+      setTimeout(() => {
+        const modal = new bootstrap.Modal(document.getElementById('gradingModal'));
+        modal.show();
+      }, 300);
+    },
+
     calculateTotalScore() {
+      if (!this.gradingData || !this.gradingData.questions) return;
+
       let total = 0;
 
-      if (this.gradingData) {
-        Object.keys(this.gradingData.questions).forEach(questionId => {
-          const question = this.gradingData.questions[questionId];
+      Object.keys(this.gradingData.questions).forEach(questionId => {
+        const question = this.gradingData.questions[questionId];
 
-          if (question.needsManualGrading) {
-            total += parseInt(this.manualGrades[questionId] || 0);
-          } else {
-            total += question.autoGrade || 0;
-          }
-        });
-      }
+        if (question.needsManualGrading) {
+          // نمره دستی
+          const manualScore = parseInt(this.manualGrades[questionId]) || 0;
+          total += Math.min(Math.max(manualScore, 0), question.points);
+        } else {
+          // نمره خودکار
+          total += question.autoGrade || 0;
+        }
+      });
 
       this.totalCalculatedScore = total;
     },
@@ -413,16 +507,23 @@ export default {
           feedback: this.feedback
         };
 
-        await axios.post(`/exams/submissions/${this.selectedSubmission.id}/manual-grade`, gradingData);
+        const response = await axios.post(
+            `/exams/submissions/${this.selectedSubmission.id}/manual-grade`,
+            gradingData
+        );
 
-        this.$toast?.success('نمرات با موفقیت ذخیره شد');
+        if (response.data.success) {
+          this.$toast?.success('نمره‌گذاری با موفقیت انجام شد');
 
-        // Hide modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('gradingModal'));
-        modal.hide();
+          // Close modal
+          const modal = bootstrap.Modal.getInstance(document.getElementById('gradingModal'));
+          modal.hide();
 
-        // Refresh data
-        await this.fetchData();
+          // Refresh data
+          await this.fetchData();
+        } else {
+          this.$toast?.error(response.data.message || 'خطا در ذخیره نمرات');
+        }
 
       } catch (error) {
         console.error('Error saving grades:', error);
@@ -432,12 +533,32 @@ export default {
       }
     },
 
-    viewSubmission(submission) {
-      this.$router.push(`/exam-answers/${submission.id}`);
+    getStudentName(submission) {
+      return `${submission.student.firstName} ${submission.student.lastName || ''}`.trim();
     },
 
-    getScoreStatusClass(submission) {
-      return submission.passed ? 'text-success' : 'text-danger';
+    getGradingStatusClass(submission) {
+      if (submission.gradedManually) {
+        return 'bg-success';
+      } else if (submission.needsManualGrading) {
+        return 'bg-warning text-dark';
+      } else {
+        return 'bg-info';
+      }
+    },
+
+    getGradingStatusText(submission) {
+      if (submission.gradedManually) {
+        return 'تکمیل شده';
+      } else if (submission.needsManualGrading) {
+        return 'در انتظار نمره‌گذاری';
+      } else {
+        return 'خودکار';
+      }
+    },
+
+    getStatusClass(passed) {
+      return passed ? 'text-success' : 'text-danger';
     },
 
     getQuestionTypeText(type) {
@@ -552,102 +673,79 @@ export default {
 
 .modern-card-header {
   background: #f8f9fa;
-  padding: 1.5rem 2rem;
+  padding: 1.5rem;
   border-bottom: 1px solid #dee2e6;
 }
 
 .modern-card-body {
-  padding: 0;
+  padding: 1.5rem;
 }
 
-.table {
-  margin: 0;
-}
-
-.table th {
-  background: #f8f9fa;
+.modern-btn {
   border: none;
-  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
   font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.modern-btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.modern-btn-primary {
+  background: #007bff;
+  color: white;
+}
+
+.modern-btn-primary:hover {
+  background: #0056b3;
+  color: white;
+}
+
+.modern-btn-outline {
+  background: transparent;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+}
+
+.modern-btn-outline:hover {
+  background: #f8f9fa;
   color: #495057;
 }
 
-.table td {
-  padding: 1rem 1.5rem;
-  border: none;
-  border-bottom: 1px solid #f1f3f4;
-  vertical-align: middle;
+.student-info {
+  display: flex;
+  flex-direction: column;
 }
 
-.student-info .student-name {
+.student-name {
   font-weight: 600;
   color: #2c3e50;
 }
 
-.student-info .student-username {
-  font-size: 0.9rem;
+.student-username {
+  font-size: 0.85rem;
   color: #6c757d;
 }
 
 .score-display {
-  text-align: center;
-}
-
-.score-number {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 600;
+  font-size: 1.1rem;
   color: #2c3e50;
 }
-
-.score-total {
-  color: #6c757d;
-  margin-right: 0.25rem;
-}
-
-.score-status {
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin-top: 0.25rem;
-}
-
-.badge {
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.badge-success { background: #d4edda; color: #155724; }
-.badge-warning { background: #fff3cd; color: #856404; }
-.badge-info { background: #d1ecf1; color: #0c5460; }
-.badge-primary { background: #cce7ff; color: #004085; }
-.badge-secondary { background: #e2e3e5; color: #383d41; }
-.badge-danger { background: #f8d7da; color: #721c24; }
-.badge-light { background: #fefefe; color: #495057; border: 1px solid #dee2e6; }
 
 .action-buttons {
   display: flex;
   gap: 0.5rem;
 }
 
-.modern-btn-sm {
-  padding: 0.5rem 1rem;
-  font-size: 0.85rem;
-}
-
-/* Modal Styles */
-.grading-form {
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-.student-header {
-  background: #f8f9fa;
-  padding: 1rem;
-  border-radius: 10px;
-}
-
 .question-card {
+  background: white;
   border: 1px solid #dee2e6;
   border-radius: 10px;
   overflow: hidden;
@@ -657,8 +755,14 @@ export default {
   background: #f8f9fa;
   padding: 1rem;
   display: flex;
-  justify-content: between;
+  justify-content: space-between;
   align-items: center;
+}
+
+.question-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 .question-type-badge {
@@ -666,8 +770,15 @@ export default {
   border-radius: 15px;
   font-size: 0.75rem;
   font-weight: 600;
-  margin-left: 1rem;
 }
+
+.badge-primary { background: #007bff; color: white; }
+.badge-secondary { background: #6c757d; color: white; }
+.badge-success { background: #28a745; color: white; }
+.badge-warning { background: #ffc107; color: #212529; }
+.badge-info { background: #17a2b8; color: white; }
+.badge-danger { background: #dc3545; color: white; }
+.badge-light { background: #f8f9fa; color: #212529; border: 1px solid #dee2e6; }
 
 .question-points {
   color: #6c757d;
@@ -779,6 +890,40 @@ export default {
   font-size: 1.5rem;
   font-weight: 700;
   color: #2c3e50;
+}
+
+.detail-list {
+  background: rgba(248, 249, 250, 0.8);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #333;
+}
+
+.detail-value {
+  color: #6c757d;
+}
+
+.feedback-display {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  white-space: pre-wrap;
 }
 
 @media (max-width: 768px) {

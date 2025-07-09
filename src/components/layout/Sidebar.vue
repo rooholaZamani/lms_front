@@ -240,7 +240,7 @@
               <li class="nav-item">
                 <router-link
                     class="modern-nav-link"
-                    :to="{ name: 'ExamManualGrading' }"
+                    :to="{ name: 'ExamManualGradingList' }"
                     active-class="active"
                     :title="collapsed ? 'نمره‌دهی دستی' : ''"
                 >
