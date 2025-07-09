@@ -294,50 +294,42 @@ export default {
     onMatchingSelectionChange(leftItem, rightItem) {
       console.log(`Matching: ${leftItem} -> ${rightItem}`);
 
-      // اطمینان از اینکه selectedAnswer یک object است
+      // فقط پاسخ‌های مربوط به این سوال را نگه دارید
       if (!this.selectedAnswer || typeof this.selectedAnswer !== 'object') {
         this.selectedAnswer = {};
-        // مقداردهی اولیه برای همه آیتم‌های چپ
-        if (this.question.matchingPairs) {
-          this.question.matchingPairs.forEach(pair => {
-            this.selectedAnswer[pair.leftItem] = '';
-          });
-        }
       }
 
-      // Vue.set استفاده کنید یا کل object را جایگزین کنید تا reactivity حفظ شود
-      this.selectedAnswer = {
-        ...this.selectedAnswer,
-        [leftItem]: rightItem
-      };
+      // فقط پاسخ‌های تطبیقی این سوال
+      const cleanAnswer = {};
+      if (this.question.matchingPairs) {
+        this.question.matchingPairs.forEach(pair => {
+          cleanAnswer[pair.leftItem] = this.selectedAnswer[pair.leftItem] || '';
+        });
+      }
 
-      console.log('Updated matching answer:', this.selectedAnswer);
-      // watcher خودکار emit می‌کند
+      cleanAnswer[leftItem] = rightItem;
+      this.selectedAnswer = cleanAnswer;
     },
 
     // 7. اصلاح انتخاب برای سوالات دسته‌بندی
     onCategorizationSelectionChange(itemText, category) {
       console.log(`Categorization: ${itemText} -> ${category}`);
 
-      // اطمینان از اینکه selectedAnswer یک object است
+      // فقط پاسخ‌های مربوط به این سوال را نگه دارید
       if (!this.selectedAnswer || typeof this.selectedAnswer !== 'object') {
         this.selectedAnswer = {};
-        // مقداردهی اولیه برای همه آیتم‌ها
-        if (this.question.answers) {
-          this.question.answers.forEach(item => {
-            this.selectedAnswer[item.text] = '';
-          });
-        }
       }
 
-      // Vue.set استفاده کنید یا کل object را جایگزین کنید تا reactivity حفظ شود
-      this.selectedAnswer = {
-        ...this.selectedAnswer,
-        [itemText]: category
-      };
+      // فقط پاسخ‌های دسته‌بندی این سوال
+      const cleanAnswer = {};
+      if (this.question.answers) {
+        this.question.answers.forEach(item => {
+          cleanAnswer[item.text] = this.selectedAnswer[item.text] || '';
+        });
+      }
 
-      console.log('Updated categorization answer:', this.selectedAnswer);
-      // watcher خودکار emit می‌کند
+      cleanAnswer[itemText] = category;
+      this.selectedAnswer = cleanAnswer;
     },
 
     // 8. تصحیح پاسخ سوالات متنی
