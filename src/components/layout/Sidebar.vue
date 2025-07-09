@@ -71,34 +71,18 @@
                   class="modern-nav-link"
                   :to="{ name: 'TeachingCourses' }"
                   active-class="active"
-                  :title="collapsed ? 'دوره‌های در حال تدریس' : ''"
+                  :title="collapsed ? 'دوره‌های تدریس' : ''"
               >
                 <div class="nav-icon">
-                  <i class="fas fa-chalkboard-teacher"></i>
+                  <i class="fas fa-chalkboard"></i>
                 </div>
-                <span v-if="!collapsed" class="nav-text">دوره‌های در حال تدریس</span>
+                <span v-if="!collapsed" class="nav-text">دوره‌های تدریس</span>
                 <div v-if="!collapsed" class="nav-arrow">
                   <i class="fas fa-chevron-left"></i>
                 </div>
               </router-link>
             </li>
 
-            <li class="nav-item">
-              <router-link
-                  class="modern-nav-link"
-                  :to="{ name: 'PendingAssignments' }"
-                  active-class="active"
-                  :title="collapsed ? 'تکالیف در حال بررسی' : ''"
-              >
-                <div class="nav-icon">
-                  <i class="fas fa-tasks"></i>
-                </div>
-                <span v-if="!collapsed" class="nav-text">تکالیف در حال بررسی</span>
-<!--                <div v-if="!collapsed" class="nav-badge modern-badge modern-badge-warning">-->
-<!--                  <span>3</span>-->
-<!--                </div>-->
-              </router-link>
-            </li>
             <li class="nav-item">
               <router-link
                   class="modern-nav-link"
@@ -124,7 +108,7 @@
                   :title="collapsed ? 'نمره‌گذاری تکالیف' : ''"
               >
                 <div class="nav-icon">
-                  <i class="fas fa-clipboard-check"></i>
+                  <i class="fas fa-check-circle"></i>
                 </div>
                 <span v-if="!collapsed" class="nav-text">نمره‌گذاری تکالیف</span>
                 <div v-if="!collapsed" class="nav-arrow">
@@ -132,6 +116,24 @@
                 </div>
               </router-link>
             </li>
+
+            <li class="nav-item">
+              <router-link
+                  class="modern-nav-link"
+                  :to="{ name: 'StudentActivities' }"
+                  active-class="active"
+                  :title="collapsed ? 'فعالیت دانش‌آموزان' : ''"
+              >
+                <div class="nav-icon">
+                  <i class="fas fa-users"></i>
+                </div>
+                <span v-if="!collapsed" class="nav-text">فعالیت دانش‌آموزان</span>
+                <div v-if="!collapsed" class="nav-arrow">
+                  <i class="fas fa-chevron-left"></i>
+                </div>
+              </router-link>
+            </li>
+
             <li class="nav-item">
               <router-link
                   class="modern-nav-link"
@@ -149,6 +151,14 @@
               </router-link>
             </li>
 
+            <!-- آزمون‌ها - برای معلم -->
+            <li class="nav-divider" v-if="!collapsed">
+              <span>
+                <i class="fas fa-clipboard-check me-2"></i>
+                آزمون‌ها
+              </span>
+            </li>
+
             <li class="nav-item">
               <router-link
                   class="modern-nav-link"
@@ -157,9 +167,47 @@
                   :title="collapsed ? 'آزمون‌های من' : ''"
               >
                 <div class="nav-icon">
-                  <i class="fas fa-clipboard-check"></i>
+                  <i class="fas fa-clipboard-list"></i>
                 </div>
                 <span v-if="!collapsed" class="nav-text">آزمون‌های من</span>
+                <div v-if="!collapsed" class="nav-arrow">
+                  <i class="fas fa-chevron-left"></i>
+                </div>
+              </router-link>
+            </li>
+
+            <li class="nav-item">
+              <router-link
+                  class="modern-nav-link"
+                  :to="{ name: 'ExamManualGradingList' }"
+                  active-class="active"
+                  :title="collapsed ? 'نمره‌دهی دستی' : ''"
+              >
+                <div class="nav-icon">
+                  <i class="fas fa-edit"></i>
+                </div>
+                <span v-if="!collapsed" class="nav-text">نمره‌دهی دستی</span>
+                <!-- نشان تعداد آزمون‌های در انتظار -->
+                <div v-if="!collapsed && pendingGradingCount > 0" class="nav-badge modern-badge modern-badge-warning">
+                  <span>{{ pendingGradingCount }}</span>
+                </div>
+                <div v-if="!collapsed" class="nav-arrow">
+                  <i class="fas fa-chevron-left"></i>
+                </div>
+              </router-link>
+            </li>
+
+            <li class="nav-item">
+              <router-link
+                  class="modern-nav-link"
+                  :to="{ name: 'ExamCreator' }"
+                  active-class="active"
+                  :title="collapsed ? 'ایجاد آزمون' : ''"
+              >
+                <div class="nav-icon">
+                  <i class="fas fa-plus-circle"></i>
+                </div>
+                <span v-if="!collapsed" class="nav-text">ایجاد آزمون</span>
                 <div v-if="!collapsed" class="nav-arrow">
                   <i class="fas fa-chevron-left"></i>
                 </div>
@@ -190,6 +238,9 @@
                 <div v-if="!collapsed" class="nav-badge modern-badge modern-badge-info">
                   <span>جدید</span>
                 </div>
+                <div v-if="!collapsed" class="nav-arrow">
+                  <i class="fas fa-chevron-left"></i>
+                </div>
               </router-link>
             </li>
 
@@ -210,153 +261,54 @@
               </router-link>
             </li>
 
-
-            <!-- آزمون‌ها - برای هر دو نقش -->
+            <!-- آزمون‌ها - برای دانش‌آموز -->
             <li class="nav-divider" v-if="!collapsed">
-            <span>
-              <i class="fas fa-clipboard-check me-2"></i>
-              آزمون‌ها
-            </span>
+              <span>
+                <i class="fas fa-clipboard-check me-2"></i>
+                آزمون‌ها
+              </span>
             </li>
 
-            <template v-if="isTeacher">
-              <li class="nav-item">
-                <router-link
-                    class="modern-nav-link"
-                    :to="{ name: 'TeacherExams' }"
-                    active-class="active"
-                    :title="collapsed ? 'آزمون‌های من' : ''"
-                >
-                  <div class="nav-icon">
-                    <i class="fas fa-clipboard-list"></i>
-                  </div>
-                  <span v-if="!collapsed" class="nav-text">آزمون‌های من</span>
-                  <div v-if="!collapsed" class="nav-arrow">
-                    <i class="fas fa-chevron-left"></i>
-                  </div>
-                </router-link>
-              </li>
+            <li class="nav-item">
+              <router-link
+                  class="modern-nav-link"
+                  :to="{ name: 'StudentExams' }"
+                  active-class="active"
+                  :title="collapsed ? 'آزمون‌های من' : ''"
+              >
+                <div class="nav-icon">
+                  <i class="fas fa-clipboard-list"></i>
+                </div>
+                <span v-if="!collapsed" class="nav-text">آزمون‌های من</span>
+                <div v-if="!collapsed" class="nav-arrow">
+                  <i class="fas fa-chevron-left"></i>
+                </div>
+              </router-link>
+            </li>
 
-              <li class="nav-item">
-                <router-link
-                    class="modern-nav-link"
-                    :to="{ name: 'ExamManualGradingList' }"
-                    active-class="active"
-                    :title="collapsed ? 'نمره‌دهی دستی' : ''"
-                >
-                  <div class="nav-icon">
-                    <i class="fas fa-edit"></i>
-                  </div>
-                  <span v-if="!collapsed" class="nav-text">نمره‌دهی دستی</span>
-                  <!-- نشان تعداد آزمون‌های در انتظار -->
-                  <div v-if="!collapsed && pendingGradingCount > 0" class="nav-badge modern-badge modern-badge-warning">
-                    <span>{{ pendingGradingCount }}</span>
-                  </div>
-                  <div v-if="!collapsed" class="nav-arrow">
-                    <i class="fas fa-chevron-left"></i>
-                  </div>
-                </router-link>
-              </li>
-
-              <li class="nav-item">
-                <router-link
-                    class="modern-nav-link"
-                    :to="{ name: 'ExamCreator' }"
-                    active-class="active"
-                    :title="collapsed ? 'ایجاد آزمون جدید' : ''"
-                >
-                  <div class="nav-icon">
-                    <i class="fas fa-plus-circle"></i>
-                  </div>
-                  <span v-if="!collapsed" class="nav-text">ایجاد آزمون جدید</span>
-                  <div v-if="!collapsed" class="nav-arrow">
-                    <i class="fas fa-chevron-left"></i>
-                  </div>
-                </router-link>
-              </li>
-
-            </template>
-
-            <template v-if="isStudent">
-              <li class="nav-item">
-                <router-link
-                    class="modern-nav-link"
-                    :to="{ name: 'StudentExams' }"
-                    active-class="active"
-                    :title="collapsed ? 'آزمون‌های من' : ''"
-                >
-                  <div class="nav-icon">
-                    <i class="fas fa-clipboard-check"></i>
-                  </div>
-                  <span v-if="!collapsed" class="nav-text">آزمون‌های من</span>
-                  <div v-if="!collapsed" class="nav-arrow">
-                    <i class="fas fa-chevron-left"></i>
-                  </div>
-                </router-link>
-              </li>
-
-              <li class="nav-item">
-                <router-link
-                    class="modern-nav-link"
-                    :to="{ name: 'StudentExamResults' }"
-                    active-class="active"
-                    :title="collapsed ? 'نتایج آزمون‌ها' : ''"
-                >
-                  <div class="nav-icon">
-                    <i class="fas fa-chart-bar"></i>
-                  </div>
-                  <span v-if="!collapsed" class="nav-text">نتایج آزمون‌ها</span>
-                  <div v-if="!collapsed" class="nav-arrow">
-                    <i class="fas fa-chevron-left"></i>
-                  </div>
-                </router-link>
-              </li>
-            </template>
+            <li class="nav-item">
+              <router-link
+                  class="modern-nav-link"
+                  :to="{ name: 'StudentExamResults' }"
+                  active-class="active"
+                  :title="collapsed ? 'نتایج آزمون‌ها' : ''"
+              >
+                <div class="nav-icon">
+                  <i class="fas fa-chart-bar"></i>
+                </div>
+                <span v-if="!collapsed" class="nav-text">نتایج آزمون‌ها</span>
+                <div v-if="!collapsed" class="nav-arrow">
+                  <i class="fas fa-chevron-left"></i>
+                </div>
+              </router-link>
+            </li>
           </template>
 
-
-
-
-          <li v-if="isTeacher" class="nav-item">
-            <router-link
-                class="modern-nav-link"
-                :to="{ name: 'Students' }"
-                active-class="active"
-                :title="collapsed ? 'مدیریت دانش‌آموزان' : ''"
-            >
-              <div class="nav-icon">
-                <i class="fas fa-users"></i>
-              </div>
-              <span v-if="!collapsed" class="nav-text">مدیریت دانش‌آموزان</span>
-              <div v-if="!collapsed" class="nav-arrow">
-                <i class="fas fa-chevron-left"></i>
-              </div>
-            </router-link>
-          </li>
-
-          <li v-if="isTeacher" class="nav-item">
-            <router-link
-                class="modern-nav-link"
-                :to="{ name: 'StudentActivities' }"
-                active-class="active"
-                :title="collapsed ? 'فعالیت دانش‌آموزان' : ''"
-            >
-              <div class="nav-icon">
-                <i class="fas fa-user-graduate"></i>
-              </div>
-              <span v-if="!collapsed" class="nav-text">فعالیت دانش‌آموزان</span>
-              <div v-if="!collapsed" class="nav-arrow">
-                <i class="fas fa-chevron-left"></i>
-              </div>
-            </router-link>
-          </li>
-
-
-          <!-- Common menu items -->
+          <!-- Common items -->
           <li class="nav-divider" v-if="!collapsed">
             <span>
               <i class="fas fa-cog me-2"></i>
-              عمومی
+              تنظیمات
             </span>
           </li>
 
@@ -376,25 +328,31 @@
               </div>
             </router-link>
           </li>
-
-<!--          <li v-if="isTeacher" class="nav-item">-->
-<!--            <router-link-->
-<!--                class="modern-nav-link"-->
-<!--                :to="{ name: 'Reports' }"-->
-<!--                active-class="active"-->
-<!--                :title="collapsed ? 'گزارش‌ها' : ''"-->
-<!--            >-->
-<!--              <div class="nav-icon">-->
-<!--                <i class="fas fa-chart-bar"></i>-->
-<!--              </div>-->
-<!--              <span v-if="!collapsed" class="nav-text">گزارش‌ها</span>-->
-<!--              <div v-if="!collapsed" class="nav-arrow">-->
-<!--                <i class="fas fa-chevron-left"></i>-->
-<!--              </div>-->
-<!--            </router-link>-->
-<!--          </li>-->
         </ul>
       </nav>
+
+      <!-- Sidebar Footer -->
+      <div class="sidebar-footer">
+        <div class="user-info" :class="{ 'collapsed': collapsed }">
+          <div class="user-avatar">
+            {{ getUserInitials() }}
+          </div>
+          <div v-if="!collapsed" class="user-details">
+            <div class="user-name">{{ getUserName() }}</div>
+            <div class="user-role">
+              <span class="modern-badge modern-badge-sm" :class="getRoleBadgeClass()">
+                {{ getUserRole() }}
+              </span>
+            </div>
+            <div class="user-actions">
+              <button class="modern-btn modern-btn-sm modern-btn-outline" @click="handleLogout">
+                <i class="fas fa-sign-out-alt me-1"></i>
+                خروج
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Overlay for mobile -->
@@ -406,6 +364,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useUser } from '@/composables/useUser.js';
 import { useRouter } from 'vue-router';
+import axios from 'axios';
 
 export default {
   name: 'Sidebar',
@@ -415,12 +374,28 @@ export default {
     const router = useRouter();
     const collapsed = ref(false);
     const isMobile = ref(false);
+    const pendingGradingCount = ref(0);
 
     // Check if mobile
     const checkMobile = () => {
       isMobile.value = window.innerWidth < 768;
       if (isMobile.value) {
         collapsed.value = true;
+      }
+    };
+
+    // Fetch pending grading count for teachers
+    const fetchPendingGradingCount = async () => {
+      if (!isTeacher.value) return;
+
+      try {
+        const response = await axios.get('/exams/manual-grading-overview');
+        if (response.data.success) {
+          pendingGradingCount.value = response.data.totalPendingSubmissions || 0;
+        }
+      } catch (error) {
+        console.error('Error fetching pending grading count:', error);
+        pendingGradingCount.value = 0;
       }
     };
 
@@ -444,10 +419,26 @@ export default {
           : currentUser.value.username;
     };
 
+    const getUserInitials = () => {
+      if (!currentUser.value) return 'K';
+
+      if (currentUser.value.firstName && currentUser.value.lastName) {
+        return `${currentUser.value.firstName.charAt(0)}${currentUser.value.lastName.charAt(0)}`;
+      }
+
+      return currentUser.value.username ? currentUser.value.username.charAt(0).toUpperCase() : 'K';
+    };
+
     const getUserRole = () => {
       if (isTeacher.value) return 'استاد';
       if (isStudent.value) return 'دانش‌آموز';
       return 'کاربر';
+    };
+
+    const getRoleBadgeClass = () => {
+      if (isTeacher.value) return 'modern-badge-success';
+      if (isStudent.value) return 'modern-badge-info';
+      return 'modern-badge-secondary';
     };
 
     const handleLogout = async () => {
@@ -469,10 +460,17 @@ export default {
       checkMobile();
       window.addEventListener('resize', checkMobile);
       emit('sidebar-collapsed', collapsed.value);
-    });
 
-    onUnmounted(() => {
-      window.removeEventListener('resize', checkMobile);
+      // Fetch pending grading count on mount and set interval
+      fetchPendingGradingCount();
+
+      // Update count every 5 minutes
+      const interval = setInterval(fetchPendingGradingCount, 5 * 60 * 1000);
+
+      onUnmounted(() => {
+        window.removeEventListener('resize', checkMobile);
+        clearInterval(interval);
+      });
     });
 
     return {
@@ -481,10 +479,13 @@ export default {
       currentUser,
       collapsed,
       isMobile,
+      pendingGradingCount,
       toggleSidebar,
       closeSidebar,
       getUserName,
+      getUserInitials,
       getUserRole,
+      getRoleBadgeClass,
       handleLogout
     };
   }
@@ -650,6 +651,7 @@ export default {
   font-size: 0.65rem;
   padding: 0.2rem 0.4rem;
   margin-left: auto;
+  margin-right: 0.5rem;
 }
 
 /* Hover and Active States */
@@ -714,6 +716,7 @@ export default {
   transition: all 0.3s ease;
   padding: 1rem;
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+  border-radius: 12px;
 }
 
 .user-info.collapsed {
@@ -733,6 +736,7 @@ export default {
   margin-left: 0.75rem;
   font-size: 1rem;
   flex-shrink: 0;
+  font-weight: 600;
 }
 
 .user-info.collapsed .user-avatar {
@@ -763,6 +767,77 @@ export default {
   gap: 0.5rem;
 }
 
+/* Modern Badges */
+.modern-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.modern-badge-sm {
+  padding: 0.1rem 0.4rem;
+  font-size: 0.65rem;
+}
+
+.modern-badge-info {
+  background: linear-gradient(135deg, #17a2b8, #138496);
+  color: white;
+}
+
+.modern-badge-success {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+}
+
+.modern-badge-warning {
+  background: linear-gradient(135deg, #ffc107, #fd7e14);
+  color: #212529;
+}
+
+.modern-badge-secondary {
+  background: linear-gradient(135deg, #6c757d, #495057);
+  color: white;
+}
+
+/* Modern Buttons */
+.modern-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.modern-btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.modern-btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.modern-btn-outline {
+  background: transparent;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+}
+
+.modern-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
 /* Sidebar Overlay */
 .sidebar-overlay {
   position: fixed;
@@ -773,6 +848,21 @@ export default {
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 999;
   backdrop-filter: blur(2px);
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Tooltip for collapsed sidebar */
@@ -786,52 +876,26 @@ export default {
   right: 100%;
   top: 50%;
   transform: translateY(-50%);
-  background: linear-gradient(135deg, rgba(33, 37, 41, 0.95), rgba(52, 58, 64, 0.95));
+  background: rgba(0, 0, 0, 0.8);
   color: white;
-  padding: 0.5rem 0.75rem;
-  border-radius: 8px;
-  white-space: nowrap;
+  padding: 0.5rem;
+  border-radius: 6px;
   font-size: 0.75rem;
-  margin-right: 15px;
+  white-space: nowrap;
   z-index: 1002;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
-  backdrop-filter: blur(10px);
-  animation: tooltipFadeIn 0.2s ease-out;
+  margin-right: 0.5rem;
 }
 
-.modern-sidebar.collapsed .modern-nav-link[title]:hover::before {
-  content: '';
-  position: absolute;
-  right: 100%;
-  top: 50%;
-  transform: translateY(-50%);
-  border: 6px solid transparent;
-  border-right-color: rgba(33, 37, 41, 0.95);
-  margin-right: 9px;
-  z-index: 1002;
-  animation: tooltipFadeIn 0.2s ease-out;
-}
-
-@keyframes tooltipFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-50%) translateX(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(-50%) translateX(0);
-  }
-}
-
-/* Responsive design */
+/* Responsive Design */
 @media (max-width: 768px) {
   .modern-sidebar {
     width: 280px;
     transform: translateX(100%);
   }
 
-  .modern-sidebar:not(.collapsed) {
+  .modern-sidebar.collapsed {
     transform: translateX(0);
+    width: 280px;
   }
 
   .sidebar-toggle {
@@ -839,61 +903,21 @@ export default {
   }
 }
 
-@media (min-width: 769px) {
-  .sidebar-overlay {
-    display: none;
-  }
-}
-
-/* Custom scrollbar */
+/* Scrollbar */
 .modern-sidebar::-webkit-scrollbar {
   width: 4px;
 }
 
 .modern-sidebar::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
+  background: transparent;
 }
 
 .modern-sidebar::-webkit-scrollbar-thumb {
   background: rgba(102, 126, 234, 0.3);
-  border-radius: 4px;
+  border-radius: 2px;
 }
 
 .modern-sidebar::-webkit-scrollbar-thumb:hover {
   background: rgba(102, 126, 234, 0.5);
-}
-
-/* Animations */
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-  .modern-sidebar {
-    background: linear-gradient(135deg, rgba(45, 55, 72, 0.95), rgba(45, 55, 72, 0.9));
-    border-left-color: rgba(102, 126, 234, 0.2);
-  }
-
-  .modern-nav-link {
-    color: #e2e8f0;
-  }
-
-  .modern-nav-link:hover {
-    color: #667eea;
-  }
-
-  .nav-divider span {
-    color: #cbd5e0;
-  }
-
-  .user-name {
-    color: #e2e8f0;
-  }
 }
 </style>

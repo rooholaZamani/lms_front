@@ -1,13 +1,3 @@
-<script setup>
-
-</script>
-
-<template>
-
-</template>
-
-<style scoped>
-
 <template>
 <div class="exam-manual-grading-list">
 <div class="container-fluid">
