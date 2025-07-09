@@ -554,52 +554,52 @@ export default {
       }
     },
     async viewStudentAnswers(submission) {
-      try {
-        this.loadingAnswers = true;
-
-        const response = await axios.get(`/exams/${this.examId}/student-answers/${submission.student.id}`);
-
-        // تبدیل answers object به array برای نمایش آسان‌تر
-        const answersArray = Object.entries(response.data.answers).map(([questionId, answerData]) => ({
-          questionId,
-          questionText: answerData.questionText,
-          questionType: answerData.questionType,
-          studentAnswer: answerData.studentAnswer,
-          correctAnswer: answerData.correctAnswer,
-          isCorrect: answerData.isCorrect,
-          earnedPoints: answerData.earnedPoints,
-          totalPoints: answerData.totalPoints,
-          questionOptions: answerData.questionOptions
-        }));
-
-
-        this.selectedStudentAnswers = {
-          studentName: response.data.studentName,
-          score: response.data.score,
-          totalScore: response.data.totalPossibleScore,
-          passed: response.data.passed,
-          timeSpent: response.data.timeSpent,
-          submissionTime: response.data.submissionTime,
-          answers: answersArray
-        };
-        console.log("response.data:"+this.selectedStudentAnswers.studentName);
-
-        await nextTick(() => {
-          const modalElement = document.getElementById('studentAnswersModal');
-          if (modalElement) {
-            const modal = new bootstrap.Modal(modalElement);
-            modal.show();
-          } else {
-            console.error('Modal element not found');
-          }
-        })
-
-      } catch (error) {
-        console.error('Error fetching student answers:', error);
-        this.$toast?.error('خطا در دریافت پاسخ‌های دانش‌آموز');
-      } finally {
-        this.loadingAnswers = false;
-      }
+      this.$toast.info("این قسمت در حال پیاده سازی است.");
+      return ""
+      // try {
+      //   this.loadingAnswers = true;
+      //   const response = await axios.get(`/exams/${this.examId}/student-answers/${submission.student.id}`);
+      //
+      //   تبدیل answers object به array برای نمایش آسان‌تر
+      //   const answersArray = Object.entries(response.data.answers).map(([questionId, answerData]) => ({
+      //     questionId,
+      //     questionText: answerData.questionText,
+      //     questionType: answerData.questionType,
+      //     studentAnswer: answerData.studentAnswer,
+      //     correctAnswer: answerData.correctAnswer,
+      //     isCorrect: answerData.isCorrect,
+      //     earnedPoints: answerData.earnedPoints,
+      //     totalPoints: answerData.totalPoints,
+      //     questionOptions: answerData.questionOptions
+      //   }));
+      //
+      //   this.selectedStudentAnswers = {
+      //     studentName: response.data.studentName,
+      //     score: response.data.score,
+      //     totalScore: response.data.totalPossibleScore,
+      //     passed: response.data.passed,
+      //     timeSpent: response.data.timeSpent,
+      //     submissionTime: response.data.submissionTime,
+      //     answers: answersArray
+      //   };
+      //   console.log("response.data:"+this.selectedStudentAnswers.studentName);
+      //
+      //   await nextTick(() => {
+      //     const modalElement = document.getElementById('studentAnswersModal');
+      //     if (modalElement) {
+      //       const modal = new bootstrap.Modal(modalElement);
+      //       modal.show();
+      //     } else {
+      //       console.error('Modal element not found');
+      //     }
+      //   })
+      //
+      // } catch (error) {
+      //   console.error('Error fetching student answers:', error);
+      //   this.$toast?.error('خطا در دریافت پاسخ‌های دانش‌آموز');
+      // } finally {
+      //   this.loadingAnswers = false;
+      // }
     },
 
     getStudentAnswerText(question, answer) {
