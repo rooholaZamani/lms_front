@@ -213,7 +213,7 @@
                     <div class="action-buttons">
                       <button
                           class="modern-btn modern-btn-sm modern-btn-primary me-1"
-                          @click="viewStudentAnswer(submission)"
+                          @click="viewStudentAnswers(submission)"
                           title="مشاهده پاسخ‌ها"
                       >
                         <i class="fas fa-eye"></i>
@@ -308,11 +308,81 @@
       </div>
     </div>
   </div>
+  <!-- Student Answers Modal -->
+  <div class="modal fade" id="studentAnswersModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fas fa-clipboard-list me-2"></i>
+            پاسخ‌های دانش‌آموز
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div v-if="selectedStudentAnswers" class="student-answers-content">
+            <!-- Student Info -->
+            <div class="student-info mb-4">
+              <div class="row">
+                <div class="col-md-6">
+                  <strong>دانش‌آموز:</strong> {{ selectedStudentAnswers.studentName }}
+                </div>
+                <div class="col-md-6">
+                  <strong>نمره:</strong>
+                  <span :class="selectedStudentAnswers.passed ? 'text-success' : 'text-danger'">
+                  {{ selectedStudentAnswers.score }}%
+                </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Questions and Answers -->
+            <div v-if="selectedStudentAnswers.questions" class="questions-list">
+              <div v-for="(question, index) in selectedStudentAnswers.questions"
+                   :key="index" class="question-item mb-4">
+                <div class="question-header">
+                  <h6>سوال {{ index + 1 }}: {{ question.text }}</h6>
+                </div>
+
+                <div class="answer-details mt-3">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <strong>پاسخ دانش‌آموز:</strong>
+                      <div class="answer-text">
+                        {{ getStudentAnswerText(question, selectedStudentAnswers.answers[index]) }}
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <strong>پاسخ صحیح:</strong>
+                      <div class="correct-answer-text">
+                        {{ getCorrectAnswerText(question) }}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="answer-status mt-2">
+                  <span :class="selectedStudentAnswers.answersResults[index] ? 'badge bg-success' : 'badge bg-danger'">
+                    {{ selectedStudentAnswers.answersResults[index] ? 'درست' : 'نادرست' }}
+                  </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            بستن
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
 import axios from 'axios'
 import Chart from 'chart.js/auto'
+import exams from "@/store/exams.js";
 
 export default {
   name: 'ExamResults',
@@ -331,7 +401,9 @@ export default {
       hasManualQuestions: false,
       selectedFeedback: null,
       scoreChart: null,
-      passFailChart: null
+      passFailChart: null,
+      selectedStudentAnswers: null,
+      loadingAnswers: false
     }
   },
   computed: {
@@ -423,6 +495,66 @@ export default {
         hour: '2-digit',
         minute: '2-digit'
       });
+    },
+    async viewStudentAnswers(submission) {
+      try {
+        this.loadingAnswers = true;
+
+        const response = await axios.get(`/exams/${this.examId}/student-answers/${submission.student.id}`, {
+          // params: { studentId: submission.student.id }
+        });
+
+        this.selectedStudentAnswers = {
+          studentName: this.getStudentName(submission),
+          score: this.getScorePercentage(submission),
+          passed: submission.passed,
+          questions: this.examData.questions,
+          answers: response.data.answers,
+          answersResults: response.data.answersResults
+        };
+
+        const modal = new bootstrap.Modal(document.getElementById('studentAnswersModal'));
+        modal.show();
+
+      } catch (error) {
+        console.error('Error fetching student answers:', error);
+        this.$toast?.error('خطا در دریافت پاسخ‌های دانش‌آموز');
+      } finally {
+        this.loadingAnswers = false;
+      }
+    },
+
+    getStudentAnswerText(question, answer) {
+      if (!answer) return 'پاسخ داده نشده';
+
+      switch (question.questionType) {
+        case 'MULTIPLE_CHOICE':
+          const option = question.answers?.find(a => a.id === answer);
+          return option ? option.text : 'نامشخص';
+        case 'TRUE_FALSE':
+          return answer === 'true' ? 'درست' : 'نادرست';
+        case 'SHORT_ANSWER':
+        case 'ESSAY':
+          return answer;
+        default:
+          return JSON.stringify(answer);
+      }
+    },
+
+    getCorrectAnswerText(question) {
+      switch (question.questionType) {
+        case 'MULTIPLE_CHOICE':
+          const correctOption = question.answers?.find(a => a.correct);
+          return correctOption ? correctOption.text : 'نامشخص';
+        case 'TRUE_FALSE':
+          return question.correctOption === 'true' ? 'درست' : 'نادرست';
+        case 'SHORT_ANSWER':
+          return question.correctOption || 'نامشخص';
+        case 'ESSAY':
+          return 'نیاز به بررسی دستی';
+        default:
+          return 'نامشخص';
+      }
     },
 
     formatTimeSpent(timeSpent) {
