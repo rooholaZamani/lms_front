@@ -376,6 +376,7 @@ export default {
         this.error = null;
 
         // دریافت اطلاعات آزمون
+        console.log(this.examId)
         const examResponse = await axios.get(`/exams/${this.examId}`);
         this.examData = examResponse.data;
 

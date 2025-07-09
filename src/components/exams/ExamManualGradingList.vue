@@ -241,7 +241,7 @@ export default {
     viewExamResults(exam) {
       this.$router.push({
         name: 'ExamAnswers',
-        params: {submissionId: exam.id}
+        params: {examId: exam.id}
       });
     },
 

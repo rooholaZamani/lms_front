@@ -334,7 +334,7 @@ const routes = [
     }
   },
   {
-    path: '/exam-answers/:submissionId',
+    path: '/exam-answers/:examId',
     name: 'ExamAnswers',
     component: () => import('../components/exams/ExamAnswers.vue'),
     props: true,
