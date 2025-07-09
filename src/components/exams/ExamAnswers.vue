@@ -309,70 +309,62 @@
     </div>
   </div>
   <!-- Student Answers Modal -->
-  <div class="modal fade" id="studentAnswersModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">
-            <i class="fas fa-clipboard-list me-2"></i>
-            پاسخ‌های دانش‌آموز
-          </h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <div v-if="selectedStudentAnswers" class="student-answers-content">
-            <!-- Student Info -->
-            <div class="student-info mb-4">
-              <div class="row">
-                <div class="col-md-6">
-                  <strong>دانش‌آموز:</strong> {{ selectedStudentAnswers.studentName }}
-                </div>
-                <div class="col-md-6">
-                  <strong>نمره:</strong>
-                  <span :class="selectedStudentAnswers.passed ? 'text-success' : 'text-danger'">
-                  {{ selectedStudentAnswers.score }}%
-                </span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Questions and Answers -->
-            <div v-if="selectedStudentAnswers.questions" class="questions-list">
-              <div v-for="(question, index) in selectedStudentAnswers.questions"
-                   :key="index" class="question-item mb-4">
-                <div class="question-header">
-                  <h6>سوال {{ index + 1 }}: {{ question.text }}</h6>
-                </div>
-
-                <div class="answer-details mt-3">
-                  <div class="row">
-                    <div class="col-md-6">
-                      <strong>پاسخ دانش‌آموز:</strong>
-                      <div class="answer-text">
-                        {{ getStudentAnswerText(question, selectedStudentAnswers.answers[index]) }}
-                      </div>
-                    </div>
-                    <div class="col-md-6">
-                      <strong>پاسخ صحیح:</strong>
-                      <div class="correct-answer-text">
-                        {{ getCorrectAnswerText(question) }}
-                      </div>
-                    </div>
-                  </div>
-                  <div class="answer-status mt-2">
-                  <span :class="selectedStudentAnswers.answersResults[index] ? 'badge bg-success' : 'badge bg-danger'">
-                    {{ selectedStudentAnswers.answersResults[index] ? 'درست' : 'نادرست' }}
-                  </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+  <div class="modal-body" id="studentAnswersModal" tabindex="-1">
+    <div v-if="selectedStudentAnswers" class="student-answers-content">
+      <!-- Student Info -->
+      <div class="student-info mb-4">
+        <div class="row">
+          <div class="col-md-4">
+            <strong>دانش‌آموز:</strong> {{ selectedStudentAnswers.studentName }}
+          </div>
+          <div class="col-md-4">
+            <strong>نمره:</strong>
+            <span :class="selectedStudentAnswers.passed ? 'text-success' : 'text-danger'">
+            {{ selectedStudentAnswers.score }}/{{ selectedStudentAnswers.totalScore }}
+          </span>
+          </div>
+          <div class="col-md-4">
+            <strong>وضعیت:</strong>
+            <span :class="selectedStudentAnswers.passed ? 'badge bg-success' : 'badge bg-danger'">
+            {{ selectedStudentAnswers.passed ? 'قبول' : 'مردود' }}
+          </span>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-            بستن
-          </button>
+      </div>
+
+      <!-- Questions and Answers -->
+      <div v-if="selectedStudentAnswers.answers" class="questions-list">
+        <div v-for="(answerData, index) in selectedStudentAnswers.answers"
+             :key="answerData.questionId" class="question-item mb-4 p-3 border rounded">
+          <div class="question-header mb-3">
+            <h6>سوال {{ index + 1 }}: {{ answerData.questionText }}</h6>
+            <small class="text-muted">نوع: {{ getQuestionTypeLabel(answerData.questionType) }}</small>
+          </div>
+
+          <div class="answer-details">
+            <div class="row">
+              <div class="col-md-6">
+                <strong>پاسخ دانش‌آموز:</strong>
+                <div class="answer-text mt-1">
+                  {{ formatStudentAnswer(answerData) }}
+                </div>
+              </div>
+              <div class="col-md-6">
+                <strong>پاسخ صحیح:</strong>
+                <div class="correct-answer-text mt-1">
+                  {{ formatCorrectAnswer(answerData) }}
+                </div>
+              </div>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+            <span :class="answerData.isCorrect ? 'badge bg-success' : 'badge bg-danger'">
+              {{ answerData.isCorrect ? 'درست' : 'نادرست' }}
+            </span>
+              <span class="text-muted">
+              امتیاز: {{ answerData.earnedPoints }}/{{ answerData.totalPoints }}
+            </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -496,21 +488,97 @@ export default {
         minute: '2-digit'
       });
     },
+    getQuestionTypeLabel(type) {
+      const labels = {
+        'MULTIPLE_CHOICE': 'چندگزینه‌ای',
+        'TRUE_FALSE': 'درست/نادرست',
+        'SHORT_ANSWER': 'پاسخ کوتاه',
+        'ESSAY': 'تشریحی',
+        'MATCHING': 'تطبیقی',
+        'FILL_IN_THE_BLANKS': 'جاهای خالی',
+        'CATEGORIZATION': 'دسته‌بندی'
+      };
+      return labels[type] || type;
+    },
+
+    formatStudentAnswer(answerData) {
+      const { questionType, studentAnswer, questionOptions } = answerData;
+
+      switch (questionType) {
+        case 'MULTIPLE_CHOICE':
+          if (questionOptions?.answers) {
+            const option = questionOptions.answers.find(a => a.id === studentAnswer);
+            return option ? option.text : 'پاسخ نامعتبر';
+          }
+          return 'نامشخص';
+
+        case 'TRUE_FALSE':
+          return studentAnswer === 'true' || studentAnswer === true ? 'درست' : 'نادرست';
+
+        case 'MATCHING':
+        case 'CATEGORIZATION':
+          return JSON.stringify(studentAnswer, null, 2);
+
+        case 'FILL_IN_THE_BLANKS':
+          return Array.isArray(studentAnswer) ? studentAnswer.join(', ') : studentAnswer;
+
+        default:
+          return studentAnswer || 'پاسخ داده نشده';
+      }
+    },
+
+    formatCorrectAnswer(answerData) {
+      const { questionType, correctAnswer, questionOptions } = answerData;
+
+      switch (questionType) {
+        case 'MULTIPLE_CHOICE':
+          if (questionOptions?.answers) {
+            const option = questionOptions.answers.find(a => a.id === correctAnswer);
+            return option ? option.text : 'نامشخص';
+          }
+          return 'نامشخص';
+
+        case 'TRUE_FALSE':
+          return correctAnswer === 'true' || correctAnswer === true ? 'درست' : 'نادرست';
+
+        case 'MATCHING':
+        case 'CATEGORIZATION':
+          return JSON.stringify(correctAnswer, null, 2);
+
+        case 'FILL_IN_THE_BLANKS':
+          return Array.isArray(correctAnswer) ? correctAnswer.join(', ') : correctAnswer;
+
+        default:
+          return correctAnswer || 'نامشخص';
+      }
+    },
     async viewStudentAnswers(submission) {
       try {
         this.loadingAnswers = true;
 
-        const response = await axios.get(`/exams/${this.examId}/student-answers/${submission.student.id}`, {
-          // params: { studentId: submission.student.id }
-        });
+        const response = await axios.get(`/exams/${this.examId}/student-answers/${submission.student.id}`);
+
+        // تبدیل answers object به array برای نمایش آسان‌تر
+        const answersArray = Object.entries(response.data.answers).map(([questionId, answerData]) => ({
+          questionId,
+          questionText: answerData.questionText,
+          questionType: answerData.questionType,
+          studentAnswer: answerData.studentAnswer,
+          correctAnswer: answerData.correctAnswer,
+          isCorrect: answerData.isCorrect,
+          earnedPoints: answerData.earnedPoints,
+          totalPoints: answerData.totalPoints,
+          questionOptions: answerData.questionOptions
+        }));
 
         this.selectedStudentAnswers = {
           studentName: this.getStudentName(submission),
-          score: this.getScorePercentage(submission),
-          passed: submission.passed,
-          questions: this.examData.questions,
-          answers: response.data.answers,
-          answersResults: response.data.answersResults
+          score: response.data.score, // استفاده از score واقعی از API
+          totalScore: response.data.totalPossibleScore,
+          passed: response.data.passed,
+          timeSpent: response.data.timeSpent,
+          submissionTime: response.data.submissionTime,
+          answers: answersArray
         };
 
         const modal = new bootstrap.Modal(document.getElementById('studentAnswersModal'));
