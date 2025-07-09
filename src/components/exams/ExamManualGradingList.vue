@@ -1,184 +1,184 @@
 <template>
-<div class="exam-manual-grading-list">
-<div class="container-fluid">
-<!-- Page Header -->
-<div class="page-header">
-<div class="d-flex justify-content-between align-items-center">
-<div>
-<h1 class="page-title">نمره‌گذاری دستی آزمون‌ها</h1>
-<p class="page-subtitle">آزمون‌هایی که نیاز به نمره‌گذاری دستی دارند</p>
-</div>
-<div class="header-actions">
-<button class="modern-btn modern-btn-outline" @click="refreshData">
-<i class="fas fa-sync-alt me-2"></i>
-تازه‌سازی
-</button>
-</div>
-</div>
-</div>
+  <div class="exam-manual-grading-list">
+    <div class="container-fluid">
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h1 class="page-title">نمره‌گذاری دستی آزمون‌ها</h1>
+            <p class="page-subtitle">آزمون‌هایی که نیاز به نمره‌گذاری دستی دارند</p>
+          </div>
+          <div class="header-actions">
+            <button class="modern-btn modern-btn-outline" @click="refreshData">
+              <i class="fas fa-sync-alt me-2"></i>
+              تازه‌سازی
+            </button>
+          </div>
+        </div>
+      </div>
 
-<!-- Loading State -->
-<div v-if="loading" class="text-center py-5">
-<div class="spinner-border text-primary" role="status">
-<span class="visually-hidden">در حال بارگذاری...</span>
-</div>
-</div>
+      <!-- Loading State -->
+      <div v-if="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">در حال بارگذاری...</span>
+        </div>
+      </div>
 
-<!-- Error State -->
-<div v-else-if="error" class="alert alert-danger">
-<i class="fas fa-exclamation-triangle me-2"></i>
-{{ error }}
-</div>
+      <!-- Error State -->
+      <div v-else-if="error" class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        {{ error }}
+      </div>
 
-<!-- Main Content -->
-<div v-else>
-<!-- Stats -->
-<div class="row mb-4">
-<div class="col-md-3">
-<div class="stat-card">
-<div class="stat-icon bg-primary">
-<i class="fas fa-clipboard-list"></i>
-</div>
-<div class="stat-content">
-<h3>{{ totalExams }}</h3>
-<p>کل آزمون‌ها</p>
-</div>
-</div>
-</div>
-<div class="col-md-3">
-<div class="stat-card">
-<div class="stat-icon bg-warning">
-<i class="fas fa-clock"></i>
-</div>
-<div class="stat-content">
-<h3>{{ examsNeedingGrading }}</h3>
-<p>نیازمند نمره‌گذاری</p>
-</div>
-</div>
-</div>
-<div class="col-md-3">
-<div class="stat-card">
-<div class="stat-icon bg-info">
-<i class="fas fa-users"></i>
-</div>
-<div class="stat-content">
-<h3>{{ totalPendingSubmissions }}</h3>
-<p>ارسالی در انتظار</p>
-</div>
-</div>
-</div>
-<div class="col-md-3">
-<div class="stat-card">
-<div class="stat-icon bg-success">
-<i class="fas fa-check"></i>
-</div>
-<div class="stat-content">
-<h3>{{ completedGrading }}</h3>
-<p>تکمیل شده</p>
-</div>
-</div>
-</div>
-</div>
+      <!-- Main Content -->
+      <div v-else>
+        <!-- Stats -->
+        <div class="row mb-4">
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div class="stat-icon bg-primary">
+                <i class="fas fa-clipboard-list"></i>
+              </div>
+              <div class="stat-content">
+                <h3>{{ totalExams }}</h3>
+                <p>کل آزمون‌ها</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div class="stat-icon bg-warning">
+                <i class="fas fa-clock"></i>
+              </div>
+              <div class="stat-content">
+                <h3>{{ examsNeedingGrading }}</h3>
+                <p>نیازمند نمره‌گذاری</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div class="stat-icon bg-info">
+                <i class="fas fa-users"></i>
+              </div>
+              <div class="stat-content">
+                <h3>{{ totalPendingSubmissions }}</h3>
+                <p>ارسالی در انتظار</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="stat-card">
+              <div class="stat-icon bg-success">
+                <i class="fas fa-check"></i>
+              </div>
+              <div class="stat-content">
+                <h3>{{ completedGrading }}</h3>
+                <p>تکمیل شده</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-<!-- No Data State -->
-<div v-if="!exams || exams.length === 0" class="no-data-container">
-<div class="no-data-content">
-<i class="fas fa-clipboard-check"></i>
-<h3>آزمونی یافت نشد</h3>
-<p>در حال حاضر آزمونی برای نمره‌گذاری دستی وجود ندارد.</p>
-</div>
-</div>
+        <!-- No Data State -->
+        <div v-if="!exams || exams.length === 0" class="no-data-container">
+          <div class="no-data-content">
+            <i class="fas fa-clipboard-check"></i>
+            <h3>آزمونی یافت نشد</h3>
+            <p>در حال حاضر آزمونی برای نمره‌گذاری دستی وجود ندارد.</p>
+          </div>
+        </div>
 
-<!-- Exams List -->
-<div v-else class="modern-card">
-<div class="modern-card-header">
-<h5 class="card-title mb-0">
-<i class="fas fa-list me-2"></i>
-                              آزمون‌های نیازمند نمره‌گذاری
-</h5>
-</div>
-<div class="modern-card-body">
-<div class="table-responsive">
-<table class="table table-hover">
-<thead>
-<tr>
-<th>آزمون</th>
-<th>درس</th>
-<th>تعداد سوالات تشریحی</th>
-<th>ارسالی‌های در انتظار</th>
-<th>آخرین به‌روزرسانی</th>
-<th>وضعیت</th>
-<th>عملیات</th>
-</tr>
-</thead>
-<tbody>
-<tr v-for="exam in exams" :key="exam.id">
-<td>
-<div class="exam-info">
-<div class="exam-title">{{ exam.title }}</div>
-<div class="exam-meta">
-                      کل سوالات: {{ exam.totalQuestions }} |
+        <!-- Exams List -->
+        <div v-else class="modern-card">
+          <div class="modern-card-header">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-list me-2"></i>
+              آزمون‌های نیازمند نمره‌گذاری
+            </h5>
+          </div>
+          <div class="modern-card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                <tr>
+                  <th>آزمون</th>
+                  <th>درس</th>
+                  <th>تعداد سوالات تشریحی</th>
+                  <th>ارسالی‌های در انتظار</th>
+                  <th>آخرین به‌روزرسانی</th>
+                  <th>وضعیت</th>
+                  <th>عملیات</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="exam in exams" :key="exam.id">
+                  <td>
+                    <div class="exam-info">
+                      <div class="exam-title">{{ exam.title }}</div>
+                      <div class="exam-meta">
+                        کل سوالات: {{ exam.totalQuestions }} |
                         حداکثر نمره: {{ exam.totalPossibleScore }}
-</div>
-</div>
-</td>
-<td>
-<div class="lesson-info">
-<div class="lesson-name">{{ exam.lessonTitle }}</div>
-<div class="course-name">{{ exam.courseTitle }}</div>
-</div>
-</td>
-<td>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="lesson-info">
+                      <div class="lesson-name">{{ exam.lessonTitle }}</div>
+                      <div class="course-name">{{ exam.courseTitle }}</div>
+                    </div>
+                  </td>
+                  <td>
 <span class="manual-questions-count">
                                     {{ exam.manualQuestionsCount }}
 </span>
-</td>
-<td>
-<div class="pending-count">
+                  </td>
+                  <td>
+                    <div class="pending-count">
 <span class="badge bg-warning text-dark" v-if="exam.pendingSubmissions > 0">
                                                                            {{ exam.pendingSubmissions }}
 </span>
-<span class="text-muted" v-else>-</span>
-</div>
-</td>
-<td>
-<div class="last-update">
-                        {{ formatDateTime(exam.lastSubmission) }}
-</div>
-</td>
-<td>
+                      <span class="text-muted" v-else>-</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="last-update">
+                      {{ formatDateTime(exam.lastSubmission) }}
+                    </div>
+                  </td>
+                  <td>
 <span class="badge" :class="getStatusClass(exam)">
                                                  {{ getStatusText(exam) }}
 </span>
-</td>
-<td>
-<div class="action-buttons">
-<button
- class="modern-btn modern-btn-sm modern-btn-primary"
-@click="goToGrading(exam)"
-:disabled="exam.pendingSubmissions === 0"
->
-<i class="fas fa-edit me-1"></i>
-نمره‌گذاری
-</button>
-<button
-class="modern-btn modern-btn-sm modern-btn-outline"
-@click="viewExamResults(exam)"
->
-<i class="fas fa-chart-bar me-1"></i>
-نتایج
-</button>
-</div>
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <button
+                          class="modern-btn modern-btn-sm modern-btn-primary"
+                          @click="goToGrading(exam)"
+                          :disabled="exam.pendingSubmissions === 0"
+                      >
+                        <i class="fas fa-edit me-1"></i>
+                        نمره‌گذاری
+                      </button>
+                      <button
+                          class="modern-btn modern-btn-sm modern-btn-outline"
+                          @click="viewExamResults(exam)"
+                      >
+                        <i class="fas fa-chart-bar me-1"></i>
+                        نتایج
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -187,102 +187,102 @@ import axios from 'axios'
 export default {
   name: 'ExamManualGradingList',
   data() {
-  return {
-    loading: false,
-    error: null,
-    exams: []
+    return {
+      loading: false,
+      error: null,
+      exams: []
+    }
+  },
+  computed: {
+    totalExams() {
+      return this.exams.length;
+    },
+    examsNeedingGrading() {
+      return this.exams.filter(exam => exam.pendingSubmissions > 0).length;
+    },
+    totalPendingSubmissions() {
+      return this.exams.reduce((total, exam) => total + exam.pendingSubmissions, 0);
+    },
+    completedGrading() {
+      return this.exams.filter(exam => exam.pendingSubmissions === 0).length;
+    }
+  },
+  async mounted() {
+    await this.fetchData();
+  },
+  methods: {
+    async fetchData() {
+      try {
+        this.loading = true;
+        this.error = null;
+
+        const response = await axios.get('/exams/manual-grading-overview');
+        this.exams = response.data.exams || [];
+
+      } catch (error) {
+        console.error('Error fetching manual grading data:', error);
+        this.error = 'خطا در دریافت اطلاعات آزمون‌ها';
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async refreshData() {
+      await this.fetchData();
+    },
+
+    goToGrading(exam) {
+      this.$router.push({
+        name: 'ExamManualGrading',
+        params: {examId: exam.id}
+      });
+    },
+
+    viewExamResults(exam) {
+      this.$router.push({
+        name: 'ExamAnswers',
+        params: {submissionId: exam.id}
+      });
+    },
+
+    getStatusClass(exam) {
+      if (exam.pendingSubmissions === 0) {
+        return 'bg-success';
+      } else if (exam.pendingSubmissions > 0) {
+        return 'bg-warning text-dark';
+      } else {
+        return 'bg-secondary';
+      }
+    },
+
+    getStatusText(exam) {
+      if (exam.pendingSubmissions === 0) {
+        return 'تکمیل شده';
+      } else if (exam.pendingSubmissions > 0) {
+        return 'در انتظار نمره‌گذاری';
+      } else {
+        return 'بدون ارسالی';
+      }
+    },
+
+    formatDateTime(dateString) {
+      if (!dateString) return '-';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('fa-IR') + ' ' + date.toLocaleTimeString('fa-IR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
   }
-},
-computed: {
-totalExams() {
-  return this.exams.length;
-},
-examsNeedingGrading() {
-  return this.exams.filter(exam => exam.pendingSubmissions > 0).length;
-},
-totalPendingSubmissions() {
-  return this.exams.reduce((total, exam) => total + exam.pendingSubmissions, 0);
-},
-completedGrading() {
-  return this.exams.filter(exam => exam.pendingSubmissions === 0).length;
-}
-},
-async mounted() {
-  await this.fetchData();
-},
-methods: {
-  async fetchData() {
-  try {
-    this.loading = true;
-    this.error = null;
-
-    const response = await axios.get('/exams/manual-grading-overview');
-    this.exams = response.data.exams || [];
-
-  } catch (error) {
-  console.error('Error fetching manual grading data:', error);
-  this.error = 'خطا در دریافت اطلاعات آزمون‌ها';
-} finally {
-    this.loading = false;
-  }
-},
-
-async refreshData() {
-  await this.fetchData();
-},
-
-goToGrading(exam) {
-  this.$router.push({
-  name: 'ExamManualGrading',
-  params: { examId: exam.id }
-});
-},
-
-viewExamResults(exam) {
-  this.$router.push({
-  name: 'ExamAnswers',
-  params: { submissionId: exam.id }
-});
-},
-
-getStatusClass(exam) {
-  if (exam.pendingSubmissions === 0) {
-  return 'bg-success';
-} else if (exam.pendingSubmissions > 0) {
-  return 'bg-warning text-dark';
-} else {
-    return 'bg-secondary';
-  }
-},
-
-getStatusText(exam) {
-  if (exam.pendingSubmissions === 0) {
-  return 'تکمیل شده';
-} else if (exam.pendingSubmissions > 0) {
-  return 'در انتظار نمره‌گذاری';
-} else {
-    return 'بدون ارسالی';
-  }
-},
-
-formatDateTime(dateString) {
-  if (!dateString) return '-';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('fa-IR') + ' ' + date.toLocaleTimeString('fa-IR', {
-  hour: '2-digit',
-  minute: '2-digit'
-});
-}
-}
 }
 </script>
 
 <style scoped>
- .exam-manual-grading-list {
-   background: #f8f9fa;
-   min-height: 100vh;
-   padding: 2rem 0;
- }
+.exam-manual-grading-list {
+  background: #f8f9fa;
+  min-height: 100vh;
+  padding: 2rem 0;
+}
 
 .page-header {
   background: white;
