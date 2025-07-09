@@ -309,7 +309,7 @@
     </div>
   </div>
   <!-- Student Answers Modal -->
-  <div class="modal-body" id="studentAnswersModal" tabindex="-1">
+  <div class="modal fade" id="studentAnswersModal" tabindex="-1">
     <div v-if="selectedStudentAnswers" class="student-answers-content">
       <!-- Student Info -->
       <div class="student-info mb-4">
@@ -571,18 +571,25 @@ export default {
           questionOptions: answerData.questionOptions
         }));
 
+
         this.selectedStudentAnswers = {
-          studentName: this.getStudentName(submission),
-          score: response.data.score, // استفاده از score واقعی از API
+          studentName: response.data.studentName,
+          score: response.data.score,
           totalScore: response.data.totalPossibleScore,
           passed: response.data.passed,
           timeSpent: response.data.timeSpent,
           submissionTime: response.data.submissionTime,
           answers: answersArray
         };
+        console.log("response.data:"+this.selectedStudentAnswers.studentName);
+          const modalElement = document.getElementById('studentAnswersModal');
+          if (modalElement) {
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+          } else {
+            console.error('Modal element not found');
+          }
 
-        const modal = new bootstrap.Modal(document.getElementById('studentAnswersModal'));
-        modal.show();
 
       } catch (error) {
         console.error('Error fetching student answers:', error);
