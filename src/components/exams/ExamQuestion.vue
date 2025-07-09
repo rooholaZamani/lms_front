@@ -68,45 +68,32 @@
         </div>
       </div>
 
-      <!-- Short Answer Questions -->
-      <div v-else-if="question.questionType === 'SHORT_ANSWER'" class="short-answer-section">
+      <!-- بخش SHORT_ANSWER و ESSAY -->
+      <div v-else-if="['SHORT_ANSWER', 'ESSAY'].includes(question.questionType)" class="text-answer-section mt-4">
         <textarea
-            v-model="selectedAnswer"
+            :value="selectedAnswer || ''"
+            @input="onTextAnswerChange($event.target.value)"
             class="modern-form-control"
-            rows="3"
-            placeholder="پاسخ خود را بنویسید..."
-            maxlength="500">
+            :rows="question.questionType === 'ESSAY' ? 6 : 3"
+            :placeholder="question.questionType === 'ESSAY' ? 'پاسخ تشریحی خود را بنویسید...' : 'پاسخ کوتاه خود را بنویسید...'">
         </textarea>
-        <small class="text-muted">حداکثر 500 کاراکتر</small>
-      </div>
-
-      <!-- Essay Questions -->
-      <div v-else-if="question.questionType === 'ESSAY'" class="essay-section">
-        <textarea
-            v-model="selectedAnswer"
-            class="modern-form-control"
-            rows="8"
-            placeholder="پاسخ تشریحی خود را بنویسید..."
-            maxlength="2000">
-        </textarea>
-        <small class="text-muted">حداکثر 2000 کاراکتر</small>
       </div>
 
       <!-- Fill in the Blanks Questions -->
-      <div v-else-if="question.questionType === 'FILL_IN_THE_BLANKS'" class="fill-blanks-section">
+      <div v-else-if="question.questionType === 'FILL_IN_THE_BLANKS'" class="fill-blanks-section mt-4">
         <div class="template-display">
-          <div class="template-with-inputs">
-            <span v-for="(part, index) in getTemplateParts()" :key="index">
-              <span v-if="part.type === 'text'" v-html="part.content"></span>
-              <input
-                  v-else-if="part.type === 'blank'"
-                  type="text"
-                  class="blank-input"
-                  v-model="selectedAnswer[part.blankIndex]"
-                  placeholder="..."
-                  @input="updateBlank(part.blankIndex, $event.target.value)"
-              />
-            </span>
+          <div class="template-content">
+      <span v-for="(part, index) in getTemplateParts()" :key="index">
+        <span v-if="part.type === 'text'">{{ part.content }}</span>
+        <input
+            v-else-if="part.type === 'blank'"
+            type="text"
+            class="blank-input"
+            :value="selectedAnswer[part.blankIndex] || ''"
+            @input="updateBlank(part.blankIndex, $event.target.value)"
+            placeholder="..."
+        />
+      </span>
           </div>
         </div>
       </div>
@@ -118,32 +105,19 @@
           آیتم‌های متناظر را به هم متصل کنید
         </h6>
         <div class="matching-container">
-          <div class="matching-columns">
-            <div class="left-column">
-              <h6>ستون اول</h6>
-              <div v-for="(pair, index) in question.matchingPairs" :key="'left-' + index"
-                   class="matching-item left-item">
-                {{ pair.leftItem }}
-              </div>
-            </div>
-            <div class="right-column">
-              <h6>ستون دوم</h6>
-              <div v-for="(pair, index) in shuffledRightItems" :key="'right-' + index"
-                   class="matching-item right-item"
-                   @click="selectRightItem(pair, index)"
-                   :class="{ selected: isRightItemSelected(pair) }">
-                {{ pair.rightItem }}
-              </div>
-            </div>
-          </div>
           <div class="matching-answers">
             <div v-for="(pair, index) in question.matchingPairs" :key="'answer-' + index"
                  class="matching-answer-row">
               <span class="left-text">{{ pair.leftItem }}</span>
               <i class="fas fa-arrow-left mx-2"></i>
-              <select v-model="selectedAnswer[pair.leftItem]" class="modern-form-control matching-select">
+              <select
+                  :value="selectedAnswer[pair.leftItem] || ''"
+                  @change="onMatchingSelectionChange(pair.leftItem, $event.target.value)"
+                  class="modern-form-control matching-select">
                 <option value="">انتخاب کنید</option>
-                <option v-for="rightItem in getAllRightItems()" :key="rightItem.rightItem" :value="rightItem.rightItem">
+                <option v-for="rightItem in getAllRightItems()"
+                        :key="rightItem.rightItem"
+                        :value="rightItem.rightItem">
                   {{ rightItem.rightItem }}
                 </option>
               </select>
@@ -159,23 +133,20 @@
           آیتم‌ها را در دسته‌های مناسب قرار دهید
         </h6>
         <div class="categorization-container">
-          <div class="categories-display">
-            <div v-for="category in question.categories" :key="category" class="category-box">
-              <h6 class="category-title">{{ category }}</h6>
-              <div class="category-items">
-                <div v-for="item in getItemsInCategory(category)" :key="item" class="categorized-item">
-                  {{ item }}
-                </div>
-              </div>
-            </div>
-          </div>
           <div class="items-to-categorize">
-            <h6>آیتم‌های قابل دسته‌بندی:</h6>
-            <div v-for="item in question.answers" :key="item.id" class="categorization-answer-row">
+            <h6>آیتم‌ها را دسته‌بندی کنید:</h6>
+            <div v-for="(item, index) in question.answers" :key="'item-' + index"
+                 class="categorization-answer-row">
               <span class="item-text">{{ item.text }}</span>
-              <select v-model="selectedAnswer[item.text]" class="modern-form-control category-select">
+              <i class="fas fa-arrow-left mx-2"></i>
+              <select
+                  :value="selectedAnswer[item.text] || ''"
+                  @change="onCategorizationSelectionChange(item.text, $event.target.value)"
+                  class="modern-form-control category-select">
                 <option value="">انتخاب دسته</option>
-                <option v-for="category in question.categories" :key="category" :value="category">
+                <option v-for="category in question.categories"
+                        :key="category"
+                        :value="category">
                   {{ category }}
                 </option>
               </select>
@@ -231,9 +202,14 @@ export default {
     },
     selectedAnswer: {
       handler(newVal) {
+        // Debug: نمایش پاسخ انتخاب شده
+        console.log(`Question ${this.questionIndex} answer changed:`, newVal);
+
+        // emit کردن پاسخ
         this.$emit('answer-changed', this.questionIndex, newVal);
       },
-      deep: true
+      deep: true,
+      immediate: false // تا در mounted دوبار emit نشود
     }
   },
   mounted() {
@@ -244,6 +220,7 @@ export default {
   },
   methods: {
     initializeAnswer() {
+      // اگر پاسخ از قبل موجود است، همان را برگردان
       if (this.answer !== null && this.answer !== undefined) {
         return this.answer;
       }
@@ -256,18 +233,20 @@ export default {
           const matchingAnswer = {};
           if (this.question.matchingPairs && Array.isArray(this.question.matchingPairs)) {
             this.question.matchingPairs.forEach(pair => {
-              matchingAnswer[pair.leftItem] = '';
+              matchingAnswer[pair.leftItem] = ''; // مقدار اولیه خالی
             });
           }
+          console.log('Initialized matching answer:', matchingAnswer);
           return matchingAnswer;
 
         case 'CATEGORIZATION':
           const categorizationAnswer = {};
           if (this.question.answers && Array.isArray(this.question.answers)) {
             this.question.answers.forEach(item => {
-              categorizationAnswer[item.text] = '';
+              categorizationAnswer[item.text] = ''; // مقدار اولیه خالی
             });
           }
+          console.log('Initialized categorization answer:', categorizationAnswer);
           return categorizationAnswer;
 
         case 'MULTIPLE_CHOICE':
@@ -279,6 +258,93 @@ export default {
         default:
           return null;
       }
+    },
+
+    // 3. اصلاح انتخاب گزینه برای سوالات چندگزینه‌ای
+    selectOption(answerId) {
+      this.selectedAnswer = answerId;
+      console.log(`Multiple choice answer selected: ${answerId}`);
+      // watcher خودکار emit می‌کند
+    },
+
+    // 4. اصلاح انتخاب برای درست/غلط
+    selectTrueFalse(answer) {
+      this.selectedAnswer = answer;
+      console.log(`True/False answer selected: ${answer}`);
+      // watcher خودکار emit می‌کند
+    },
+
+    // 5. تصحیح updateBlank برای جای خالی
+    updateBlank(index, value) {
+      if (!Array.isArray(this.selectedAnswer)) {
+        this.selectedAnswer = Array(this.getBlankCount()).fill('');
+      }
+
+      // کپی آرایه و تغییر مقدار
+      const newAnswer = [...this.selectedAnswer];
+      newAnswer[index] = value;
+      this.selectedAnswer = newAnswer;
+
+      console.log(`Blank ${index} updated to:`, value);
+      console.log('All blanks:', newAnswer);
+      // watcher خودکار emit می‌کند
+    },
+
+    // 6. اصلاح انتخاب برای سوالات تطبیقی
+    onMatchingSelectionChange(leftItem, rightItem) {
+      console.log(`Matching: ${leftItem} -> ${rightItem}`);
+
+      // اطمینان از اینکه selectedAnswer یک object است
+      if (!this.selectedAnswer || typeof this.selectedAnswer !== 'object') {
+        this.selectedAnswer = {};
+        // مقداردهی اولیه برای همه آیتم‌های چپ
+        if (this.question.matchingPairs) {
+          this.question.matchingPairs.forEach(pair => {
+            this.selectedAnswer[pair.leftItem] = '';
+          });
+        }
+      }
+
+      // Vue.set استفاده کنید یا کل object را جایگزین کنید تا reactivity حفظ شود
+      this.selectedAnswer = {
+        ...this.selectedAnswer,
+        [leftItem]: rightItem
+      };
+
+      console.log('Updated matching answer:', this.selectedAnswer);
+      // watcher خودکار emit می‌کند
+    },
+
+    // 7. اصلاح انتخاب برای سوالات دسته‌بندی
+    onCategorizationSelectionChange(itemText, category) {
+      console.log(`Categorization: ${itemText} -> ${category}`);
+
+      // اطمینان از اینکه selectedAnswer یک object است
+      if (!this.selectedAnswer || typeof this.selectedAnswer !== 'object') {
+        this.selectedAnswer = {};
+        // مقداردهی اولیه برای همه آیتم‌ها
+        if (this.question.answers) {
+          this.question.answers.forEach(item => {
+            this.selectedAnswer[item.text] = '';
+          });
+        }
+      }
+
+      // Vue.set استفاده کنید یا کل object را جایگزین کنید تا reactivity حفظ شود
+      this.selectedAnswer = {
+        ...this.selectedAnswer,
+        [itemText]: category
+      };
+
+      console.log('Updated categorization answer:', this.selectedAnswer);
+      // watcher خودکار emit می‌کند
+    },
+
+    // 8. تصحیح پاسخ سوالات متنی
+    onTextAnswerChange(value) {
+      this.selectedAnswer = value;
+      console.log(`Text answer changed to: ${value}`);
+      // watcher خودکار emit می‌کند
     },
 
     getBlankCount() {
@@ -329,16 +395,6 @@ export default {
       }
 
       return parts;
-    },
-
-    updateBlank(index, value) {
-      if (!Array.isArray(this.selectedAnswer)) {
-        this.selectedAnswer = Array(this.getBlankCount()).fill('');
-      }
-      const newAnswer = [...this.selectedAnswer];
-      newAnswer[index] = value;
-      this.selectedAnswer = newAnswer;
-      this.$emit('answer-selected', this.selectedAnswer);
     },
 
     // Matching Methods
