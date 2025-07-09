@@ -105,7 +105,7 @@
                   <td>
                     <div class="student-info">
                       <div class="student-name">{{ getStudentName(submission) }}</div>
-                      <div class="student-username">{{ submission.student.username }}</div>
+                      <div class="student-username">{{ submission.studentUsername }}</div>
                     </div>
                   </td>
                   <td>{{ formatDateTime(submission.submissionTime) }}</td>
@@ -534,7 +534,7 @@ export default {
     },
 
     getStudentName(submission) {
-      return `${submission.student.firstName} ${submission.student.lastName || ''}`.trim();
+      return submission.studentName || 'نامشخص';
     },
 
     getGradingStatusClass(submission) {

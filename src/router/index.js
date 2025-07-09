@@ -203,12 +203,12 @@ const routes = [
       showSidebar: true
     }
   },
-  {
-    path: '/exam-answers/:submissionId',
-    name: 'ExamAnswers',
-    component: () => import('../components/exams/ExamAnswers.vue'),
-    props: true
-  },
+  // {
+  //   path: '/exam-answers/:submissionId',
+  //   name: 'ExamAnswers',
+  //   component: () => import('../components/exams/ExamAnswers.vue'),
+  //   props: true
+  // },
   {
     path: '/exams/:id/edit',
     name: 'ExamEditor',
