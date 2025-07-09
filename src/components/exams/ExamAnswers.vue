@@ -213,7 +213,7 @@
                     <div class="action-buttons">
                       <button
                           class="modern-btn modern-btn-sm modern-btn-primary me-1"
-                          @click="viewSubmission(submission)"
+                          @click="viewStudentAnswer(submission)"
                           title="مشاهده پاسخ‌ها"
                       >
                         <i class="fas fa-eye"></i>
@@ -221,7 +221,7 @@
                       <button
                           v-if="hasManualQuestions && needsManualGrading(submission)"
                           class="modern-btn modern-btn-sm modern-btn-warning me-1"
-                          @click="gradeSubmission(submission)"
+                          @click="goToManualGrading()"
                           title="نمره‌گذاری دستی"
                       >
                         <i class="fas fa-edit"></i>
@@ -439,15 +439,13 @@ export default {
       }
     },
 
-    viewSubmission(submission) {
-      this.$router.push(`/exam-answers/${submission.id}`);
-    },
+    // viewSubmission(submission) {
+    //   this.$router.push(`/exam-answers/${submission.id}`);
+    // },
 
-    gradeSubmission(submission) {
-      this.$router.push(`/exams/${this.examId}/manual-grading`);
-    },
 
     goToManualGrading() {
+      console.log('goToManualGrading' + this.examId);
       this.$router.push(`/exams/${this.examId}/manual-grading`);
     },
 
