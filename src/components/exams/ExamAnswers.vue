@@ -1,212 +1,307 @@
 <template>
-  <div class="exam-answers-page">
-    <div class="container py-4">
-      <LoadingSpinner v-if="loading" />
-
-      <div v-else-if="error" class="alert alert-danger">
-        {{ error }}
-      </div>
-
-      <div v-else>
-        <!-- Header -->
-        <div class="page-header mb-4">
-          <div class="d-flex justify-content-between align-items-center">
-            <div>
-              <h3 class="page-title">پاسخ‌های شما</h3>
-              <p class="text-muted">نتایج تفصیلی آزمون</p>
-            </div>
-            <button @click="goBack" class="btn btn-outline-secondary">
+  <div class="exam-results">
+    <div class="container-fluid">
+      <!-- Header -->
+      <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <h2 class="page-title">
+              <i class="fas fa-chart-bar me-2"></i>
+              نتایج آزمون
+            </h2>
+            <p class="page-subtitle" v-if="examData">{{ examData.title }}</p>
+          </div>
+          <div class="header-actions">
+            <button
+                v-if="hasManualQuestions"
+                class="modern-btn modern-btn-warning me-2"
+                @click="goToManualGrading"
+            >
+              <i class="fas fa-clipboard-check me-2"></i>
+              نمره‌گذاری دستی
+            </button>
+            <button class="modern-btn modern-btn-outline" @click="goBack">
               <i class="fas fa-arrow-right me-2"></i>
               بازگشت
             </button>
           </div>
         </div>
+      </div>
 
+      <!-- Loading -->
+      <div v-if="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">در حال بارگذاری...</span>
+        </div>
+      </div>
 
-        <!-- Score Summary -->
+      <!-- Error -->
+      <div v-else-if="error" class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        {{ error }}
+      </div>
+
+      <!-- Content -->
+      <div v-else-if="examData" class="results-content">
+        <!-- Statistics Cards -->
         <div class="row mb-4">
-          <div class="col-lg-8">
-            <div class="modern-card">
-              <div class="exam-summary">
-                <div class="summary-item">
-                  <div class="summary-icon">
-                    <i class="fas fa-calendar"></i>
-                  </div>
-                  <div class="summary-content">
-                    <span class="summary-label">تاریخ شرکت</span>
-                    <span class="summary-value">{{ formatDateTime(submissionData.submissionTime) }}</span>
-                  </div>
-                </div>
-                <div class="summary-item">
-                  <div class="summary-icon">
-                    <i class="fas fa-clock"></i>
-                  </div>
-                  <div class="summary-content">
-                    <span class="summary-label">زمان صرف شده</span>
-                    <span class="summary-value">{{ formatDurationSecend(submissionData.timeSpent) }} </span>
-                  </div>
-                </div>
+          <div class="col-md-2">
+            <div class="stat-card">
+              <div class="stat-icon bg-primary">
+                <i class="fas fa-users"></i>
+              </div>
+              <div class="stat-content">
+                <h3>{{ submissions.length }}</h3>
+                <p>کل شرکت‌کنندگان</p>
               </div>
             </div>
           </div>
-
-          <div class="col-lg-4">
-            <div class="modern-card text-center">
-              <div class="score-display">
-                <div class="score-circle" :class="getScoreClass()">
-                  <div class="score-number">{{ submissionData.score || 0 }}</div>
-                  <div class="score-total">از {{ submissionData.totalPossibleScore || 100 }}</div>
-                </div>
-                <div class="score-percentage mt-2">
-                  {{ getScorePercentage() }}%
-                </div>
-                <div class="result-status mt-2">
-                  <span class="modern-badge" :class="submissionData.passed ? 'modern-badge-success' : 'modern-badge-danger'">
-                    <i :class="submissionData.passed ? 'fas fa-check' : 'fas fa-times'" class="me-1"></i>
-                    {{ submissionData.passed ? 'قبول' : 'مردود' }}
-                  </span>
-                </div>
+          <div class="col-md-2">
+            <div class="stat-card">
+              <div class="stat-icon bg-success">
+                <i class="fas fa-check"></i>
+              </div>
+              <div class="stat-content">
+                <h3>{{ passedCount }}</h3>
+                <p>قبول شدگان</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="stat-card">
+              <div class="stat-icon bg-danger">
+                <i class="fas fa-times"></i>
+              </div>
+              <div class="stat-content">
+                <h3>{{ failedCount }}</h3>
+                <p>مردود شدگان</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="stat-card">
+              <div class="stat-icon bg-info">
+                <i class="fas fa-percentage"></i>
+              </div>
+              <div class="stat-content">
+                <h3>{{ passPercentage }}%</h3>
+                <p>درصد قبولی</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <div class="stat-card">
+              <div class="stat-icon bg-warning">
+                <i class="fas fa-calculator"></i>
+              </div>
+              <div class="stat-content">
+                <h3>{{ averageScore }}</h3>
+                <p>میانگین نمره</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-2" v-if="hasManualQuestions">
+            <div class="stat-card">
+              <div class="stat-icon bg-secondary">
+                <i class="fas fa-clock"></i>
+              </div>
+              <div class="stat-content">
+                <h3>{{ pendingGradingCount }}</h3>
+                <p>نیاز به نمره‌گذاری</p>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Questions and Answers Section -->
-        <div class="modern-card">
-          <h4 class="section-title mb-4">
-            <i class="fas fa-list-alt me-2"></i>
-            سوالات و پاسخ‌ها
-          </h4>
+        <!-- Manual Grading Alert -->
+        <div v-if="hasManualQuestions && pendingGradingCount > 0" class="alert alert-warning mb-4">
+          <div class="d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle me-3"></i>
+            <div class="flex-grow-1">
+              <strong>توجه:</strong> {{ pendingGradingCount }} ارسالی نیاز به نمره‌گذاری دستی دارد.
+              سوالات تشریحی و پاسخ کوتاه نیاز به بررسی و نمره‌گذاری توسط شما دارند.
+            </div>
+            <button class="btn btn-warning btn-sm" @click="goToManualGrading">
+              <i class="fas fa-edit me-2"></i>
+              شروع نمره‌گذاری
+            </button>
+          </div>
+        </div>
 
-          <!-- Check if we have answers -->
-          <div v-if="!submissionData.answers || getTotalQuestionsCount() === 0" class="alert alert-warning">
-            هیچ سوال و پاسخی یافت نشد
+        <!-- Submissions Table -->
+        <div class="modern-card">
+          <div class="modern-card-header">
+            <div class="d-flex justify-content-between align-items-center">
+              <h5 class="card-title mb-0">
+                <i class="fas fa-list me-2"></i>
+                جزئیات نتایج
+              </h5>
+              <div class="table-actions">
+                <button class="modern-btn modern-btn-sm modern-btn-success" @click="exportResults">
+                  <i class="fas fa-download me-2"></i>
+                  خروجی Excel
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="modern-card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                <tr>
+                  <th>ردیف</th>
+                  <th>دانش‌آموز</th>
+                  <th>زمان ارسال</th>
+                  <th>مدت زمان</th>
+                  <th>نمره</th>
+                  <th>درصد</th>
+                  <th>وضعیت</th>
+                  <th v-if="hasManualQuestions">نمره‌گذاری</th>
+                  <th>عملیات</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr v-for="(submission, index) in submissions" :key="submission.id">
+                  <td>{{ index + 1 }}</td>
+                  <td>
+                    <div class="student-info">
+                      <div class="student-name">{{ getStudentName(submission) }}</div>
+                      <div class="student-username">{{ submission.student.username }}</div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="submission-time">
+                      {{ formatDateTime(submission.submissionTime) }}
+                    </div>
+                  </td>
+                  <td>
+                    <div class="time-spent">
+                      {{ formatTimeSpent(submission.timeSpent) }}
+                    </div>
+                  </td>
+                  <td>
+                    <div class="score-display">
+                      <span class="score-number">{{ submission.score || 0 }}</span>
+                      <span class="score-total">/ {{ examData.totalPossibleScore }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="percentage">
+                      {{ getScorePercentage(submission) }}%
+                    </div>
+                  </td>
+                  <td>
+                      <span :class="getStatusBadgeClass(submission)" class="status-badge">
+                        {{ submission.passed ? 'قبول' : 'مردود' }}
+                      </span>
+                  </td>
+                  <td v-if="hasManualQuestions">
+                      <span v-if="submission.gradedManually" class="badge badge-success">
+                        <i class="fas fa-check me-1"></i>
+                        تکمیل شده
+                      </span>
+                    <span v-else-if="needsManualGrading(submission)" class="badge badge-warning">
+                        <i class="fas fa-clock me-1"></i>
+                        در انتظار
+                      </span>
+                    <span v-else class="badge badge-info">
+                        <i class="fas fa-robot me-1"></i>
+                        خودکار
+                      </span>
+                  </td>
+                  <td>
+                    <div class="action-buttons">
+                      <button
+                          class="modern-btn modern-btn-sm modern-btn-primary me-1"
+                          @click="viewSubmission(submission)"
+                          title="مشاهده پاسخ‌ها"
+                      >
+                        <i class="fas fa-eye"></i>
+                      </button>
+                      <button
+                          v-if="hasManualQuestions && needsManualGrading(submission)"
+                          class="modern-btn modern-btn-sm modern-btn-warning me-1"
+                          @click="gradeSubmission(submission)"
+                          title="نمره‌گذاری دستی"
+                      >
+                        <i class="fas fa-edit"></i>
+                      </button>
+                      <button
+                          v-if="submission.feedback"
+                          class="modern-btn modern-btn-sm modern-btn-info"
+                          @click="viewFeedback(submission)"
+                          title="مشاهده بازخورد"
+                      >
+                        <i class="fas fa-comment"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="row mt-4">
+          <!-- Score Distribution Chart -->
+          <div class="col-md-6">
+            <div class="modern-card">
+              <div class="modern-card-header">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-chart-pie me-2"></i>
+                  توزیع نمرات
+                </h5>
+              </div>
+              <div class="modern-card-body">
+                <canvas ref="scoreChart" width="400" height="200"></canvas>
+              </div>
+            </div>
           </div>
 
-          <!-- Loop through answers -->
-          <div v-else>
-            <!-- If answers is an object, convert to array -->
-            <div
-                v-for="(answer, index) in getAnswersArray()"
-                :key="index"
-                class="question-answer-item mb-4"
-            >
-              <!-- Question Header -->
-              <div class="question-card">
-                <div class="question-header">
-                  <div class="question-number">
-                    <span>{{ index + 1 }}</span>
-                  </div>
-                  <div class="question-meta">
-                    <div class="question-type">
-                      <span class="badge" :class="getQuestionTypeClass(answer.questionType)">
-                        {{ getQuestionTypeText(answer.questionType) }}
-                      </span>
-                    </div>
-                    <div class="question-points">
-                      <span class="earned-points" :class="answer.isCorrect ? 'text-success' : 'text-danger'">
-                        {{ answer.earnedPoints || 0 }}
-                      </span>
-                      <span class="total-points">/ {{ answer.totalPoints || 10 }} امتیاز</span>
-                    </div>
-                    <div class="question-result-icon">
-                      <i :class="answer.isCorrect ? 'fas fa-check text-success' : 'fas fa-times text-danger'"></i>
-                    </div>
-                  </div>
-                </div>
-                <div class="question-text">{{ answer.questionText }}</div>
+          <!-- Pass/Fail Chart -->
+          <div class="col-md-6">
+            <div class="modern-card">
+              <div class="modern-card-header">
+                <h5 class="card-title mb-0">
+                  <i class="fas fa-chart-doughnut me-2"></i>
+                  وضعیت قبولی
+                </h5>
               </div>
+              <div class="modern-card-body">
+                <canvas ref="passFailChart" width="400" height="200"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-              <!-- Question Answers based on type -->
-              <div class="answer-section">
-                <!-- Multiple Choice, True/False -->
-                <div v-if="['MULTIPLE_CHOICE', 'TRUE_FALSE'].includes(answer.questionType)" class="choices-answers">
-                  <div class="answer-row">
-                    <span class="answer-label">پاسخ شما:</span>
-                    <span class="answer-value" :class="answer.isCorrect ? 'correct-answer' : 'incorrect-answer'">
-                      {{ answer.studentAnswer || 'بدون پاسخ' }}
-                    </span>
-                  </div>
-                  <div class="answer-row">
-                    <span class="answer-label">پاسخ صحیح:</span>
-                    <span class="answer-value correct-answer">{{ answer.correctAnswer }}</span>
-                  </div>
+      <!-- Feedback Modal -->
+      <div class="modal fade" id="feedbackModal" tabindex="-1">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title">
+                <i class="fas fa-comment me-2"></i>
+                بازخورد استاد
+              </h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div v-if="selectedFeedback" class="feedback-content">
+                <div class="student-info mb-3">
+                  <strong>دانش‌آموز:</strong> {{ selectedFeedback.studentName }}
                 </div>
-
-                <!-- Fill in the Blanks -->
-                <div v-else-if="answer.questionType === 'FILL_IN_THE_BLANKS'" class="blanks-answers">
-                  <div class="answer-row">
-                    <span class="answer-label">پاسخ‌های شما:</span>
-                    <div class="blanks-container">
-                      <span
-                          v-for="(blank, blankIndex) in getBlankAnswers(answer.studentAnswer)"
-                          :key="blankIndex"
-                          class="blank-answer"
-                          :class="isBlankCorrect(answer, blankIndex) ? 'correct' : 'incorrect'"
-                      >
-                        {{ blank || 'خالی' }}
-                      </span>
-                    </div>
-                  </div>
-                  <div class="answer-row">
-                    <span class="answer-label">پاسخ‌های صحیح:</span>
-                    <div class="blanks-container">
-                      <span
-                          v-for="(blank, blankIndex) in getBlankAnswers(answer.correctAnswer)"
-                          :key="blankIndex"
-                          class="blank-answer correct"
-                      >
-                        {{ blank }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Matching -->
-                <div v-else-if="answer.questionType === 'MATCHING'" class="matching-answers">
-                  <h6>تطبیق‌های شما:</h6>
-                  <div class="matching-pairs">
-                    <div
-                        v-for="(value, key) in answer.studentAnswer"
-                        :key="key"
-                        class="matching-pair"
-                        :class="isMatchingCorrect(answer, key) ? 'correct' : 'incorrect'"
-                    >
-                      <span class="left-item">{{ key }}</span>
-                      <i class="fas fa-arrow-left mx-2"></i>
-                      <span class="right-item">{{ value || 'انتخاب نشده' }}</span>
-                      <i :class="isMatchingCorrect(answer, key) ? 'fas fa-check text-success' : 'fas fa-times text-danger'" class="ms-2"></i>
-                    </div>
-                  </div>
-
-                  <h6 class="mt-3">تطبیق‌های صحیح:</h6>
-                  <div class="matching-pairs">
-                    <div
-                        v-for="(value, key) in answer.correctAnswer"
-                        :key="key"
-                        class="matching-pair correct"
-                    >
-                      <span class="left-item">{{ key }}</span>
-                      <i class="fas fa-arrow-left mx-2"></i>
-                      <span class="right-item">{{ value }}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Essay and Short Answer -->
-                <div v-else-if="['ESSAY', 'SHORT_ANSWER'].includes(answer.questionType)" class="text-answers">
-                  <div class="answer-row">
-                    <span class="answer-label">پاسخ شما:</span>
-                    <div class="text-answer-content" :class="answer.isCorrect ? 'correct' : 'incorrect'">
-                      {{ answer.studentAnswer || 'بدون پاسخ' }}
-                    </div>
-                  </div>
-                  <div class="answer-row">
-                    <span class="answer-label">پاسخ صحیح:</span>
-                    <div class="text-answer-content correct">{{ answer.correctAnswer }}</div>
-                  </div>
+                <div class="feedback-text">
+                  {{ selectedFeedback.feedback }}
                 </div>
               </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                بستن
+              </button>
             </div>
           </div>
         </div>
@@ -217,646 +312,500 @@
 
 <script>
 import axios from 'axios'
+import Chart from 'chart.js/auto'
 
 export default {
-  name: 'ExamAnswers',
+  name: 'ExamResults',
   props: {
-    submissionId: {
+    examId: {
       type: [String, Number],
       required: true
     }
   },
   data() {
     return {
-      submissionData : null,
-      loading: true,
-      error: null
+      loading: false,
+      error: null,
+      examData: null,
+      submissions: [],
+      hasManualQuestions: false,
+      selectedFeedback: null,
+      scoreChart: null,
+      passFailChart: null
+    }
+  },
+  computed: {
+    passedCount() {
+      return this.submissions.filter(s => s.passed).length;
+    },
+    failedCount() {
+      return this.submissions.filter(s => !s.passed).length;
+    },
+    passPercentage() {
+      if (this.submissions.length === 0) return 0;
+      return Math.round((this.passedCount / this.submissions.length) * 100);
+    },
+    averageScore() {
+      if (this.submissions.length === 0) return 0;
+      const total = this.submissions.reduce((sum, s) => sum + (s.score || 0), 0);
+      return Math.round(total / this.submissions.length);
+    },
+    pendingGradingCount() {
+      if (!this.hasManualQuestions) return 0;
+      return this.submissions.filter(s => this.needsManualGrading(s)).length;
     }
   },
   async mounted() {
-    await this.fetchExamAnswers()
-    // await this.fetchData()
+    await this.fetchData();
+    this.$nextTick(() => {
+      this.initializeCharts();
+    });
+  },
+  beforeUnmount() {
+    if (this.scoreChart) {
+      this.scoreChart.destroy();
+    }
+    if (this.passFailChart) {
+      this.passFailChart.destroy();
+    }
   },
   methods: {
-    getAnswersArray() {
-      if (!this.submissionData.answers) return [];
-
-      // اگر آرایه باشه، همون رو برگردون
-      if (Array.isArray(this.submissionData.answers)) {
-        return this.submissionData.answers;
-      }
-
-      // اگر object باشه، به آرایه تبدیل کن
-      if (typeof this.submissionData.answers === 'object') {
-        return Object.values(this.submissionData.answers);
-      }
-
-      return [];
-    },
-    isMatchingCorrect(answer, leftItem) {
-      if (!answer.studentAnswer || !answer.correctAnswer) return false;
-      return answer.studentAnswer[leftItem] === answer.correctAnswer[leftItem];
-    },
-
-    isBlankCorrect(answer, blankIndex) {
-      if (!answer.studentAnswer || !answer.correctAnswer) return false;
-      const studentBlanks = this.getBlankAnswers(answer.studentAnswer);
-      const correctBlanks = this.getBlankAnswers(answer.correctAnswer);
-      return studentBlanks[blankIndex] === correctBlanks[blankIndex];
-    },
-
-    getBlankAnswers(answers) {
-      if (Array.isArray(answers)) return answers;
-      if (typeof answers === 'string') {
-        try {
-          return JSON.parse(answers);
-        } catch {
-          return answers.split(',').map(s => s.trim());
-        }
-      }
-      return [];
-    },
-    getTotalQuestionsCount() {
-      const answers = this.getAnswersArray();
-      return answers.length;
-    },
-    getCorrectAnswersCount() {
-      const answers = this.getAnswersArray();
-      return answers.filter(answer => answer.isCorrect).length;
-    },
-    formatDateTime(dateString) {
-      if (!dateString) return '';
-      const date = new Date(dateString);
-      return date.toLocaleDateString('fa-IR') + ' ' + date.toLocaleTimeString('fa-IR');
-    },
-    getScorePercentage() {
-      if (!this.submissionData?.score || !this.submissionData?.totalPossibleScore) return 0;
-      return Math.round((this.submissionData.score / this.submissionData.totalPossibleScore) * 100);
-    },
-
-    getScoreClass() {
-      const percentage = this.getScorePercentage();
-      if (percentage >= 90) return 'score-excellent';
-      if (percentage >= 80) return 'score-good';
-      if (percentage >= 70) return 'score-average';
-      if (percentage >= 60) return 'score-poor';
-      return 'score-fail';
-    },
-
-    getQuestionTypeText(type) {
-      const labels = {
-        'MULTIPLE_CHOICE': 'چند گزینه‌ای',
-        'TRUE_FALSE': 'درست/غلط',
-        'MATCHING': 'تطبیقی',
-        'CATEGORIZATION': 'دسته‌بندی',
-        'FILL_IN_THE_BLANK': 'جای خالی',
-        'ESSAY': 'تشریحی',
-        'SHORT_ANSWER': 'پاسخ کوتاه'
-      };
-      return labels[type] || type;
-    },
-
-    getQuestionTypeClass(type) {
-      const classes = {
-        'MULTIPLE_CHOICE': 'badge-primary',
-        'TRUE_FALSE': 'badge-secondary',
-        'MATCHING': 'badge-success',
-        'CATEGORIZATION': 'badge-warning',
-        'FILL_IN_THE_BLANK': 'badge-info',
-        'ESSAY': 'badge-danger',
-        'SHORT_ANSWER': 'badge-light'
-      };
-      return classes[type] || 'badge-secondary';
-    },
-
-    goBack() {
-      this.$router.go(-1);
-    },
     async fetchData() {
       try {
         this.loading = true;
         this.error = null;
 
-        const response = await axios.get(`/exams/${this.submissionId}/student-answers`);
-        this.submissionData = response.data;
+        // دریافت اطلاعات آزمون
+        const examResponse = await axios.get(`/exams/${this.examId}`);
+        this.examData = examResponse.data;
+
+        // دریافت submissions
+        const submissionsResponse = await axios.get(`/exams/${this.examId}/submissions`);
+        this.submissions = submissionsResponse.data;
+
+        // بررسی وجود سوالات تشریحی
+        this.hasManualQuestions = this.examData.questions?.some(
+            q => ['ESSAY', 'SHORT_ANSWER'].includes(q.questionType)
+        ) || false;
 
       } catch (error) {
-        console.error('Error fetching submission answers:', error);
-        this.error = 'خطا در دریافت اطلاعات. لطفاً دوباره تلاش کنید.';
+        console.error('Error fetching exam results:', error);
+        this.error = 'خطا در دریافت نتایج آزمون';
       } finally {
         this.loading = false;
       }
     },
-    async fetchExamAnswers() {
-      try {
-        this.loading = true
-        this.error = null
 
-        // استفاده از submissionId برای دریافت داده‌ها
-        const response = await axios.get(`/exams/${this.submissionId}/student-answers`)
-        this.submissionData  = response.data
-
-      } catch (error) {
-        console.error('Error fetching exam answers:', error)
-        this.error = 'خطا در بارگذاری پاسخ‌های آزمون'
-      } finally {
-        this.loading = false
-      }
+    needsManualGrading(submission) {
+      if (!this.hasManualQuestions) return false;
+      return !submission.gradedManually;
     },
 
-    getEarnedScore() {
-      if (!this.examData?.answers) return 0
-      return Object.values(this.examData.answers)
-          .reduce((total, answer) => total + (answer.earnedPoints || 0), 0)
+    getStudentName(submission) {
+      const student = submission.student;
+      return `${student.firstName} ${student.lastName || ''}`.trim();
     },
 
-    formatTime(seconds) {
-      if (!seconds) return '00:00'
-      const mins = Math.floor(seconds / 60)
-      const secs = seconds % 60
-      return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+    getScorePercentage(submission) {
+      if (!this.examData?.totalPossibleScore) return 0;
+      return Math.round(((submission.score || 0) / this.examData.totalPossibleScore) * 100);
     },
 
-    formatDate(dateString) {
-      if (!dateString) return ''
-      const date = new Date(dateString)
-      return date.toLocaleDateString('fa-IR', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
+    getStatusBadgeClass(submission) {
+      return submission.passed ? 'badge-success' : 'badge-danger';
+    },
+
+    formatDateTime(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('fa-IR') + ' ' + date.toLocaleTimeString('fa-IR', {
         hour: '2-digit',
         minute: '2-digit'
-      })
+      });
     },
-    formatDurationSecend(secends) {
 
-      if (!secends) return '-';
-      const min = Math.floor(secends / 60);
-      const sec = secends % 60;
-      const hrs = Math.floor(min / 60);
-      const mins = min % 60;
+    formatTimeSpent(timeSpent) {
+      if (!timeSpent) return 'نامشخص';
 
-      if (sec > 0) {
-        return `${hrs} ساعت و ${mins} دقیقه و ${sec} ثانیه`;
+      const hours = Math.floor(timeSpent / 3600);
+      const minutes = Math.floor((timeSpent % 3600) / 60);
+      const seconds = timeSpent % 60;
+
+      if (hours > 0) {
+        return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      } else {
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
       }
-      return `${mins} دقیقه`;
     },
 
-    getQuestionTypeLabel(type) {
-      const labels = {
-        'MULTIPLE_CHOICE': 'چند گزینه‌ای',
-        'TRUE_FALSE': 'درست/غلط',
-        'MATCHING': 'تطبیقی',
-        'CATEGORIZATION': 'دسته‌بندی',
-        'FILL_IN_THE_BLANK': 'جای خالی',
-        'ESSAY': 'تشریحی',
-        'SHORT_ANSWER': 'پاسخ کوتاه'
+    viewSubmission(submission) {
+      this.$router.push(`/exam-answers/${submission.id}`);
+    },
+
+    gradeSubmission(submission) {
+      this.$router.push(`/exams/${this.examId}/manual-grading`);
+    },
+
+    goToManualGrading() {
+      this.$router.push(`/exams/${this.examId}/manual-grading`);
+    },
+
+    viewFeedback(submission) {
+      this.selectedFeedback = {
+        studentName: this.getStudentName(submission),
+        feedback: submission.feedback
+      };
+
+      const modal = new bootstrap.Modal(document.getElementById('feedbackModal'));
+      modal.show();
+    },
+
+    async exportResults() {
+      try {
+        const response = await axios.get(`/exams/${this.examId}/export-results`, {
+          responseType: 'blob'
+        });
+
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `exam-results-${this.examId}.xlsx`);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+
+        this.$toast?.success('فایل با موفقیت دانلود شد');
+      } catch (error) {
+        console.error('Error exporting results:', error);
+        this.$toast?.error('خطا در دانلود فایل');
       }
-      return labels[type] || type
     },
 
-    getQuestionTypeBadgeClass(type) {
-      const classes = {
-        'MULTIPLE_CHOICE': 'primary',
-        'TRUE_FALSE': 'secondary',
-        'MATCHING': 'success',
-        'CATEGORIZATION': 'warning',
-        'FILL_IN_THE_BLANK': 'info',
-        'ESSAY': 'danger',
-        'SHORT_ANSWER': 'light'
-      }
-      return classes[type] || 'secondary'
+    initializeCharts() {
+      this.initializeScoreChart();
+      this.initializePassFailChart();
     },
 
-    checkMatchingCorrectness(questionData, leftItem, rightItem) {
-      const correctAnswer = questionData.correctAnswer?.[leftItem]
-      return rightItem === correctAnswer ? 'correct' : 'incorrect'
+    initializeScoreChart() {
+      if (!this.$refs.scoreChart) return;
+
+      const ctx = this.$refs.scoreChart.getContext('2d');
+
+      // توزیع نمرات در بازه‌های 10 تایی
+      const scoreRanges = ['0-10', '11-20', '21-30', '31-40', '41-50', '51-60', '61-70', '71-80', '81-90', '91-100'];
+      const scoreCounts = new Array(10).fill(0);
+
+      this.submissions.forEach(submission => {
+        const percentage = this.getScorePercentage(submission);
+        const rangeIndex = Math.min(Math.floor(percentage / 10), 9);
+        scoreCounts[rangeIndex]++;
+      });
+
+      this.scoreChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: scoreRanges,
+          datasets: [{
+            label: 'تعداد دانش‌آموزان',
+            data: scoreCounts,
+            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          }
+        }
+      });
     },
 
-    checkCategorizationCorrectness(questionData, item, category) {
-      const correctCategory = questionData.correctAnswer?.[item]
-      return category === correctCategory ? 'correct' : 'incorrect'
+    initializePassFailChart() {
+      if (!this.$refs.passFailChart) return;
+
+      const ctx = this.$refs.passFailChart.getContext('2d');
+
+      this.passFailChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['قبول', 'مردود'],
+          datasets: [{
+            data: [this.passedCount, this.failedCount],
+            backgroundColor: [
+              'rgba(40, 167, 69, 0.7)',
+              'rgba(220, 53, 69, 0.7)'
+            ],
+            borderColor: [
+              'rgba(40, 167, 69, 1)',
+              'rgba(220, 53, 69, 1)'
+            ],
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+    },
+
+    goBack() {
+      this.$router.go(-1);
     }
   }
 }
 </script>
 
 <style scoped>
-.exam-answers-page {
+.exam-results {
   background: #f8f9fa;
   min-height: 100vh;
   padding: 2rem 0;
-  direction: rtl;
 }
 
-.container-fluid {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-/* Loading & Error States */
-.loading-section, .error-section {
-  padding: 3rem 0;
-}
-
-/* Summary Header */
-.summary-header {
-  margin-bottom: 2rem;
-}
-
-.summary-card {
+.page-header {
   background: white;
-  border-radius: 15px;
   padding: 2rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border-radius: 15px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
 }
 
 .page-title {
   color: #2c3e50;
-  font-weight: 700;
+  font-weight: 600;
   margin: 0;
 }
 
-.status-badge {
-  padding: 0.75rem 1.5rem;
-  border-radius: 25px;
-  font-weight: 600;
-  font-size: 1rem;
+.page-subtitle {
+  color: #6c757d;
+  margin: 0;
+  font-size: 1.1rem;
 }
 
-.status-badge.success {
-  background: linear-gradient(135deg, #28a745, #20c997);
-  color: white;
-}
-
-.status-badge.danger {
-  background: linear-gradient(135deg, #dc3545, #fd7e14);
-  color: white;
-}
-
-/* Stats Row */
-.stats-row {
-  margin-top: 2rem;
+.header-actions {
+  display: flex;
+  gap: 1rem;
 }
 
 .stat-card {
   background: white;
-  border-radius: 12px;
+  border-radius: 15px;
   padding: 1.5rem;
-  margin-bottom: 1rem;
-  border-left: 4px solid;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
-  gap: 1rem;
+  margin-bottom: 1rem;
 }
-
-.stat-card.primary { border-color: #007bff; }
-.stat-card.success { border-color: #28a745; }
-.stat-card.warning { border-color: #ffc107; }
-.stat-card.info { border-color: #17a2b8; }
 
 .stat-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  border-radius: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
   color: white;
+  margin-left: 1rem;
 }
 
-.stat-card.primary .stat-icon { background: #007bff; }
-.stat-card.success .stat-icon { background: #28a745; }
-.stat-card.warning .stat-icon { background: #ffc107; }
-.stat-card.info .stat-icon { background: #17a2b8; }
-
-.stat-content {
-  flex: 1;
-}
-
-.stat-value {
-  font-size: 1.5rem;
+.stat-content h3 {
+  margin: 0;
+  font-size: 2rem;
   font-weight: 700;
   color: #2c3e50;
-  line-height: 1;
 }
 
-.stat-label {
-  font-size: 0.9rem;
+.stat-content p {
+  margin: 0;
   color: #6c757d;
-  margin-top: 0.25rem;
+  font-size: 0.9rem;
 }
 
-/* Questions Section */
-.questions-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.question-card {
+.modern-card {
   background: white;
   border-radius: 15px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.question-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-}
-
-/* Question Header */
-.question-header {
+.modern-card-header {
   background: #f8f9fa;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e9ecef;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #dee2e6;
 }
 
-.question-number {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.modern-card-body {
+  padding: 0;
+}
+
+.table {
+  margin: 0;
+}
+
+.table th {
+  background: #f8f9fa;
+  border: none;
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.9rem;
+}
+
+.table td {
+  padding: 1rem 1.5rem;
+  border: none;
+  border-bottom: 1px solid #f1f3f4;
+  vertical-align: middle;
+  font-size: 0.9rem;
+}
+
+.student-info .student-name {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.student-info .student-username {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.submission-time, .time-spent {
+  font-size: 0.85rem;
+  color: #495057;
+}
+
+.score-display {
+  text-align: center;
+}
+
+.score-number {
+  font-size: 1.2rem;
   font-weight: 700;
-  font-size: 1.1rem;
+  color: #2c3e50;
 }
 
-.question-badges {
-  display: flex;
-  gap: 0.75rem;
-  margin-right: 1rem;
+.score-total {
+  color: #6c757d;
+  margin-right: 0.25rem;
+  font-size: 0.9rem;
 }
 
-.type-badge {
-  padding: 0.4rem 1rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
+.percentage {
+  text-align: center;
   font-weight: 600;
-  color: white;
+  color: #495057;
 }
 
-.type-badge.primary { background: #007bff; }
-.type-badge.secondary { background: #6c757d; }
-.type-badge.success { background: #28a745; }
-.type-badge.warning { background: #ffc107; color: #212529; }
-.type-badge.info { background: #17a2b8; }
-.type-badge.danger { background: #dc3545; }
-.type-badge.light { background: #f8f9fa; color: #212529; }
-
-.result-badge {
-  padding: 0.4rem 1rem;
+.status-badge {
+  padding: 0.4rem 0.8rem;
   border-radius: 20px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
-.result-badge.correct {
+.badge-success {
   background: #d4edda;
   color: #155724;
 }
 
-.result-badge.incorrect {
+.badge-danger {
   background: #f8d7da;
   color: #721c24;
 }
 
-.question-text {
-  color: #2c3e50;
-  font-weight: 500;
-  line-height: 1.6;
-  margin: 0;
-}
-
-.points-info {
-  text-align: center;
-  min-width: 80px;
-}
-
-.points-earned {
-  font-size: 1.8rem;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.points-earned.correct { color: #28a745; }
-.points-earned.incorrect { color: #dc3545; }
-
-.points-total {
-  font-size: 1rem;
-  color: #6c757d;
-  line-height: 1;
-}
-
-.points-label {
-  font-size: 0.8rem;
-  color: #6c757d;
-  margin-top: 0.25rem;
-}
-
-/* Answer Content */
-.answer-content {
-  padding: 2rem;
-}
-
-.answer-comparison {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-}
-
-.answer-section {
-  background: #f8f9fa;
-  border-radius: 10px;
-  padding: 1.5rem;
-}
-
-.answer-section.student {
-  background: rgba(23, 162, 184, 0.05);
-  border: 1px solid rgba(23, 162, 184, 0.2);
-}
-
-.answer-section.correct {
-  background: rgba(40, 167, 69, 0.05);
-  border: 1px solid rgba(40, 167, 69, 0.2);
-}
-
-.answer-title {
-  color: #495057;
+.badge {
+  padding: 0.3rem 0.6rem;
+  border-radius: 15px;
+  font-size: 0.7rem;
   font-weight: 600;
+}
+
+.badge-warning { background: #fff3cd; color: #856404; }
+.badge-info { background: #d1ecf1; color: #0c5460; }
+
+.action-buttons {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.modern-btn-sm {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  width: 35px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.feedback-content {
+  line-height: 1.6;
+}
+
+.student-info {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
   margin-bottom: 1rem;
-  font-size: 1rem;
 }
 
-.answer-box {
-  background: white;
-  padding: 1rem;
-  border-radius: 8px;
-  border: 2px solid #e9ecef;
-  font-weight: 500;
-  min-height: 50px;
-  display: flex;
-  align-items: center;
+.feedback-text {
+  white-space: pre-wrap;
+  color: #2c3e50;
 }
 
-.answer-box.correct {
-  border-color: #28a745;
-  background: rgba(40, 167, 69, 0.05);
-  color: #155724;
-}
-
-.answer-box.incorrect {
-  border-color: #dc3545;
-  background: rgba(220, 53, 69, 0.05);
-  color: #721c24;
-}
-
-/* Matching Styles */
-.matching-pairs {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.matching-pair {
-  background: white;
-  padding: 1rem;
-  border-radius: 8px;
-  border: 2px solid #e9ecef;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.matching-pair.correct {
-  border-color: #28a745;
-  background: rgba(40, 167, 69, 0.05);
-}
-
-.matching-pair.incorrect {
-  border-color: #dc3545;
-  background: rgba(220, 53, 69, 0.05);
-}
-
-.left-item, .right-item {
-  font-weight: 500;
-  flex: 1;
-}
-
-.left-item {
-  color: #495057;
-}
-
-.right-item {
-  color: #6c757d;
-  text-align: left;
-}
-
-/* Categorization Styles */
-.category-items {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.category-item {
-  background: white;
-  padding: 1rem;
-  border-radius: 8px;
-  border: 2px solid #e9ecef;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.category-item.correct {
-  border-color: #28a745;
-  background: rgba(40, 167, 69, 0.05);
-}
-
-.category-item.incorrect {
-  border-color: #dc3545;
-  background: rgba(220, 53, 69, 0.05);
-}
-
-.item-name {
-  font-weight: 500;
-  color: #495057;
-  flex: 1;
-}
-
-.category-badge {
-  background: #667eea;
-  color: white;
-  padding: 0.4rem 1rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
-  .exam-answers-page {
+  .exam-results {
     padding: 1rem 0;
   }
 
-  .summary-card {
+  .page-header {
     padding: 1rem;
   }
 
-  .stats-row {
-    margin-top: 1rem;
-  }
-
-  .stat-card {
-    margin-bottom: 0.5rem;
-  }
-
-  .answer-comparison {
-    grid-template-columns: 1fr;
+  .page-header .d-flex {
+    flex-direction: column;
     gap: 1rem;
   }
 
-  .question-header {
-    padding: 1rem;
-  }
-
-  .answer-content {
-    padding: 1rem;
-  }
-
-  .stat-value {
-    font-size: 1.2rem;
-  }
-
-  .points-earned {
-    font-size: 1.4rem;
-  }
-}
-
-@media (max-width: 576px) {
-  .question-badges {
-    flex-direction: column;
-    gap: 0.5rem;
+  .header-actions {
+    justify-content: center;
   }
 
   .stat-card {
+    margin-bottom: 1rem;
+  }
+
+  .action-buttons {
     flex-direction: column;
-    text-align: center;
     gap: 0.5rem;
   }
 
-  .stat-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 1.2rem;
+  .modern-btn-sm {
+    width: 100%;
+    height: auto;
+    padding: 0.5rem;
   }
 }
 </style>

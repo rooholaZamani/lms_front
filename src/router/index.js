@@ -309,6 +309,29 @@ const routes = [
       showSidebar: true
     }
   },
+  {
+    path: '/exams/:examId/manual-grading',
+    name: 'ExamManualGrading',
+    component: () => import('../components/exams/ExamManualGrading.vue'),
+    props: true,
+    meta: {
+      title: 'نمره‌گذاری دستی آزمون',
+      requiresAuth: true,
+      requiresTeacher: true,
+      showSidebar: true
+    }
+  },
+  {
+    path: '/exam-answers/:submissionId',
+    name: 'ExamAnswers',
+    component: () => import('../components/exams/ExamAnswers.vue'),
+    props: true,
+    meta: {
+      title: 'نتایج آزمون',
+      requiresAuth: true,
+      showSidebar: true
+    }
+  },
 
   {
     path: '/chat/:courseId',
