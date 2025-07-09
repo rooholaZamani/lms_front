@@ -93,8 +93,8 @@
               </div>
             </div>
 
-            <div class="exam-actions">
-              <router-link :to="`/exams/${exam.id}/edit`" class="modern-btn modern-btn-primary">
+            <div  class="exam-actions">
+              <router-link v-if="canDeleteExam(exam)" :to="`/exams/${exam.id}/edit`" class="modern-btn modern-btn-primary">
                 <i class="fas fa-edit me-1"></i> ویرایش
               </router-link>
               <router-link :to="`/exams/${exam.id}/results`" class="modern-btn modern-btn-info">

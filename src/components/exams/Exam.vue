@@ -604,6 +604,7 @@ export default {
         case 'TRUE_FALSE':
           return answer === question.correctOption;
         case 'SHORT_ANSWER':
+          if (!question.correctOption) return false;
           return answer.toLowerCase().trim() === question.correctOption.toLowerCase().trim();
         default:
           return false;

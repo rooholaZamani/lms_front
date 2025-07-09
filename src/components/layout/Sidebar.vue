@@ -240,6 +240,27 @@
               <li class="nav-item">
                 <router-link
                     class="modern-nav-link"
+                    :to="{ name: 'ExamManualGrading' }"
+                    active-class="active"
+                    :title="collapsed ? 'نمره‌دهی دستی' : ''"
+                >
+                  <div class="nav-icon">
+                    <i class="fas fa-edit"></i>
+                  </div>
+                  <span v-if="!collapsed" class="nav-text">نمره‌دهی دستی</span>
+                  <!-- نشان تعداد آزمون‌های در انتظار -->
+                  <div v-if="!collapsed && pendingGradingCount > 0" class="nav-badge modern-badge modern-badge-warning">
+                    <span>{{ pendingGradingCount }}</span>
+                  </div>
+                  <div v-if="!collapsed" class="nav-arrow">
+                    <i class="fas fa-chevron-left"></i>
+                  </div>
+                </router-link>
+              </li>
+
+              <li class="nav-item">
+                <router-link
+                    class="modern-nav-link"
                     :to="{ name: 'ExamCreator' }"
                     active-class="active"
                     :title="collapsed ? 'ایجاد آزمون جدید' : ''"
