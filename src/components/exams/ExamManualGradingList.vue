@@ -129,15 +129,15 @@
                     </div>
                   </td>
                   <td>
-<span class="manual-questions-count">
-                                    {{ exam.manualQuestionsCount }}
-</span>
+                  <span class="manual-questions-count">
+                    {{ exam.manualQuestionsCount }}
+                  </span>
                   </td>
                   <td>
                     <div class="pending-count">
-<span class="badge bg-warning text-dark" v-if="exam.pendingSubmissions > 0">
-                                                                           {{ exam.pendingSubmissions }}
-</span>
+                    <span class="badge bg-warning text-dark" v-if="exam.pendingSubmissions > 0">
+                      {{ exam.pendingSubmissions }}
+                    </span>
                       <span class="text-muted" v-else>-</span>
                     </div>
                   </td>
