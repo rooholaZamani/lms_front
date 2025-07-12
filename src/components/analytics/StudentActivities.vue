@@ -99,7 +99,121 @@
             </div>
           </div>
         </div>
+        <!-- ردیف دوم: Heatmap و Timeline -->
+        <div class="row mb-4">
+          <!-- نمودار Heatmap فعالیت روزانه -->
+          <div class="col-lg-7 mb-4">
+            <div class="modern-card h-100">
+              <div class="modern-card-header">
+                <h6 class="mb-0">
+                  <i class="fas fa-calendar-alt text-warning me-2"></i>
+                  نقشه حرارتی فعالیت (Heatmap)
+                </h6>
+                <small class="text-muted">فعالیت در ساعات مختلف روز و روزهای هفته</small>
+              </div>
+              <div class="modern-card-body">
+                <div v-if="dailyHeatmapData.length === 0" class="text-center py-4">
+                  <i class="fas fa-chart-area text-muted fa-3x mb-3"></i>
+                  <p class="text-muted">داده‌ای برای نمایش وجود ندارد</p>
+                </div>
+                <div v-else>
+                  <canvas ref="dailyHeatmapChart" height="300"></canvas>
 
+                  <!-- راهنمای رنگ‌ها -->
+                  <div class="heatmap-legend mt-3">
+                    <div class="d-flex align-items-center justify-content-center">
+                      <span class="me-2">کم</span>
+                      <div class="legend-gradient me-2"></div>
+                      <span>زیاد</span>
+                    </div>
+                  </div>
+
+                  <!-- آمار کلی -->
+                  <div class="row mt-3">
+                    <div class="col-4 text-center">
+                      <div class="stat-number">{{ mostActiveDay }}</div>
+                      <div class="stat-label">فعال‌ترین روز</div>
+                    </div>
+                    <div class="col-4 text-center">
+                      <div class="stat-number">{{ mostActiveHour }}</div>
+                      <div class="stat-label">فعال‌ترین ساعت</div>
+                    </div>
+                    <div class="col-4 text-center">
+                      <div class="stat-number">{{ totalDailyActivities }}</div>
+                      <div class="stat-label">کل فعالیت‌ها</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- نمودار Timeline فعالیت‌ها -->
+          <div class="col-lg-5 mb-4">
+            <div class="modern-card h-100">
+              <div class="modern-card-header">
+                <h6 class="mb-0">
+                  <i class="fas fa-history text-info me-2"></i>
+                  جدول زمانی فعالیت‌ها (Timeline)
+                </h6>
+                <small class="text-muted">فعالیت‌های اخیر به ترتیب زمانی</small>
+              </div>
+              <div class="modern-card-body">
+                <div v-if="activityTimelineData.length === 0" class="text-center py-4">
+                  <i class="fas fa-clock text-muted fa-3x mb-3"></i>
+                  <p class="text-muted">فعالیتی یافت نشد</p>
+                </div>
+                <div v-else class="timeline-container">
+                  <!-- فیلتر نوع فعالیت -->
+                  <div class="timeline-filters mb-3">
+                    <select v-model="timelineFilter" @change="filterTimelineData" class="form-select form-select-sm">
+                      <option value="all">همه فعالیت‌ها</option>
+                      <option value="CONTENT_VIEW">مشاهده محتوا</option>
+                      <option value="EXAM_SUBMISSION">آزمون‌ها</option>
+                      <option value="ASSIGNMENT_SUBMISSION">تکالیف</option>
+                      <option value="LESSON_COMPLETION">تکمیل درس</option>
+                    </select>
+                  </div>
+
+                  <!-- Timeline -->
+                  <div class="timeline">
+                    <div
+                        v-for="(activity, index) in filteredTimelineData.slice(0, 20)"
+                        :key="index"
+                        class="timeline-item"
+                        :class="getTimelineItemClass(activity.type)"
+                    >
+                      <div class="timeline-marker">
+                        <i :class="getActivityTypeIcon(activity.type)"></i>
+                      </div>
+                      <div class="timeline-content">
+                        <div class="timeline-header">
+                          <span class="timeline-title">{{ getEnhancedDescription(activity) }}</span>
+                          <span class="timeline-time">{{ formatTimelineDate(activity.timestamp) }}</span>
+                        </div>
+                        <div class="timeline-meta">
+                  <span v-if="activity.metadata" class="badge badge-outline me-1">
+                    {{ formatMetadata(activity.metadata) }}
+                  </span>
+                          <span v-if="activity.timeSpent" class="text-muted small">
+                    <i class="fas fa-clock me-1"></i>{{ Math.round(activity.timeSpent / 60) }} دقیقه
+                  </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- نمایش بیشتر -->
+                  <div v-if="filteredTimelineData.length > 20" class="text-center mt-3">
+                    <button class="btn btn-outline-primary btn-sm" @click="loadMoreTimeline">
+                      <i class="fas fa-plus me-1"></i>نمایش بیشتر
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
         <!-- ردیف دوم نمودارها -->
         <div class="row mb-4">
           <!-- نمودار فعالیت در هر درس -->
@@ -204,7 +318,19 @@ export default {
         { value: 'month', label: 'ماه گذشته' },
         { value: '3months', label: '3 ماه گذشته' },
         { value: 'semester', label: 'ترم جاری' }
-      ]
+      ],
+      // نمودار Heatmap
+      dailyHeatmapData: [],
+      dailyHeatmapChart: null,
+      mostActiveDay: '-',
+      mostActiveHour: '-',
+      totalDailyActivities: 0,
+
+      // Timeline
+      activityTimelineData: [],
+      filteredTimelineData: [],
+      timelineFilter: 'all',
+      timelineLoadLimit: 20,
     }
   },
 
@@ -219,6 +345,9 @@ export default {
   },
 
   beforeUnmount() {
+    if (this.dailyHeatmapChart) {
+      this.dailyHeatmapChart.destroy();
+    }
     this.destroyCharts()
   },
 
@@ -231,6 +360,225 @@ export default {
         console.error('Error fetching teaching courses:', error)
         this.$toast.error('خطا در بارگذاری دوره‌ها')
       }
+    },
+    async fetchDailyHeatmapData(studentId, courseId, timeFilter) {
+      try {
+        const response = await axios.get(`/analytics/student/${studentId}/course/${courseId}/daily-heatmap`, {
+          params: { timeFilter }
+        });
+
+        this.processDailyHeatmapData(response.data);
+        this.$nextTick(() => {
+          this.renderDailyHeatmap();
+        });
+      } catch (error) {
+        console.error('Error fetching daily heatmap data:', error);
+        this.dailyHeatmapData = [];
+      }
+    },
+
+    async fetchActivityTimeline(studentId, courseId, timeFilter) {
+      try {
+        const response = await axios.get(`/analytics/student/${studentId}/course/${courseId}/activity-timeline`, {
+          params: {
+            timeFilter,
+            limit: 100 // دریافت 100 فعالیت اخیر
+          }
+        });
+
+        this.activityTimelineData = response.data.activities || [];
+        this.filterTimelineData();
+      } catch (error) {
+        console.error('Error fetching activity timeline:', error);
+        this.activityTimelineData = [];
+        this.filteredTimelineData = [];
+      }
+    },
+
+    processDailyHeatmapData(data) {
+      this.dailyHeatmapData = data.heatmapData || [];
+      this.mostActiveDay = data.analytics?.mostActiveDay || '-';
+      this.mostActiveHour = data.analytics?.mostActiveHour || '-';
+      this.totalDailyActivities = data.analytics?.totalActivities || 0;
+    },
+
+    renderDailyHeatmap() {
+      if (!this.$refs.dailyHeatmapChart || this.dailyHeatmapData.length === 0) return;
+
+      const ctx = this.$refs.dailyHeatmapChart.getContext('2d');
+
+      if (this.dailyHeatmapChart) {
+        this.dailyHeatmapChart.destroy();
+      }
+
+      // تبدیل داده‌ها به فرمت مناسب برای Chart.js
+      const datasets = [];
+      const daysOfWeek = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
+
+      // ایجاد dataset برای هر روز هفته
+      daysOfWeek.forEach((day, dayIndex) => {
+        const dayData = [];
+
+        // 24 ساعت روز
+        for (let hour = 0; hour < 24; hour++) {
+          const activityCount = this.getActivityCountForDayHour(dayIndex, hour);
+          dayData.push({
+            x: hour,
+            y: dayIndex,
+            v: activityCount // مقدار برای رنگ‌آمیزی
+          });
+        }
+
+        datasets.push({
+          label: day,
+          data: dayData,
+          backgroundColor: (ctx) => {
+            const value = ctx.parsed.v;
+            const maxValue = Math.max(...this.dailyHeatmapData.map(d => d.activityCount));
+            const intensity = maxValue > 0 ? value / maxValue : 0;
+            return this.getHeatmapColor(intensity);
+          },
+          borderColor: '#fff',
+          borderWidth: 1
+        });
+      });
+
+      this.dailyHeatmapChart = new Chart(ctx, {
+        type: 'scatter',
+        data: { datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                title: () => '',
+                label: (context) => {
+                  const hour = context.parsed.x;
+                  const day = daysOfWeek[context.parsed.y];
+                  const count = context.parsed.v;
+                  return `${day} ساعت ${hour}:00 - ${count} فعالیت`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              type: 'linear',
+              position: 'bottom',
+              min: 0,
+              max: 23,
+              ticks: {
+                stepSize: 2,
+                callback: (value) => `${value}:00`
+              },
+              title: {
+                display: true,
+                text: 'ساعت روز'
+              }
+            },
+            y: {
+              type: 'linear',
+              min: -0.5,
+              max: 6.5,
+              ticks: {
+                stepSize: 1,
+                callback: (value) => daysOfWeek[Math.round(value)]
+              },
+              title: {
+                display: true,
+                text: 'روز هفته'
+              }
+            }
+          },
+          elements: {
+            point: {
+              radius: 15,
+              hoverRadius: 20
+            }
+          }
+        }
+      });
+    },
+
+    getActivityCountForDayHour(dayIndex, hour) {
+      const activity = this.dailyHeatmapData.find(d =>
+          d.dayOfWeek === dayIndex && d.hour === hour
+      );
+      return activity ? activity.activityCount : 0;
+    },
+
+    getHeatmapColor(intensity) {
+      // گرادیان رنگی از آبی کم‌رنگ تا قرمز پررنگ
+      const colors = [
+        'rgba(239, 243, 255, 0.8)', // خیلی کم
+        'rgba(199, 210, 254, 0.8)', // کم
+        'rgba(129, 140, 248, 0.8)', // متوسط
+        'rgba(79, 70, 229, 0.8)',   // زیاد
+        'rgba(239, 68, 68, 0.8)'    // خیلی زیاد
+      ];
+
+      const colorIndex = Math.min(Math.floor(intensity * colors.length), colors.length - 1);
+      return colors[colorIndex];
+    },
+
+    filterTimelineData() {
+      if (this.timelineFilter === 'all') {
+        this.filteredTimelineData = [...this.activityTimelineData];
+      } else {
+        this.filteredTimelineData = this.activityTimelineData.filter(
+            activity => activity.type === this.timelineFilter
+        );
+      }
+    },
+
+    getTimelineItemClass(activityType) {
+      const classMap = {
+        'CONTENT_VIEW': 'timeline-content-view',
+        'EXAM_SUBMISSION': 'timeline-exam',
+        'ASSIGNMENT_SUBMISSION': 'timeline-assignment',
+        'LESSON_COMPLETION': 'timeline-lesson',
+        'CHAT_MESSAGE_SEND': 'timeline-chat',
+        'LOGIN': 'timeline-login'
+      };
+      return classMap[activityType] || 'timeline-default';
+    },
+
+    formatTimelineDate(dateString) {
+      if (!dateString) return '';
+
+      const date = new Date(dateString);
+      const now = new Date();
+      const diff = now - date;
+
+      // اگر کمتر از یک روز باشد
+      if (diff < 24 * 60 * 60 * 1000) {
+        const hours = Math.floor(diff / (60 * 60 * 1000));
+        const minutes = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
+
+        if (hours > 0) {
+          return `${hours} ساعت پیش`;
+        } else if (minutes > 0) {
+          return `${minutes} دقیقه پیش`;
+        } else {
+          return 'همین الان';
+        }
+      }
+
+      // برای تاریخ‌های قدیمی‌تر
+      return new Intl.DateTimeFormat('fa-IR', {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+    },
+
+    loadMoreTimeline() {
+      this.timelineLoadLimit += 20;
     },
 
     async onCourseChange() {
@@ -265,6 +613,11 @@ export default {
               }
             }
         )
+
+        await Promise.all([
+          this.fetchDailyHeatmapData(this.selectedStudentId, this.selectedCourseId, this.selectedTimeFilter),
+          this.fetchActivityTimeline(this.selectedStudentId, this.selectedCourseId, this.selectedTimeFilter)
+        ]);
 
         this.advancedAnalytics = response.data
 
@@ -844,5 +1197,155 @@ export default {
     margin-right: 0;
     margin-bottom: 10px;
   }
+}
+
+.heatmap-legend {
+  text-align: center;
+  font-size: 12px;
+}
+
+.legend-gradient {
+  width: 60px;
+  height: 10px;
+  background: linear-gradient(to right,
+  rgba(239, 243, 255, 0.8),
+  rgba(199, 210, 254, 0.8),
+  rgba(129, 140, 248, 0.8),
+  rgba(79, 70, 229, 0.8),
+  rgba(239, 68, 68, 0.8)
+  );
+  border-radius: 5px;
+  display: inline-block;
+}
+
+.stat-number {
+  font-size: 18px;
+  font-weight: bold;
+  color: #2d3748;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #718096;
+}
+
+/* Timeline Styles */
+.timeline-container {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.timeline-filters .form-select {
+  max-width: 200px;
+}
+
+.timeline {
+  position: relative;
+  padding-left: 30px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, #e2e8f0, #cbd5e0);
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 20px;
+  padding-left: 20px;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -25px;
+  top: 5px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #718096;
+}
+
+.timeline-content {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: between;
+  align-items: flex-start;
+  margin-bottom: 5px;
+}
+
+.timeline-title {
+  flex: 1;
+  font-weight: 500;
+  color: #2d3748;
+  font-size: 14px;
+}
+
+.timeline-time {
+  font-size: 11px;
+  color: #a0aec0;
+  white-space: nowrap;
+  margin-left: 10px;
+}
+
+.timeline-meta {
+  font-size: 12px;
+}
+
+.badge-outline {
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  color: #718096;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+}
+
+/* رنگ‌بندی انواع فعالیت */
+.timeline-content-view .timeline-marker {
+  border-color: #3182ce;
+  color: #3182ce;
+}
+
+.timeline-exam .timeline-marker {
+  border-color: #e53e3e;
+  color: #e53e3e;
+}
+
+.timeline-assignment .timeline-marker {
+  border-color: #38a169;
+  color: #38a169;
+}
+
+.timeline-lesson .timeline-marker {
+  border-color: #d69e2e;
+  color: #d69e2e;
+}
+
+.timeline-chat .timeline-marker {
+  border-color: #805ad5;
+  color: #805ad5;
+}
+
+.timeline-login .timeline-marker {
+  border-color: #718096;
+  color: #718096;
 }
 </style>
