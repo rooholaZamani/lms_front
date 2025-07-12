@@ -142,7 +142,13 @@
                         </span>
                         <span class="timeline-time">{{ formatDate(activity.timestamp) }}</span>
                       </div>
-                      <div class="timeline-description">{{ activity.description }}</div>
+                      <div class="timeline-description">{{ getEnhancedDescription(activity) }}</div>
+                      <div v-if="activity.metadata && Object.keys(activity.metadata).length > 0" class="timeline-metadata">
+                        <small class="text-muted">
+                          <i class="fas fa-info-circle me-1"></i>
+                          {{ formatMetadata(activity.metadata) }}
+                        </small>
+                      </div>
                       <div v-if="activity.score !== undefined" class="timeline-score">
                         نمره: <strong>{{ activity.score }}</strong>
                       </div>
@@ -504,6 +510,117 @@ export default {
       return icons[activityType] || 'fas fa-circle'
     },
 
+    getEnhancedDescription(activity) {
+      // اگر metadata وجود دارد، توضیحات غنی‌تری بسازیم
+      if (activity.metadata && Object.keys(activity.metadata).length > 0) {
+        const meta = activity.metadata;
+
+        switch (activity.type) {
+          case 'CONTENT_VIEW':
+            if (meta.contentTitle && meta.lessonTitle) {
+              return `مشاهده محتوای "${meta.contentTitle}" در درس "${meta.lessonTitle}"`
+            } else if (meta.lessonTitle) {
+              return `مشاهده محتوا در درس "${meta.lessonTitle}"`
+            } else if (meta.contentTitle) {
+              return `مشاهده محتوای "${meta.contentTitle}"`
+            }
+            break;
+
+          case 'EXAM_SUBMISSION':
+            if (meta.examTitle && meta.lessonTitle) {
+              return `شرکت در آزمون "${meta.examTitle}" درس "${meta.lessonTitle}"`
+            } else if (meta.examTitle) {
+              return `شرکت در آزمون "${meta.examTitle}"`
+            } else if (meta.lessonTitle) {
+              return `شرکت در آزمون درس "${meta.lessonTitle}"`
+            }
+            break;
+
+          case 'ASSIGNMENT_SUBMISSION':
+            if (meta.assignmentTitle && meta.lessonTitle) {
+              return `ارسال تکلیف "${meta.assignmentTitle}" درس "${meta.lessonTitle}"`
+            } else if (meta.assignmentTitle) {
+              return `ارسال تکلیف "${meta.assignmentTitle}"`
+            } else if (meta.lessonTitle) {
+              return `ارسال تکلیف درس "${meta.lessonTitle}"`
+            }
+            break;
+
+          case 'LESSON_COMPLETION':
+            if (meta.lessonTitle) {
+              return `تکمیل درس "${meta.lessonTitle}"`
+            }
+            break;
+
+          case 'LESSON_ACCESS':
+            if (meta.lessonTitle) {
+              return `دسترسی به درس "${meta.lessonTitle}"`
+            }
+            break;
+
+          case 'CHAT_MESSAGE_SEND':
+            if (meta.courseTitle) {
+              return `ارسال پیام در چت دوره "${meta.courseTitle}"`
+            }
+            break;
+
+          case 'FILE_ACCESS':
+            if (meta.fileName && meta.lessonTitle) {
+              return `دسترسی به فایل "${meta.fileName}" در درس "${meta.lessonTitle}"`
+            } else if (meta.fileName) {
+              return `دسترسی به فایل "${meta.fileName}"`
+            }
+            break;
+        }
+      }
+
+      // اگر metadata کامل نبود، از توضیحات پیش‌فرض استفاده کن
+      return activity.description || activity.typeLabel
+    },
+
+    formatMetadata(metadata) {
+      const metaArray = []
+
+      // فیلدهای مهم metadata را نمایش بده
+      if (metadata.courseTitle) {
+        metaArray.push(`دوره: ${metadata.courseTitle}`)
+      }
+
+      if (metadata.score !== undefined) {
+        metaArray.push(`نمره: ${metadata.score}`)
+      }
+
+      if (metadata.difficulty) {
+        const difficultyMap = {
+          'EASY': 'آسان',
+          'MEDIUM': 'متوسط',
+          'HARD': 'سخت'
+        }
+        metaArray.push(`سطح: ${difficultyMap[metadata.difficulty] || metadata.difficulty}`)
+      }
+
+      if (metadata.questionCount) {
+        metaArray.push(`${metadata.questionCount} سؤال`)
+      }
+
+      if (metadata.fileSize) {
+        metaArray.push(`حجم: ${this.formatFileSize(metadata.fileSize)}`)
+      }
+
+      if (metadata.progress && metadata.progress !== '100') {
+        metaArray.push(`پیشرفت: ${metadata.progress}%`)
+      }
+
+      return metaArray.join(' • ')
+    },
+
+    formatFileSize(bytes) {
+      if (!bytes || bytes === 0) return '0 B'
+      const sizes = ['B', 'KB', 'MB', 'GB']
+      const i = Math.floor(Math.log(bytes) / Math.log(1024))
+      return Math.round(bytes / Math.pow(1024, i) * 10) / 10 + ' ' + sizes[i]
+    },
+
     formatDate(dateString) {
       if (!dateString) return 'نامشخص'
       const date = new Date(dateString)
@@ -688,6 +805,15 @@ export default {
 .timeline-description {
   color: #2d3748;
   margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.timeline-metadata {
+  background: #f7fafc;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  border-left: 3px solid #e2e8f0;
 }
 
 .timeline-score {
