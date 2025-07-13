@@ -60,7 +60,7 @@
 
     <!-- دوره‌های در حال تدریس -->
     <div class="modern-card mb-4">
-      <div class="modern-card-header bg-gray text-white d-flex justify-content-between align-items-center">
+      <div class="modern-card-header bg-gray text-dark d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
           <i class="fas fa-chalkboard-teacher me-2"></i>
           دوره‌های من
@@ -89,15 +89,15 @@
             <div class="row">
               <div v-for="course in courses.slice(0, 3)" :key="course.id" class="col-md-4 mb-3">
                 <div class="modern-card h-100 course-card">
-                  <div class="modern-card-header bg-gray text-white">
+                  <div class="modern-card-header bg-gray text-dark">
                     <h6 class="mb-0">{{ course.title }}</h6>
                   </div>
                   <div class="modern-card-body d-flex flex-column">
-                    <p v-if="course.description" class="mb-3 text-white">
+                    <p v-if="course.description" class="mb-3 text-dark">
                       {{ truncateText(course.description, 100) }}
                     </p>
 
-                    <div class="course-stats mb-3 mt-auto text-white">
+                    <div class="course-stats mb-3 mt-auto text-dark">
                       <div class="d-flex justify-content-between mb-2">
                         <span>دانش‌آموزان:</span>
                         <span class="fw-bold text-success">
@@ -160,7 +160,7 @@
   <div class="modal fade" id="createCourseModal" tabindex="-1" v-if="showCreateCourse">
     <div class="modal-dialog">
       <div class="modal-content">
-        <div class="modal-header bg-primary text-white">
+        <div class="modal-header bg-primary text-dark">
           <h5 class="modal-title">ایجاد دوره جدید</h5>
           <button type="button" class="btn-close btn-close-white" @click="hideCreateCourseModal"></button>
         </div>

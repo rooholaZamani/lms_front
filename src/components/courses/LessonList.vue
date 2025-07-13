@@ -120,7 +120,16 @@
                     <i class="fas fa-eye me-1"></i>
                     مشاهده
                   </button>
-                </div>
+
+                <button
+                    v-if="isEnrolled || isTeacherOfCourse"
+                    class="modern-btn modern-btn-danger btn-sm me-2"
+                    @click="confirmDeleteContent(content)"
+                >
+                  <i class="fas fa-trash me-1"></i>
+                  حذف
+                </button>
+              </div>
               </div>
             </div>
           </div>
@@ -238,6 +247,7 @@ import axios from 'axios';
 
 export default {
   name: 'LessonList',
+  // emits: ['delete-content'],
   props: {
     lessons: {
       type: Array,
@@ -322,6 +332,35 @@ export default {
   //   this.closeContentModal();
   // },
   methods: {
+    async confirmDeleteContent(content) {
+      try {
+        // نمایش تأیید حذف
+        const confirmed = confirm(`آیا از حذف "${content.title}" اطمینان دارید؟`);
+
+        if (confirmed) {
+          await this.deleteContent(content);
+        }
+      } catch (error) {
+        console.error('Error confirming delete:', error);
+      }
+    },
+    async deleteContent(content) {
+      try {
+        // فراخوانی API حذف
+        await axios.delete(`/content/${content.id}`);
+
+        // حذف از لیست محلی
+        if (this.lessonContents[content.lessonId]) {
+          this.lessonContents[content.lessonId] = this.lessonContents[content.lessonId]
+              .filter(c => c.id !== content.id);
+        }
+
+        this.$toast?.success('محتوا با موفقیت حذف شد');
+      } catch (error) {
+        console.error('Error deleting content:', error);
+        this.$toast?.error('خطا در حذف محتوا');
+      }
+    },
     async fetchAllLessonsContent() {
       // Fetch basic content info for all lessons without expanding them
       const contentPromises = this.lessons.map(async (lesson) => {

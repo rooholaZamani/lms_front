@@ -449,6 +449,7 @@ import { defineComponent, ref, computed, onMounted, onUnmounted, watch, nextTick
 import { useRoute, useRouter } from 'vue-router'
 import { useTextFormatter } from '@/composables/useTextFormatter'
 import { toast } from 'vue3-toastify'
+import axios from "axios";
 
 export default defineComponent({
   name: 'ContentViewer',
@@ -562,17 +563,17 @@ export default defineComponent({
         error.value = null
 
         const token = localStorage.getItem('token')
-        const response = await fetch(`/api/content/${contentId.value}`, {
+        const response = await axios.get(`/content/${contentId.value}`, {
           headers: {
             'Authorization': `Basic ${token}`
           }
         })
 
-        if (!response.ok) {
-          throw new Error('خطا در دریافت اطلاعات محتوا')
-        }
+        // if (!response.ok) {
+        //   throw new Error('خطا در دریافت اطلاعات محتوا')
+        // }
 
-        const data = await response.json()
+        const data = await response.data
         content.value = data
 
         // Mark as viewed
@@ -597,7 +598,7 @@ export default defineComponent({
     const markAsViewed = async () => {
       try {
         const token = localStorage.getItem('token')
-        await fetch(`/api/progress/content/${contentId.value}/view?timeSpent=${timeSpent.value}`, {
+        await axios.post(`/progress/content/${contentId.value}/view?timeSpent=${timeSpent.value}`, {
           method: 'POST',
           headers: {
             'Authorization': `Basic ${token}`
@@ -613,7 +614,7 @@ export default defineComponent({
         isMarkingComplete.value = true
         const token = localStorage.getItem('token')
 
-        await fetch(`/api/progress/content/${contentId.value}/complete?timeSpent=${timeSpent.value}`, {
+        await axios.post(`/progress/content/${contentId.value}/complete?timeSpent=${timeSpent.value}`, {
           method: 'POST',
           headers: {
             'Authorization': `Basic ${token}`
@@ -640,15 +641,15 @@ export default defineComponent({
         videoError.value = false
 
         const token = localStorage.getItem('token')
-        const response = await fetch(`/api/content/files/${videoFileId}?timeSpent=${timeSpent.value}`, {
+        const response = await axios.get(`/content/files/${videoFileId}?timeSpent=${timeSpent.value}`, {
           headers: {
             'Authorization': `Basic ${token}`
           }
         })
 
-        if (!response.ok) {
-          throw new Error('خطا در دریافت ویدیو')
-        }
+        // if (!response.ok) {
+        //   throw new Error('خطا در دریافت ویدیو')
+        // }
 
         const blob = await response.blob()
         videoBlobUrl.value = URL.createObjectURL(blob)
@@ -738,15 +739,15 @@ export default defineComponent({
 
         // دریافت PDF با authentication
         const token = localStorage.getItem('token')
-        const response = await fetch(`/api/content/files/${fileId.value}?timeSpent=${timeSpent.value}`, {
+        const response = await axios.get(`/content/files/${fileId.value}?timeSpent=${timeSpent.value}`, {
           headers: {
             'Authorization': `Basic ${token}`
           }
         })
 
-        if (!response.ok) {
-          throw new Error(`خطا در دریافت PDF: ${response.status}`)
-        }
+        // if (!response.ok) {
+        //   throw new Error(`خطا در دریافت PDF: ${response.status}`)
+        // }
 
         const pdfArrayBuffer = await response.arrayBuffer()
 
@@ -1037,15 +1038,15 @@ export default defineComponent({
 
       try {
         const token = localStorage.getItem('token')
-        const response = await fetch(`/api/content/files/${fileId.value}?timeSpent=${timeSpent.value}`, {
+        const response = await axios.get(`/content/files/${fileId.value}?timeSpent=${timeSpent.value}`, {
           headers: {
             'Authorization': `Basic ${token}`
           }
         })
 
-        if (!response.ok) {
-          throw new Error('خطا در دانلود فایل')
-        }
+        // if (!response.ok) {
+        //   throw new Error('خطا در دانلود فایل')
+        // }
 
         const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)
