@@ -1349,20 +1349,21 @@ export default {
 
     async handleContentSaved(contentData) {
       try {
-        await this.fetchCourseData();
-
-        const updatedLessonResponse = await this.$http.get(`/lessons/${this.selectedLesson.id}`);
-        const updatedLesson = updatedLessonResponse.data;
-
+        // بجای fetch کردن کل course، فقط محتوای جدید را اضافه کن
         const lessonIndex = this.course.lessons.findIndex(l => l.id === this.selectedLesson.id);
         if (lessonIndex !== -1) {
-          this.course.lessons[lessonIndex] = updatedLesson;
+          // اگر contents موجود نباشد، آرایه خالی بساز
+          if (!this.course.lessons[lessonIndex].contents) {
+            this.course.lessons[lessonIndex].contents = [];
+          }
+          // محتوای جدید را به آرایه اضافه کن
+          this.course.lessons[lessonIndex].contents.push(contentData);
         }
 
         this.$toast.success('محتوای درس با موفقیت اضافه شد.');
       } catch (error) {
-        console.error('Error updating lesson data:', error);
-        this.$toast.error('خطا در به‌روزرسانی اطلاعات درس.');
+        console.error('Error updating lesson content:', error);
+        this.$toast.error('خطا در به‌روزرسانی محتوا');
       }
     }
   }

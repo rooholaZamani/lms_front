@@ -1927,4 +1927,5 @@ export default defineComponent({
     image-rendering: crisp-edges;
   }
 }
+
 </style>

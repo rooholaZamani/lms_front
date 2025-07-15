@@ -202,6 +202,7 @@ import { ref, reactive, onMounted } from 'vue';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
 import StudentActivityTable from '@/components/dashboard/StudentActivityTable.vue';
 import { useFormatters } from '@/composables/useFormatters.js';
+import { getCurrentInstance } from 'vue';
 import axios from 'axios';
 
 export default {
@@ -218,7 +219,7 @@ export default {
   },
   setup(props) {
     const { truncateText } = useFormatters();
-
+    const { proxy } = getCurrentInstance();
     // State
     const loadingCourses = ref(true);
     const loadingStudentActivities = ref(false);
@@ -304,7 +305,7 @@ export default {
       isSubmitting.value = true;
       try {
         await axios.post('/courses', newCourse);
-        this.$toast.success('دوره جدید با موفقیت ایجاد شد.');
+        proxy.$toast.success('دوره جدید با موفقیت ایجاد شد.');
         hideCreateCourseModal();
 
         // Reset form
@@ -316,7 +317,7 @@ export default {
         calculateStats();
       } catch (error) {
         console.error('Error creating course:', error);
-        this.$toast.error('خطا در ایجاد دوره. لطفاً دوباره تلاش کنید.');
+        proxy.$toast.error('خطا در ایجاد دوره. لطفاً دوباره تلاش کنید.');
       } finally {
         isSubmitting.value = false;
       }

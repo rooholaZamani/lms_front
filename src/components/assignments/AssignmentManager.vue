@@ -166,9 +166,6 @@
                   <small class="text-muted">{{ assignment.lesson?.course?.title || 'نامشخص' }}</small>
                 </div>
                 <div class="dropdown">
-                  <button class="btn btn-sm btn-outline-light dropdown-toggle" data-bs-toggle="dropdown">
-                    <i class="fas fa-ellipsis-v"></i>
-                  </button>
                   <ul class="dropdown-menu">
                     <li><a class="dropdown-item" href="#" @click="editAssignment(assignment)">
                       <i class="fas fa-edit me-2"></i>ویرایش

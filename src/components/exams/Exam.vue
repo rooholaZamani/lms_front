@@ -105,7 +105,7 @@
                 </div>
                 <div class="info-content">
                   <span class="info-label">استاد درس</span>
-                  <span class="info-value">{{ exam.teacherName || 'نامشخص' }}</span>
+                  <span class="info-value">{{ exam.finalizedBy || 'نامشخص' }}</span>
                 </div>
               </div>
 
