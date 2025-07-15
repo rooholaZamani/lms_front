@@ -937,7 +937,10 @@ export default {
     };
 
     const viewSubmissions = (assignment) => {
-      window.open(`/assignments/${assignment.id}/submissions`, '_blank');
+      this.$router.push({
+        name: 'AssignmentGrading',
+        query: { assignmentId: assignment.id }
+      });
     };
 
     const viewAnalytics = (assignment) => {
