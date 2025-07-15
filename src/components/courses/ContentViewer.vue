@@ -644,14 +644,15 @@ export default defineComponent({
         const response = await axios.get(`/content/files/${videoFileId}?timeSpent=${timeSpent.value}`, {
           headers: {
             'Authorization': `Basic ${token}`
-          }
+          },
+          responseType: 'blob'
         })
 
         // if (!response.ok) {
         //   throw new Error('خطا در دریافت ویدیو')
         // }
 
-        const blob = await response.blob()
+        const blob = await response.data
         videoBlobUrl.value = URL.createObjectURL(blob)
 
       } catch (err) {
@@ -1041,14 +1042,15 @@ export default defineComponent({
         const response = await axios.get(`/content/files/${fileId.value}?timeSpent=${timeSpent.value}`, {
           headers: {
             'Authorization': `Basic ${token}`
-          }
+          },
+          responseType: 'blob'
         })
 
         // if (!response.ok) {
         //   throw new Error('خطا در دانلود فایل')
         // }
 
-        const blob = await response.blob()
+        const blob = await response.data
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url

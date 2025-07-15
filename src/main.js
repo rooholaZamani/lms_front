@@ -34,7 +34,7 @@ store.registerModule('notification', notification)
 
 // تنظیم URL پایه برای Axios
 // axios.defaults.baseURL = process.env.VUE_APP_API_URL || '/api'
-axios.defaults.baseURL = 'http://localhost:8080/api';
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || '/api';
 axios.defaults.headers.common['Accept'] = 'application/json';
 
 // ارسال توکن احراز هویت با هر درخواست
