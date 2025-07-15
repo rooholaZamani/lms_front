@@ -468,13 +468,12 @@
             </div>
 
             <!-- Chart placeholder -->
-            <div class="chart-section mt-4">
-              <h6>نمودار توزیع نمرات</h6>
-              <div class="chart-placeholder">
-                <i class="fas fa-chart-bar fa-3x text-muted"></i>
-                <p class="text-muted mt-2">نمودار در نسخه آینده اضافه خواهد شد</p>
+              <div class="chart-section mt-4">
+                <h6>نمودار توزیع نمرات</h6>
+                <div class="chart-container" style="position: relative; height: 300px;">
+                  <canvas ref="scoreChart"></canvas>
+                </div>
               </div>
-            </div>
           </div>
         </div>
       </div>
@@ -483,7 +482,8 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
+import {ref, computed, onMounted, onBeforeUnmount, watch, nextTick} from 'vue';
+import Chart from 'chart.js/auto';
 import axios from 'axios';
 
 export default {
@@ -496,6 +496,9 @@ export default {
     const courses = ref([]);
     const lessons = ref([]);
     const selectedAssignment = ref(null);
+
+    const scoreChart = ref(null);
+    const chartInstance = ref(null);
 
     const searchQuery = ref('');
     const selectedCourse = ref('');
@@ -696,6 +699,60 @@ export default {
       if (!dateString) return '';
       return new Date(dateString).toLocaleString('fa-IR');
     };
+    const initializeScoreChart = () => {
+      if (!scoreChart.value || !selectedAssignment.value?.submissions) return;
+
+      // پاک کردن نمودار قبلی
+      if (chartInstance.value) {
+        chartInstance.value.destroy();
+      }
+
+      const ctx = scoreChart.value.getContext('2d');
+      const submissions = selectedAssignment.value.submissions || [];
+
+      // محاسبه توزیع نمرات در بازه‌های 10 تایی
+      const scoreRanges = ['0-10', '11-20', '21-30', '31-40', '41-50', '51-60', '61-70', '71-80', '81-90', '91-100'];
+      const scoreCounts = new Array(10).fill(0);
+
+      submissions.forEach(submission => {
+        if (submission.score !== null && submission.score !== undefined) {
+          const percentage = (submission.score / (submission.maxScore || 100)) * 100;
+          const rangeIndex = Math.min(Math.floor(percentage / 10), 9);
+          scoreCounts[rangeIndex]++;
+        }
+      });
+
+      chartInstance.value = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: scoreRanges,
+          datasets: [{
+            label: 'تعداد دانش‌آموزان',
+            data: scoreCounts,
+            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          }
+        }
+      });
+    };
 
     const formatFileSize = (bytes) => {
       if (!bytes) return '0 B';
@@ -865,6 +922,7 @@ export default {
       }
     };
 
+
     const deleteAssignment = async (assignment) => {
       if (confirm(`آیا می‌خواهید تکلیف "${assignment.title}" را حذف کنید؟ این عمل قابل بازگشت نیست.`)) {
         try {
@@ -888,9 +946,21 @@ export default {
       const modal = new bootstrap.Modal(document.getElementById('analyticsModal'));
       modal.show();
     };
+    watch(selectedAssignment, (newAssignment) => {
+      if (newAssignment) {
+        nextTick(() => {
+          initializeScoreChart();
+        });
+      }
+    });
 
     onMounted(() => {
       fetchData();
+    });
+    onBeforeUnmount(() => {
+      if (chartInstance.value) {
+        chartInstance.value.destroy();
+      }
     });
 
     return {
@@ -932,7 +1002,9 @@ export default {
       duplicateAssignment,
       deleteAssignment,
       viewSubmissions,
-      viewAnalytics
+      viewAnalytics,
+      scoreChart,
+      initializeScoreChart
     };
   }
 };
