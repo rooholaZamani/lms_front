@@ -743,14 +743,11 @@ export default defineComponent({
         const response = await axios.get(`/content/files/${fileId.value}?timeSpent=${timeSpent.value}`, {
           headers: {
             'Authorization': `Basic ${token}`
-          }
+          },
+          responseType: 'arraybuffer'
         })
 
-        // if (!response.ok) {
-        //   throw new Error(`خطا در دریافت PDF: ${response.status}`)
-        // }
-
-        const pdfArrayBuffer = await response.arrayBuffer()
+        const pdfArrayBuffer = await response.data
 
         // بارگذاری PDF document با تنظیمات بهینه
         const loadingTask = pdfjsLib.getDocument({
