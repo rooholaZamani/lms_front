@@ -1,4 +1,4 @@
-@import url('/src/assets/fonts/vazirmatn/Vazirmatn-font-face.css');
+@import url('vazirmatn/Vazirmatn-font-face.css');
 @import './variables.css';
 @import './common-pages.css';
 @import './forms.css';
