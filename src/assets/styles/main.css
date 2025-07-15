@@ -1,10 +1,10 @@
-@import url('https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css');
+@import url('/src/assets/fonts/vazirmatn/Vazirmatn-font-face.css');
 @import './variables.css';
 @import './common-pages.css';
 @import './forms.css';
 
 body {
-    font-family: var(--font-family);
+    font-family: var(--font-family), serif;
     margin: 0;
     padding: 0;
     direction: rtl;

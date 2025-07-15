@@ -122,7 +122,7 @@
                   </button>
 
                 <button
-                    v-if="isEnrolled || isTeacherOfCourse"
+                    v-if="isTeacher"
                     class="modern-btn modern-btn-danger btn-sm me-2"
                     @click="confirmDeleteContent(content)"
                 >
