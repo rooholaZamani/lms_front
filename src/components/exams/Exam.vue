@@ -1,6 +1,7 @@
 <template>
   <div class="modern-page-bg primary-gradient">
-    <div class="modern-container animate-slide-up" v-if="!loading">
+    <div class="modern-container animate-slide-up">
+
       <!-- Header -->
       <div class="modern-header">
         <div class="modern-logo primary">
@@ -15,144 +16,110 @@
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">در حال بارگذاری...</span>
         </div>
+        <p class="mt-3">در حال بارگذاری آزمون...</p>
       </div>
 
-      <!-- Exam Introduction (if not started and not completed) -->
-      <div v-else-if="!examStarted && !examCompleted && !showingAnswers" class="row">
-        <div class="col-lg-8 mb-4">
-          <div class="modern-card animate-slide-right">
-            <h6 class="section-title">
-              <i class="fas fa-info-circle me-2"></i>
-              قوانین آزمون
-            </h6>
+      <!-- Student Answers Display (اولویت اول) -->
+      <div v-else-if="!loading && showingAnswers" class="student-answers-section">
+        <button class="modern-btn modern-btn-outline mb-3" @click="$router.go(-1)">
+          <i class="fas fa-arrow-right me-1"></i>
+          بازگشت
+        </button>
 
-            <div class="exam-rules">
-              <div class="rule-item">
-                <div class="rule-icon">
-                  <i class="fas fa-clock"></i>
-                </div>
-                <div class="rule-content">
-                  <span class="rule-title">مدت زمان آزمون</span>
-                  <span class="rule-value">{{ exam.timeLimit || 60 }} دقیقه</span>
+        <div class="modern-card">
+          <h6 class="section-title">
+            <i class="fas fa-clipboard-list me-2"></i>
+            پاسخ‌های شما
+          </h6>
+
+          <!-- Answer Summary -->
+          <div class="answer-summary mb-4">
+            <div class="row">
+              <div class="col-md-3">
+                <div class="info-item">
+                  <span class="info-label">نمره:</span>
+                  <span class="info-value score" :class="studentPassed ? 'passed' : 'failed'">
+                    {{ studentScore }}%
+                  </span>
                 </div>
               </div>
-
-              <div class="rule-item">
-                <div class="rule-icon">
-                  <i class="fas fa-question-circle"></i>
-                </div>
-                <div class="rule-content">
-                  <span class="rule-title">تعداد سوالات</span>
-                  <span class="rule-value">{{ exam.questions ? exam.questions.length : 0 }}</span>
-                </div>
-              </div>
-
-              <div class="rule-item">
-                <div class="rule-icon">
-                  <i class="fas fa-percentage"></i>
-                </div>
-                <div class="rule-content">
-                  <span class="rule-title">نمره قبولی</span>
-                  <span class="rule-value">{{ exam.passingScore }}%</span>
+              <div class="col-md-3">
+                <div class="info-item">
+                  <span class="info-label">وضعیت:</span>
+                  <span class="info-value" :class="studentPassed ? 'text-success' : 'text-danger'">
+                    <i :class="studentPassed ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
+                    {{ studentPassed ? 'قبول' : 'مردود' }}
+                  </span>
                 </div>
               </div>
-
-              <div class="rule-item warning">
-                <div class="rule-icon">
-                  <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                <div class="rule-content">
-                  <span class="rule-title">هشدار</span>
-                  <span class="rule-value">پس از شروع آزمون امکان خروج و بازگشت وجود ندارد</span>
+              <div class="col-md-6">
+                <div class="info-item">
+                  <span class="info-label">زمان ارسال:</span>
+                  <span class="info-value">{{ formatDateTime(studentSubmissionTime) }}</span>
                 </div>
               </div>
-            </div>
-
-            <div class="exam-start-section">
-              <button
-                  class="modern-btn modern-btn-primary modern-btn-large"
-                  @click="startExam"
-                  :disabled="!canStartExam">
-                <i class="fas fa-play me-2"></i>
-                شروع آزمون
-              </button>
             </div>
           </div>
-        </div>
 
-        <!-- Exam Info Sidebar -->
-        <div class="col-lg-4">
-          <div class="modern-card animate-slide-left">
-            <h6 class="section-title">
-              <i class="fas fa-info me-2"></i>
-              اطلاعات آزمون
-            </h6>
 
-            <div class="exam-info-items">
-              <div class="info-item">
-                <div class="info-icon text-primary">
-                  <i class="fas fa-calendar-alt"></i>
-                </div>
-                <div class="info-content">
-                  <span class="info-label">تاریخ آزمون</span>
-                  <span class="info-value">{{ formatDate(exam.createdAt) }}</span>
-                </div>
-              </div>
 
-              <div class="info-item">
-                <div class="info-icon text-info">
-                  <i class="fas fa-user-graduate"></i>
-                </div>
-                <div class="info-content">
-                  <span class="info-label">استاد درس</span>
-                  <span class="info-value">{{ exam.finalizedBy || 'نامشخص' }}</span>
-                </div>
-              </div>
+          <!-- Questions and Answers Using ExamQuestion Component -->
+          <div class="questions-answers">
+            <div
+                v-for="(question, index) in exam.questions"
+                :key="question.id"
+                class="question-answer-item mb-4">
 
-              <div class="info-item">
-                <div class="info-icon text-success">
-                  <i class="fas fa-book"></i>
-                </div>
-                <div class="info-content">
-                  <span class="info-label">درس مربوطه</span>
-                  <span class="info-value">{{ exam.lessonTitle || 'نامشخص' }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Previous Result (if exists) -->
-            <div v-if="previousResult" class="previous-result">
-              <h6 class="section-title">
-                <i class="fas fa-history me-2"></i>
-                نتیجه قبلی
-              </h6>
-
-              <div class="result-summary">
-                <div class="score-display" :class="previousResult.passed ? 'passed' : 'failed'">
-                  <div class="score-number">{{ previousResult.score }}%</div>
-                  <div class="score-status">{{ previousResult.passed ? 'قبول' : 'مردود' }}</div>
-                </div>
-                <div class="submission-time">
-                  {{ formatDateTime(previousResult.submittedAt) }}
-                </div>
-              </div>
+              <ExamQuestion
+                  :question="question"
+                  :question-number="index + 1"
+                  :question-index="index"
+                  :total-questions="exam.questions.length"
+                  :selected-answer="answers[index]"
+                  :show-correct-answer="true"
+                  :show-explanation="true"
+                  :is-review-mode="true"
+                  :is-correct="checkAnswer(question, answers[index])"
+                  @answer-selected="() => {}"
+              />
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Exam Interface (when started) -->
-      <div v-else-if="examStarted && !examCompleted" class="exam-interface">
+      <!-- Exam Completed -->
+      <div v-else-if="!loading && examCompleted && !showingAnswers" class="exam-completed">
+        <div class="modern-card text-center">
+          <div class="modern-logo large success mb-4">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <h3 class="mb-3">آزمون با موفقیت تکمیل شد!</h3>
+          <p class="mb-4">پاسخ‌های شما ثبت شد و نتیجه بزودی اعلام می‌شود.</p>
+
+          <div class="completion-actions">
+            <button class="modern-btn modern-btn-primary me-3" @click="viewAnswers">
+              <i class="fas fa-eye me-2"></i>
+              مشاهده پاسخ‌ها
+            </button>
+
+            <button class="modern-btn modern-btn-outline" @click="goToDashboard">
+              <i class="fas fa-home me-2"></i>
+              بازگشت به داشبورد
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Exam Active (در حال انجام) -->
+      <div v-else-if="!loading && examStarted && !examCompleted && !showingAnswers" class="exam-active">
+        <!-- Exam Header -->
         <div class="exam-header">
-          <div class="exam-info">
-            <h5 class="mb-0">{{ exam.title }}</h5>
-            <div class="exam-progress">
-              <div class="progress-info">
-                سوال {{ currentQuestionIndex + 1 }} از {{ exam.questions ? exam.questions.length : 0 }}
-              </div>
-              <div class="progress">
-                <div class="progress-bar" :style="`width: ${examProgress}%`"></div>
-              </div>
+          <div class="exam-progress">
+            <div class="progress-info">
+              سوال {{ currentQuestionIndex + 1 }} از {{ exam.questions ? exam.questions.length : 0 }}
+            </div>
+            <div class="progress">
+              <div class="progress-bar" :style="`width: ${examProgress}%`"></div>
             </div>
           </div>
           <div class="exam-timer" :class="getTimerClass()">
@@ -219,93 +186,112 @@
         </div>
       </div>
 
-      <!-- Student Answers Display -->
-      <div v-else-if="showingAnswers" class="student-answers-section">
-        <button class="modern-btn modern-btn-outline mb-3" @click="$router.go(-1)">
-          <i class="fas fa-arrow-right me-1"></i>
-          بازگشت
-        </button>
-        <div class="modern-card">
-          <h6 class="section-title">
-            <i class="fas fa-clipboard-list me-2"></i>
-            پاسخ‌های شما
-          </h6>
+      <!-- Exam Introduction (آغاز آزمون) -->
+      <div v-else-if="!loading && !examStarted && !examCompleted && !showingAnswers" class="row">
+        <div class="col-lg-8 mb-4">
+          <div class="modern-card animate-slide-right">
+            <h6 class="section-title">
+              <i class="fas fa-info-circle me-2"></i>
+              قوانین آزمون
+            </h6>
 
-          <!-- Answer Summary -->
-          <div class="answer-summary mb-4">
-            <div class="row">
-              <div class="col-md-3">
-                <div class="info-item">
-                  <span class="info-label">نمره:</span>
-                  <span class="info-value score" :class="studentPassed ? 'passed' : 'failed'">
-                    {{ studentScore }}%
-                  </span>
+            <div class="exam-rules">
+              <div class="rule-item">
+                <div class="rule-icon">
+                  <i class="fas fa-clock"></i>
+                </div>
+                <div class="rule-content">
+                  <span class="rule-title">مدت زمان آزمون</span>
+                  <span class="rule-value">{{ exam.timeLimit || 60 }} دقیقه</span>
                 </div>
               </div>
-              <div class="col-md-3">
-                <div class="info-item">
-                  <span class="info-label">وضعیت:</span>
-                  <span class="info-value" :class="studentPassed ? 'text-success' : 'text-danger'">
-                    <i :class="studentPassed ? 'fas fa-check-circle' : 'fas fa-times-circle'"></i>
-                    {{ studentPassed ? 'قبول' : 'مردود' }}
-                  </span>
+
+              <div class="rule-item">
+                <div class="rule-icon">
+                  <i class="fas fa-question-circle"></i>
+                </div>
+                <div class="rule-content">
+                  <span class="rule-title">تعداد سوالات</span>
+                  <span class="rule-value">{{ exam.questions ? exam.questions.length : 0 }}</span>
                 </div>
               </div>
-              <div class="col-md-6">
-                <div class="info-item">
-                  <span class="info-label">زمان ارسال:</span>
-                  <span class="info-value">{{ formatDateTime(studentSubmissionTime) }}</span>
+
+              <div class="rule-item">
+                <div class="rule-icon">
+                  <i class="fas fa-percentage"></i>
+                </div>
+                <div class="rule-content">
+                  <span class="rule-title">نمره قبولی</span>
+                  <span class="rule-value">{{ exam.passingScore }}%</span>
+                </div>
+              </div>
+
+              <div class="rule-item warning">
+                <div class="rule-icon">
+                  <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="rule-content">
+                  <span class="rule-title">هشدار</span>
+                  <span class="rule-value">پس از شروع آزمون امکان خروج و بازگشت وجود ندارد</span>
                 </div>
               </div>
             </div>
+
+            <div class="exam-start-section">
+              <button
+                  class="modern-btn modern-btn-primary modern-btn-large"
+                  :disabled="!canStartExam"
+                  @click="startExam">
+                <i class="fas fa-play me-2"></i>
+                شروع آزمون
+              </button>
+            </div>
           </div>
+        </div>
 
-          <!-- Questions and Answers Using ExamQuestion Component -->
-          <div class="questions-answers">
-            <div
-                v-for="(question, index) in exam.questions"
-                :key="question.id"
-                class="question-answer-item mb-4">
+        <!-- Exam Statistics Sidebar -->
+        <div class="col-lg-4">
+          <div class="modern-card animate-slide-left">
+            <h6 class="section-title">
+              <i class="fas fa-chart-line me-2"></i>
+              آمار آزمون
+            </h6>
 
-              <ExamQuestion
-                  :question="question"
-                  :question-number="index + 1"
-                  :question-index="index"
-                  :total-questions="exam.questions.length"
-                  :selected-answer="answers[index]"
-                  :show-correct-answer="true"
-                  :show-explanation="true"
-                  :is-review-mode="true"
-                  :is-correct="checkAnswer(question, answers[index])"
-                  @answer-selected="() => {}"
-              />
+            <div class="exam-stats">
+              <div class="stat-item">
+                <div class="stat-icon">
+                  <i class="fas fa-star"></i>
+                </div>
+                <div class="stat-content">
+                  <span class="stat-value">{{ exam.totalPossibleScore || 'نامشخص' }}</span>
+                  <span class="stat-label">حداکثر نمره</span>
+                </div>
+              </div>
+
+              <div class="stat-item">
+                <div class="stat-icon">
+                  <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                  <span class="stat-value">{{ exam.participantCount || 0 }}</span>
+                  <span class="stat-label">شرکت‌کنندگان</span>
+                </div>
+              </div>
+
+              <div class="stat-item">
+                <div class="stat-icon">
+                  <i class="fas fa-calendar"></i>
+                </div>
+                <div class="stat-content">
+                  <span class="stat-value">{{ formatDate(exam.availableFrom) }}</span>
+                  <span class="stat-label">تاریخ شروع</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Exam Completed -->
-      <div v-else-if="examCompleted" class="exam-completed">
-        <div class="modern-card text-center">
-          <div class="modern-logo large success mb-4">
-            <i class="fas fa-check-circle"></i>
-          </div>
-          <h3 class="mb-3">آزمون با موفقیت تکمیل شد!</h3>
-          <p class="mb-4">پاسخ‌های شما ثبت شد و نتیجه بزودی اعلام می‌شود.</p>
-
-          <div class="completion-actions">
-            <button class="modern-btn modern-btn-primary me-3" @click="viewAnswers">
-              <i class="fas fa-eye me-2"></i>
-              مشاهده پاسخ‌ها
-            </button>
-
-            <button class="modern-btn modern-btn-outline" @click="goToDashboard">
-              <i class="fas fa-home me-2"></i>
-              بازگشت به داشبورد
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -368,23 +354,6 @@ export default {
     }
   },
   methods: {
-    getTimerClass() {
-      if (this.timeRemaining <= 60) return 'timer-critical';
-      if (this.timeRemaining <= 300) return 'timer-warning';
-      return '';
-    },
-    getQuestionTypeLabel(type) {
-      const types = {
-        'MULTIPLE_CHOICE': 'چند گزینه‌ای',
-        'TRUE_FALSE': 'درست/نادرست',
-        'SHORT_ANSWER': 'پاسخ کوتاه',
-        'ESSAY': 'تشریحی',
-        'FILL_IN_THE_BLANKS': 'جاخالی',
-        'MATCHING': 'تطبیق',
-        'CATEGORIZATION': 'دسته‌بندی'
-      };
-      return types[type] || 'نامشخص';
-    },
     async fetchExam() {
       try {
         this.loading = true;
@@ -425,7 +394,7 @@ export default {
           try {
             const answersResponse = await axios.get(`/exams/${this.id}/student-answers`);
             if (answersResponse.data && answersResponse.data.answers) {
-              console.log('API Response:', answersResponse.data); // برای debug
+
 
               // تبدیل پاسخ‌ها از questionId به index
               const convertedAnswers = {};
@@ -447,7 +416,7 @@ export default {
                   answersResponse.data.passed : this.studentPassed;
               this.studentSubmissionTime = answersResponse.data.submissionTime || this.studentSubmissionTime;
 
-              console.log('Converted answers:', this.answers); // برای debug
+
             }
 
           } catch (answerError) {
@@ -498,8 +467,6 @@ export default {
         [questionIndex]: answer
       };
 
-      // Debug: نمایش وضعیت answers
-      console.log('Current answers:', this.answers);
     },
 
     toggleQuestionForReview() {
@@ -601,8 +568,6 @@ export default {
           submittedAt: new Date().toISOString()
         };
 
-        console.log('Submission data:', submission); // برای debug
-
         const response = await axios.post(`/exams/${this.id}/submit`, submission);
 
         this.examCompleted = true;
@@ -618,29 +583,39 @@ export default {
       }
     },
 
-
-    viewAnswers() {
-      this.showingAnswers = true;
-      this.examCompleted = false;
-    },
-
-    goToDashboard() {
-      this.$router.push('/dashboard');
+    logCurrentState() {
+      console.log('Current State:', {
+        loading: this.loading,
+        showingAnswers: this.showingAnswers,
+        examStarted: this.examStarted,
+        examCompleted: this.examCompleted,
+        previousResult: this.previousResult,
+        answersCount: Object.keys(this.answers).length,
+        hasStudentTaken: this.exam.hasStudentTaken
+      });
     },
 
     checkAnswer(question, answer) {
-      if (!question || answer === null || answer === undefined) return false;
+      if (!question || answer === null || answer === undefined) {
+        return false;
+      }
 
       const questionType = question.type || question.questionType;
+
+      console.log('Checking answer for question:', {
+        questionType,
+        answer,
+        questionId: question.id
+      });
 
       switch (questionType) {
         case 'MULTIPLE_CHOICE':
           if (question.answers && Array.isArray(question.answers)) {
-            // پیدا کردن پاسخ صحیح از آرایه answers
             const correctAnswer = question.answers.find(ans => ans.correct);
-            return correctAnswer && answer === correctAnswer.id;
+            const result = correctAnswer && answer === correctAnswer.id;
+            console.log('Multiple choice check:', { correctAnswer, studentAnswer: answer, result });
+            return result;
           }
-          // fallback به ساختار قدیمی
           return answer === question.correctOption;
 
         case 'TRUE_FALSE':
@@ -648,11 +623,18 @@ export default {
             const correctAnswer = question.answers.find(ans => ans.correct);
             if (correctAnswer) {
               const isCorrectTrue = correctAnswer.text.toLowerCase() === 'true';
-              const studentAnswerBool = answer === 'true' || answer === true || answer === 7; // 7 از API response
-              return isCorrectTrue === studentAnswerBool;
+              const studentAnswerBool = answer === 'true' || answer === true || answer === 7;
+              const result = isCorrectTrue === studentAnswerBool;
+              console.log('True/False check:', {
+                correctAnswer: correctAnswer.text,
+                isCorrectTrue,
+                studentAnswer: answer,
+                studentAnswerBool,
+                result
+              });
+              return result;
             }
           }
-          // fallback به ساختار قدیمی
           return answer === question.correctOption;
 
         case 'CATEGORIZATION':
@@ -710,11 +692,36 @@ export default {
           return answer.toLowerCase().trim() === question.correctOption.toLowerCase().trim();
 
         case 'ESSAY':
-          // سوالات تشریحی نیاز به بررسی دستی دارند
-          return false;
+          return false; // نیاز به بررسی دستی
 
         default:
+          console.log('Unknown question type:', questionType);
           return false;
+      }
+    },
+
+    formatDateTime(dateString) {
+      if (!dateString) return '';
+      try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fa-IR') + ' ' + date.toLocaleTimeString('fa-IR', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+      } catch (error) {
+        console.error('Error formatting date:', error);
+        return dateString;
+      }
+    },
+
+    formatDate(dateString) {
+      if (!dateString) return '';
+      try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('fa-IR');
+      } catch (error) {
+        console.error('Error formatting date:', error);
+        return dateString;
       }
     },
 
@@ -729,16 +736,33 @@ export default {
       return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     },
 
-    formatDate(dateString) {
-      if (!dateString) return '';
-      const date = new Date(dateString);
-      return date.toLocaleDateString('fa-IR');
+    getTimerClass() {
+      if (this.timeRemaining <= 60) return 'timer-critical';
+      if (this.timeRemaining <= 300) return 'timer-warning';
+      return '';
     },
 
-    formatDateTime(dateString) {
-      if (!dateString) return '';
-      const date = new Date(dateString);
-      return date.toLocaleDateString('fa-IR') + ' ' + date.toLocaleTimeString('fa-IR');
+    getQuestionTypeLabel(type) {
+      const types = {
+        'MULTIPLE_CHOICE': 'چند گزینه‌ای',
+        'TRUE_FALSE': 'درست/نادرست',
+        'SHORT_ANSWER': 'پاسخ کوتاه',
+        'ESSAY': 'تشریحی',
+        'FILL_IN_THE_BLANKS': 'جاخالی',
+        'MATCHING': 'تطبیق',
+        'CATEGORIZATION': 'دسته‌بندی'
+      };
+      return types[type] || 'نامشخص';
+    },
+
+    viewAnswers() {
+      console.log('viewAnswers called, setting showingAnswers = true');
+      this.showingAnswers = true;
+      this.examCompleted = false;
+    },
+
+    goToDashboard() {
+      this.$router.push('/dashboard');
     }
   }
 }
