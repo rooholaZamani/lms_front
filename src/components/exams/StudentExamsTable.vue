@@ -630,8 +630,8 @@ export default {
     viewAnswers(exam) {
       // Navigate to exam answers page
       this.$router.push({
-        name: 'ExamAnswers',
-        params: { submissionId: exam.examId }
+        name: 'Exam',
+        params: { id: exam.examId }
       });
     },
 

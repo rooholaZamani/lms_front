@@ -415,7 +415,11 @@ export default {
             const answersResponse = await axios.get(`/exams/${this.id}/student-answers`);
             if (answersResponse.data && answersResponse.data.answers) {
               this.answers = { ...answersResponse.data.answers };
+              this.studentScore = response.data.score || this.studentScore;
+              this.studentPassed = response.data.passed !== undefined ? response.data.passed : this.studentPassed;
+              this.studentSubmissionTime = response.data.submissionTime || this.studentSubmissionTime;
             }
+
           } catch (answerError) {
             console.log('Could not load previous answers:', answerError);
           }
@@ -424,6 +428,7 @@ export default {
         // No previous submission found, continue normally
         console.log('No previous submission found');
       }
+
     },
 
     startExam() {

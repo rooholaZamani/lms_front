@@ -484,6 +484,7 @@
 <script>
 import {ref, computed, onMounted, onBeforeUnmount, watch, nextTick} from 'vue';
 import Chart from 'chart.js/auto';
+import { useRouter } from 'vue-router';
 import axios from 'axios';
 
 export default {
@@ -496,7 +497,7 @@ export default {
     const courses = ref([]);
     const lessons = ref([]);
     const selectedAssignment = ref(null);
-
+    const router = useRouter();
     const scoreChart = ref(null);
     const chartInstance = ref(null);
 
@@ -805,7 +806,8 @@ export default {
     const getSubmissionProgress = (assignment) => {
       if (!assignment.submissionCount || assignment.submissionCount === 0) return 0;
       // Assume total students enrolled in the course - this would need actual data
-      const totalStudents = 30; // This should come from actual enrolled students count
+      const totalStudents = assignment.lesson?.course?.enrolledStudents?.length ||
+          30; // fallback به 30 در صورت عدم دسترسی به داده
       return Math.min(Math.round((assignment.submissionCount / totalStudents) * 100), 100);
     };
 
@@ -937,7 +939,7 @@ export default {
     };
 
     const viewSubmissions = (assignment) => {
-      this.$router.push({
+      router.push({
         name: 'AssignmentGrading',
         query: { assignmentId: assignment.id }
       });

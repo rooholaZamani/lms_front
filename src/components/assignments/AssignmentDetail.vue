@@ -85,7 +85,7 @@
                 <div v-if="hasSubmitted" class="alert alert-success">
                   <i class="fas fa-check-circle me-2"></i>
                   شما این تکلیف را ارسال کرده‌اید
-                  <div class="mt-2" v-if="submission.score !== null">
+                  <div class="mt-2" v-if="submission && submission.score !== null">
                     <small>نمره: {{ submission.score }}</small>
                   </div>
                 </div>

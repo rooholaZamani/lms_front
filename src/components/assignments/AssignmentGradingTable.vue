@@ -171,7 +171,7 @@
                           {{ getStudentInitials(submission.student) }}
                         </div>
                         <div class="student-details">
-                          <div class="student-name">{{ getStudentName(submission.student) }}</div>
+                          <div class="student-name">{{ submission.studentName }}</div>
                           <small class="text-muted">{{ submission.student?.username }}</small>
                         </div>
                       </div>
@@ -303,7 +303,7 @@
                         {{ getStudentInitials(selectedSubmission.student) }}
                       </div>
                       <div class="student-info">
-                        <h6>{{ getStudentName(selectedSubmission.student) }}</h6>
+                        <h6>{{ selectedSubmission?.studentName }}</h6>
                         <p class="text-muted">{{ selectedSubmission.student?.username }}</p>
                         <p class="text-muted" v-if="selectedSubmission.student?.email">
                           {{ selectedSubmission.student.email }}
@@ -445,10 +445,6 @@
                           <i class="fas fa-check me-1"></i>
                           {{ submitting ? 'در حال ذخیره...' : 'ثبت نمره و بازخورد' }}
                         </button>
-                        <button type="button" @click="saveAsDraft" class="modern-btn modern-btn-outline-warning">
-                          <i class="fas fa-save me-1"></i>
-                          ذخیره پیش‌نویس
-                        </button>
                         <button type="button" @click="resetGradingForm" class="modern-btn modern-btn-outline-secondary">
                           <i class="fas fa-undo me-1"></i>
                           بازنشانی
@@ -544,7 +540,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted , getCurrentInstance} from 'vue';
 import axios from 'axios';
 
 export default {
@@ -556,7 +552,7 @@ export default {
     const courses = ref([]);
     const selectedSubmission = ref(null);
     const selectedSubmissions = ref([]);
-
+    const { proxy } = getCurrentInstance();
     const searchQuery = ref('');
     const selectedCourse = ref('');
     const statusFilter = ref('');
@@ -718,7 +714,7 @@ export default {
         submissions.value = allSubmissions;
       } catch (error) {
         console.error('Error fetching data:', error);
-        this.$toast.error('خطا در دریافت اطلاعات');
+        proxy.$toast.error('خطا در دریافت اطلاعات');
       } finally {
         loading.value = false;
       }
@@ -766,7 +762,7 @@ export default {
 
     const getStudentName = (student) => {
       if (!student) return 'نامشخص';
-      return student.firstName && student.lastName
+      return student.studentName
           ? `${student.firstName} ${student.lastName}`
           : student.username;
     };
@@ -892,7 +888,7 @@ export default {
 
       const numericScore = parseInt(score);
       if (isNaN(numericScore) || numericScore < 0 || numericScore > 100) {
-        this.$toast.error('لطفاً نمره معتبری بین 0 تا 100 وارد کنید.');
+        proxy.$toast.error('لطفاً نمره معتبری بین 0 تا 100 وارد کنید.');
         return;
       }
 
@@ -904,11 +900,11 @@ export default {
           feedback: feedback
         });
 
-        this.$toast.success('تکلیف با موفقیت نمره‌گذاری شد.');
+        proxy.$toast.success('تکلیف با موفقیت نمره‌گذاری شد.');
         await fetchData();
       } catch (error) {
         console.error('Error grading submission:', error);
-        this.$toast.error('خطا در نمره‌گذاری');
+        proxy.$toast.error('خطا در نمره‌گذاری');
       }
     };
 
@@ -927,7 +923,7 @@ export default {
           status: gradingForm.value.status
         });
 
-        this.$toast.success('نمره‌گذاری با موفقیت انجام شد.');
+        proxy.$toast.success('نمره‌گذاری با موفقیت انجام شد.');
 
         // Close modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('submissionModal'));
@@ -937,7 +933,7 @@ export default {
         await fetchData();
       } catch (error) {
         console.error('Error submitting grade:', error);
-        this.$toast.error('خطا در ثبت نمره');
+        proxy.$toast.error('خطا در ثبت نمره');
       } finally {
         submitting.value = false;
       }
@@ -945,7 +941,7 @@ export default {
 
     const bulkGrade = () => {
       if (selectedSubmissions.value.length === 0) {
-        this.$toast.warning('لطفاً حداقل یک ارسالی انتخاب کنید.');
+        proxy.$toast.warning('لطفاً حداقل یک ارسالی انتخاب کنید.');
         return;
       }
 
@@ -972,7 +968,7 @@ export default {
 
         await Promise.all(promises);
 
-        this.$toast.success(`${selectedSubmissions.value.length} ارسالی با موفقیت نمره‌گذاری شد.`);
+        proxy.$toast.success(`${selectedSubmissions.value.length} ارسالی با موفقیت نمره‌گذاری شد.`);
 
         // Close modal and clear selections
         const modal = bootstrap.Modal.getInstance(document.getElementById('bulkGradingModal'));
@@ -983,7 +979,7 @@ export default {
         await fetchData();
       } catch (error) {
         console.error('Error bulk grading:', error);
-        this.$toast.error('خطا در نمره‌گذاری گروهی');
+        proxy.$toast.error('خطا در نمره‌گذاری گروهی');
       } finally {
         submitting.value = false;
       }
@@ -1003,16 +999,16 @@ export default {
         link.click();
         document.body.removeChild(link);
 
-        this.$toast.success('فایل با موفقیت دانلود شد.');
+        proxy.$toast.success('فایل با موفقیت دانلود شد.');
       } catch (error) {
         console.error('Error downloading file:', error);
-        this.$toast.error('خطا در دانلود فایل.');
+        proxy.$toast.error('خطا در دانلود فایل.');
       }
     };
 
     const downloadSubmissionFiles = async (submission) => {
       if (!submission.files || submission.files.length === 0) {
-        this.$toast.warning('فایلی برای دانلود وجود ندارد.');
+        proxy.$toast.warning('فایلی برای دانلود وجود ندارد.');
         return;
       }
 
@@ -1061,7 +1057,7 @@ export default {
       link.click();
       document.body.removeChild(link);
 
-      this.$toast.success('فایل CSV با موفقیت دانلود شد.');
+      proxy.$toast.success('فایل CSV با موفقیت دانلود شد.');
     };
 
     const getSubmissionStudentName = (submissionId) => {
@@ -1072,10 +1068,6 @@ export default {
     const getSubmissionAssignmentTitle = (submissionId) => {
       const submission = submissions.value.find(s => s.id === submissionId);
       return submission?.assignment?.title || '';
-    };
-
-    const saveAsDraft = () => {
-      this.$toast.info('پیش‌نویس ذخیره شد.');
     };
 
     const resetGradingForm = () => {
@@ -1089,7 +1081,7 @@ export default {
 
     const previewFile = async (file) => {
       // This would implement file preview functionality
-      this.$toast.info('پیش‌نمایش فایل در نسخه آینده اضافه خواهد شد.');
+      proxy.$toast.info('پیش‌نمایش فایل در نسخه آینده اضافه خواهد شد.');
     };
 
     onMounted(() => {
@@ -1150,7 +1142,6 @@ export default {
       exportToCSV,
       getSubmissionStudentName,
       getSubmissionAssignmentTitle,
-      saveAsDraft,
       resetGradingForm,
       previewFile
     };
