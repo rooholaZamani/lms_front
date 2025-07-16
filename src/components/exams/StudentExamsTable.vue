@@ -629,6 +629,11 @@ export default {
 
     viewAnswers(exam) {
       // Navigate to exam answers page
+
+      const modal = bootstrap.Modal.getInstance(document.getElementById('examDetailsModal'));
+      if (modal) {
+        modal.hide();
+      }
       this.$router.push({
         name: 'Exam',
         params: { id: exam.examId }
