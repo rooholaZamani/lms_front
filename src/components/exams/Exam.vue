@@ -425,12 +425,19 @@ export default {
           try {
             const answersResponse = await axios.get(`/exams/${this.id}/student-answers`);
             if (answersResponse.data && answersResponse.data.answers) {
+              console.log('API Response:', answersResponse.data); // برای debug
+
               // تبدیل پاسخ‌ها از questionId به index
               const convertedAnswers = {};
               this.exam.questions.forEach((question, index) => {
                 const answerData = answersResponse.data.answers[question.id];
                 if (answerData) {
                   convertedAnswers[index] = answerData.studentAnswer;
+                  console.log(`Question ${index}: `, {
+                    questionId: question.id,
+                    studentAnswer: answerData.studentAnswer,
+                    questionType: answerData.questionType
+                  });
                 }
               });
 
@@ -439,10 +446,12 @@ export default {
               this.studentPassed = answersResponse.data.passed !== undefined ?
                   answersResponse.data.passed : this.studentPassed;
               this.studentSubmissionTime = answersResponse.data.submissionTime || this.studentSubmissionTime;
+
+              console.log('Converted answers:', this.answers); // برای debug
             }
 
           } catch (answerError) {
-            console.log('Could not load previous answers:', answerError);
+            console.error('Could not load previous answers:', answerError);
           }
         }
       } catch (error) {
@@ -622,14 +631,88 @@ export default {
     checkAnswer(question, answer) {
       if (!question || answer === null || answer === undefined) return false;
 
-      switch (question.type || question.questionType) {
+      const questionType = question.type || question.questionType;
+
+      switch (questionType) {
         case 'MULTIPLE_CHOICE':
+          if (question.answers && Array.isArray(question.answers)) {
+            // پیدا کردن پاسخ صحیح از آرایه answers
+            const correctAnswer = question.answers.find(ans => ans.correct);
+            return correctAnswer && answer === correctAnswer.id;
+          }
+          // fallback به ساختار قدیمی
           return answer === question.correctOption;
+
         case 'TRUE_FALSE':
+          if (question.answers && Array.isArray(question.answers)) {
+            const correctAnswer = question.answers.find(ans => ans.correct);
+            if (correctAnswer) {
+              const isCorrectTrue = correctAnswer.text.toLowerCase() === 'true';
+              const studentAnswerBool = answer === 'true' || answer === true || answer === 7; // 7 از API response
+              return isCorrectTrue === studentAnswerBool;
+            }
+          }
+          // fallback به ساختار قدیمی
           return answer === question.correctOption;
+
+        case 'CATEGORIZATION':
+          if (typeof answer === 'object' && question.answers) {
+            const correctCategories = {};
+            question.answers.forEach(ans => {
+              correctCategories[ans.text] = ans.category;
+            });
+
+            for (const [item, category] of Object.entries(answer)) {
+              if (correctCategories[item] !== category) {
+                return false;
+              }
+            }
+            return true;
+          }
+          return false;
+
+        case 'MATCHING':
+          if (typeof answer === 'object' && question.matchingPairs) {
+            const correctMatches = {};
+            question.matchingPairs.forEach(pair => {
+              correctMatches[pair.leftItem] = pair.rightItem;
+            });
+
+            for (const [left, right] of Object.entries(answer)) {
+              if (correctMatches[left] !== right) {
+                return false;
+              }
+            }
+            return true;
+          }
+          return false;
+
+        case 'FILL_IN_THE_BLANKS':
+          if (Array.isArray(answer) && question.blankAnswers) {
+            return question.blankAnswers.every((blank, index) => {
+              const studentAnswer = answer[index];
+              if (!studentAnswer) return false;
+
+              const correctAnswers = [blank.correctAnswer, ...blank.acceptableAnswers];
+              if (blank.caseSensitive) {
+                return correctAnswers.includes(studentAnswer);
+              } else {
+                return correctAnswers.some(correct =>
+                    correct.toLowerCase() === studentAnswer.toLowerCase()
+                );
+              }
+            });
+          }
+          return false;
+
         case 'SHORT_ANSWER':
           if (!question.correctOption) return false;
           return answer.toLowerCase().trim() === question.correctOption.toLowerCase().trim();
+
+        case 'ESSAY':
+          // سوالات تشریحی نیاز به بررسی دستی دارند
+          return false;
+
         default:
           return false;
       }
