@@ -426,23 +426,21 @@ export default {
           try {
             const answersResponse = await axios.get(`/exams/${this.id}/student-answers`);
             if (answersResponse.data && answersResponse.data.answers) {
-              // تبدیل پاسخ‌ها از شناسه سوال به ایندکس سوال
-              const transformedAnswers = {};
+              // تبدیل فرمت پاسخ‌ها برای سازگاری با ExamQuestion component
+              const processedAnswers = {};
 
               // برای هر سوال در آزمون
               this.exam.questions.forEach((question, index) => {
                 const questionId = question.id.toString();
+
                 if (answersResponse.data.answers[questionId]) {
                   const answerData = answersResponse.data.answers[questionId];
-                  transformedAnswers[index] = answerData.studentAnswer;
+                  // استخراج پاسخ دانش‌آموز از object و قرار دادن در index مربوطه
+                  processedAnswers[index] = answerData.studentAnswer;
                 }
               });
 
-              this.answers = transformedAnswers;
-              this.studentScore = answersResponse.data.score || this.studentScore;
-              this.studentPassed = answersResponse.data.passed !== undefined ?
-                  answersResponse.data.passed : this.studentPassed;
-              this.studentSubmissionTime = answersResponse.data.submissionTime || this.studentSubmissionTime;
+              this.answers = processedAnswers;
             }
           } catch (answerError) {
             console.log('Could not load previous answers:', answerError);
