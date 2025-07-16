@@ -373,6 +373,18 @@ export default {
       if (this.timeRemaining <= 300) return 'timer-warning';
       return '';
     },
+    getQuestionTypeLabel(type) {
+      const types = {
+        'MULTIPLE_CHOICE': 'چند گزینه‌ای',
+        'TRUE_FALSE': 'درست/نادرست',
+        'SHORT_ANSWER': 'پاسخ کوتاه',
+        'ESSAY': 'تشریحی',
+        'FILL_IN_THE_BLANKS': 'جاخالی',
+        'MATCHING': 'تطبیق',
+        'CATEGORIZATION': 'دسته‌بندی'
+      };
+      return types[type] || 'نامشخص';
+    },
     async fetchExam() {
       try {
         this.loading = true;
@@ -414,12 +426,22 @@ export default {
           try {
             const answersResponse = await axios.get(`/exams/${this.id}/student-answers`);
             if (answersResponse.data && answersResponse.data.answers) {
-              this.answers = { ...answersResponse.data.answers };
-              this.studentScore = response.data.score || this.studentScore;
-              this.studentPassed = response.data.passed !== undefined ? response.data.passed : this.studentPassed;
-              this.studentSubmissionTime = response.data.submissionTime || this.studentSubmissionTime;
-            }
+              // تبدیل فرمت پاسخ‌ها برای سازگاری با ExamQuestion component
+              const processedAnswers = {};
 
+              // برای هر سوال در آزمون
+              this.exam.questions.forEach((question, index) => {
+                const questionId = question.id.toString();
+
+                if (answersResponse.data.answers[questionId]) {
+                  const answerData = answersResponse.data.answers[questionId];
+                  // استخراج پاسخ دانش‌آموز از object و قرار دادن در index مربوطه
+                  processedAnswers[index] = answerData.studentAnswer;
+                }
+              });
+
+              this.answers = processedAnswers;
+            }
           } catch (answerError) {
             console.log('Could not load previous answers:', answerError);
           }
@@ -569,7 +591,7 @@ export default {
 
         const submission = {
           examId: this.exam.id,
-          answers: submissionAnswers,  // استفاده از submissionAnswers به جای this.answers
+          answers: submissionAnswers,
           submittedAt: new Date().toISOString()
         };
 
