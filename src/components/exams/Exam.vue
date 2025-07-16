@@ -422,35 +422,32 @@ export default {
           this.studentPassed = response.data.passed;
           this.studentSubmissionTime = response.data.submissionTime;
 
-          // اگر نیاز به پاسخ‌های قبلی دارید، از endpoint جداگانه استفاده کنید
           try {
             const answersResponse = await axios.get(`/exams/${this.id}/student-answers`);
             if (answersResponse.data && answersResponse.data.answers) {
-              // تبدیل فرمت پاسخ‌ها برای سازگاری با ExamQuestion component
-              const processedAnswers = {};
-
-              // برای هر سوال در آزمون
+              // تبدیل پاسخ‌ها از questionId به index
+              const convertedAnswers = {};
               this.exam.questions.forEach((question, index) => {
-                const questionId = question.id.toString();
-
-                if (answersResponse.data.answers[questionId]) {
-                  const answerData = answersResponse.data.answers[questionId];
-                  // استخراج پاسخ دانش‌آموز از object و قرار دادن در index مربوطه
-                  processedAnswers[index] = answerData.studentAnswer;
+                const answerData = answersResponse.data.answers[question.id];
+                if (answerData) {
+                  convertedAnswers[index] = answerData.studentAnswer;
                 }
               });
 
-              this.answers = processedAnswers;
+              this.answers = convertedAnswers;
+              this.studentScore = answersResponse.data.score || this.studentScore;
+              this.studentPassed = answersResponse.data.passed !== undefined ?
+                  answersResponse.data.passed : this.studentPassed;
+              this.studentSubmissionTime = answersResponse.data.submissionTime || this.studentSubmissionTime;
             }
+
           } catch (answerError) {
             console.log('Could not load previous answers:', answerError);
           }
         }
       } catch (error) {
-        // No previous submission found, continue normally
         console.log('No previous submission found');
       }
-
     },
 
     startExam() {
