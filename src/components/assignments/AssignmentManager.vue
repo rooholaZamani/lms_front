@@ -322,11 +322,20 @@
               <div class="row">
                 <div class="col-md-6 mb-3">
                   <label class="form-label">مهلت ارسال</label>
-                  <input
-                      type="datetime-local"
-                      class="form-control"
+
+                  <DatePicker
                       v-model="assignmentForm.dueDate"
-                  >
+                      format="YYYY-MM-DD HH:mm"
+                      display-format="jYYYY/jMM/jDD - HH:mm"
+                      :min="getTodayDate()"
+                      :editable="false"
+                      :clearable="false"
+                      placeholder="انتخاب تاریخ و زمان تحویل"
+                      class="form-control"
+                      locale="fa"
+                      :auto-submit="true"
+                      type="datetime"
+                  />
                 </div>
                 <div class="col-md-6 mb-3">
                   <label class="form-label">حداکثر امتیاز</label>
@@ -747,7 +756,9 @@ export default {
       if (dueDate > now) return 'bg-success';
       return 'bg-danger';
     };
-
+    const getTodayDate = () => {
+      return new Date().toISOString().split('T')[0];
+    };
     const getStatusText = (assignment) => {
       if (!assignment.dueDate) return 'فعال';
 
@@ -833,7 +844,6 @@ export default {
     const removeCurrentFile = () => {
       assignmentForm.value.currentFile = null;
     };
-
     const saveAssignment = async () => {
       submitting.value = true;
       try {
