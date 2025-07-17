@@ -241,7 +241,7 @@
                             @click="downloadSubmissionFiles(submission)"
                             class="btn btn-sm btn-outline-primary"
                             title="دانلود فایل‌ها"
-                            :disabled="!submission.file || submission.file.length === 0"
+                            :disabled="!submission.file"
                         >
                           <i class="fas fa-download"></i>
                         </button>
@@ -370,23 +370,23 @@
                   </div>
 
                   <!-- Submitted Files -->
-                  <div v-if="selectedSubmission.file && selectedSubmission.file.length > 0" class="files-section mb-4">
-                    <label class="form-label">فایل‌های ارسالی:</label>
+                  <div v-if="selectedSubmission.file" class="files-section mb-4">
+                    <label class="form-label">فایل ارسالی:</label>
                     <div class="submitted-files">
-                      <div v-for="file in selectedSubmission.file" :key="file.id" class="file-item">
+                      <div class="file-item">
                         <div class="file-info">
-                          <i :class="getFileIcon(file.originalFilename)" class="me-2"></i>
+                          <i :class="getFileIcon(selectedSubmission.file.originalFilename)" class="me-2"></i>
                           <div>
-                            <div class="file-name">{{ file.originalFilename }}</div>
-                            <small class="text-muted">{{ formatFileSize(file.fileSize) }}</small>
+                            <div class="file-name">{{ selectedSubmission.file.originalFilename }}</div>
+                            <small class="text-muted">{{ formatFileSize(selectedSubmission.file.fileSize) }}</small>
                           </div>
                         </div>
                         <div class="file-actions">
-                          <button @click="downloadFile(file)" class="btn btn-sm btn-primary">
+                          <button @click="downloadFile(selectedSubmission.file)" class="btn btn-sm btn-primary">
                             <i class="fas fa-download me-1"></i>
                             دانلود
                           </button>
-                          <button v-if="isViewableFile(file)" @click="previewFile(file)" class="btn btn-sm btn-outline-info">
+                          <button v-if="isViewableFile(selectedSubmission.file)" @click="previewFile(selectedSubmission.file)" class="btn btn-sm btn-outline-info">
                             <i class="fas fa-eye me-1"></i>
                             پیش‌نمایش
                           </button>
@@ -422,11 +422,15 @@
                         </div>
                         <div class="col-md-4 mb-3">
                           <label class="form-label">تاریخ نمره‌گذاری</label>
-                          <input
-                              type="datetime-local"
-                              class="form-control"
+                          <DatePicker
                               v-model="gradingForm.gradedAt"
-                          >
+                              type="datetime"
+                              format="YYYY-MM-DD HH:mm:ss"
+                              display-format="jYYYY/jMM/jDD HH:mm"
+                              :auto-submit="true"
+                              placeholder="انتخاب تاریخ و زمان"
+                              class="form-control"
+                          />
                         </div>
                       </div>
 
@@ -1007,14 +1011,12 @@ export default {
     };
 
     const downloadSubmissionFiles = async (submission) => {
-      if (!submission.file || submission.file.length === 0) {
+      if (!submission.file) {
         proxy.$toast.warning('فایلی برای دانلود وجود ندارد.');
         return;
       }
 
-      for (const file of submission.file) {
-        await downloadFile(file);
-      }
+      await downloadFile(submission.file);
     };
 
     const exportToCSV = () => {
