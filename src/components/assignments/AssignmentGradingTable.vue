@@ -241,7 +241,7 @@
                             @click="downloadSubmissionFiles(submission)"
                             class="btn btn-sm btn-outline-primary"
                             title="دانلود فایل‌ها"
-                            :disabled="!submission.files || submission.files.length === 0"
+                            :disabled="!submission.file || submission.file.length === 0"
                         >
                           <i class="fas fa-download"></i>
                         </button>
@@ -370,15 +370,15 @@
                   </div>
 
                   <!-- Submitted Files -->
-                  <div v-if="selectedSubmission.files && selectedSubmission.files.length > 0" class="files-section mb-4">
+                  <div v-if="selectedSubmission.file && selectedSubmission.file.length > 0" class="files-section mb-4">
                     <label class="form-label">فایل‌های ارسالی:</label>
                     <div class="submitted-files">
-                      <div v-for="file in selectedSubmission.files" :key="file.id" class="file-item">
+                      <div v-for="file in selectedSubmission.file" :key="file.id" class="file-item">
                         <div class="file-info">
                           <i :class="getFileIcon(file.originalFilename)" class="me-2"></i>
                           <div>
                             <div class="file-name">{{ file.originalFilename }}</div>
-                            <small class="text-muted">{{ formatFileSize(file.size) }}</small>
+                            <small class="text-muted">{{ formatFileSize(file.fileSize) }}</small>
                           </div>
                         </div>
                         <div class="file-actions">
@@ -1007,12 +1007,12 @@ export default {
     };
 
     const downloadSubmissionFiles = async (submission) => {
-      if (!submission.files || submission.files.length === 0) {
+      if (!submission.file || submission.file.length === 0) {
         proxy.$toast.warning('فایلی برای دانلود وجود ندارد.');
         return;
       }
 
-      for (const file of submission.files) {
+      for (const file of submission.file) {
         await downloadFile(file);
       }
     };
