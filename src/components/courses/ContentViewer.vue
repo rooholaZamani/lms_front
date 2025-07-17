@@ -62,6 +62,7 @@
               </div>
               <div class="content-actions">
                 <button
+                    v-if="!isCompleted && (content.type !== 'VIDEO' || videoEnded)"
                     @click="markAsComplete"
                     :disabled="isMarkingComplete || isCompleted"
                     class="modern-btn"
@@ -459,7 +460,7 @@ export default defineComponent({
     const route = useRoute()
     const router = useRouter()
     const { formatText } = useTextFormatter()
-
+    const videoEnded = ref(false)
     // State
     const loading = ref(true)
     const error = ref(null)
@@ -677,6 +678,7 @@ export default defineComponent({
 
     const onVideoEnded = () => {
       console.log('Video ended')
+      videoEnded.value = true
     }
 
     const onVideoError = () => {
@@ -1173,6 +1175,7 @@ export default defineComponent({
       videoPlayer,
       videoBlobUrl,
       videoUrl,
+      videoEnded,
 
       // PDF
       isPdfLoaded,
@@ -1927,5 +1930,4 @@ export default defineComponent({
     image-rendering: crisp-edges;
   }
 }
-
 </style>

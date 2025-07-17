@@ -243,9 +243,9 @@ export default {
           return false;
         }
 
-        const maxSize = 100 * 1024 * 1024; // 100MB
+        const maxSize = 1000 * 1024 * 1024; // 100MB
         if (this.contentForm.file.size > maxSize) {
-          this.error = 'حجم فایل نباید بیش از 100 مگابایت باشد.';
+          this.error = 'حجم فایل نباید بیش از یک گیگ باشد.';
           return false;
         }
 
