@@ -387,7 +387,7 @@ export default {
                 for (const assignment of lessonAssignments) {
                   try {
                     const submissionsResponse = await axios.get(`/assignments/${assignment.id}/submissions`);
-                    const submissions = submissionsResponse.data;
+                    const submissions = submissionsResponse.data.submissions;
 
                     const ungradedSubmissions = submissions
                         .filter(submission => !submission.graded)

@@ -188,7 +188,9 @@ export default {
       submissionCount: 0,
       selectedFile: null,
       submissionComment: '',
-      submitting: false
+      submitting: false,
+      totalStudents: 0,
+      submittedStudents: 0
     };
   },
   async mounted() {
@@ -230,7 +232,9 @@ export default {
     async loadSubmissions() {
       try {
         const response = await this.$http.get(`/assignments/${this.id}/submissions`);
-        this.submissionCount = response.data.submittedStudents;
+        this.submissionCount = response.data.submissions.length;
+        this.totalStudents = response.data.totalStudents;
+        this.submittedStudents = response.data.submittedStudents;
       } catch (error) {
         console.error('Error loading submissions:', error);
       }

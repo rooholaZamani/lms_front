@@ -806,7 +806,7 @@ export default {
     const getSubmissionProgress = (assignment) => {
       if (!assignment.submissionCount || assignment.submissionCount === 0) return 0;
       // Assume total students enrolled in the course - this would need actual data
-      const totalStudents = assignment ||
+      const totalStudents = this.totalStudents ||
           30; // fallback به 30 در صورت عدم دسترسی به داده
       return Math.min(Math.round((assignment.submissionCount / totalStudents) * 100), 100);
     };
