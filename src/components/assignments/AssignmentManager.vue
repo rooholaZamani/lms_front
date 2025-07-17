@@ -325,7 +325,7 @@
 
                   <DatePicker
                       v-model="assignmentForm.dueDate"
-                      format="YYYY-MM-DD HH:mm"
+                      format="YYYY-MM-DDTHH:mm:ss"
                       display-format="jYYYY/jMM/jDD - HH:mm"
                       :min="getTodayDate()"
                       :editable="false"
@@ -479,7 +479,7 @@ export default {
     const router = useRouter();
     const scoreChart = ref(null);
     const chartInstance = ref(null);
-    const {proxy} = ref(getCurrentInstance());
+    const {proxy} = getCurrentInstance();
 
     const searchQuery = ref('');
     const selectedCourse = ref('');
@@ -990,7 +990,8 @@ export default {
       viewSubmissions,
       viewAnalytics,
       scoreChart,
-      initializeScoreChart
+      initializeScoreChart,
+      getTodayDate
     };
   }
 };
