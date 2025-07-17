@@ -230,7 +230,7 @@ export default {
     async loadSubmissions() {
       try {
         const response = await this.$http.get(`/assignments/${this.id}/submissions`);
-        this.submissionCount = response.data.length;
+        this.submissionCount = response.data.submittedStudents;
       } catch (error) {
         console.error('Error loading submissions:', error);
       }

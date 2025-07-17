@@ -422,7 +422,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted,getCurrentInstance } from 'vue';
 import axios from 'axios';
 
 export default {
@@ -434,7 +434,7 @@ export default {
     const assignments = ref([]);
     const selectedAssignment = ref(null);
     const viewingAssignment = ref(null);
-
+    const { proxy } = getCurrentInstance();
     const stats = ref({
       totalAssignments: 0,
       submittedAssignments: 0,
@@ -624,7 +624,7 @@ export default {
 
     const handleSubmission = async () => {
       if (!submissionForm.value.file) {
-        window.toast.error('لطفاً یک فایل انتخاب کنید.');
+        proxy.$toast.error('لطفاً یک فایل انتخاب کنید.');
         return;
       }
 
@@ -640,7 +640,7 @@ export default {
           }
         });
 
-        window.toast.success('تکلیف با موفقیت ارسال شد.');
+        proxy.$toast.success('تکلیف با موفقیت ارسال شد.');
 
         // Close modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('submissionModal'));
@@ -651,7 +651,7 @@ export default {
         activeTab.value = 'submitted';
       } catch (error) {
         console.error('Error submitting assignment:', error);
-        window.toast.error('خطا در ارسال تکلیف.');
+        proxy.$toast.error('خطا در ارسال تکلیف.');
       } finally {
         submitting.value = false;
       }
@@ -671,10 +671,10 @@ export default {
         link.click();
         document.body.removeChild(link);
 
-        window.toast.success('فایل با موفقیت دانلود شد.');
+        proxy.$toast.success('فایل با موفقیت دانلود شد.');
       } catch (error) {
         console.error('Error downloading file:', error);
-        window.toast.error('خطا در دانلود فایل.');
+        proxy.$toast.error('خطا در دانلود فایل.');
       }
     };
 

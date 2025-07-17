@@ -632,7 +632,7 @@ export default {
             for (const assignment of lessonAssignments) {
               try {
                 const submissionsResponse = await axios.get(`/assignments/${assignment.id}/submissions`);
-                const submissions = submissionsResponse.data;
+                const submissions = submissionsResponse.data.submissions;
 
                 assignment.submissionCount = submissions.length;
                 assignment.gradedCount = submissions.filter(s => s.graded).length;
@@ -806,7 +806,7 @@ export default {
     const getSubmissionProgress = (assignment) => {
       if (!assignment.submissionCount || assignment.submissionCount === 0) return 0;
       // Assume total students enrolled in the course - this would need actual data
-      const totalStudents = assignment.lesson?.course?.enrolledStudents?.length ||
+      const totalStudents = assignment ||
           30; // fallback به 30 در صورت عدم دسترسی به داده
       return Math.min(Math.round((assignment.submissionCount / totalStudents) * 100), 100);
     };

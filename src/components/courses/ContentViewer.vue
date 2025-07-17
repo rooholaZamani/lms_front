@@ -62,7 +62,7 @@
               </div>
               <div class="content-actions">
                 <button
-                    v-if="!isCompleted && (content.type !== 'VIDEO' || videoEnded)"
+                    v-if="(content.type !== 'VIDEO' || videoEnded)"
                     @click="markAsComplete"
                     :disabled="isMarkingComplete || isCompleted"
                     class="modern-btn"
@@ -569,23 +569,19 @@ export default defineComponent({
             'Authorization': `Basic ${token}`
           }
         })
-
-        // if (!response.ok) {
-        //   throw new Error('خطا در دریافت اطلاعات محتوا')
-        // }
-
         const data = await response.data
+        isCompleted.value = data.isCompleted || false
         content.value = data
 
         // Mark as viewed
-        markAsViewed()
+        await markAsViewed()
 
         // Initialize based on content type
         if (data.type === 'VIDEO' && fileId.value) {
           await fetchVideoBlob(fileId.value)
         } else if (data.type === 'PDF' && fileId.value) {
           await nextTick()
-          initializePdfViewer()
+          await initializePdfViewer()
         }
 
       } catch (err) {
