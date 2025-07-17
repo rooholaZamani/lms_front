@@ -365,36 +365,6 @@
                   </button>
                 </div>
               </div>
-
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <div class="form-check">
-                    <input
-                        class="form-check-input"
-                        type="checkbox"
-                        v-model="assignmentForm.allowLateSubmission"
-                        id="allowLateSubmission"
-                    >
-                    <label class="form-check-label" for="allowLateSubmission">
-                      اجازه ارسال دیرهنگام
-                    </label>
-                  </div>
-                </div>
-                <div class="col-md-6 mb-3">
-                  <div class="form-check">
-                    <input
-                        class="form-check-input"
-                        type="checkbox"
-                        v-model="assignmentForm.notifyStudents"
-                        id="notifyStudents"
-                    >
-                    <label class="form-check-label" for="notifyStudents">
-                      اطلاع‌رسانی به دانش‌آموزان
-                    </label>
-                  </div>
-                </div>
-              </div>
-
               <div class="d-flex gap-2">
                 <button type="submit" class="modern-btn modern-btn-primary" :disabled="submitting">
                   <i class="fas fa-save me-1"></i>
@@ -482,7 +452,7 @@
 </template>
 
 <script>
-import {ref, computed, onMounted, onBeforeUnmount, watch, nextTick} from 'vue';
+import {ref, computed, onMounted, onBeforeUnmount, watch, nextTick, getCurrentInstance} from 'vue';
 import Chart from 'chart.js/auto';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
@@ -500,6 +470,7 @@ export default {
     const router = useRouter();
     const scoreChart = ref(null);
     const chartInstance = ref(null);
+    const {proxy} = ref(getCurrentInstance());
 
     const searchQuery = ref('');
     const selectedCourse = ref('');
@@ -633,7 +604,7 @@ export default {
               try {
                 const submissionsResponse = await axios.get(`/assignments/${assignment.id}/submissions`);
                 const submissions = submissionsResponse.data.submissions;
-
+                assignment.totalStudents = submissionsResponse.data.totalStudents;
                 assignment.submissionCount = submissions.length;
                 assignment.gradedCount = submissions.filter(s => s.graded).length;
                 assignment.lesson = lesson;
@@ -671,7 +642,7 @@ export default {
 
       } catch (error) {
         console.error('Error fetching data:', error);
-        this.$toast.error('خطا در دریافت اطلاعات');
+        proxy.$toast.error('خطا در دریافت اطلاعات');
       } finally {
         loading.value = false;
       }
@@ -806,7 +777,7 @@ export default {
     const getSubmissionProgress = (assignment) => {
       if (!assignment.submissionCount || assignment.submissionCount === 0) return 0;
       // Assume total students enrolled in the course - this would need actual data
-      const totalStudents = this.totalStudents ||
+      const totalStudents = assignment.totalStudents ||
           30; // fallback به 30 در صورت عدم دسترسی به داده
       return Math.min(Math.round((assignment.submissionCount / totalStudents) * 100), 100);
     };
@@ -881,12 +852,12 @@ export default {
           await axios.put(`/assignments/${assignmentForm.value.id}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
           });
-          this.$toast.success('تکلیف با موفقیت ویرایش شد.');
+          proxy.$toast.success('تکلیف با موفقیت ویرایش شد.');
         } else {
           await axios.post(`/assignments/lesson/${assignmentForm.value.lessonId}`, formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
           });
-          this.$toast.success('تکلیف با موفقیت ایجاد شد.');
+          proxy.$toast.success('تکلیف با موفقیت ایجاد شد.');
         }
 
         // Close modal
@@ -897,7 +868,7 @@ export default {
         await fetchData();
       } catch (error) {
         console.error('Error saving assignment:', error);
-        this.$toast.error('خطا در ذخیره تکلیف');
+        proxy.$toast.error('خطا در ذخیره تکلیف');
       } finally {
         submitting.value = false;
       }
@@ -915,11 +886,11 @@ export default {
             headers: { 'Content-Type': 'multipart/form-data' }
           });
 
-          this.$toast.success('تکلیف با موفقیت کپی شد.');
+          proxy.$toast.success('تکلیف با موفقیت کپی شد.');
           await fetchData();
         } catch (error) {
           console.error('Error duplicating assignment:', error);
-          this.$toast.error('خطا در کپی تکلیف');
+          proxy.$toast.error('خطا در کپی تکلیف');
         }
       }
     };
@@ -929,11 +900,11 @@ export default {
       if (confirm(`آیا می‌خواهید تکلیف "${assignment.title}" را حذف کنید؟ این عمل قابل بازگشت نیست.`)) {
         try {
           await axios.delete(`/assignments/${assignment.id}`);
-          this.$toast.success('تکلیف با موفقیت حذف شد.');
+          proxy.$toast.success('تکلیف با موفقیت حذف شد.');
           await fetchData();
         } catch (error) {
           console.error('Error deleting assignment:', error);
-          this.$toast.error('خطا در حذف تکلیف');
+          proxy.$toast.error('خطا در حذف تکلیف');
         }
       }
     };

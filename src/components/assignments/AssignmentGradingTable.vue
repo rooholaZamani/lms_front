@@ -688,7 +688,7 @@ export default {
                 for (const assignment of assignments) {
                   try {
                     const submissionsResponse = await axios.get(`/assignments/${assignment.id}/submissions`);
-                    const assignmentSubmissions = submissionsResponse.data;
+                    const assignmentSubmissions = submissionsResponse.data.submissions;
 
                     assignmentSubmissions.forEach(submission => {
                       allSubmissions.push({
