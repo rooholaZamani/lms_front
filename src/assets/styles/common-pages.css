@@ -67,24 +67,27 @@
 /* Responsive */
 @media (max-width: 768px) {
     .modal-dialog {
-        min-width: 350px !important;
+        min-width: 300px !important;
         max-width: 95vw !important;
+        margin: 0.5rem auto !important;
     }
 
     .modal-body {
         min-height: 150px !important;
         max-height: 60vh !important;
+        padding: 1rem !important;
     }
 }
 
 @media (max-width: 576px) {
     .modal-dialog {
-        min-width: 300px !important;
+        min-width: 280px !important;
+        margin: 0.25rem auto !important;
     }
 
     .modal-body {
         min-height: 120px !important;
-        padding: 1rem !important;
+        padding: 0.75rem !important;
     }
 }
 .modal {
@@ -787,4 +790,56 @@
     .animate-slide-right { animation: slideRight 0.6s ease-out; }
     .animate-slide-left { animation: slideLeft 0.6s ease-out; }
     .animate-fade-in { animation: fadeIn 0.6s ease-out; }
+}
+
+@media (max-width: 400px) {
+    .modal-dialog {
+        min-width: 260px !important;
+        margin: 0.125rem auto !important;
+    }
+
+    .modal-body {
+        padding: 0.5rem !important;
+        font-size: 0.9rem;
+    }
+}
+
+/* Enhanced Mobile Support */
+@media (max-width: 480px) {
+    .modern-container {
+        margin: 0.25rem !important;
+        padding: 0.75rem !important;
+        border-radius: 8px;
+    }
+
+    .modern-title {
+        font-size: 1.1rem !important;
+        line-height: 1.3;
+    }
+
+    .modern-btn {
+        padding: 0.5rem 1rem !important;
+        font-size: 0.85rem !important;
+        min-height: 44px; /* Touch-friendly */
+    }
+
+    /* Tables */
+    .table-responsive {
+        font-size: 0.8rem;
+    }
+
+    /* Forms */
+    .form-control {
+        min-height: 44px;
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+
+    /* Cards */
+    .card {
+        margin-bottom: 0.75rem;
+    }
+
+    .card-body {
+        padding: 0.75rem;
+    }
 }

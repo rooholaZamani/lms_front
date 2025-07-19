@@ -831,9 +831,27 @@ export default {
 
   .notifications-dropdown,
   .user-dropdown {
-    right: -1rem;
-    min-width: calc(100vw - 2rem);
-    max-width: calc(100vw - 2rem);
+    right: 0.5rem;
+    left: 0.5rem;
+    min-width: auto;
+    max-width: none;
+    width: calc(100vw - 1rem);
+  }
+}
+@media (max-width: 480px) {
+  .notifications-dropdown,
+  .user-dropdown {
+    right: 0.25rem;
+    left: 0.25rem;
+    width: calc(100vw - 0.5rem);
+  }
+
+  .dropdown-header {
+    padding: 0.75rem;
+  }
+
+  .user-details {
+    font-size: 0.9rem;
   }
 }
 

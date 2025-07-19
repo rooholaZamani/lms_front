@@ -142,6 +142,18 @@ export default {
   .main-content.with-sidebar,
   .main-content.with-sidebar.sidebar-collapsed {
     margin-right: 0;
+    padding: 0.5rem;
+  }
+  .sidebar-toggle {
+    position: fixed;
+    top: 70px;
+    right: 10px;
+    z-index: 1001;
+  }
+}
+@media (max-width: 480px) {
+  .main-content {
+    padding: 0.25rem;
   }
 }
 
@@ -219,4 +231,5 @@ html {
     margin-right: 0 !important;
   }
 }
+
 </style>
