@@ -46,7 +46,12 @@
                   <button class="modern-btn modern-btn-info w-100 mb-2" @click="openCourseChat">
                     <i class="fas fa-comments me-1"></i> گفتگوی درس
                   </button>
-                </div>
+              <!-- Delete Course Button -->
+                  <button class="modern-btn modern-btn-danger w-100 mb-2" @click="confirmDeleteCourse">
+                    <i class="fas fa-trash-alt me-1"></i>
+                    حذف دوره
+                  </button>
+            </div>
               </div>
 
               <!-- در بخش Student Actions - بعد از دکمه‌های موجود -->
@@ -123,15 +128,27 @@
       </div>
     </div>
   </div>
+  <confirmation-dialog
+      modal-id="deleteCourseModal"
+      title="حذف دوره"
+      :message="'آیا از حذف این دوره اطمینان دارید؟ این عمل قابل بازگشت نیست و تمام اطلاعات دوره، درس‌ها، تکالیف و آزمون‌ها پاک خواهد شد.'"
+      :details="course?.title"
+      confirm-text="حذف دوره"
+      confirm-button-type="danger"
+      icon="trash-alt"
+      ref="deleteCourseModal"
+      @confirm="deleteCourse"
+  />
 </template>
 
 <script>
 import { useTextFormatter } from '@/composables/useTextFormatter'
-
+import ConfirmationDialog from "@/components/common/ConfirmationDialog.vue";
 
 
 export default {
   name: 'CourseHeader',
+  components: {ConfirmationDialog},
   props: {
     course: {
       type: Object,
@@ -172,6 +189,29 @@ export default {
       }).href;
 
       window.open(chatUrl, '_blank');
+    },
+    confirmDeleteCourse() {
+      this.$refs.deleteCourseModal.show();
+    },
+    async deleteCourse() {
+      try {
+        await this.$http.delete(`/courses/${this.course.id}`);
+
+        this.$toast.success('دوره با موفقیت حذف شد.');
+
+        // هدایت به صفحه دوره‌های من
+        this.$router.push('/courses/my-courses');
+
+      } catch (error) {
+        console.error('Error deleting course:', error);
+
+        let errorMessage = 'خطا در حذف دوره';
+        if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+
+        this.$toast.error(errorMessage);
+      }
     }
   }
 }

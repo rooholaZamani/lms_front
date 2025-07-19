@@ -1,11 +1,10 @@
 FROM nginx:alpine
 
-# کپی فایل‌های build شده
 COPY dist/ /usr/share/nginx/html/
 
-# تنظیمات ساده nginx برای SPA
 RUN echo 'server { \
     listen 80; \
+    client_max_body_size 1000M;\
     location / { \
         root /usr/share/nginx/html; \
         try_files $uri $uri/ /index.html; \
@@ -20,6 +19,7 @@ RUN echo 'server { \
         proxy_read_timeout 300; \
         proxy_connect_timeout 300; \
         proxy_send_timeout 300; \
+        proxy_request_buffering off; \
     } \
 
 }' > /etc/nginx/conf.d/default.conf

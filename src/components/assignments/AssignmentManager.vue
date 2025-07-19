@@ -612,11 +612,19 @@ export default {
             for (const assignment of lessonAssignments) {
               try {
                 const submissionsResponse = await axios.get(`/assignments/${assignment.id}/submissions`);
+                const submissionsData = submissionsResponse.data;
+
                 const submissions = submissionsResponse.data.submissions;
+                assignment.submissions = submissionsData.submissions || [];
                 assignment.totalStudents = submissionsResponse.data.totalStudents;
                 assignment.submissionCount = submissions.length;
                 assignment.gradedCount = submissions.filter(s => s.graded).length;
                 assignment.lesson = lesson;
+
+
+                assignment.submittedStudents = submissionsData.submittedStudents;
+                assignment.averageScore = submissionsData.averageScore;
+                assignment.lateSubmissions = submissionsData.lateSubmissions;
 
                 totalSubmissions += submissions.length;
                 pendingGrades += submissions.filter(s => !s.graded).length;
@@ -626,6 +634,9 @@ export default {
                 console.error(`Error fetching submissions for assignment ${assignment.id}:`, error);
                 assignment.submissionCount = 0;
                 assignment.gradedCount = 0;
+                assignment.averageScore = 0;
+                assignment.lateSubmissions = 0;
+                assignment.submissions = [];
                 assignment.lesson = lesson;
                 allAssignments.push(assignment);
               }
@@ -928,7 +939,6 @@ export default {
 
     const viewAnalytics = (assignment) => {
       selectedAssignment.value = assignment;
-
       const modal = new bootstrap.Modal(document.getElementById('analyticsModal'));
       modal.show();
     };
