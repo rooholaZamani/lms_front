@@ -810,27 +810,59 @@ export default {
 }
 
 /* Responsive */
+/* Responsive */
 @media (max-width: 768px) {
+  .modern-navbar {
+    height: 56px; /* کاهش ارتفاع از 70px به 56px */
+    padding: 0; /* حذف padding اضافی */
+  }
+
+  .container-fluid {
+    padding-left: 0.5rem !important; /* کاهش padding */
+    padding-right: 0.5rem !important;
+  }
+
+  .navbar-content {
+    height: 56px; /* مطابق با ارتفاع navbar */
+    padding: 0.25rem 0; /* padding کم */
+  }
+
+  .navbar-left {
+    gap: 0.5rem; /* کاهش gap */
+  }
+
+  .page-title {
+    font-size: 0.9rem; /* کاهش سایز فونت */
+    line-height: 1.2;
+  }
+
+  .mobile-menu-toggle {
+    padding: 0.375rem; /* کاهش padding */
+    font-size: 1rem; /* کاهش سایز آیکون */
+  }
+
   .navbar-right {
     gap: 0.25rem;
   }
 
   .icon-button {
-    padding: 0.5rem;
+    padding: 0.375rem; /* کاهش padding */
+    font-size: 0.9rem; /* کاهش سایز آیکون */
   }
 
   .user-menu-container {
-    padding: 0.25rem 0.5rem;
+    padding: 0.25rem 0.375rem; /* کاهش padding */
   }
 
   .avatar-circle {
-    width: 35px;
-    height: 35px;
-    font-size: 0.8rem;
+    width: 32px; /* کاهش سایز */
+    height: 32px;
+    font-size: 0.75rem;
   }
 
   .notifications-dropdown,
   .user-dropdown {
+    top: calc(100% + 0.25rem); /* کاهش فاصله */
     right: 0.5rem;
     left: 0.5rem;
     min-width: auto;
@@ -839,22 +871,59 @@ export default {
   }
 }
 @media (max-width: 480px) {
+  .modern-navbar {
+    height: 50px; /* ارتفاع کمتر */
+  }
+
+  .navbar-content {
+    height: 50px;
+    padding: 0.125rem 0;
+  }
+
+  .container-fluid {
+    padding-left: 0.25rem !important;
+    padding-right: 0.25rem !important;
+  }
+
+  .page-title {
+    font-size: 0.85rem;
+  }
+
+  .mobile-menu-toggle {
+    padding: 0.25rem;
+    font-size: 0.9rem;
+  }
+
+  .avatar-circle {
+    width: 28px;
+    height: 28px;
+    font-size: 0.7rem;
+  }
+
   .notifications-dropdown,
   .user-dropdown {
     right: 0.25rem;
     left: 0.25rem;
     width: calc(100vw - 0.5rem);
   }
-
-  .dropdown-header {
-    padding: 0.75rem;
+}
+@media (max-width: 360px) {
+  .modern-navbar {
+    height: 48px;
   }
 
-  .user-details {
-    font-size: 0.9rem;
+  .navbar-content {
+    height: 48px;
+  }
+
+  .page-title {
+    font-size: 0.8rem;
+    max-width: 120px; /* محدود کردن عرض */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
-
 /* Dark mode support */
 @media (prefers-color-scheme: dark) {
   .modern-navbar {

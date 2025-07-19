@@ -139,21 +139,44 @@ export default {
 
 /* Responsive design */
 @media (max-width: 768px) {
+  .app-content {
+    min-height: calc(100vh - 56px);
+  }
+  .main-content {
+    min-height: calc(100vh - 56px);
+    padding: 0.5rem;
+  }
   .main-content.with-sidebar,
   .main-content.with-sidebar.sidebar-collapsed {
     margin-right: 0;
-    padding: 0.5rem;
+    width: 100% !important;
   }
+
   .sidebar-toggle {
     position: fixed;
-    top: 70px;
+    top: 10px;
     right: 10px;
-    z-index: 1001;
+    z-index: 1051;
+    background: rgba(102, 126, 234, 0.9);
+    backdrop-filter: blur(10px);
   }
 }
 @media (max-width: 480px) {
+  .app-content {
+    min-height: calc(100vh - 50px); /* برای navbar کوچکتر */
+  }
   .main-content {
     padding: 0.25rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .app-content {
+    min-height: calc(100vh - 48px);
+  }
+
+  .main-content {
+    min-height: calc(100vh - 48px);
   }
 }
 

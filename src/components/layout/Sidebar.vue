@@ -356,7 +356,7 @@
     </div>
 
     <!-- Overlay for mobile -->
-    <div v-if="!collapsed && isMobile" class="sidebar-overlay" @click="closeSidebar"></div>
+    <div v-if="!collapsed && isMobile" class="sidebar-overlay show" @click="closeSidebar"></div>
   </div>
 </template>
 
@@ -381,7 +381,10 @@ export default {
       isMobile.value = window.innerWidth < 768;
       if (isMobile.value) {
         collapsed.value = true;
-      }
+      } else {
+      const saved = localStorage.getItem('sidebarCollapsed');
+      collapsed.value = saved === 'true';
+    }
     };
 
     // Fetch pending grading count for teachers
@@ -401,7 +404,9 @@ export default {
 
     const toggleSidebar = () => {
       collapsed.value = !collapsed.value;
-      localStorage.setItem('sidebarCollapsed', collapsed.value.toString());
+      if (!isMobile.value) {
+        localStorage.setItem('sidebarCollapsed', collapsed.value.toString());
+      }
       emit('sidebar-collapsed', collapsed.value);
     };
 
@@ -889,17 +894,25 @@ export default {
 /* Responsive Design */
 @media (max-width: 768px) {
   .modern-sidebar {
-    width: 280px;
-    transform: translateX(100%);
+    width: 240px; /* کاهش عرض از 280 به 240 */
+    transform: translateX(100%); /* مخفی کردن اولیه */
+    top: 0; /* از بالای صفحه شروع شود */
+    height: 100vh; /* تمام ارتفاع صفحه */
+    z-index: 1050; /* بالاتر از سایر عناصر */
+  }
+
+  .modern-sidebar:not(.collapsed) {
+    transform: translateX(0); /* نمایش کامل */
   }
 
   .modern-sidebar.collapsed {
-    transform: translateX(0);
-    width: 280px;
+    transform: translateX(100%); /* مخفی کردن کامل */
+    width: 0; /* عرض صفر */
   }
 
   .sidebar-toggle {
     display: block;
+    z-index: 1051;
   }
 }
 
@@ -919,5 +932,27 @@ export default {
 
 .modern-sidebar::-webkit-scrollbar-thumb:hover {
   background: rgba(102, 126, 234, 0.5);
+}
+
+@media (max-width: 480px) {
+  .modern-sidebar {
+    width: 220px; /* عرض کمتر برای موبایل‌های کوچک */
+  }
+}
+
+@media (max-width: 360px) {
+  .modern-sidebar {
+    width: 200px; /* عرض خیلی کم برای موبایل‌های قدیمی */
+  }
+}
+
+.modern-sidebar {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (max-width: 768px) {
+  .modern-sidebar {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
 </style>
