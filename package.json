@@ -9,14 +9,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/vazirmatn": "^5.2.6",
     "@fortawesome/fontawesome-free": "^6.7.2",
     "@popperjs/core": "^2.11.8",
     "axios": "^1.9.0",
     "bootstrap": "^5.3.6",
     "chart.js": "^4.5.0",
     "d3": "^7.9.0",
+    "fontkit": "^2.0.4",
     "lodash": "^4.17.21",
-    "pdfjs-dist": "^3.11.174",
+    "pdf-vue3": "^1.0.12",
     "pinia": "^3.0.3",
     "vazirmatn": "^33.0.3",
     "vue": "^3.5.13",
@@ -27,7 +29,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.3",
-    "pdfjs-dist": "3.11.174",
+    "pdfjs-dist": "^3.11.174",
     "vite": "^6.2.4",
     "vite-plugin-vue-devtools": "^7.7.2"
   }

@@ -586,8 +586,9 @@ export default {
 .user-dropdown {
   position: absolute;
   top: calc(100% + 0.5rem);
-  right: 0;
-  background: white;
+  right: 0.25rem;
+  left: 0.5rem;
+  /*background: white;*/
   border-radius: 16px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
   border: 1px solid rgba(102, 126, 234, 0.1);
@@ -742,31 +743,7 @@ export default {
   margin-bottom: 0.25rem;
 }
 
-.notification-time {
-  color: #adb5bd;
-  font-size: 0.75rem;
-}
 
-/* Mobile Search */
-.mobile-search-container {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: white;
-  border-bottom: 1px solid rgba(102, 126, 234, 0.1);
-  padding: 1rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-}
-
-.mobile-search-input {
-  position: relative;
-  display: flex;
-  align-items: center;
-  background: #f8f9fa;
-  border-radius: 12px;
-  padding: 0.75rem 1rem;
-}
 
 .mobile-search-input i {
   color: #6c757d;
@@ -863,11 +840,11 @@ export default {
   .notifications-dropdown,
   .user-dropdown {
     top: calc(100% + 0.25rem); /* کاهش فاصله */
-    right: 0.5rem;
-    left: 0.5rem;
+    right: 0.25rem;
+    left: 0.25rem;
     min-width: auto;
     max-width: none;
-    width: calc(100vw - 1rem);
+    width: calc(100vw - 0.5rem);
   }
 }
 @media (max-width: 480px) {
@@ -902,9 +879,9 @@ export default {
 
   .notifications-dropdown,
   .user-dropdown {
-    right: 0.25rem;
-    left: 0.25rem;
-    width: calc(100vw - 0.5rem);
+    right: 0.125rem;
+    left: 0.125rem;
+    width: calc(100vw - 0.25rem);
   }
 }
 @media (max-width: 360px) {

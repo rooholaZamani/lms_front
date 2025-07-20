@@ -244,6 +244,17 @@ const routes = [
       hideSidebar: true // Hide sidebar for full-page content viewing
     }
   },
+  {
+    path: '/my-activities',
+    name: 'MyActivities',
+    component: () => import('../components/student/MyActivities.vue'),
+    meta: {
+      title: 'فعالیت‌های من',
+      requiresAuth: true,
+      requiresStudent: true,
+      showSidebar: true
+    }
+  },
   // Student routes
   {
     path: '/student/assignments',

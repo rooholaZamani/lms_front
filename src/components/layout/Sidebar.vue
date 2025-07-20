@@ -302,6 +302,22 @@
                 </div>
               </router-link>
             </li>
+            <li class="nav-item">
+              <router-link
+                  class="modern-nav-link"
+                  :to="{ name: 'MyActivities' }"
+                  active-class="active"
+                  :title="collapsed ? 'فعالیت‌های من' : ''"
+              >
+                <div class="nav-icon">
+                  <i class="fas fa-chart-line"></i>
+                </div>
+                <span v-if="!collapsed" class="nav-text">فعالیت‌های من</span>
+                <div v-if="!collapsed" class="nav-arrow">
+                  <i class="fas fa-chevron-left"></i>
+                </div>
+              </router-link>
+            </li>
           </template>
 
           <!-- Common items -->

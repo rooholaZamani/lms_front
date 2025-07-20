@@ -231,52 +231,6 @@
             </div>
           </div>
         </div>
-
-        <!-- Timeline فعالیت‌ها -->
-<!--        <div class="row">-->
-<!--          <div class="col-12">-->
-<!--            <div class="modern-card">-->
-<!--              <div class="modern-card-header">-->
-<!--                <h5 class="mb-0">-->
-<!--                  <i class="fas fa-history text-info me-2"></i>-->
-<!--                  Timeline فعالیت‌های اخیر-->
-<!--                </h5>-->
-<!--              </div>-->
-<!--              <div class="modern-card-body">-->
-<!--                <div class="activity-timeline">-->
-<!--                  <div v-for="activity in activityTimeline" :key="activity.id"-->
-<!--                       class="timeline-item" :class="`timeline-${activity.type.toLowerCase()}`">-->
-<!--                    <div class="timeline-marker">-->
-<!--                      <i :class="getActivityIcon(activity.type)"></i>-->
-<!--                    </div>-->
-<!--                    <div class="timeline-content">-->
-<!--                      <div class="timeline-header">-->
-<!--                        <span class="activity-type-badge" :class="`badge-${activity.type.toLowerCase()}`">-->
-<!--                          {{ activity.typeLabel }}-->
-<!--                        </span>-->
-<!--                        <span class="timeline-time">{{ formatDate(activity.timestamp) }}</span>-->
-<!--                      </div>-->
-<!--                      <div class="timeline-description">{{ getEnhancedDescription(activity) }}</div>-->
-<!--                      <div v-if="activity.metadata && Object.keys(activity.metadata).length > 0" class="timeline-metadata">-->
-<!--                        <small class="text-muted">-->
-<!--                          <i class="fas fa-info-circle me-1"></i>-->
-<!--                          {{ formatMetadata(activity.metadata) }}-->
-<!--                        </small>-->
-<!--                      </div>-->
-<!--                      <div v-if="activity.score !== undefined" class="timeline-score">-->
-<!--                        نمره: <strong>{{ activity.score }}</strong>-->
-<!--                      </div>-->
-<!--                      <div v-if="activity.timeSpent" class="timeline-duration">-->
-<!--                        مدت زمان: {{ Math.round(activity.timeSpent / 60) }} دقیقه-->
-<!--                      </div>-->
-<!--                    </div>-->
-<!--                  </div>-->
-<!--                </div>-->
-<!--              </div>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--        </div>-->
-
       </div>
     </div>
 
