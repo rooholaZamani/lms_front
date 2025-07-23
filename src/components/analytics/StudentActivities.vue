@@ -192,12 +192,12 @@
                           <span class="timeline-time">{{ formatTimelineDate(activity.timestamp) }}</span>
                         </div>
                         <div class="timeline-meta">
-                  <span v-if="activity.metadata" class="badge badge-outline me-1">
-                    {{ formatMetadata(activity.metadata) }}
-                  </span>
-                          <span v-if="activity.timeSpent" class="text-muted small">
-                    <i class="fas fa-clock me-1"></i>{{ Math.round(activity.timeSpent / 60) }} دقیقه
-                  </span>
+                            <span v-if="activity.metadata" class="badge badge-outline me-1">
+                              {{ formatMetadata(activity.metadata) }}
+                            </span>
+                            <span v-if="activity.timeSpent" class="text-muted small">
+                              <i class="fas fa-clock me-1"></i>{{ $formatTime(activity.timeSpent) }}
+                            </span>
                         </div>
                       </div>
                     </div>
@@ -661,7 +661,9 @@ export default {
       const data = this.advancedAnalytics.timeAnalysisByActivityType
       const chartData = Object.entries(data).map(([type, info]) => ({
         label: info.label,
-        hours: info.totalHours,
+        // اصلاح: استفاده از valueSeconds یا valueHours
+        hours: info.valueHours || (info.valueSeconds ? info.valueSeconds / 3600 : 0),
+        minutes: info.valueMinutes || (info.valueSeconds ? info.valueSeconds / 60 : 0),
         percentage: info.percentage
       }))
 
@@ -712,7 +714,7 @@ export default {
               callbacks: {
                 label: (context) => {
                   const item = chartData[context.dataIndex]
-                  return `${item.hours} ساعت (${item.percentage}%)`
+                  return `${this.$formatTime(item.hours * 3600)} (${item.percentage}%)`
                 }
               }
             }

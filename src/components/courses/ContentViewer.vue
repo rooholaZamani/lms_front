@@ -451,6 +451,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useTextFormatter } from '@/composables/useTextFormatter'
 import { toast } from 'vue3-toastify'
 import axios from "axios";
+import app from "@/App.vue";
 
 export default defineComponent({
   name: 'ContentViewer',
@@ -516,16 +517,7 @@ export default defineComponent({
     })
     // Helper Functions
     const formatTime = (seconds) => {
-      if (!seconds || seconds < 0) return '00:00:00'
-      const hours = Math.floor(seconds / 3600)
-      const minutes = Math.floor((seconds % 3600) / 60)
-      const secs = Math.floor(seconds % 60)
-
-      return [
-        hours.toString().padStart(2, '0'),
-        minutes.toString().padStart(2, '0'),
-        secs.toString().padStart(2, '0')
-      ].join(':')
+      return app.config.globalProperties.$formatTime(seconds);
     }
 
     const formatFileSize = (bytes) => {

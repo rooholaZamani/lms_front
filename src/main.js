@@ -89,16 +89,46 @@ app.config.globalProperties.$filters = {
     },
 
     formatTime(seconds) {
-        if (!seconds) return '00:00:00'
+        if (!seconds || seconds < 0) return '0 ثانیه'
+
         const hours = Math.floor(seconds / 3600)
         const minutes = Math.floor((seconds % 3600) / 60)
-        const secs = seconds % 60
+        const secs = Math.floor(seconds % 60)
+
+        const parts = []
+
+        if (hours > 0) {
+            parts.push(`${hours} ساعت`)
+        }
+        if (minutes > 0) {
+            parts.push(`${minutes} دقیقه`)
+        }
+        if (secs > 0 || parts.length === 0) {
+            parts.push(`${secs} ثانیه`)
+        }
+
+        return parts.join(' و ')
+    },
+
+    formatTimeShort(seconds) {
+        if (!seconds || seconds < 0) return '00:00:00'
+
+        const hours = Math.floor(seconds / 3600)
+        const minutes = Math.floor((seconds % 3600) / 60)
+        const secs = Math.floor(seconds % 60)
 
         return [
             hours.toString().padStart(2, '0'),
             minutes.toString().padStart(2, '0'),
             secs.toString().padStart(2, '0')
         ].join(':')
+    },
+    formatTimeSmart(seconds, useShort = false) {
+        if (useShort) {
+            return this.formatTimeShort(seconds)
+        } else {
+            return this.formatTime(seconds)
+        }
     },
 
     formatNumber(number) {

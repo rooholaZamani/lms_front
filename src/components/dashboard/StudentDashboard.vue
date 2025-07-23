@@ -139,11 +139,11 @@
 
             <template v-else>
               <div class="row">
-                <div v-for="progress in progressList" :key="progress.course.id" class="col-md-6 mb-3">
+                <div v-for="progress in progressList" :key="progress.courseId" class="col-md-6 mb-3">
                   <div class="modern-card h-100">
                     <div class="modern-card-body">
                       <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="mb-0">{{ progress.course.title }}</h6>
+                        <h6 class="mb-0">{{ progress.courseTitle }}</h6>
                         <span class="modern-badge" :class="getProgressBadgeClass(progress.completionPercentage)">
                           {{ Math.round(progress.completionPercentage) }}%
                         </span>
@@ -238,8 +238,8 @@ export default {
 
         this.progressMap = {};
         this.progressList.forEach(progress => {
-          if (progress.course) {
-            this.progressMap[progress.course.id] = progress;
+          if (progress.courseId) {
+            this.progressMap[progress.courseId] = progress;
           }
         });
 

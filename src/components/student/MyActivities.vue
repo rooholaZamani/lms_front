@@ -205,7 +205,7 @@
                   </span>
                   <span v-if="activity.timeSpent" class="badge badge-time">
                     <i class="fas fa-clock me-1"></i>
-                    {{ formatDuration(activity.timeSpent) }}
+                    {{ formatTime(activity.timeSpent) }}
                   </span>
                 </div>
                 <div v-if="activity.metadata" class="timeline-details mt-2">
@@ -284,6 +284,7 @@ import { ref, reactive, onMounted, computed, nextTick } from 'vue'
 import axios from 'axios'
 import Chart from 'chart.js/auto'
 import { useFormatters } from '@/composables/useFormatters.js'
+import app from "@/App.vue";
 
 export default {
   name: 'MyActivities',
@@ -540,14 +541,8 @@ export default {
 
     // Utility methods
     const formatTime = (seconds) => {
-      if (!seconds) return '0 دقیقه'
-      const hours = Math.floor(seconds / 3600)
-      const minutes = Math.floor((seconds % 3600) / 60)
-
-      if (hours > 0) {
-        return `${hours} ساعت ${minutes > 0 ? `و ${minutes} دقیقه` : ''}`
-      }
-      return `${minutes} دقیقه`
+      // استفاده از global function
+      return app.config.globalProperties.$formatTime(seconds)
     }
 
     const getActivityClass = (type) => {
@@ -561,6 +556,9 @@ export default {
       }
       return classMap[type] || 'default'
     }
+
+
+
 
     const getActivityIcon = (type) => {
       const iconMap = {
