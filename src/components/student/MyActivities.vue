@@ -106,10 +106,69 @@
             </div>
           </div>
         </div>
+
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card">
+            <div class="stat-icon bg-info text-white">
+              <i class="fas fa-star"></i>
+            </div>
+            <div class="stat-info">
+              <h3 class="stat-number">{{ calculateAverageScore }}</h3>
+              <p class="stat-label">میانگین نمرات</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card">
+            <div class="stat-icon bg-success text-white">
+              <i class="fas fa-clipboard-check"></i>
+            </div>
+            <div class="stat-info">
+              <h3 class="stat-number">{{ totalExams }}</h3>
+              <p class="stat-label">تعداد آزمون‌ها</p>
+            </div>
+          </div>
+        </div>
       </div>
+
 
       <!-- Charts Section -->
       <div class="charts-section row g-4 mb-4">
+        <div class="col-lg-4">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h5>توزیع فعالیت‌ها</h5>
+            </div>
+            <div class="chart-container">
+              <canvas ref="activityDistributionChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h5>فعالیت روزانه</h5>
+            </div>
+            <div class="chart-container">
+              <canvas ref="dailyActivityChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h5>توزیع نمرات</h5>
+            </div>
+            <div class="chart-container">
+              <canvas ref="gradeDistributionChartRef" v-if="!loading"></canvas>
+              <div v-else class="text-center py-4">
+                <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                <p class="text-muted mt-2">در حال بارگذاری...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="col-lg-6">
           <div class="chart-card">
             <div class="chart-header">
@@ -254,7 +313,7 @@
 </template>
 
 <script>
-import { ref, reactive, onMounted, computed, nextTick } from 'vue'
+import {ref, reactive, onMounted, computed, nextTick, watch, onUnmounted} from 'vue'
 import axios from 'axios'
 import Chart from 'chart.js/auto'
 import { useFormatters } from '@/composables/useFormatters.js'
@@ -273,6 +332,17 @@ export default {
     const timelineView = ref('timeline')
     const currentPage = ref(1)
     const hasMoreActivities = ref(false)
+
+    const gradesDistribution = ref({
+      excellent: 0,
+      good: 0,
+      average: 0,
+      poor: 0
+    })
+    const examScores = ref([])
+    const assignmentScores = ref([])
+    const gradeDistributionChart = ref(null)
+    const gradeDistributionChartRef = ref(null)
 
     // Data storage
     const enrolledCourses = ref([])
@@ -324,6 +394,82 @@ export default {
       }
     }
 
+    // اضافه کردن این متدها در قسمت methods
+    const fetchGradesData = async () => {
+      try {
+        const params = {
+          timeFilter: selectedTimeFilter.value,
+        }
+
+        if (selectedCourseId.value) {
+          params.courseId = selectedCourseId.value
+        }
+
+        const response = await axios.get('/analytics/student/grades-distribution', { params })
+
+        examScores.value = response.data.examScores || []
+        assignmentScores.value = response.data.assignmentScores || []
+        gradesDistribution.value = response.data.distribution || {}
+
+      } catch (error) {
+        console.error('Error fetching grades data:', error)
+      }
+    }
+
+    const createGradeDistributionChart = () => {
+      if (!gradeDistributionChartRef.value || Object.keys(gradesDistribution.value).length === 0) return
+
+      const ctx = gradeDistributionChartRef.value.getContext('2d')
+
+      if (gradeDistributionChart.value) {
+        gradeDistributionChart.value.destroy()
+      }
+
+      gradeDistributionChart.value = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['ممتاز (18-20)', 'خوب (15-17)', 'متوسط (10-14)', 'ضعیف (0-9)'],
+          datasets: [{
+            data: [
+              gradesDistribution.value.excellent || 0,
+              gradesDistribution.value.good || 0,
+              gradesDistribution.value.average || 0,
+              gradesDistribution.value.poor || 0
+            ],
+            backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#dc3545'],
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                font: {
+                  family: 'IRANSans'
+                },
+                padding: 15
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                  return `${label}: ${value} (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      })
+    }
+
     const fetchData = async () => {
       loading.value = true
       currentPage.value = 1
@@ -342,10 +488,13 @@ export default {
 
         activities.value = response.data.activities || []
         updateActivitySummary()
-        hasMoreActivities.value = activities.value.length >= 50
+        hasMoreActivities.value = activities.value.length >= 10
+
+        await fetchGradesData()
 
         await nextTick()
         createCharts()
+        await fetchGradesData()
 
       } catch (error) {
         console.error('Error fetching activities:', error)
@@ -354,7 +503,24 @@ export default {
         loading.value = false
       }
     }
+    const calculateAverageScore = computed(() => {
+      if (!examScores.value || examScores.value.length === 0) return 0
 
+      const total = examScores.value.reduce((sum, exam) => sum + (exam.score || 0), 0)
+      return Math.round(total / examScores.value.length)
+    })
+
+    const totalExams = computed(() => {
+      return examScores.value ? examScores.value.length : 0
+    })
+
+    const hasGradesData = computed(() => {
+      return gradesDistribution.value &&
+          (gradesDistribution.value.excellent > 0 ||
+              gradesDistribution.value.good > 0 ||
+              gradesDistribution.value.average > 0 ||
+              gradesDistribution.value.poor > 0)
+    })
     const loadMoreActivities = async () => {
       loadingMore.value = true
       currentPage.value++
@@ -599,6 +765,21 @@ export default {
       await fetchData()
     })
 
+    watch(selectedTimeFilter, () => {
+      console.log('Time filter changed to:', selectedTimeFilter.value)
+      fetchData()
+    })
+
+    watch(selectedCourseId, () => {
+      console.log('Course changed to:', selectedCourseId.value)
+      fetchData()
+    })
+    onUnmounted(() => {
+      if (gradeDistributionChart.value) {
+        gradeDistributionChart.value.destroy()
+      }
+    })
+
     return {
       // Reactive data
       loading,
@@ -632,7 +813,8 @@ export default {
       getActivityDescription,
       getEnhancedDescription
     }
-  }
+  },
+
 }
 </script>
 
