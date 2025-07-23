@@ -168,27 +168,6 @@
             </div>
           </div>
         </div>
-
-        <div class="col-lg-6">
-          <div class="chart-card">
-            <div class="chart-header">
-              <h5>توزیع فعالیت‌ها</h5>
-            </div>
-            <div class="chart-container">
-              <canvas ref="activityDistributionChart"></canvas>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-6">
-          <div class="chart-card">
-            <div class="chart-header">
-              <h5>فعالیت روزانه</h5>
-            </div>
-            <div class="chart-container">
-              <canvas ref="dailyActivityChart"></canvas>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- Activities List -->
