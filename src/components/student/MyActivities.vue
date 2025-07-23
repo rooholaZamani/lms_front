@@ -389,6 +389,9 @@ export default {
         examScores.value = response.data.examScores || []
         assignmentScores.value = response.data.assignmentScores || []
         gradesDistribution.value = response.data.distribution || {}
+        console.log("examScores.value: "+examScores.value)
+        console.log("assignmentScores.value: "+ assignmentScores.value)
+        console.log("gradesDistribution.value: "+gradesDistribution.value)
 
       } catch (error) {
         console.error('Error fetching grades data:', error)
@@ -466,7 +469,16 @@ export default {
         const response = await axios.get('/analytics/student/my-activities', { params })
 
         activities.value = response.data.activities || []
-        updateActivitySummary()
+
+
+        if (response.data.statistics) {
+          activitySummary.totalActivities = response.data.statistics.totalActivities || 0
+          activitySummary.totalTime = response.data.statistics.totalTime || 0
+          activitySummary.uniqueCourses = response.data.statistics.uniqueCourses || 0
+          activitySummary.activeDays = response.data.statistics.activeDays || 0
+        }
+
+        // updateActivitySummary()
         hasMoreActivities.value = activities.value.length >= 10
 
         await fetchGradesData()
@@ -526,19 +538,6 @@ export default {
       } finally {
         loadingMore.value = false
       }
-    }
-
-    const updateActivitySummary = () => {
-      activitySummary.totalActivities = activities.value.length
-      activitySummary.totalTime = activities.value.reduce((sum, activity) => sum + (activity.timeSpent || 0), 0)
-
-      const uniqueCourses = new Set(activities.value.map(activity => activity.courseId))
-      activitySummary.uniqueCourses = uniqueCourses.size
-
-      const uniqueDays = new Set(activities.value.map(activity =>
-          new Date(activity.timestamp).toDateString()
-      ))
-      activitySummary.activeDays = uniqueDays.size
     }
 
     const createCharts = () => {
