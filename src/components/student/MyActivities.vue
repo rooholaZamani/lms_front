@@ -389,9 +389,7 @@ export default {
         examScores.value = response.data.examScores || []
         assignmentScores.value = response.data.assignmentScores || []
         gradesDistribution.value = response.data.distribution || {}
-        console.log("examScores.value: "+examScores.value)
-        console.log("assignmentScores.value: "+ assignmentScores.value)
-        console.log("gradesDistribution.value: "+gradesDistribution.value)
+
 
       } catch (error) {
         console.error('Error fetching grades data:', error)
