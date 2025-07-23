@@ -775,6 +775,10 @@ export default {
       activityTypes,
       filteredActivities,
 
+      calculateAverageScore,
+      totalExams,
+      hasGradesData,
+
       // Chart refs
       activityDistributionChart,
       dailyActivityChart,
