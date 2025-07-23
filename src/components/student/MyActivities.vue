@@ -1,177 +1,155 @@
 <template>
   <div class="my-activities-container">
-    <!-- Header -->
+    <!-- Page Header -->
     <div class="page-header">
-      <h1 class="page-title">
-        <i class="fas fa-chart-line me-3"></i>
-        فعالیت‌های من
-      </h1>
-      <p class="page-description">
-        مشاهده و تحلیل فعالیت‌های آموزشی شما
-      </p>
-    </div>
-
-    <!-- Filters Section -->
-    <div class="filters-section mb-4">
-      <div class="row g-3">
-        <div class="col-md-4">
-          <div class="filter-group">
-            <label class="form-label">انتخاب دوره:</label>
-            <select v-model="selectedCourseId" @change="fetchData" class="form-select">
-              <option value="">همه دوره‌ها</option>
-              <option v-for="course in enrolledCourses" :key="course.id" :value="course.id">
-                {{ course.title }}
-              </option>
-            </select>
-          </div>
-        </div>
-
-        <div class="col-md-4">
-          <div class="filter-group">
-            <label class="form-label">بازه زمانی:</label>
-            <select v-model="selectedTimeFilter" @change="fetchData" class="form-select">
-              <option v-for="filter in timeFilters" :key="filter.value" :value="filter.value">
-                {{ filter.label }}
-              </option>
-            </select>
-          </div>
-        </div>
-
-        <div class="col-md-4">
-          <div class="filter-group">
-            <label class="form-label">نوع فعالیت:</label>
-            <select v-model="selectedActivityType" @change="filterActivities" class="form-select">
-              <option value="">همه فعالیت‌ها</option>
-              <option v-for="type in activityTypes" :key="type.value" :value="type.value">
-                {{ type.label }}
-              </option>
-            </select>
-          </div>
-        </div>
-      </div>
+      <h1 class="page-title">فعالیت‌های من</h1>
+      <p class="page-description">مشاهده و تحلیل فعالیت‌های آموزشی شما</p>
     </div>
 
     <!-- Loading State -->
-    <div v-if="loading" class="loading-container">
-      <div class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">در حال بارگذاری...</span>
-        </div>
-        <p class="mt-3 text-muted">در حال بارگذاری فعالیت‌ها...</p>
+    <div v-if="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">در حال بارگذاری...</span>
       </div>
     </div>
 
     <!-- Main Content -->
-    <div v-else class="main-content">
+    <div v-else>
+      <!-- Filters Section -->
+      <div class="filters-section mb-4">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-3">
+            <div class="filter-group">
+              <label class="form-label">دوره</label>
+              <select v-model="selectedCourseId" @change="fetchData" class="form-select">
+                <option value="">همه دوره‌ها</option>
+                <option v-for="course in enrolledCourses" :key="course.id" :value="course.id">
+                  {{ course.title }}
+                </option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="filter-group">
+              <label class="form-label">بازه زمانی</label>
+              <select v-model="selectedTimeFilter" @change="fetchData" class="form-select">
+                <option v-for="filter in timeFilters" :key="filter.value" :value="filter.value">
+                  {{ filter.label }}
+                </option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="filter-group">
+              <label class="form-label">نوع فعالیت</label>
+              <select v-model="selectedActivityType" class="form-select">
+                <option value="">همه فعالیت‌ها</option>
+                <option v-for="type in activityTypes" :key="type.value" :value="type.value">
+                  {{ type.label }}
+                </option>
+              </select>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <p class="mb-2 text-muted">مجموع فعالیت‌ها: {{ activities.length }}</p>
+            <button @click="resetFilters" class="btn btn-primary">
+              <i class="fas fa-refresh me-2"></i>
+              بازنشانی فیلترها
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Summary Cards -->
-      <div class="summary-cards mb-4">
-        <div class="row g-3">
-          <div class="col-md-3 col-sm-6">
-            <div class="stat-card">
-              <div class="stat-icon bg-primary">
-                <i class="fas fa-chart-bar"></i>
-              </div>
-              <div class="stat-content">
-                <div class="stat-number">{{ activitySummary.totalActivities }}</div>
-                <div class="stat-label">کل فعالیت‌ها</div>
-              </div>
+      <div class="summary-cards row g-3 mb-4">
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card">
+            <div class="stat-icon bg-primary text-white">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-info">
+              <h3 class="stat-number">{{ activitySummary.totalActivities }}</h3>
+              <p class="stat-label">کل فعالیت‌ها</p>
             </div>
           </div>
-
-          <div class="col-md-3 col-sm-6">
-            <div class="stat-card">
-              <div class="stat-icon bg-success">
-                <i class="fas fa-clock"></i>
-              </div>
-              <div class="stat-content">
-                <div class="stat-number">{{ formatTime(activitySummary.totalTime) }}</div>
-                <div class="stat-label">زمان کل مطالعه</div>
-              </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card">
+            <div class="stat-icon bg-success text-white">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-info">
+              <h3 class="stat-number">{{ formatDuration(activitySummary.totalTime) }}</h3>
+              <p class="stat-label">کل زمان فعالیت</p>
             </div>
           </div>
-
-          <div class="col-md-3 col-sm-6">
-            <div class="stat-card">
-              <div class="stat-icon bg-info">
-                <i class="fas fa-book"></i>
-              </div>
-              <div class="stat-content">
-                <div class="stat-number">{{ activitySummary.uniqueCourses }}</div>
-                <div class="stat-label">دوره‌های فعال</div>
-              </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card">
+            <div class="stat-icon bg-info text-white">
+              <i class="fas fa-book"></i>
+            </div>
+            <div class="stat-info">
+              <h3 class="stat-number">{{ activitySummary.uniqueCourses }}</h3>
+              <p class="stat-label">دوره‌های فعال</p>
             </div>
           </div>
-
-          <div class="col-md-3 col-sm-6">
-            <div class="stat-card">
-              <div class="stat-icon bg-warning">
-                <i class="fas fa-calendar-day"></i>
-              </div>
-              <div class="stat-content">
-                <div class="stat-number">{{ activitySummary.activeDays }}</div>
-                <div class="stat-label">روزهای فعال</div>
-              </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+          <div class="stat-card">
+            <div class="stat-icon bg-warning text-white">
+              <i class="fas fa-calendar"></i>
+            </div>
+            <div class="stat-info">
+              <h3 class="stat-number">{{ activitySummary.activeDays }}</h3>
+              <p class="stat-label">روزهای فعال</p>
             </div>
           </div>
         </div>
       </div>
 
       <!-- Charts Section -->
-      <div class="charts-section mb-4">
-        <div class="row g-4">
-          <!-- Activity Distribution Chart -->
-          <div class="col-lg-6">
-            <div class="chart-card">
-              <div class="chart-header">
-                <h3 class="chart-title">
-                  <i class="fas fa-pie-chart me-2"></i>
-                  توزیع انواع فعالیت
-                </h3>
-              </div>
-              <div class="chart-body">
-                <canvas ref="activityDistributionChart"></canvas>
-              </div>
+      <div class="charts-section row g-4 mb-4">
+        <div class="col-lg-6">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h5>توزیع فعالیت‌ها</h5>
+            </div>
+            <div class="chart-container">
+              <canvas ref="activityDistributionChart"></canvas>
             </div>
           </div>
-
-          <!-- Daily Activity Chart -->
-          <div class="col-lg-6">
-            <div class="chart-card">
-              <div class="chart-header">
-                <h3 class="chart-title">
-                  <i class="fas fa-chart-line me-2"></i>
-                  فعالیت روزانه
-                </h3>
-              </div>
-              <div class="chart-body">
-                <canvas ref="dailyActivityChart"></canvas>
-              </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h5>فعالیت روزانه</h5>
+            </div>
+            <div class="chart-container">
+              <canvas ref="dailyActivityChart"></canvas>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Activity Timeline -->
-      <div class="timeline-section">
-        <div class="section-header mb-4">
-          <h3 class="section-title">
-            <i class="fas fa-history me-2"></i>
-            تاریخچه فعالیت‌ها
-          </h3>
-          <div class="section-actions">
+      <!-- Activities List -->
+      <div class="activities-section">
+        <div class="section-header">
+          <h4>فعالیت‌های اخیر</h4>
+          <div class="view-toggles">
             <div class="btn-group" role="group">
               <button
                   type="button"
-                  class="btn btn-outline-primary btn-sm"
+                  class="btn btn-outline-secondary"
                   :class="{ active: timelineView === 'timeline' }"
                   @click="timelineView = 'timeline'"
               >
                 <i class="fas fa-list me-1"></i>
-                Timeline
+                جدول زمانی
               </button>
               <button
                   type="button"
-                  class="btn btn-outline-primary btn-sm"
+                  class="btn btn-outline-secondary"
                   :class="{ active: timelineView === 'cards' }"
                   @click="timelineView = 'cards'"
               >
@@ -205,7 +183,7 @@
                   </span>
                   <span v-if="activity.timeSpent" class="badge badge-time">
                     <i class="fas fa-clock me-1"></i>
-                    {{ formatTime(activity.timeSpent) }}
+                    {{ formatDuration(activity.timeSpent) }}
                   </span>
                 </div>
                 <div v-if="activity.metadata" class="timeline-details mt-2">
@@ -268,10 +246,6 @@
             <p class="empty-state-description">
               در بازه زمانی انتخاب شده فعالیتی ثبت نشده است.
             </p>
-            <button @click="resetFilters" class="btn btn-primary">
-              <i class="fas fa-refresh me-2"></i>
-              بازنشانی فیلترها
-            </button>
           </div>
         </div>
       </div>
@@ -284,12 +258,11 @@ import { ref, reactive, onMounted, computed, nextTick } from 'vue'
 import axios from 'axios'
 import Chart from 'chart.js/auto'
 import { useFormatters } from '@/composables/useFormatters.js'
-import app from "@/App.vue";
 
 export default {
   name: 'MyActivities',
   setup() {
-    const { formatDateTime, formatDuration } = useFormatters()
+    const { formatDate, formatTime } = useFormatters()
 
     // Reactive data
     const loading = ref(true)
@@ -414,13 +387,13 @@ export default {
       activitySummary.totalActivities = activities.value.length
       activitySummary.totalTime = activities.value.reduce((sum, activity) => sum + (activity.timeSpent || 0), 0)
 
-      const coursesSet = new Set(activities.value.map(activity => activity.courseName).filter(Boolean))
-      activitySummary.uniqueCourses = coursesSet.size
+      const uniqueCourses = new Set(activities.value.map(activity => activity.courseId))
+      activitySummary.uniqueCourses = uniqueCourses.size
 
-      const datesSet = new Set(activities.value.map(activity =>
+      const uniqueDays = new Set(activities.value.map(activity =>
           new Date(activity.timestamp).toDateString()
       ))
-      activitySummary.activeDays = datesSet.size
+      activitySummary.activeDays = uniqueDays.size
     }
 
     const createCharts = () => {
@@ -436,18 +409,14 @@ export default {
       const ctx = activityDistributionChart.value?.getContext('2d')
       if (!ctx) return
 
-      // Count activities by type
-      const typeCounts = {}
+      const activityCounts = {}
       activities.value.forEach(activity => {
-        typeCounts[activity.type] = (typeCounts[activity.type] || 0) + 1
+        const typeName = getActivityTypeName(activity.type)
+        activityCounts[typeName] = (activityCounts[typeName] || 0) + 1
       })
 
-      const labels = Object.keys(typeCounts).map(type => getActivityTypeName(type))
-      const data = Object.values(typeCounts)
-      const colors = [
-        '#667eea', '#764ba2', '#f093fb', '#f5576c',
-        '#4facfe', '#00f2fe', '#43e97b', '#38f9d7'
-      ]
+      const labels = Object.keys(activityCounts)
+      const data = Object.values(activityCounts)
 
       distributionChartInstance = new Chart(ctx, {
         type: 'doughnut',
@@ -455,9 +424,15 @@ export default {
           labels,
           datasets: [{
             data,
-            backgroundColor: colors.slice(0, labels.length),
-            borderWidth: 2,
-            borderColor: '#fff'
+            backgroundColor: [
+              '#667eea',
+              '#f093fb',
+              '#ff6b6b',
+              '#4ecdc4',
+              '#45b7d1',
+              '#f9ca24',
+              '#f0932b'
+            ]
           }]
         },
         options: {
@@ -465,11 +440,7 @@ export default {
           maintainAspectRatio: false,
           plugins: {
             legend: {
-              position: 'bottom',
-              labels: {
-                padding: 20,
-                usePointStyle: true
-              }
+              position: 'bottom'
             }
           }
         }
@@ -539,12 +510,28 @@ export default {
       fetchData()
     }
 
-    // Utility methods
-    const formatTime = (seconds) => {
-      // استفاده از global function
-      return app.config.globalProperties.$formatTime(seconds)
+    // Local formatting functions
+    const formatDateTime = (dateString) => {
+      if (!dateString) return 'نامشخص'
+      const date = new Date(dateString)
+      const dateStr = date.toLocaleDateString('fa-IR')
+      const timeStr = date.toLocaleTimeString('fa-IR', {
+        hour: '2-digit',
+        minute: '2-digit'
+      })
+      return `${dateStr} ${timeStr}`
     }
 
+    const formatDuration = (seconds) => {
+      if (!seconds) return '0 دقیقه'
+      const hours = Math.floor(seconds / 3600)
+      const minutes = Math.floor((seconds % 3600) / 60)
+
+      if (hours > 0) {
+        return `${hours} ساعت ${minutes > 0 ? `و ${minutes} دقیقه` : ''}`
+      }
+      return `${minutes} دقیقه`
+    }
     const getActivityClass = (type) => {
       const classMap = {
         'CONTENT_VIEW': 'content',
@@ -556,9 +543,6 @@ export default {
       }
       return classMap[type] || 'default'
     }
-
-
-
 
     const getActivityIcon = (type) => {
       const iconMap = {
@@ -640,7 +624,6 @@ export default {
       loadMoreActivities,
       filterActivities,
       resetFilters,
-      formatTime,
       formatDateTime,
       formatDuration,
       getActivityClass,
@@ -728,26 +711,24 @@ export default {
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
-  color: white;
   margin-left: 1rem;
 }
 
-.stat-icon.bg-primary { background: linear-gradient(135deg, #667eea, #764ba2); }
-.stat-icon.bg-success { background: linear-gradient(135deg, #48bb78, #38a169); }
-.stat-icon.bg-info { background: linear-gradient(135deg, #4299e1, #3182ce); }
-.stat-icon.bg-warning { background: linear-gradient(135deg, #ed8936, #dd6b20); }
+.stat-info {
+  flex: 1;
+}
 
 .stat-number {
-  font-size: 2rem;
+  font-size: 1.8rem;
   font-weight: 700;
+  margin-bottom: 0.25rem;
   color: #2d3748;
-  line-height: 1;
 }
 
 .stat-label {
-  font-size: 0.875rem;
-  color: #718096;
-  margin-top: 0.25rem;
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin: 0;
 }
 
 .charts-section .chart-card {
@@ -758,61 +739,46 @@ export default {
 }
 
 .chart-header {
-  padding: 1.5rem 1.5rem 0;
+  padding: 1.5rem 1.5rem 1rem;
   border-bottom: 1px solid #e2e8f0;
 }
 
-.chart-title {
-  font-size: 1.25rem;
+.chart-header h5 {
+  margin: 0;
   font-weight: 600;
   color: #2d3748;
-  margin: 0;
 }
 
-.chart-body {
+.chart-container {
   padding: 1.5rem;
   height: 300px;
+}
+
+.activities-section {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  padding: 1.5rem;
 }
 
 .section-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.section-title {
-  font-size: 1.5rem;
+.section-header h4 {
+  margin: 0;
   font-weight: 600;
   color: #2d3748;
-  margin: 0;
-}
-
-.btn-group .btn {
-  border-radius: 6px !important;
-}
-
-.btn-group .btn.active {
-  background: #667eea;
-  border-color: #667eea;
-}
-
-/* Timeline Styles */
-.timeline-container {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  max-height: 800px;
-  overflow-y: auto;
 }
 
 .timeline {
   position: relative;
-  padding-right: 30px;
+  padding-right: 2rem;
 }
 
 .timeline::before {
@@ -822,114 +788,97 @@ export default {
   top: 0;
   bottom: 0;
   width: 2px;
-  background: linear-gradient(to bottom, #e2e8f0, #cbd5e0);
+  background: linear-gradient(to bottom, #667eea, #764ba2);
 }
 
 .timeline-item {
   position: relative;
-  margin-bottom: 20px;
-  padding-right: 20px;
+  margin-bottom: 2rem;
+  padding-right: 3rem;
 }
 
 .timeline-marker {
   position: absolute;
-  right: -25px;
-  top: 5px;
-  width: 30px;
-  height: 30px;
+  right: -22px;
+  top: 0;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background: white;
-  border: 2px solid #e2e8f0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  color: #718096;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border: 3px solid #667eea;
 }
 
 .timeline-content {
   background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .timeline-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 5px;
+  margin-bottom: 0.75rem;
 }
 
 .timeline-title {
-  flex: 1;
-  font-weight: 500;
+  font-weight: 600;
   color: #2d3748;
-  font-size: 14px;
+  flex: 1;
 }
 
 .timeline-time {
-  font-size: 11px;
-  color: #a0aec0;
+  font-size: 0.875rem;
+  color: #6c757d;
   white-space: nowrap;
-  margin-right: 10px;
+  margin-right: 1rem;
 }
 
 .timeline-meta {
-  font-size: 12px;
+  margin-bottom: 0.5rem;
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 0.375rem 0.75rem;
 }
 
 .badge-outline {
-  background: transparent;
-  border: 1px solid #e2e8f0;
-  color: #718096;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 10px;
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
+  border: 1px solid rgba(102, 126, 234, 0.3);
 }
 
 .badge-time {
-  background: #f7fafc;
-  color: #4a5568;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 10px;
-}
-
-/* Activity type colors */
-.timeline-content .timeline-marker { border-color: #3182ce; color: #3182ce; }
-.timeline-exam .timeline-marker { border-color: #e53e3e; color: #e53e3e; }
-.timeline-assignment .timeline-marker { border-color: #38a169; color: #38a169; }
-.timeline-lesson .timeline-marker { border-color: #d69e2e; color: #d69e2e; }
-.timeline-chat .timeline-marker { border-color: #805ad5; color: #805ad5; }
-.timeline-login .timeline-marker { border-color: #718096; color: #718096; }
-
-/* Cards View */
-.cards-container {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  background: rgba(34, 197, 94, 0.1);
+  color: #059669;
+  border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
 .activity-card {
   background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  overflow: hidden;
   transition: all 0.3s ease;
   height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .activity-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
 }
 
 .activity-card-header {
-  padding: 1rem;
-  background: #f7fafc;
+  padding: 1rem 1.5rem;
   border-bottom: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
@@ -939,160 +888,107 @@ export default {
   width: 40px;
   height: 40px;
   border-radius: 8px;
+  background: rgba(102, 126, 234, 0.1);
+  color: #667eea;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #667eea;
-  color: white;
   margin-left: 0.75rem;
 }
 
 .activity-type {
   font-weight: 600;
   color: #2d3748;
+  font-size: 0.9rem;
 }
 
 .activity-card-body {
-  padding: 1rem;
+  padding: 1.5rem;
   flex: 1;
 }
 
 .activity-title {
-  font-size: 1rem;
   font-weight: 600;
   color: #2d3748;
   margin-bottom: 0.5rem;
 }
 
 .activity-details {
+  color: #6c757d;
   font-size: 0.875rem;
-  color: #718096;
   margin: 0;
+  line-height: 1.4;
 }
 
 .activity-card-footer {
-  padding: 0.75rem 1rem;
-  background: #f7fafc;
+  padding: 1rem 1.5rem;
   border-top: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  background: rgba(248, 249, 250, 0.5);
 }
 
 .activity-meta {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
 }
 
 .activity-course {
-  font-size: 0.75rem;
-  color: #4a5568;
+  font-size: 0.8rem;
+  color: #667eea;
   font-weight: 500;
 }
 
 .activity-time {
   font-size: 0.75rem;
-  color: #a0aec0;
+  color: #6c757d;
 }
 
 .activity-duration {
-  font-size: 0.75rem;
-  color: #4a5568;
-  background: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
+  font-size: 0.8rem;
+  color: #059669;
+  font-weight: 500;
 }
 
-/* Empty State */
 .empty-state {
   text-align: center;
-  padding: 4rem 2rem;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  padding: 3rem 1rem;
 }
 
 .empty-state-icon {
   font-size: 4rem;
-  color: #cbd5e0;
+  color: #e2e8f0;
   margin-bottom: 1rem;
 }
 
 .empty-state-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #2d3748;
+  color: #6c757d;
   margin-bottom: 0.5rem;
 }
 
 .empty-state-description {
-  color: #718096;
-  margin-bottom: 2rem;
+  color: #9ca3af;
+  margin: 0;
 }
 
-.loading-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-/* Responsive */
 @media (max-width: 768px) {
-  .my-activities-container {
-    padding: 1rem;
-  }
-
-  .page-title {
-    font-size: 2rem;
-  }
-
-  .section-header {
-    flex-direction: column;
-    gap: 1rem;
-    align-items: stretch;
-  }
-
-  .section-actions {
-    align-self: center;
-  }
-
-  .stat-card {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .stat-icon {
-    margin-left: 0;
-    margin-bottom: 0.75rem;
-  }
-
-  .timeline {
-    padding-right: 0;
-  }
-
-  .timeline::before {
-    right: auto;
-    left: 15px;
-  }
-
-  .timeline-item {
-    padding-right: 0;
-    padding-left: 40px;
-  }
-
-  .timeline-marker {
-    right: auto;
-    left: 1px;
-  }
-
   .timeline-header {
     flex-direction: column;
-    gap: 0.5rem;
     align-items: flex-start;
   }
 
   .timeline-time {
     margin-right: 0;
+    margin-top: 0.5rem;
+  }
+
+  .activity-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .activity-time {
+    margin-top: 0.25rem;
   }
 }
 </style>
