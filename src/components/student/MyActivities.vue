@@ -796,7 +796,8 @@ export default {
       getActivityIcon,
       getActivityTypeName,
       getActivityDescription,
-      getEnhancedDescription
+      getEnhancedDescription,
+      createGradeDistributionChart
     }
   },
 
