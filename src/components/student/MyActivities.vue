@@ -544,6 +544,7 @@ export default {
     const createCharts = () => {
       createDistributionChart()
       createDailyChart()
+      createGradeDistributionChart()
     }
 
     const createDistributionChart = () => {
@@ -782,6 +783,7 @@ export default {
       // Chart refs
       activityDistributionChart,
       dailyActivityChart,
+      gradeDistributionChartRef,
 
       // Methods
       fetchData,
