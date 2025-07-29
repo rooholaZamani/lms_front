@@ -71,12 +71,12 @@
                   class="modern-nav-link"
                   :to="{ name: 'TeachingCourses' }"
                   active-class="active"
-                  :title="collapsed ? 'دوره‌های تدریس' : ''"
+                  :title="collapsed ? 'درحال تدریس' : ''"
               >
                 <div class="nav-icon">
                   <i class="fas fa-chalkboard"></i>
                 </div>
-                <span v-if="!collapsed" class="nav-text">دوره‌های تدریس</span>
+                <span v-if="!collapsed" class="nav-text">درحال تدریس</span>
                 <div v-if="!collapsed" class="nav-arrow">
                   <i class="fas fa-chevron-left"></i>
                 </div>

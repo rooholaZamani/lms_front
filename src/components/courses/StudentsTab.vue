@@ -19,10 +19,6 @@
       <p class="text-muted mb-4">
         دانش‌آموزان می‌توانند از بخش دوره‌های موجود در این دوره ثبت‌نام کنند
       </p>
-<!--      <div class="modern-alert modern-alert-info">-->
-<!--        <i class="fas fa-info-circle me-2"></i>-->
-<!--        لینک دوره را با دانش‌آموزان خود به اشتراک بگذارید-->
-<!--      </div>-->
     </div>
 
     <div v-else class="modern-table-container">

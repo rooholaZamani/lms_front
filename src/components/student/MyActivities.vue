@@ -124,7 +124,7 @@
 
       <!-- Charts Section -->
       <div class="charts-section row g-4 mb-4">
-        <div class="col-lg-4">
+        <div class="col-lg-6">
           <div class="chart-card">
             <div class="chart-header">
               <h5>توزیع فعالیت‌ها</h5>
@@ -134,7 +134,7 @@
             </div>
           </div>
         </div>
-        <div class="col-lg-4">
+        <div class="col-lg-6">
           <div class="chart-card">
             <div class="chart-header">
               <h5>فعالیت روزانه</h5>
