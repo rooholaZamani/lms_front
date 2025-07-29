@@ -39,17 +39,7 @@
               </select>
             </div>
           </div>
-          <div class="col-md-3">
-            <div class="filter-group">
-              <label class="form-label">نوع فعالیت</label>
-              <select v-model="selectedActivityType" class="form-select">
-                <option value="">همه فعالیت‌ها</option>
-                <option v-for="type in activityTypes" :key="type.value" :value="type.value">
-                  {{ type.label }}
-                </option>
-              </select>
-            </div>
-          </div>
+
           <div class="col-md-3">
             <p class="mb-2 text-muted">مجموع فعالیت‌ها: {{ activities.length }}</p>
             <button @click="resetFilters" class="btn btn-primary">
@@ -187,7 +177,22 @@
       <!-- Activities List -->
       <div class="activities-section">
         <div class="section-header">
-          <h4>فعالیت‌های اخیر</h4>
+          <div class="activities-header d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h5 class="mb-1">
+                <i class="fas fa-history text-info me-2"></i>
+                فعالیت‌های اخیر
+              </h5>
+            </div>
+            <div class="activity-filter">
+              <select v-model="selectedActivityType" class="form-select form-select-sm" style="width: 200px;">
+                <option value="">همه فعالیت‌ها</option>
+                <option v-for="type in activityTypes" :key="type.value" :value="type.value">
+                  {{ type.label }}
+                </option>
+              </select>
+            </div>
+          </div>
           <div class="view-toggles">
             <div class="btn-group" role="group">
               <button
@@ -532,7 +537,7 @@ export default {
       try {
         const params = {
           timeFilter: selectedTimeFilter.value,
-          limit: 50
+          limit: 10
         }
 
         if (selectedCourseId.value) {
@@ -593,7 +598,7 @@ export default {
       try {
         const params = {
           timeFilter: selectedTimeFilter.value,
-          limit: 50,
+          limit: 10,
           page: currentPage.value
         }
 
