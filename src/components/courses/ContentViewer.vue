@@ -508,7 +508,7 @@ export default defineComponent({
     // })
     const videoUrl = computed(() => {
       if (fileId.value) {
-        return `/api/content/files/${fileId.value}?timeSpent=${timeSpent.value}`
+        return `/api/content/files/${fileId.value}`
       }
       return null
     })
@@ -630,7 +630,7 @@ export default defineComponent({
         videoError.value = false
 
         const token = localStorage.getItem('token')
-        const response = await axios.get(`/content/files/${videoFileId}?timeSpent=${timeSpent.value}`, {
+        const response = await axios.get(`/content/files/${videoFileId}`, {
           headers: {
             'Authorization': `Basic ${token}`
           },
@@ -730,7 +730,7 @@ export default defineComponent({
 
         // دریافت PDF با authentication
         const token = localStorage.getItem('token')
-        const response = await axios.get(`/content/files/${fileId.value}?timeSpent=${timeSpent.value}`, {
+        const response = await axios.get(`/content/files/${fileId.value}`, {
           headers: {
             'Authorization': `Basic ${token}`
           },
@@ -1026,7 +1026,7 @@ export default defineComponent({
 
       try {
         const token = localStorage.getItem('token')
-        const response = await axios.get(`/content/files/${fileId.value}?timeSpent=${timeSpent.value}`, {
+        const response = await axios.get(`/content/files/${fileId.value}`, {
           headers: {
             'Authorization': `Basic ${token}`
           },

@@ -114,7 +114,7 @@
             </div>
             <div class="stat-info">
               <h3 class="stat-number">{{ calculateAverageScore }}</h3>
-              <p class="stat-label">میانگین نمرات</p>
+              <p class="stat-label"> میانگین نمرات آزمون</p>
             </div>
           </div>
         </div>
@@ -557,8 +557,9 @@ export default {
         await fetchGradesData()
 
         await nextTick()
-        createCharts()
-        await fetchGradesData()
+        // if (activities.value.length > 0) {
+        //   createCharts()
+        // }
 
       } catch (error) {
         console.error('Error fetching activities:', error)
@@ -626,6 +627,11 @@ export default {
       }
 
       const ctx = activityDistributionChart.value?.getContext('2d')
+
+      if (!ctx || activities.value.length === 0) {
+        console.log('Canvas not found or no activities data')
+        return
+      }
       if (!ctx) return
 
       const activityCounts = {}
@@ -672,6 +678,10 @@ export default {
       }
 
       const ctx = dailyActivityChart.value?.getContext('2d')
+      if (!ctx || activities.value.length === 0) {
+        console.log('Canvas not found or no activities data')
+        return
+      }
       if (!ctx) return
 
       // Group activities by date
@@ -742,12 +752,12 @@ export default {
     }
 
     const formatDuration = (seconds) => {
-      if (!seconds) return '0 دقیقه'
+      if (!seconds || seconds < 60) return `${seconds || 0} ثانیه`
       const hours = Math.floor(seconds / 3600)
       const minutes = Math.floor((seconds % 3600) / 60)
 
       if (hours > 0) {
-        return `${hours} ساعت ${minutes > 0 ? `و ${minutes} دقیقه` : ''}`
+        return `${hours} ساعت ${minutes > 0 ? `${minutes} دقیقه` : ''}`
       }
       return `${minutes} دقیقه`
     }
@@ -811,7 +821,22 @@ export default {
           return ''
       }
     }
+    watch([activities, loading], ([newActivities, isLoading]) => {
+      console.log('Activities watch triggered:', {
+        activitiesLength: newActivities.length,
+        isLoading
+      })
 
+      if (!isLoading && newActivities.length > 0) {
+        nextTick(() => {
+          console.log('Creating charts from watch')
+          createCharts()
+        })
+      }
+    }, {
+      deep: true,
+      flush: 'post' // اطمینان از اجرا بعد از DOM update
+    })
     // Lifecycle
     onMounted(async () => {
       await fetchEnrolledCourses()
@@ -877,6 +902,9 @@ export default {
       assignmentDistributionChartRef,
       createExamDistributionChart,
       createAssignmentDistributionChart,
+      createCharts,
+      createDistributionChart,
+      createDailyChart
     }
   },
 
