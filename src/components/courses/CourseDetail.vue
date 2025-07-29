@@ -39,13 +39,6 @@
                   دانش‌آموزان
                 </button>
               </li>
-<!--              <li v-if="isEnrolled || isTeacherOfCourse" class="nav-item" role="presentation">-->
-<!--                <button class="nav-link" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chat"-->
-<!--                        type="button" role="tab" aria-controls="chat" aria-selected="false">-->
-<!--                  <i class="fas fa-comments me-2"></i>-->
-<!--                  گفتگوی دوره-->
-<!--                </button>-->
-<!--              </li>-->
               <li v-if="isTeacher && isTeacherOfCourse" class="nav-item" role="presentation">
                 <button class="nav-link modern-nav-link" id="manage-tab" data-bs-toggle="tab" data-bs-target="#manage"
                         type="button" role="tab" aria-controls="manage" aria-selected="false">
@@ -910,6 +903,7 @@ export default {
 
     async fetchCourseData() {
       try {
+        this.loading = true;
         await this.$store.dispatch('courses/fetchCourseById', this.id);
         this.course = this.currentCourse.course;
 
@@ -936,6 +930,21 @@ export default {
           await this.fetchProgressData();
         }
 
+        if (this.isTeacherOfCourse) {
+          const studentsResponse = await axios.get(`/courses/${this.id}/students`);
+          console.log('Students with progress:', studentsResponse.data);
+
+          // اطلاعات progress و نمرات را به course اضافه کن
+          this.course.studentsWithProgress = studentsResponse.data;
+
+          // یا اگر می‌خواهی در قالب قبلی باشد:
+          this.course.progress = studentsResponse.data.map(student => ({
+            studentId: student.id,
+            completedLessons: student.completedLessons || [],
+            averageExamScore: student.averageExamScore || 0,
+            averageAssignmentScore: student.averageAssignmentScore || 0
+          }));
+        }
       } catch (error) {
         console.error('Error in fetchCourseData:', error);
         throw error;

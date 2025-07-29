@@ -101,9 +101,8 @@
           </td>
           <td>
             <div class="d-flex gap-2">
-
-              <span >
-                 0
+              <span class="score-value" :class="getScoreClass(getStudentAssignmentAverageScore(student.id))">
+                 {{ getStudentAssignmentAverageScore(student.id) }}
              </span>
             </div>
           </td>
@@ -132,6 +131,24 @@ export default {
     return { formatDate };
   },
   methods: {
+    getStudentAssignmentAverageScore(studentId) {
+      // اگر دیتای تکالیف دانش‌آموز موجود است
+      if (this.course.assignmentResults) {
+        const studentAssignments = this.course.assignmentResults.filter(assignment => assignment.studentId === studentId);
+        if (studentAssignments.length === 0) return 0;
+
+        const totalScore = studentAssignments.reduce((sum, assignment) => sum + (assignment.score || 0), 0);
+        return Math.round(totalScore / studentAssignments.length);
+      }
+
+      // اگر دیتا در قالب دیگر موجود است
+      if (this.course.progress) {
+        const studentProgress = this.course.progress.find(p => p.studentId === studentId);
+        return studentProgress?.averageAssignmentScore || 0;
+      }
+
+      return 0;
+    },
     getStudentInitials(student) {
       const firstName = student.firstName || '';
       const lastName = student.lastName || '';
@@ -160,6 +177,14 @@ export default {
       return 'bg-danger';
     },
     getStudentAverageScore(studentId) {
+
+      console.log('=== Debug Student Average Score ===');
+      console.log('Student ID:', studentId);
+      console.log('Course object:', this.course);
+      console.log('Course.examResults:', this.course.examResults);
+      console.log('Course.progress:', this.course.progress);
+      console.log('Course keys:', Object.keys(this.course));
+
       // اگر دیتای آزمون‌های دانش‌آموز موجود است
       if (this.course.examResults) {
         const studentExams = this.course.examResults.filter(exam => exam.studentId === studentId);
