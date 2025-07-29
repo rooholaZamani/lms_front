@@ -154,13 +154,27 @@
             </div>
           </div>
         </div>
-        <div class="col-lg-4">
+        <div class="col-lg-6">
           <div class="chart-card">
             <div class="chart-header">
-              <h5>توزیع نمرات</h5>
+              <h5>توزیع نمرات آزمون‌ها</h5>
             </div>
             <div class="chart-container">
-              <canvas ref="gradeDistributionChartRef" v-if="!loading"></canvas>
+              <canvas ref="examDistributionChartRef" v-if="!loading"></canvas>
+              <div v-else class="text-center py-4">
+                <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
+                <p class="text-muted mt-2">در حال بارگذاری...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6">
+          <div class="chart-card">
+            <div class="chart-header">
+              <h5>توزیع نمرات تکالیف</h5>
+            </div>
+            <div class="chart-container">
+              <canvas ref="assignmentDistributionChartRef" v-if="!loading"></canvas>
               <div v-else class="text-center py-4">
                 <i class="fas fa-spinner fa-spin fa-2x text-muted"></i>
                 <p class="text-muted mt-2">در حال بارگذاری...</p>
@@ -318,6 +332,16 @@ export default {
       average: 0,
       poor: 0
     })
+
+    const examDistributionChart = ref(null)
+    const assignmentDistributionChart = ref(null)
+    const examDistributionChartRef = ref(null)
+    const assignmentDistributionChartRef = ref(null)
+
+    const examDistribution = ref({})
+    const assignmentDistribution = ref({})
+
+
     const examScores = ref([])
     const assignmentScores = ref([])
     const gradeDistributionChart = ref(null)
@@ -388,7 +412,8 @@ export default {
 
         examScores.value = response.data.examScores || []
         assignmentScores.value = response.data.assignmentScores || []
-        gradesDistribution.value = response.data.distribution || {}
+        examDistribution.value = response.data.examDistribution || {}
+        assignmentDistribution.value = response.data.assignmentDistribution || {}
 
 
       } catch (error) {
@@ -396,25 +421,25 @@ export default {
       }
     }
 
-    const createGradeDistributionChart = () => {
-      if (!gradeDistributionChartRef.value || Object.keys(gradesDistribution.value).length === 0) return
+    const createExamDistributionChart = () => {
+      if (!examDistributionChartRef.value || Object.keys(examDistribution.value).length === 0) return
 
-      const ctx = gradeDistributionChartRef.value.getContext('2d')
+      const ctx = examDistributionChartRef.value.getContext('2d')
 
-      if (gradeDistributionChart.value) {
-        gradeDistributionChart.value.destroy()
+      if (examDistributionChart.value) {
+        examDistributionChart.value.destroy()
       }
 
-      gradeDistributionChart.value = new Chart(ctx, {
+      examDistributionChart.value = new Chart(ctx, {
         type: 'doughnut',
         data: {
           labels: ['ممتاز (18-20)', 'خوب (15-17)', 'متوسط (10-14)', 'ضعیف (0-9)'],
           datasets: [{
             data: [
-              gradesDistribution.value.excellent || 0,
-              gradesDistribution.value.good || 0,
-              gradesDistribution.value.average || 0,
-              gradesDistribution.value.poor || 0
+              examDistribution.value.excellent || 0,
+              examDistribution.value.good || 0,
+              examDistribution.value.average || 0,
+              examDistribution.value.poor || 0
             ],
             backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#dc3545'],
             borderWidth: 2,
@@ -428,9 +453,59 @@ export default {
             legend: {
               position: 'bottom',
               labels: {
-                font: {
-                  family: 'IRANSans'
-                },
+                font: { family: 'IRANSans' },
+                padding: 15
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.parsed || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                  return `${label}: ${value} (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      })
+    }
+
+    const createAssignmentDistributionChart = () => {
+      if (!assignmentDistributionChartRef.value || Object.keys(assignmentDistribution.value).length === 0) return
+
+      const ctx = assignmentDistributionChartRef.value.getContext('2d')
+
+      if (assignmentDistributionChart.value) {
+        assignmentDistributionChart.value.destroy()
+      }
+
+      assignmentDistributionChart.value = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['ممتاز (18-20)', 'خوب (15-17)', 'متوسط (10-14)', 'ضعیف (0-9)'],
+          datasets: [{
+            data: [
+              assignmentDistribution.value.excellent || 0,
+              assignmentDistribution.value.good || 0,
+              assignmentDistribution.value.average || 0,
+              assignmentDistribution.value.poor || 0
+            ],
+            backgroundColor: ['#28a745', '#17a2b8', '#ffc107', '#dc3545'],
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                font: { family: 'IRANSans' },
                 padding: 15
               }
             },
@@ -541,7 +616,8 @@ export default {
     const createCharts = () => {
       createDistributionChart()
       createDailyChart()
-      createGradeDistributionChart()
+      createExamDistributionChart()
+      createAssignmentDistributionChart()
     }
 
     const createDistributionChart = () => {
@@ -752,8 +828,11 @@ export default {
       fetchData()
     })
     onUnmounted(() => {
-      if (gradeDistributionChart.value) {
-        gradeDistributionChart.value.destroy()
+      if (examDistributionChart.value) {
+        examDistributionChart.value.destroy()
+      }
+      if (assignmentDistributionChart.value) {
+        assignmentDistributionChart.value.destroy()
       }
     })
 
@@ -794,7 +873,10 @@ export default {
       getActivityTypeName,
       getActivityDescription,
       getEnhancedDescription,
-      createGradeDistributionChart
+      examDistributionChartRef,
+      assignmentDistributionChartRef,
+      createExamDistributionChart,
+      createAssignmentDistributionChart,
     }
   },
 

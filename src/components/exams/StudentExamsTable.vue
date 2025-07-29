@@ -566,10 +566,16 @@ export default {
       const hrs = Math.floor(min / 60);
       const mins = min % 60;
 
-      if (sec > 0) {
+      if (hrs > 0) {
         return `${hrs} ساعت و ${mins} دقیقه و ${sec} ثانیه`;
       }
-      return `${mins} دقیقه`;
+      else if (min > 0) {
+        return `${mins} دقیقه و ${sec} ثانیه`;
+      }
+      else if  (sec > 0) {
+        return `${sec} ثانیه`;
+      }
+      return `0`;
     },
 
     getDurationPercentage(exam) {
