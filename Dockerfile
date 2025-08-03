@@ -12,6 +12,7 @@ RUN npm cache clean --force && \
     npm install --legacy-peer-deps --force
 
 # Build the application
+ENV NODE_OPTIONS="--openssl-legacy-provider"
 RUN npm run build
 
 # Production stage
