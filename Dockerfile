@@ -14,7 +14,7 @@ RUN npm cache clean --force && \
 # Build the application
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 ENV GENERATE_SOURCEMAP=false
-
+ENV NODE_OPTIONS="--openssl-legacy-provider"
 RUN npm run build
 
 # Production stage
