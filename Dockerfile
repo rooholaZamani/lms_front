@@ -1,5 +1,5 @@
 # Build stage - Simplest approach
-FROM node:16-alpine AS build
+FROM node:18-alpine AS build
 
 WORKDIR /app
 
@@ -12,9 +12,7 @@ RUN npm cache clean --force && \
     npm install --legacy-peer-deps --force
 
 # Build the application
-ENV NODE_OPTIONS="--max-old-space-size=2048"
-ENV GENERATE_SOURCEMAP=false
-ENV NODE_OPTIONS="--openssl-legacy-provider"
+
 RUN npm run build
 
 # Production stage
