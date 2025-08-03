@@ -115,16 +115,13 @@
               <div v-else class="video-container">
                 <video
                     ref="videoPlayer"
-                    :src="videoBlobUrl || videoUrl"
-                    class="video-player"
                     controls
-                    preload="metadata"
-                    @loadedmetadata="onVideoLoaded"
+                    class="video-player"
+                    :src="videoBlobUrl"
+                    @loadeddata="onVideoLoaded"
                     @timeupdate="onVideoTimeUpdate"
                     @ended="onVideoEnded"
-                    @error="onVideoError"
-                >
-                  مرورگر شما از نمایش ویدیو پشتیبانی نمی‌کند.
+                    @error="onVideoError">
                 </video>
 
                 <!-- Video Controls -->
@@ -583,7 +580,7 @@ export default defineComponent({
 
         // Initialize based on content type
         if (data.type === 'VIDEO' && fileId.value) {
-          await fetchVideoBlob(fileId.value)
+          await initializeVideo(fileId.value)
         } else if (data.type === 'PDF' && fileId.value) {
           await nextTick()
           await initializePdfViewer()
@@ -637,28 +634,18 @@ export default defineComponent({
     }
 
     // Video Methods
-    const fetchVideoBlob = async (videoFileId) => {
+    // حذف کنید fetchVideoBlob و جایگزین کنید با:
+    const initializeVideo = async (videoFileId) => {
       try {
         videoLoading.value = true
         videoError.value = false
 
         const token = localStorage.getItem('token')
-        const response = await axios.get(`/content/files/${videoFileId}`, {
-          headers: {
-            'Authorization': `Basic ${token}`
-          },
-          responseType: 'blob'
-        })
-
-        // if (!response.ok) {
-        //   throw new Error('خطا در دریافت ویدیو')
-        // }
-
-        const blob = await response.data
-        videoBlobUrl.value = URL.createObjectURL(blob)
+        // مستقیماً URL را تنظیم کن - بدون blob
+        videoBlobUrl.value = `/api/content/files/${videoFileId}?Authorization=Basic ${token}`
 
       } catch (err) {
-        console.error('Error fetching video:', err)
+        console.error('Error initializing video:', err)
         videoError.value = true
       } finally {
         videoLoading.value = false
@@ -690,7 +677,7 @@ export default defineComponent({
     const retryVideo = async () => {
       if (fileId.value) {
         videoError.value = false
-        await fetchVideoBlob(fileId.value)
+        await initializeVideo(fileId.value)
       }
     }
 
@@ -1193,7 +1180,7 @@ export default defineComponent({
       fetchContentData,
       markAsComplete,
       goBack,
-      fetchVideoBlob,
+      initializeVideo,
       formatTime,
       formatFileSize,
 
