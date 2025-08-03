@@ -516,7 +516,21 @@ export default defineComponent({
     })
     // Helper Functions
     const formatTime = (seconds) => {
-      return instance.appContext.app.config.globalProperties.$filters.formatTime(seconds);
+      const app = getCurrentInstance()?.appContext?.app;
+      if (app?.config?.globalProperties?.$filters) {
+        return app.config.globalProperties.$filters.formatTime(seconds);
+      }
+
+      // Fallback اگر global properties در دسترس نبود
+      if (!seconds || seconds < 0) return '0 ثانیه'
+      const hours = Math.floor(seconds / 3600)
+      const minutes = Math.floor((seconds % 3600) / 60)
+      const secs = Math.floor(seconds % 60)
+      const parts = []
+      if (hours > 0) parts.push(`${hours} ساعت`)
+      if (minutes > 0) parts.push(`${minutes} دقیقه`)
+      if (secs > 0 || parts.length === 0) parts.push(`${secs} ثانیه`)
+      return parts.join(' و ')
     }
 
     const formatFileSize = (bytes) => {
