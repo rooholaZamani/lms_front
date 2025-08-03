@@ -446,18 +446,17 @@
 </template>
 
 <script>
-import { defineComponent, ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { defineComponent, ref, computed, onMounted, onUnmounted, watch, nextTick, getCurrentInstance } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useTextFormatter } from '@/composables/useTextFormatter'
 import { toast } from 'vue3-toastify'
 import axios from "axios";
-import app from "@/App.vue";
 
 export default defineComponent({
   name: 'ContentViewer',
 
   setup() {
-
+    const instance = getCurrentInstance()
     const route = useRoute()
     const router = useRouter()
     const { formatText } = useTextFormatter()
@@ -517,7 +516,7 @@ export default defineComponent({
     })
     // Helper Functions
     const formatTime = (seconds) => {
-      return app.config.globalProperties.$formatTime(seconds);
+      return instance.appContext.app.config.globalProperties.$filters.formatTime(seconds);
     }
 
     const formatFileSize = (bytes) => {
