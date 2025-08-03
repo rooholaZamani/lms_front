@@ -3,13 +3,16 @@ FROM node:20-alpine AS build
 
 WORKDIR /app
 
-# Copy everything first
-COPY . .
+COPY package*.json ./
 
 # Try different approaches for npm install
 RUN npm cache clean --force && \
     rm -rf node_modules package-lock.json && \
     npm install --legacy-peer-deps --force
+
+
+# Copy everything first
+COPY . .
 
 # Build the application
 
