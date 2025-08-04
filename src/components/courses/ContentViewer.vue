@@ -642,18 +642,7 @@ export default defineComponent({
 
         const token = localStorage.getItem('token')
         // مستقیماً URL را تنظیم کن - بدون blob
-        const response = await fetch(`/api/content/files/${videoFileId}`, {
-          headers: {
-            'Authorization': `Basic ${token}`
-          }
-        })
-
-        if (response.ok) {
-          const blob = await response.blob()
-          videoBlobUrl.value = URL.createObjectURL(blob)
-        } else {
-          throw new Error('Failed to load video')
-        }
+        videoBlobUrl.value = `/api/content/files/${videoFileId}?Authorization=Basic ${token}`
 
       } catch (err) {
         console.error('Error initializing video:', err)
