@@ -642,14 +642,21 @@ export default defineComponent({
 
         const token = localStorage.getItem('token')
 
-        // اول temporary token بگیر
-        const tokenResponse = await axios.post(`/content/files/${videoFileId}/video-token`, {}, {
+        // اول بررسی کن که دسترسی داری
+        const urlResponse = await axios.post(`/content/files/${videoFileId}/video-url`, {}, {
           headers: {
             'Authorization': `Basic ${token}`
           }
         })
 
-        // URL رو با temporary token تنظیم کن
+        // حالا token video بگیر
+        const tokenResponse = await axios.post(urlResponse.data.videoUrl, {}, {
+          headers: {
+            'Authorization': `Basic ${token}`
+          }
+        })
+
+        // URL رو تنظیم کن
         videoBlobUrl.value = tokenResponse.data.streamUrl
 
       } catch (err) {
