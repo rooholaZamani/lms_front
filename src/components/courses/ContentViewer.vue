@@ -641,8 +641,16 @@ export default defineComponent({
         videoError.value = false
 
         const token = localStorage.getItem('token')
-        // مستقیماً URL را تنظیم کن - بدون blob
-        videoBlobUrl.value = `/api/content/files/${videoFileId}?Authorization=Basic ${token}`
+
+        // اول temporary token بگیر
+        const tokenResponse = await axios.post(`/content/files/${videoFileId}/video-token`, {}, {
+          headers: {
+            'Authorization': `Basic ${token}`
+          }
+        })
+
+        // URL رو با temporary token تنظیم کن
+        videoBlobUrl.value = tokenResponse.data.streamUrl
 
       } catch (err) {
         console.error('Error initializing video:', err)
