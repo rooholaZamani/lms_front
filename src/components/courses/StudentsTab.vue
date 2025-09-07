@@ -116,6 +116,8 @@
 <script>
 import { useFormatters } from '@/composables/useFormatters.js';
 import tableMixin from '@/mixins/tableMixin.js';
+import ConfirmationDialog from '@/components/common/ConfirmationDialog.vue';
+import { useUser } from '@/composables/useUser.js';
 
 export default {
   name: 'StudentsTab',
@@ -124,6 +126,10 @@ export default {
     course: {
       type: Object,
       required: true
+    },
+    isTeacherOfCourse: {
+      type: Boolean,
+      default: false
     }
   },
   setup() {

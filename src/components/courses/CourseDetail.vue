@@ -198,7 +198,9 @@
               <div class="tab-pane fade" id="students" role="tabpanel" aria-labelledby="students-tab">
                 <students-tab
                     :course="course"
+                    :is-teacher-of-course="isTeacherOfCourse"
                     @view-student-progress="viewStudentProgress"
+                    @student-removed="handleStudentRemoved"
                 />
               </div>
 
@@ -728,6 +730,22 @@ export default {
     this.setupBootstrapTabs();
   },
   methods: {
+    handleStudentRemoved(removedStudent) {
+      // بروزرسانی لیست دانش‌آموزان در course object
+      if (this.course.enrolledStudents) {
+        this.course.enrolledStudents = this.course.enrolledStudents.filter(s => s.id !== removedStudent.id);
+      }
+
+      // بروزرسانی studentsWithProgress اگر وجود دارد
+      if (this.course.studentsWithProgress) {
+        this.course.studentsWithProgress = this.course.studentsWithProgress.filter(s => s.id !== removedStudent.id);
+      }
+
+      // بروزرسانی آمار دوره
+      this.calculateProgressStats();
+
+      console.log(`Student ${removedStudent.firstName} ${removedStudent.lastName} removed from course`);
+    },
     handleDataFromChild(message) {
       console.log('داده دریافتی از فرزند:', message)
     },
@@ -930,7 +948,7 @@ export default {
           await this.fetchProgressData();
         }
 
-        if (this.isTeacherOfCourse) {
+        if (this.isTeacherOfCourse && this.isTeacher) {
           const studentsResponse = await axios.get(`/courses/${this.id}/students`);
           console.log('Students with progress:', studentsResponse.data);
 

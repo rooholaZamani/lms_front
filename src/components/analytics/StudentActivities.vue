@@ -117,7 +117,7 @@
                   <p class="text-muted">داده‌ای برای نمایش وجود ندارد</p>
                 </div>
                 <div v-else>
-                  <canvas ref="dailyHeatmapChart" height="300"></canvas>
+                  <div ref="dailyHeatmapChart" class="heatmap-container"></div>
 
                   <!-- راهنمای رنگ‌ها -->
                   <div class="heatmap-legend mt-3">
@@ -247,6 +247,7 @@
 <script>
 import { Chart, registerables } from 'chart.js'
 import axios from 'axios'
+import * as d3 from 'd3'
 
 Chart.register(...registerables)
 
@@ -299,8 +300,11 @@ export default {
   },
 
   beforeUnmount() {
+    // پاک کردن tooltip اگر وجود دارد
+    d3.select("body").selectAll(".heatmap-tooltip").remove();
+
     if (this.dailyHeatmapChart) {
-      this.dailyHeatmapChart.destroy();
+      d3.select(this.$refs.dailyHeatmapChart).selectAll("*").remove();
     }
     this.destroyCharts()
   },
@@ -359,103 +363,138 @@ export default {
     renderDailyHeatmap() {
       if (!this.$refs.dailyHeatmapChart || this.dailyHeatmapData.length === 0) return;
 
-      const ctx = this.$refs.dailyHeatmapChart.getContext('2d');
+      // پاک کردن محتوای قبلی
+      d3.select(this.$refs.dailyHeatmapChart).selectAll("*").remove();
 
-      if (this.dailyHeatmapChart) {
-        this.dailyHeatmapChart.destroy();
-      }
+      const margin = { top: 50, right: 80, bottom: 80, left: 80 };
+      const width = 600 - margin.left - margin.right;
+      const height = 300 - margin.top - margin.bottom;
 
-      // تبدیل داده‌ها به فرمت مناسب برای Chart.js
-      const datasets = [];
+      const gridSize = Math.floor(width / 24);
+      const legendElementWidth = gridSize * 2;
+
       const daysOfWeek = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
+      const hours = d3.range(24);
 
-      // ایجاد dataset برای هر روز هفته
-      daysOfWeek.forEach((day, dayIndex) => {
-        const dayData = [];
+      // ایجاد SVG
+      const svg = d3.select(this.$refs.dailyHeatmapChart)
+          .append("svg")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.bottom + margin.top)
+          .append("g")
+          .attr("transform", `translate(${margin.left},${margin.top})`);
 
-        // 24 ساعت روز
+      // برچسب‌های روزها
+      const dayLabels = svg.selectAll(".dayLabel")
+          .data(daysOfWeek)
+          .enter().append("text")
+          .text(d => d)
+          .attr("x", 0)
+          .attr("y", (d, i) => i * gridSize)
+          .style("text-anchor", "end")
+          .style("font-size", "12px")
+          .style("fill", "#666")
+          .attr("transform", `translate(-6, ${gridSize / 1.5})`);
+
+      // برچسب‌های ساعت‌ها
+      const hourLabels = svg.selectAll(".hourLabel")
+          .data(hours)
+          .enter().append("text")
+          .text(d => `${d}:00`)
+          .attr("x", (d, i) => i * gridSize)
+          .attr("y", 0)
+          .style("text-anchor", "middle")
+          .style("font-size", "10px")
+          .style("fill", "#666")
+          .attr("transform", `translate(${gridSize / 2}, -6) rotate(-45)`);
+
+      // محاسبه حداکثر مقدار برای رنگ‌بندی
+      const maxValue = d3.max(this.dailyHeatmapData, d => d.activityCount) || 1;
+
+      // رنگ‌بندی
+      const colorScale = d3.scaleSequential()
+          .interpolator(d3.interpolateBlues)
+          .domain([0, maxValue]);
+
+      // ایجاد tooltip
+      const tooltip = d3.select("body").append("div")
+          .attr("class", "heatmap-tooltip")
+          .style("opacity", 0)
+          .style("position", "absolute")
+          .style("background", "rgba(0, 0, 0, 0.8)")
+          .style("color", "white")
+          .style("padding", "5px")
+          .style("border-radius", "3px")
+          .style("font-size", "12px")
+          .style("pointer-events", "none");
+
+      // ایجاد مربع‌ها
+      const heatmapData = [];
+      for (let day = 0; day < 7; day++) {
         for (let hour = 0; hour < 24; hour++) {
-          const activityCount = this.getActivityCountForDayHour(dayIndex, hour);
-          dayData.push({
-            x: hour,
-            y: dayIndex,
-            v: activityCount // مقدار برای رنگ‌آمیزی
+          const activityCount = this.getActivityCountForDayHour(day, hour);
+          heatmapData.push({
+            day: day,
+            hour: hour,
+            value: activityCount,
+            dayName: daysOfWeek[day]
           });
         }
+      }
 
-        datasets.push({
-          label: day,
-          data: dayData,
-          backgroundColor: (ctx) => {
-            const value = ctx.parsed.v;
-            const maxValue = Math.max(...this.dailyHeatmapData.map(d => d.activityCount));
-            const intensity = maxValue > 0 ? value / maxValue : 0;
-            return this.getHeatmapColor(intensity);
-          },
-          borderColor: '#fff',
-          borderWidth: 1
-        });
-      });
+      const heatmap = svg.selectAll(".hour")
+          .data(heatmapData)
+          .enter().append("rect")
+          .attr("x", d => d.hour * gridSize)
+          .attr("y", d => d.day * gridSize)
+          .attr("width", gridSize)
+          .attr("height", gridSize)
+          .style("fill", d => d.value === 0 ? "#f8f9fa" : colorScale(d.value))
+          .style("stroke", "#ffffff")
+          .style("stroke-width", "1px")
+          .style("cursor", "pointer")
+          .on("mouseover", function(event, d) {
+            tooltip.transition()
+                .duration(200)
+                .style("opacity", .9);
+            tooltip.html(`${d.dayName}<br/>ساعت ${d.hour}:00<br/>${d.value} فعالیت`)
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 28) + "px");
 
-      this.dailyHeatmapChart = new Chart(ctx, {
-        type: 'scatter',
-        data: { datasets },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              display: false
-            },
-            tooltip: {
-              callbacks: {
-                title: () => '',
-                label: (context) => {
-                  const hour = context.parsed.x;
-                  const day = daysOfWeek[context.parsed.y];
-                  const count = context.parsed.v;
-                  return `${day} ساعت ${hour}:00 - ${count} فعالیت`;
-                }
-              }
-            }
-          },
-          scales: {
-            x: {
-              type: 'linear',
-              position: 'bottom',
-              min: 0,
-              max: 23,
-              ticks: {
-                stepSize: 2,
-                callback: (value) => `${value}:00`
-              },
-              title: {
-                display: true,
-                text: 'ساعت روز'
-              }
-            },
-            y: {
-              type: 'linear',
-              min: -0.5,
-              max: 6.5,
-              ticks: {
-                stepSize: 1,
-                callback: (value) => daysOfWeek[Math.round(value)]
-              },
-              title: {
-                display: true,
-                text: 'روز هفته'
-              }
-            }
-          },
-          elements: {
-            point: {
-              radius: 15,
-              hoverRadius: 20
-            }
-          }
-        }
-      });
+            d3.select(this)
+                .style("stroke", "#333")
+                .style("stroke-width", "2px");
+          })
+          .on("mouseout", function(d) {
+            tooltip.transition()
+                .duration(500)
+                .style("opacity", 0);
+
+            d3.select(this)
+                .style("stroke", "#ffffff")
+                .style("stroke-width", "1px");
+          });
+
+      // افزودن Legend
+      const legend = svg.selectAll(".legend")
+          .data([0, Math.round(maxValue/4), Math.round(maxValue/2), Math.round(3*maxValue/4), maxValue])
+          .enter().append("g")
+          .attr("class", "legend");
+
+      legend.append("rect")
+          .attr("x", (d, i) => legendElementWidth * i)
+          .attr("y", height + 40)
+          .attr("width", legendElementWidth)
+          .attr("height", gridSize / 2)
+          .style("fill", d => d === 0 ? "#f8f9fa" : colorScale(d));
+
+      legend.append("text")
+          .attr("class", "mono")
+          .text(d => d)
+          .attr("x", (d, i) => legendElementWidth * i)
+          .attr("y", height + 60)
+          .style("font-size", "10px")
+          .style("fill", "#666");
     },
 
     getActivityCountForDayHour(dayIndex, hour) {
@@ -1320,4 +1359,6 @@ export default {
   border-color: #718096;
   color: #718096;
 }
+
+
 </style>
