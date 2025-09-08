@@ -642,7 +642,7 @@ export default {
       savingLesson: false,
       course: null,
       isEnrolled: false,
-      isTeacherOfCourse: true,
+      isTeacherOfCourse: false,
       selectedLessonForQuestions: null,
       showQuestionsManager: false,
       loadingProgress: false,
@@ -930,8 +930,11 @@ export default {
           return;
         }
 
-        if (this.isTeacher) {
+        // Determine user role and permissions
+        if (this.isTeacher && this.course.teacher) {
           this.isTeacherOfCourse = (this.currentUser.id === this.course.teacher.id);
+        } else {
+          this.isTeacherOfCourse = false;
         }
 
         if (this.isStudent && this.course.enrolledStudents) {
@@ -944,24 +947,32 @@ export default {
           active: this.course.active
         };
 
+        // Load progress data for enrolled students (individual progress)
         if (this.isStudent && this.isEnrolled) {
           await this.fetchProgressData();
         }
 
-        if (this.isTeacherOfCourse && this.isTeacher) {
-          const studentsResponse = await axios.get(`/courses/${this.id}/students`);
-          console.log('Students with progress:', studentsResponse.data);
+        // Load students data for both teachers and enrolled students
+        if ((this.isTeacher && this.isTeacherOfCourse) || (this.isStudent && this.isEnrolled)) {
+          try {
+            const studentsResponse = await axios.get(`/courses/${this.id}/students`);
+            console.log('Students with progress:', studentsResponse.data);
 
-          // اطلاعات progress و نمرات را به course اضافه کن
-          this.course.studentsWithProgress = studentsResponse.data;
+            // اطلاعات progress و نمرات را به course اضافه کن
+            this.course.studentsWithProgress = studentsResponse.data;
 
-          // یا اگر می‌خواهی در قالب قبلی باشد:
-          this.course.progress = studentsResponse.data.map(student => ({
-            studentId: student.id,
-            completedLessons: student.completedLessons || [],
-            averageExamScore: student.averageExamScore || 0,
-            averageAssignmentScore: student.averageAssignmentScore || 0
-          }));
+            // یا اگر می‌خواهی در قالب قبلی باشد:
+            this.course.progress = studentsResponse.data.map(student => ({
+              studentId: student.id,
+              completedLessons: student.completedLessons || [],
+              completionPercentage: student.completionPercentage || 0,
+              averageExamScore: student.averageExamScore || 0,
+              averageAssignmentScore: student.averageAssignmentScore || 0
+            }));
+          } catch (error) {
+            console.error('Error fetching students data:', error);
+            // Don't throw error here, just log it
+          }
         }
       } catch (error) {
         console.error('Error in fetchCourseData:', error);

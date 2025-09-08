@@ -168,12 +168,22 @@ export default {
       if (!this.course.lessons || this.course.lessons.length === 0) return 0;
 
       const studentProgress = this.course.progress?.find(p => p.studentId === studentId);
-      if (!studentProgress || !studentProgress.completedLessons) return 0;
+      if (!studentProgress) return 0;
 
-      const totalLessons = this.course.lessons.length;
-      const completedLessons = studentProgress.completedLessons.length;
+      // Use backend's pre-calculated completionPercentage if available
+      if (studentProgress.completionPercentage !== undefined && studentProgress.completionPercentage !== null) {
+        return Math.round(studentProgress.completionPercentage);
+      }
 
-      return Math.round((completedLessons / totalLessons) * 100);
+      // Fallback: calculate from counts if completionPercentage is not available
+      const totalLessons = studentProgress.totalLessons || this.course.lessons.length;
+      const completedLessons = studentProgress.completedLessons || studentProgress.completedLessonCount || 0;
+      
+      // Handle both array format and count format
+      const completedCount = Array.isArray(completedLessons) ? completedLessons.length : completedLessons;
+      
+      if (totalLessons === 0) return 0;
+      return Math.round((completedCount / totalLessons) * 100);
     },
 
     getProgressClass(progress) {
@@ -183,14 +193,6 @@ export default {
       return 'bg-danger';
     },
     getStudentAverageScore(studentId) {
-
-      console.log('=== Debug Student Average Score ===');
-      console.log('Student ID:', studentId);
-      console.log('Course object:', this.course);
-      console.log('Course.examResults:', this.course.examResults);
-      console.log('Course.progress:', this.course.progress);
-      console.log('Course keys:', Object.keys(this.course));
-
       // اگر دیتای آزمون‌های دانش‌آموز موجود است
       if (this.course.examResults) {
         const studentExams = this.course.examResults.filter(exam => exam.studentId === studentId);
