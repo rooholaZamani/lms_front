@@ -637,7 +637,7 @@ export default {
 
     formatTimeSpent(timeSpent) {
       if (!timeSpent) return 'نامشخص';
-      return this.$formatTime(timeSpent);
+      return this.$filters.formatTime(timeSpent);
     },
 
     // viewSubmission(submission) {

@@ -726,7 +726,7 @@ export default {
     },
 
     formatTime(seconds) {
-      return this.$formatTimeShort(seconds);
+      return this.$filters.formatTimeShort(seconds);
     },
 
     getTimerClass() {

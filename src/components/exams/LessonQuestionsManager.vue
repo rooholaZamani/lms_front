@@ -204,7 +204,7 @@
     <base-modal
         modal-id="questionModal"
         :title="isEditingQuestion ? 'ویرایش سوال' : 'افزودن سوال جدید'"
-        modal-size="modal-lg"
+        modal-size="modal-xl modal-form-lg"
         ref="questionModal"
     >
       <question-form

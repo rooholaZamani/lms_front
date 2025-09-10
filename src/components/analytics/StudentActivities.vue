@@ -196,7 +196,7 @@
                               {{ formatMetadata(activity.metadata) }}
                             </span>
                             <span v-if="activity.timeSpent" class="text-muted small">
-                              <i class="fas fa-clock me-1"></i>{{ $formatTime(activity.timeSpent) }}
+                              <i class="fas fa-clock me-1"></i>{{ $filters.formatTime(activity.timeSpent) }}
                             </span>
                         </div>
                       </div>
@@ -325,13 +325,24 @@ export default {
           params: { timeFilter }
         });
 
+        console.log('Heatmap API Response:', response.data);
+        
+        if (response.data.error) {
+          console.error('Backend heatmap error:', response.data.error);
+          this.$toast?.error?.(response.data.error);
+        }
+
         this.processDailyHeatmapData(response.data);
         this.$nextTick(() => {
           this.renderDailyHeatmap();
         });
       } catch (error) {
         console.error('Error fetching daily heatmap data:', error);
+        this.$toast?.error?.('خطا در بارگذاری داده‌های نمودار حرارتی');
         this.dailyHeatmapData = [];
+        this.mostActiveDay = '-';
+        this.mostActiveHour = '-';
+        this.totalDailyActivities = 0;
       }
     },
 
@@ -361,57 +372,74 @@ export default {
     },
 
     renderDailyHeatmap() {
-      if (!this.$refs.dailyHeatmapChart || this.dailyHeatmapData.length === 0) return;
+      if (!this.$refs.dailyHeatmapChart || this.dailyHeatmapData.length === 0) {
+        console.log('Heatmap render skipped: no container or no data', {
+          containerExists: !!this.$refs.dailyHeatmapChart,
+          dataLength: this.dailyHeatmapData.length
+        });
+        return;
+      }
 
-      // پاک کردن محتوای قبلی
+      // پاک کردن محتوای قبلی و tooltips
       d3.select(this.$refs.dailyHeatmapChart).selectAll("*").remove();
+      d3.selectAll(".heatmap-tooltip").remove();
 
-      const margin = { top: 50, right: 80, bottom: 80, left: 80 };
-      const width = 600 - margin.left - margin.right;
-      const height = 300 - margin.top - margin.bottom;
+      // دریافت ابعاد container
+      const containerRect = this.$refs.dailyHeatmapChart.getBoundingClientRect();
+      const containerWidth = containerRect.width || 600;
+      
+      const margin = { top: 40, right: 40, bottom: 100, left: 100 };
+      const width = Math.max(480, containerWidth - margin.left - margin.right);
+      const height = 200;
 
       const gridSize = Math.floor(width / 24);
-      const legendElementWidth = gridSize * 2;
-
+      const rowHeight = Math.floor(height / 7);
+      
       const daysOfWeek = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
       const hours = d3.range(24);
+
+      console.log('Heatmap data structure:', this.dailyHeatmapData.slice(0, 5));
 
       // ایجاد SVG
       const svg = d3.select(this.$refs.dailyHeatmapChart)
           .append("svg")
           .attr("width", width + margin.left + margin.right)
-          .attr("height", height + margin.bottom + margin.top)
+          .attr("height", height + margin.top + margin.bottom)
+          .style("overflow", "visible")
           .append("g")
           .attr("transform", `translate(${margin.left},${margin.top})`);
 
       // برچسب‌های روزها
-      const dayLabels = svg.selectAll(".dayLabel")
+      svg.selectAll(".dayLabel")
           .data(daysOfWeek)
           .enter().append("text")
           .text(d => d)
-          .attr("x", 0)
-          .attr("y", (d, i) => i * gridSize)
+          .attr("x", -10)
+          .attr("y", (d, i) => i * rowHeight + rowHeight / 2)
           .style("text-anchor", "end")
-          .style("font-size", "12px")
+          .style("dominant-baseline", "middle")
+          .style("font-size", "11px")
           .style("fill", "#666")
-          .attr("transform", `translate(-6, ${gridSize / 1.5})`);
+          .style("font-family", "IRANSans, sans-serif");
 
-      // برچسب‌های ساعت‌ها
-      const hourLabels = svg.selectAll(".hourLabel")
-          .data(hours)
+      // برچسب‌های ساعت‌ها (فقط ساعات زوج)
+      const hourLabels = hours.filter(h => h % 2 === 0);
+      svg.selectAll(".hourLabel")
+          .data(hourLabels)
           .enter().append("text")
           .text(d => `${d}:00`)
-          .attr("x", (d, i) => i * gridSize)
-          .attr("y", 0)
+          .attr("x", d => d * gridSize + gridSize / 2)
+          .attr("y", -10)
           .style("text-anchor", "middle")
-          .style("font-size", "10px")
+          .style("font-size", "9px")
           .style("fill", "#666")
-          .attr("transform", `translate(${gridSize / 2}, -6) rotate(-45)`);
+          .style("font-family", "IRANSans, sans-serif");
 
       // محاسبه حداکثر مقدار برای رنگ‌بندی
       const maxValue = d3.max(this.dailyHeatmapData, d => d.activityCount) || 1;
+      console.log('Max activity value:', maxValue);
 
-      // رنگ‌بندی
+      // رنگ‌بندی بهتر
       const colorScale = d3.scaleSequential()
           .interpolator(d3.interpolateBlues)
           .domain([0, maxValue]);
@@ -423,78 +451,100 @@ export default {
           .style("position", "absolute")
           .style("background", "rgba(0, 0, 0, 0.8)")
           .style("color", "white")
-          .style("padding", "5px")
-          .style("border-radius", "3px")
-          .style("font-size", "12px")
-          .style("pointer-events", "none");
+          .style("padding", "8px 10px")
+          .style("border-radius", "4px")
+          .style("font-size", "11px")
+          .style("font-family", "IRANSans, sans-serif")
+          .style("pointer-events", "none")
+          .style("z-index", "1000");
 
       // ایجاد مربع‌ها
-      const heatmapData = [];
-      for (let day = 0; day < 7; day++) {
-        for (let hour = 0; hour < 24; hour++) {
-          const activityCount = this.getActivityCountForDayHour(day, hour);
-          heatmapData.push({
-            day: day,
-            hour: hour,
-            value: activityCount,
-            dayName: daysOfWeek[day]
-          });
-        }
-      }
-
       const heatmap = svg.selectAll(".hour")
-          .data(heatmapData)
+          .data(this.dailyHeatmapData)
           .enter().append("rect")
+          .attr("class", "hour")
           .attr("x", d => d.hour * gridSize)
-          .attr("y", d => d.day * gridSize)
-          .attr("width", gridSize)
-          .attr("height", gridSize)
-          .style("fill", d => d.value === 0 ? "#f8f9fa" : colorScale(d.value))
+          .attr("y", d => d.dayOfWeek * rowHeight)
+          .attr("width", gridSize - 1)
+          .attr("height", rowHeight - 1)
+          .attr("rx", 2)
+          .style("fill", d => {
+            if (d.activityCount === 0) return "#f8f9fa";
+            return colorScale(d.activityCount);
+          })
           .style("stroke", "#ffffff")
           .style("stroke-width", "1px")
           .style("cursor", "pointer")
           .on("mouseover", function(event, d) {
             tooltip.transition()
                 .duration(200)
-                .style("opacity", .9);
-            tooltip.html(`${d.dayName}<br/>ساعت ${d.hour}:00<br/>${d.value} فعالیت`)
-                .style("left", (event.pageX + 10) + "px")
-                .style("top", (event.pageY - 28) + "px");
+                .style("opacity", 0.95);
+            
+            const dayName = daysOfWeek[d.dayOfWeek] || 'نامشخص';
+            tooltip.html(`
+              <div><strong>${dayName}</strong></div>
+              <div>ساعت ${d.hour}:00</div>
+              <div>${d.activityCount} فعالیت</div>
+            `)
+                .style("left", (event.pageX + 15) + "px")
+                .style("top", (event.pageY - 10) + "px");
 
             d3.select(this)
                 .style("stroke", "#333")
-                .style("stroke-width", "2px");
+                .style("stroke-width", "2px")
+                .style("opacity", 0.8);
           })
-          .on("mouseout", function(d) {
+          .on("mouseout", function() {
             tooltip.transition()
-                .duration(500)
+                .duration(300)
                 .style("opacity", 0);
 
             d3.select(this)
                 .style("stroke", "#ffffff")
-                .style("stroke-width", "1px");
+                .style("stroke-width", "1px")
+                .style("opacity", 1);
           });
 
       // افزودن Legend
-      const legend = svg.selectAll(".legend")
-          .data([0, Math.round(maxValue/4), Math.round(maxValue/2), Math.round(3*maxValue/4), maxValue])
-          .enter().append("g")
-          .attr("class", "legend");
+      const legendData = [0, Math.ceil(maxValue/4), Math.ceil(maxValue/2), Math.ceil(3*maxValue/4), maxValue];
+      const legendWidth = 200;
+      const legendHeight = 15;
+      
+      const legend = svg.append("g")
+          .attr("class", "legend")
+          .attr("transform", `translate(${(width - legendWidth) / 2}, ${height + 50})`);
 
-      legend.append("rect")
-          .attr("x", (d, i) => legendElementWidth * i)
-          .attr("y", height + 40)
-          .attr("width", legendElementWidth)
-          .attr("height", gridSize / 2)
+      legend.selectAll("rect")
+          .data(legendData)
+          .enter().append("rect")
+          .attr("x", (d, i) => i * (legendWidth / legendData.length))
+          .attr("y", 0)
+          .attr("width", legendWidth / legendData.length)
+          .attr("height", legendHeight)
           .style("fill", d => d === 0 ? "#f8f9fa" : colorScale(d));
 
-      legend.append("text")
-          .attr("class", "mono")
+      legend.selectAll("text")
+          .data(legendData)
+          .enter().append("text")
           .text(d => d)
-          .attr("x", (d, i) => legendElementWidth * i)
-          .attr("y", height + 60)
+          .attr("x", (d, i) => i * (legendWidth / legendData.length) + (legendWidth / legendData.length) / 2)
+          .attr("y", legendHeight + 15)
+          .style("text-anchor", "middle")
           .style("font-size", "10px")
+          .style("font-family", "IRANSans, sans-serif")
           .style("fill", "#666");
+
+      // افزودن عنوان Legend
+      legend.append("text")
+          .attr("x", legendWidth / 2)
+          .attr("y", -10)
+          .style("text-anchor", "middle")
+          .style("font-size", "11px")
+          .style("font-family", "IRANSans, sans-serif")
+          .style("fill", "#666")
+          .text("تعداد فعالیت‌ها");
+
+      console.log('Heatmap rendered successfully with', this.dailyHeatmapData.length, 'data points');
     },
 
     getActivityCountForDayHour(dayIndex, hour) {
@@ -753,7 +803,7 @@ export default {
               callbacks: {
                 label: (context) => {
                   const item = chartData[context.dataIndex]
-                  return `${this.$formatTime(item.hours * 3600)} (${item.percentage}%)`
+                  return `${this.$filters.formatTime(item.hours * 3600)} (${item.percentage}%)`
                 }
               }
             }
@@ -1210,9 +1260,24 @@ export default {
   }
 }
 
+/* Heatmap Styles */
+.heatmap-container {
+  min-height: 400px;
+  width: 100%;
+  position: relative;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f7fa 100%);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+  overflow-x: auto;
+}
+
 .heatmap-legend {
   text-align: center;
   font-size: 12px;
+  margin-top: 15px;
+  font-family: 'IRANSans', 'Vazirmatn', sans-serif;
+  direction: rtl;
 }
 
 .legend-gradient {
@@ -1227,17 +1292,61 @@ export default {
   );
   border-radius: 5px;
   display: inline-block;
+  border: 1px solid rgba(0,0,0,0.1);
 }
 
+/* Heatmap tooltip override global styles */
+.heatmap-tooltip {
+  pointer-events: none !important;
+  z-index: 9999 !important;
+  font-family: 'IRANSans', 'Vazirmatn', sans-serif !important;
+  direction: rtl !important;
+  text-align: center !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+  backdrop-filter: blur(5px) !important;
+}
+
+/* Responsive heatmap */
+@media (max-width: 768px) {
+  .heatmap-container {
+    min-height: 300px;
+    padding: 15px 10px;
+    overflow-x: scroll;
+  }
+  
+  .heatmap-container svg {
+    min-width: 500px;
+  }
+}
+
+@media (max-width: 576px) {
+  .heatmap-container {
+    min-height: 280px;
+    padding: 10px 5px;
+  }
+  
+  .col-lg-7.mb-4:has(.heatmap-container) {
+    order: 2;
+  }
+  
+  .col-lg-5.mb-4:has(.timeline-container) {
+    order: 1;
+  }
+}
+
+/* Enhanced stat styling */
 .stat-number {
-  font-size: 18px;
-  font-weight: bold;
+  font-size: 20px;
+  font-weight: 700;
   color: #2d3748;
+  font-family: 'IRANSans', 'Vazirmatn', sans-serif;
 }
 
 .stat-label {
-  font-size: 12px;
+  font-size: 13px;
   color: #718096;
+  font-family: 'IRANSans', 'Vazirmatn', sans-serif;
+  margin-top: 4px;
 }
 
 /* Timeline Styles */

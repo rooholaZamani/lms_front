@@ -302,7 +302,7 @@
                     <ul class="list-unstyled">
                       <li v-if="selectedStudentProgress">
                         <i class="fas fa-clock me-2 text-muted"></i>
-                        {{ Math.round((selectedStudentProgress.totalStudyTime || 0) / 60) }} ساعت مطالعه
+                        {{ $filters.formatTime(selectedStudentProgress.totalStudyTime || 0) }}
                       </li>
                       <li v-if="selectedStudentExams.length > 0">
                         <i class="fas fa-clipboard-check me-2 text-muted"></i>
@@ -372,7 +372,7 @@
                       <div class="card text-center">
                         <div class="card-body">
                           <h5 class="card-title text-success">{{ Math.round((selectedStudentProgress.totalStudyTime || 0) / 60) }}</h5>
-                          <p class="card-text">ساعت مطالعه</p>
+                          <p class="card-text">دقیقه مطالعه</p>
                         </div>
                       </div>
                     </div>
@@ -380,7 +380,7 @@
                       <div class="card text-center">
                         <div class="card-body">
                           <h5 class="card-title text-warning">{{ Math.round((selectedStudentProgress.averageStudyTimePerCourse || 0) / 60) }}</h5>
-                          <p class="card-text">میانگین ساعت/دوره</p>
+                          <p class="card-text">میانگین دقیقه/دوره</p>
                         </div>
                       </div>
                     </div>
@@ -414,7 +414,7 @@
                           <div class="col-md-6">
                             <small class="text-muted">
                               <i class="fas fa-clock me-1"></i>
-                              زمان مطالعه: {{ Math.round((course.studyTime || 0) / 60) }} ساعت
+                              زمان مطالعه: {{ Math.round((course.studyTime || 0) / 60) }} دقیقه
                             </small>
                           </div>
                           <div class="col-md-6 text-end">
@@ -1108,7 +1108,7 @@ export default {
         this.selectedStudentActivity = [{
           id: 1,
           type: 'PERFORMANCE_SUMMARY',
-          description: `میانگین تکمیل: ${performanceData.averageCompletion || 0}% - زمان مطالعه کل: ${Math.round((performanceData.totalStudyTime || 0) / 60)} ساعت`,
+          description: `میانگین تکمیل: ${performanceData.averageCompletion || 0}% - زمان مطالعه کل: ${Math.round((performanceData.totalStudyTime || 0) / 60)} دقیقه`,
           courseName: `${performanceData.enrolledCourses || 0} دوره`,
           timestamp: performanceData.lastAccessed || new Date().toISOString(),
           additionalInfo: `آزمون‌های شرکت کرده: ${performanceData.examsTaken || 0} - میانگین نمره: ${Math.round(performanceData.averageExamScore || 0)}`

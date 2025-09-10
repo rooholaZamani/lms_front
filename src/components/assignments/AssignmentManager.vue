@@ -277,7 +277,7 @@
 
     <!-- Create/Edit Assignment Modal -->
     <div class="modal fade" id="assignmentModal" tabindex="-1">
-      <div class="modal-dialog modal-lg">
+      <div class="modal-dialog modal-xl modal-form-lg">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">

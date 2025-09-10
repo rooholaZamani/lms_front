@@ -382,7 +382,6 @@ export default {
       { value: 'EXAM_SUBMISSION', label: 'شرکت در آزمون' },
       { value: 'ASSIGNMENT_SUBMISSION', label: 'ارسال تکلیف' },
       { value: 'CHAT_MESSAGE_SEND', label: 'ارسال پیام' },
-      { value: 'FILE_ACCESS', label: 'دسترسی به فایل' },
       { value: 'LOGIN', label: 'ورود به سیستم' }
     ]
 
@@ -640,10 +639,12 @@ export default {
       if (!ctx) return
 
       const activityCounts = {}
-      activities.value.forEach(activity => {
-        const typeName = getActivityTypeName(activity.type)
-        activityCounts[typeName] = (activityCounts[typeName] || 0) + 1
-      })
+      activities.value
+        .filter(activity => activity.type !== 'FILE_ACCESS') // Filter out FILE_ACCESS activities
+        .forEach(activity => {
+          const typeName = getActivityTypeName(activity.type)
+          activityCounts[typeName] = (activityCounts[typeName] || 0) + 1
+        })
 
       const labels = Object.keys(activityCounts)
       const data = Object.values(activityCounts)
@@ -773,6 +774,12 @@ export default {
         'EXAM_SUBMISSION': 'exam',
         'ASSIGNMENT_SUBMISSION': 'assignment',
         'CHAT_MESSAGE_SEND': 'chat',
+        'CHAT_VIEW': 'chat',
+        'FILE_ACCESS': 'file',
+        'LESSON_ACCESS': 'lesson',
+        'EXAM_START': 'exam',
+        'ASSIGNMENT_VIEW': 'assignment',
+        'CONTENT_COMPLETION': 'content',
         'LOGIN': 'login'
       }
       return classMap[type] || 'default'
@@ -785,7 +792,12 @@ export default {
         'EXAM_SUBMISSION': 'fas fa-clipboard-check',
         'ASSIGNMENT_SUBMISSION': 'fas fa-tasks',
         'CHAT_MESSAGE_SEND': 'fas fa-comment',
+        'CHAT_VIEW': 'fas fa-comments',
         'FILE_ACCESS': 'fas fa-file',
+        'LESSON_ACCESS': 'fas fa-book-open',
+        'EXAM_START': 'fas fa-play',
+        'ASSIGNMENT_VIEW': 'fas fa-eye',
+        'CONTENT_COMPLETION': 'fas fa-check-double',
         'LOGIN': 'fas fa-sign-in-alt'
       }
       return iconMap[type] || 'fas fa-circle'
@@ -798,10 +810,15 @@ export default {
         'EXAM_SUBMISSION': 'شرکت در آزمون',
         'ASSIGNMENT_SUBMISSION': 'ارسال تکلیف',
         'CHAT_MESSAGE_SEND': 'ارسال پیام',
+        'CHAT_VIEW': 'مشاهده چت',
         'FILE_ACCESS': 'دسترسی به فایل',
+        'LESSON_ACCESS': 'دسترسی به درس',
+        'EXAM_START': 'شروع آزمون',
+        'ASSIGNMENT_VIEW': 'مشاهده تکالیف',
+        'CONTENT_COMPLETION': 'تکمیل محتوا',
         'LOGIN': 'ورود به سیستم'
       }
-      return typeNames[type] || 'فعالیت نامشخص'
+      return typeNames[type] || type || 'فعالیت نامشخص'
     }
 
     const getActivityDescription = (activity) => {

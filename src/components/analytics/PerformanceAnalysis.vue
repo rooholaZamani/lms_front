@@ -164,7 +164,7 @@
               <div class="chart-container">
                 <Charts
                     v-if="timeDistributionChartData.length > 0"
-                    type="activity"
+                    type="timeDistribution"
                     :data="timeDistributionChartData"
                     height="400px"
                 />
@@ -455,7 +455,8 @@ export default {
       return timeDistributionData.value.map(item => ({
         date: item.date,
         activeStudents: item.activeStudents || 0,
-        totalseconds: item.totalseconds || 0
+        totalseconds: item.totalseconds || 0,
+        totalTime: Math.round((item.totalseconds || 0) / 60) // زمان بر حسب دقیقه
       }));
     });
 
@@ -486,6 +487,20 @@ export default {
         return `${hours} ساعت ${mins} دقیقه`;
       }
       return `${mins} دقیقه`;
+    };
+
+    const formatDuration = (seconds) => {
+      if (!seconds) return '0 ثانیه';
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const remainingSeconds = seconds % 60;
+      
+      if (hours > 0) {
+        return `${hours}ساعت ${minutes}دقیقه`;
+      } else if (minutes > 0) {
+        return `${minutes}دقیقه ${remainingSeconds}ثانیه`;
+      }
+      return `${remainingSeconds}ثانیه`;
     };
 
     const getRiskFactorLabel = (factor) => {
@@ -778,6 +793,7 @@ export default {
 
       // Methods
       formatTime,
+      formatDuration,
       getRiskFactorLabel,
       onCourseChange,
       fetchAnalyticsData

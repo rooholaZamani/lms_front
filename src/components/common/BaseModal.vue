@@ -109,7 +109,7 @@ export default {
         if (modalDialog) {
           modalDialog.style.margin = '0';
           modalDialog.style.width = 'auto';
-          modalDialog.style.maxWidth = '500px';
+          // Remove hardcoded maxWidth constraint to allow responsive sizing
         }
       }
     },

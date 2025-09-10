@@ -294,7 +294,7 @@ export default {
     },
 
     formatTime(seconds) {
-      return this.$formatTime(seconds);
+      return this.$filters.formatTime(seconds);
     }
   }
 }

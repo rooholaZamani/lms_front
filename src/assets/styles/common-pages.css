@@ -10,84 +10,67 @@
     overflow: hidden;
 }
 
-.modal-dialog {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    min-height: calc(100vh - 1rem) !important;
-    width: auto !important;
-    max-width: none !important;
-    margin: 0.5rem auto !important;
+/* Content-specific modal sizing */
+.modal-form-lg {
+    min-width: 900px;
+    max-width: 95vw;
+}
+
+.modal-content-md {
+    min-width: 600px;
+    max-width: 90vw;
 }
 
 .modal-content {
-    width: auto !important;
-    min-width: 400px !important;
-    max-width: 90vw !important;
-    margin: 0 !important;
+    max-height: 90vh;
 }
 
-/* اندازه بر اساس محتوا */
 .modal-body {
-    width: max-content !important;
-    max-width: 100% !important;
+    max-height: 70vh;
+    overflow-y: auto;
 }
 
-/* Responsive */
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .modal-form-lg {
+        min-width: 700px;
+        max-width: 90vw;
+    }
+}
+
+@media (max-width: 992px) {
+    .modal-form-lg,
+    .modal-content-md {
+        min-width: 500px;
+        max-width: 85vw;
+    }
+}
+
 @media (max-width: 768px) {
-    .modal-content {
-        min-width: 350px !important;
+    .modal-form-lg,
+    .modal-content-md {
+        min-width: 400px;
+        max-width: 95vw;
+        margin: 0.5rem auto;
+    }
+    
+    .modal-body {
+        max-height: 60vh;
+        padding: 1rem;
     }
 }
 
 @media (max-width: 576px) {
-    .modal-content {
-        min-width: 300px !important;
-        max-width: 95vw !important;
+    .modal-form-lg,
+    .modal-content-md {
+        min-width: 300px;
+        max-width: 98vw;
+        margin: 0.25rem auto;
     }
-}
-.modal-dialog {
-    min-width: 500px !important;
-    max-width: 90vw !important;
-    width: auto !important;
-}
-
-.modal-content {
-    min-height: auto !important;
-    max-height: 90vh !important;
-}
-
-.modal-body {
-    min-height: 200px !important;
-    max-height: 70vh !important;
-    overflow-y: auto !important;
-    padding: 1.5rem !important;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .modal-dialog {
-        min-width: 300px !important;
-        max-width: 95vw !important;
-        margin: 0.5rem auto !important;
-    }
-
+    
     .modal-body {
-        min-height: 150px !important;
-        max-height: 60vh !important;
-        padding: 1rem !important;
-    }
-}
-
-@media (max-width: 576px) {
-    .modal-dialog {
-        min-width: 280px !important;
-        margin: 0.25rem auto !important;
-    }
-
-    .modal-body {
-        min-height: 120px !important;
-        padding: 0.75rem !important;
+        padding: 0.75rem;
+        max-height: 70vh;
     }
 }
 .modal {

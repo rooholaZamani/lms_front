@@ -8,7 +8,7 @@
           متن سوال
         </h6>
 
-        <div class="modern-form-group">
+        <div class="modern-form-group text-black">
           <label for="questionText" class="modern-form-label">متن سوال <span class="text-danger">*</span></label>
           <textarea
               class="modern-form-control"
@@ -813,6 +813,19 @@ export default {
 <style scoped>
 .question-form {
   max-width: 100%;
+  min-width: 800px;
+}
+
+@media (max-width: 992px) {
+  .question-form {
+    min-width: 600px;
+  }
+}
+
+@media (max-width: 768px) {
+  .question-form {
+    min-width: auto;
+  }
 }
 
 .form-section {

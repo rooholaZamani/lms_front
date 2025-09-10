@@ -9,6 +9,7 @@ import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
+  TimeScale,
   PointElement,
   LineElement,
   BarElement,
@@ -20,11 +21,13 @@ import {
   BarController,
   PieController
 } from 'chart.js';
+import 'chartjs-adapter-date-fns';
 
 // ثبت همه components مورد نیاز
 ChartJS.register(
     CategoryScale,
     LinearScale,
+    TimeScale,
     PointElement,
     LineElement,
     BarElement,
@@ -169,28 +172,62 @@ export default {
         this.chart = new ChartJS(ctx, {
           type: 'bar',
           data: {
-            labels: this.data.map(item => {
-              const date = new Date(item.date);
-              return date.toLocaleDateString('fa-IR', { month: 'short', day: 'numeric' });
-            }),
-            datasets: [{
-              label: 'دانش‌آموزان فعال',
-              data: this.data.map(item => item.activeStudents || 0),
-              backgroundColor: '#667eea',
-              borderColor: '#667eea',
-              borderWidth: 1
-            }]
+            labels: this.data.map(item => new Date(item.date)),
+            datasets: [
+              {
+                label: 'دانش‌آموزان فعال',
+                data: this.data.map(item => item.activeStudents || 0),
+                backgroundColor: 'rgba(102, 126, 234, 0.7)',
+                borderColor: '#667eea',
+                borderWidth: 1,
+                yAxisID: 'y'
+              },
+              {
+                label: 'زمان مطالعه (دقیقه)',
+                data: this.data.map(item => Math.round((item.totalseconds || 0) / 60)),
+                type: 'line',
+                backgroundColor: 'rgba(255, 107, 107, 0.1)',
+                borderColor: '#ff6b6b',
+                borderWidth: 2,
+                tension: 0.4,
+                fill: false,
+                yAxisID: 'y1'
+              }
+            ]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
+            interaction: {
+              intersect: false,
+              mode: 'index'
+            },
             plugins: {
               legend: {
                 position: 'top',
+              },
+              tooltip: {
+                callbacks: {
+                  afterLabel: function(context) {
+                    const item = context.parsed;
+                    const dataIndex = context.dataIndex;
+                    const totalSeconds = this.data[dataIndex]?.totalseconds || 0;
+                    const hours = Math.floor(totalSeconds / 3600);
+                    const minutes = Math.floor((totalSeconds % 3600) / 60);
+                    return `کل زمان: ${hours}ساعت ${minutes}دقیقه`;
+                  }.bind(this)
+                }
               }
             },
             scales: {
               x: {
+                type: 'time',
+                time: {
+                  unit: 'day',
+                  displayFormats: {
+                    day: 'MMM dd'
+                  }
+                },
                 display: true,
                 title: {
                   display: true,
@@ -198,10 +235,26 @@ export default {
                 }
               },
               y: {
+                type: 'linear',
+                display: true,
+                position: 'left',
                 beginAtZero: true,
                 title: {
                   display: true,
                   text: 'تعداد دانش‌آموزان'
+                }
+              },
+              y1: {
+                type: 'linear',
+                display: true,
+                position: 'right',
+                beginAtZero: true,
+                title: {
+                  display: true,
+                  text: 'زمان مطالعه (دقیقه)'
+                },
+                grid: {
+                  drawOnChartArea: false
                 }
               }
             }

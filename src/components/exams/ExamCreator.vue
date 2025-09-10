@@ -63,7 +63,7 @@
 
     <!-- Modal: افزودن/ویرایش سوال -->
     <div class="modal fade" id="questionModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
-      <div class="modal-dialog modal-lg">
+      <div class="modal-dialog modal-xl modal-form-lg">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title">{{ isEditingQuestion ? 'ویرایش سوال' : 'افزودن سوال جدید' }}</h5>
