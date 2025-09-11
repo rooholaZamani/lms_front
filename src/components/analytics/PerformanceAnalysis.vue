@@ -312,10 +312,6 @@
                   <span class="factor-label">عدم فعالیت</span>
                   <span class="factor-count">{{ riskFactors.inactivity }}</span>
                 </div>
-                <div class="risk-factor">
-                  <span class="factor-label">مسائل رفتاری</span>
-                  <span class="factor-count">{{ riskFactors.behavioralIssues }}</span>
-                </div>
               </div>
             </div>
           </div>
@@ -508,7 +504,6 @@ export default {
         'LOW_ATTENDANCE': 'حضور پایین',
         'POOR_PERFORMANCE': 'عملکرد ضعیف',
         'INACTIVITY': 'عدم فعالیت',
-        'BEHAVIORAL_ISSUES': 'مسائل رفتاری'
       };
       return labels[factor] || factor;
     };
@@ -696,8 +691,8 @@ export default {
 
         } else if (analysisType.value === 'questions') {
           // تحلیل سوالات چالش‌برانگیز
-          const questionsResponse = await analytics.fetchChallengingQuestions();
-          challengingQuestions.value = questionsResponse || [];
+          const questionsResponse = await axios.get(`/analytics/course/${selectedCourse.value}/challenging-questions`);
+          challengingQuestions.value = questionsResponse.data?.questions || [];
 
           if (challengingQuestions.value.length > 0) {
             questionStats.value = {
@@ -707,14 +702,14 @@ export default {
             };
           }
 
-        } else if (analysisType.value === 'students') {
+        } else if (analysisType.value === 'risk') {
           // دانش‌آموزان در معرض خطر
-          const riskResponse = await analytics.fetchAtRiskStudents(selectedCourse.value);
-          console.log('At-risk students response:', riskResponse);
+          const riskResponse = await axios.get(`/analytics/course/${selectedCourse.value}/at-risk-students`);
+          console.log('At-risk students response:', riskResponse.data);
 
-          if (riskResponse) {
-            atRiskStudents.value = riskResponse.students || [];
-            riskFactors.value = riskResponse.riskFactors || {
+          if (riskResponse.data) {
+            atRiskStudents.value = riskResponse.data.students || [];
+            riskFactors.value = riskResponse.data.riskFactors || {
               lowAttendance: 0,
               poorPerformance: 0,
               inactivity: 0,
