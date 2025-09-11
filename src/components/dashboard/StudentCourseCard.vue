@@ -105,11 +105,6 @@
 
         <div class="action-buttons">
           <button class="modern-btn modern-btn-outline modern-btn-sm"
-                  @click="viewProgress"
-                  title="مشاهده پیشرفت">
-            <i class="fas fa-chart-line"></i>
-          </button>
-          <button class="modern-btn modern-btn-outline modern-btn-sm"
                   @click="downloadCertificate"
                   title="گواهی"
                   v-if="progressPercentage >= 100">
@@ -261,14 +256,6 @@ export default {
       if (this.progressPercentage >= 25) return 'progress-warning';
       return 'progress-danger';
     },
-
-    viewProgress() {
-      this.$router.push({
-        name: 'Analytics',
-        query: { courseId: this.course.id }
-      });
-    },
-
     downloadCertificate() {
       // Mock certificate download
       this.$toast?.success('گواهی دوره در حال آماده‌سازی است...');

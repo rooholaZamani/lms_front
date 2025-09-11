@@ -728,6 +728,15 @@ export default {
   },
   mounted() {
     this.setupBootstrapTabs();
+    
+    // Auto-open progress modal if requested via query parameter
+    if (this.$route.query.showProgress === 'true') {
+      this.$nextTick(() => {
+        setTimeout(() => {
+          this.viewStudentOwnProgress();
+        }, 500); // Small delay to ensure component is fully loaded
+      });
+    }
   },
   methods: {
     handleStudentRemoved(removedStudent) {
@@ -812,28 +821,17 @@ export default {
       const response = await this.$http.get(`/progress/${this.id}`);
       const progressInfo = response.data;
 
-      // Calculate progress categories
-      const totalLessons = this.course.lessons?.length || 0;
-      const completedLessons = this.progress.completedLessonIds?.length || 0;
+      // Use actual API data from backend for all counts (including lessons)
+      const totalLessons = progressInfo.totalLessons || 0;
+      const completedLessons = progressInfo.completedLessonCount || 0;
 
-      // Count assignments and exams
-      let totalAssignments = 0;
-      let completedAssignments = 0;
-      let totalExams = 0;
-      let completedExams = 0;
-      let totalContent = 0;
-      let viewedContent = 0;
-
-      this.course.lessons?.forEach(lesson => {
-        if (lesson.assignments?.length) totalAssignments += lesson.assignments.length;
-        if (lesson.hasExam || lesson.exam) totalExams++;
-        if (lesson.contents?.length) totalContent += lesson.contents.length;
-      });
-
-      // Mock completed data - replace with actual API data
-      completedAssignments = Math.floor(totalAssignments * 0.6);
-      completedExams = Math.floor(totalExams * 0.4);
-      viewedContent = Math.floor(totalContent * 0.8);
+      // Use actual API data from backend for all counts
+      const totalAssignments = progressInfo.totalAssignmentCount || 0;
+      const completedAssignments = progressInfo.submittedAssignmentCount || 0;
+      const totalExams = progressInfo.totalExamCount || 0;
+      const completedExams = progressInfo.attemptedExamCount || 0;
+      const totalContent = progressInfo.totalContentCount || 0;
+      const viewedContent = progressInfo.viewedContentCount || 0;
 
       this.progressData = [
         {
