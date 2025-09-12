@@ -328,7 +328,8 @@ export default {
       studentPassed: false,
       studentSubmissionTime: null,
       warningShown: false,
-      finalWarningShown: false
+      finalWarningShown: false,
+      examStartTime: null // Track actual exam start time for duration calculation
     };
   },
   computed: {
@@ -432,6 +433,7 @@ export default {
       if (!this.canStartExam) return;
 
       this.examStarted = true;
+      this.examStartTime = new Date(); // Record the actual start time
       this.startTimer();
     },
 
@@ -562,10 +564,18 @@ export default {
           }
         });
 
+        // Calculate time spent in seconds
+        let timeSpent = 0;
+        if (this.examStartTime) {
+          const currentTime = new Date();
+          timeSpent = Math.floor((currentTime - this.examStartTime) / 1000); // Convert to seconds
+        }
+
         const submission = {
           examId: this.exam.id,
           answers: submissionAnswers,
-          submittedAt: new Date().toISOString()
+          submittedAt: new Date().toISOString(),
+          timeSpent: timeSpent
         };
 
         const response = await axios.post(`/exams/${this.id}/submit`, submission);
