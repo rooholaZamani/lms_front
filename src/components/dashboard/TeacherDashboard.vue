@@ -23,37 +23,37 @@
       <div class="col-md-3 col-sm-6 mb-3">
         <div class="modern-stat-card animate-slide-up">
           <div class="modern-stat-icon text-primary">
-            <i class="fas fa-book"></i>
+            <i class="fas fa-check-circle"></i>
           </div>
-          <div class="modern-stat-value">{{ stats.totalCourses }}</div>
-          <div class="modern-stat-label">تعداد دوره‌ها</div>
+          <div class="modern-stat-value">{{ stats.completionRate }}%</div>
+          <div class="modern-stat-label">نرخ تکمیل</div>
         </div>
       </div>
       <div class="col-md-3 col-sm-6 mb-3">
         <div class="modern-stat-card animate-slide-up" style="animation-delay: 0.1s;">
-          <div class="modern-stat-icon text-success">
-            <i class="fas fa-user-graduate"></i>
+          <div class="modern-stat-icon text-warning">
+            <i class="fas fa-clock"></i>
           </div>
-          <div class="modern-stat-value">{{ stats.totalStudents }}</div>
-          <div class="modern-stat-label">تعداد دانش‌آموزان</div>
+          <div class="modern-stat-value">{{ formatStudyTime(stats.averageTimeSpent) }}</div>
+          <div class="modern-stat-label">میانگین زمان مطالعه</div>
         </div>
       </div>
       <div class="col-md-3 col-sm-6 mb-3">
         <div class="modern-stat-card animate-slide-up" style="animation-delay: 0.2s;">
-          <div class="modern-stat-icon text-warning">
-            <i class="fas fa-clipboard-check"></i>
+          <div class="modern-stat-icon text-success">
+            <i class="fas fa-chart-line"></i>
           </div>
-          <div class="modern-stat-value">{{ stats.activeAssignments }}</div>
-          <div class="modern-stat-label">تکالیف در انتظار</div>
+          <div class="modern-stat-value">{{ stats.averageProgress }}%</div>
+          <div class="modern-stat-label">میانگین پیشرفت</div>
         </div>
       </div>
       <div class="col-md-3 col-sm-6 mb-3">
         <div class="modern-stat-card animate-slide-up" style="animation-delay: 0.3s;">
           <div class="modern-stat-icon text-info">
-            <i class="fas fa-chart-line"></i>
+            <i class="fas fa-user-graduate"></i>
           </div>
-          <div class="modern-stat-value">{{ stats.averageProgress }}%</div>
-          <div class="modern-stat-label">میانگین پیشرفت</div>
+          <div class="modern-stat-value">{{ stats.totalStudents }}</div>
+          <div class="modern-stat-label">تعداد دانش‌آموزان</div>
         </div>
       </div>
     </div>
@@ -233,7 +233,9 @@ export default {
       totalCourses: 0,
       totalStudents: 0,
       activeAssignments: 0,
-      averageProgress: 0
+      averageProgress: 0,
+      averageTimeSpent: 0,
+      completionRate: 0
     });
 
     const newCourse = reactive({
@@ -244,8 +246,10 @@ export default {
     // Methods
     const fetchData = async () => {
       try {
-        await fetchCourses();
-        calculateStats();
+        await Promise.all([
+          fetchCourses(),
+          fetchAnalyticsStats()
+        ]);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       }
@@ -263,7 +267,32 @@ export default {
       }
     };
 
-    const calculateStats = () => {
+    const fetchAnalyticsStats = async () => {
+      try {
+        // Fetch system overview stats
+        const systemOverviewResponse = await axios.get('/api/analytics/teacher/system-overview');
+        const systemOverview = systemOverviewResponse.data;
+        
+        // Fetch students progress overview  
+        const progressOverviewResponse = await axios.get('/api/analytics/teacher/students-progress');
+        const progressOverview = progressOverviewResponse.data;
+
+        // Update stats with real analytics data
+        stats.totalCourses = courses.value.length;
+        stats.totalStudents = systemOverview.totalStudents || 0;
+        stats.averageProgress = Math.round(progressOverview.averageCompletion || 0);
+        stats.averageTimeSpent = systemOverview.avgTimePerStudent || 0;
+        stats.completionRate = Math.round(systemOverview.averageCompletion || 0);
+        stats.activeAssignments = systemOverview.activeAssignments || 0;
+        
+      } catch (error) {
+        console.error('Error fetching analytics stats:', error);
+        // Fallback to basic calculation if analytics API fails
+        calculateBasicStats();
+      }
+    };
+
+    const calculateBasicStats = () => {
       stats.totalCourses = courses.value.length;
 
       const uniqueStudents = new Set();
@@ -275,8 +304,10 @@ export default {
         }
       });
       stats.totalStudents = uniqueStudents.size;
-      stats.activeAssignments = 0; // Will be fetched from API
-      stats.averageProgress = 0; // Will be calculated
+      stats.activeAssignments = 0;
+      stats.averageProgress = 0;
+      stats.averageTimeSpent = 0;
+      stats.completionRate = 0;
     };
 
     const getUserName = () => {
@@ -312,9 +343,9 @@ export default {
         newCourse.title = '';
         newCourse.description = '';
 
-        // Refresh courses
+        // Refresh courses and stats
         await fetchCourses();
-        calculateStats();
+        await fetchAnalyticsStats();
       } catch (error) {
         console.error('Error creating course:', error);
         proxy.$toast.error('خطا در ایجاد دوره. لطفاً دوباره تلاش کنید.');
@@ -333,6 +364,23 @@ export default {
 
     const refreshData = async () => {
       await fetchData();
+    };
+
+    const formatStudyTime = (seconds) => {
+      if (!seconds || seconds === 0) {
+        return '0 دقیقه';
+      }
+      
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      
+      if (hours > 0) {
+        return `${hours} ساعت ${minutes > 0 ? minutes + ' دقیقه' : ''}`;
+      } else if (minutes > 0) {
+        return `${minutes} دقیقه`;
+      } else {
+        return '0 دقیقه';
+      }
     };
 
     // Lifecycle
@@ -356,7 +404,8 @@ export default {
       createCourse,
       viewStudentProgress,
       sendMessageToStudent,
-      refreshData
+      refreshData,
+      formatStudyTime
     };
   }
 }
