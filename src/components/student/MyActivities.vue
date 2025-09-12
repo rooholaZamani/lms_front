@@ -749,10 +749,15 @@ export default {
     const formatDateTime = (dateString) => {
       if (!dateString) return 'نامشخص'
       const date = new Date(dateString)
-      const dateStr = date.toLocaleDateString('fa-IR')
+      
+      // Since backend now sends Iran time, we can display directly
+      const dateStr = date.toLocaleDateString('fa-IR', {
+        timeZone: 'Asia/Tehran'
+      })
       const timeStr = date.toLocaleTimeString('fa-IR', {
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
+        timeZone: 'Asia/Tehran'
       })
       return `${dateStr} ${timeStr}`
     }

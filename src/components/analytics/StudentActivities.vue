@@ -593,12 +593,17 @@ export default {
     formatTimelineDate(dateString) {
       if (!dateString) return '';
 
+      // Parse date with Iran timezone context
       const date = new Date(dateString);
       const now = new Date();
-      const diff = now - date;
+      
+      // Calculate difference using Iran timezone
+      const iranNow = new Date().toLocaleString('en-CA', { timeZone: 'Asia/Tehran' });
+      const iranDate = date.toLocaleString('en-CA', { timeZone: 'Asia/Tehran' });
+      const diff = new Date(iranNow) - new Date(iranDate);
 
       // اگر کمتر از یک روز باشد
-      if (diff < 24 * 60 * 60 * 1000) {
+      if (diff < 24 * 60 * 60 * 1000 && diff >= 0) {
         const hours = Math.floor(diff / (60 * 60 * 1000));
         const minutes = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
 
@@ -611,12 +616,13 @@ export default {
         }
       }
 
-      // برای تاریخ‌های قدیمی‌تر
+      // برای تاریخ‌های قدیمی‌تر - display in Iran timezone
       return new Intl.DateTimeFormat('fa-IR', {
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
+        timeZone: 'Asia/Tehran'
       }).format(date);
     },
 
