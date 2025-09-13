@@ -270,19 +270,26 @@ export default {
     const fetchAnalyticsStats = async () => {
       try {
         // Fetch system overview stats
-        const systemOverviewResponse = await axios.get('/api/analytics/teacher/system-overview');
+        const systemOverviewResponse = await axios.get('/analytics/teacher/system-overview');
         const systemOverview = systemOverviewResponse.data;
         
         // Fetch students progress overview  
-        const progressOverviewResponse = await axios.get('/api/analytics/teacher/students-progress');
+        const progressOverviewResponse = await axios.get('/analytics/teacher/students-progress');
         const progressOverview = progressOverviewResponse.data;
 
-        // Update stats with real analytics data
+        // Update stats with real analytics data and proper validation
         stats.totalCourses = courses.value.length;
         stats.totalStudents = systemOverview.totalStudents || 0;
-        stats.averageProgress = Math.round(progressOverview.averageCompletion || 0);
-        stats.averageTimeSpent = systemOverview.avgTimePerStudent || 0;
-        stats.completionRate = Math.round(systemOverview.averageCompletion || 0);
+
+        // Use consistent progress calculation with validation
+        const progressCompletion = progressOverview.averageCompletion || 0;
+        stats.averageProgress = Math.min(Math.round(progressCompletion), 100); // Cap at 100%
+        stats.completionRate = Math.min(Math.round(systemOverview.averageCompletion || 0), 100); // Cap at 100%
+
+        // Validate study time (should be in seconds)
+        const timePerStudent = systemOverview.avgTimePerStudent || 0;
+        stats.averageTimeSpent = Math.max(timePerStudent, 0); // Ensure non-negative
+
         stats.activeAssignments = systemOverview.activeAssignments || 0;
         
       } catch (error) {
@@ -367,19 +374,24 @@ export default {
     };
 
     const formatStudyTime = (seconds) => {
-      if (!seconds || seconds === 0) {
+      // Handle invalid or null values
+      if (!seconds || isNaN(seconds) || seconds < 0) {
         return '0 دقیقه';
       }
-      
-      const hours = Math.floor(seconds / 3600);
-      const minutes = Math.floor((seconds % 3600) / 60);
-      
+
+      // Round to avoid floating point issues
+      const totalSeconds = Math.round(seconds);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+
       if (hours > 0) {
-        return `${hours} ساعت ${minutes > 0 ? minutes + ' دقیقه' : ''}`;
+        const hoursText = `${hours} ساعت`;
+        const minutesText = minutes > 0 ? ` ${minutes} دقیقه` : '';
+        return hoursText + minutesText;
       } else if (minutes > 0) {
         return `${minutes} دقیقه`;
       } else {
-        return '0 دقیقه';
+        return '۱ دقیقه کمتر'; // Show "less than 1 minute" for very small values
       }
     };
 
