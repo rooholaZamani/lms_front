@@ -174,6 +174,93 @@
         </div>
       </div>
 
+      <!-- Assignment Submission Summary -->
+      <div v-if="submissionSummary.totalAssignmentsSubmitted > 0" class="submission-summary-section mb-4">
+        <div class="row">
+          <div class="col-12">
+            <div class="summary-card">
+              <div class="card-header">
+                <h5 class="mb-0">
+                  <i class="fas fa-clipboard-list text-primary me-2"></i>
+                  خلاصه وضعیت تکالیف
+                </h5>
+              </div>
+              <div class="card-body">
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <div class="stat-item">
+                      <div class="stat-number text-primary">{{ submissionSummary.totalAssignmentsSubmitted }}</div>
+                      <div class="stat-label">کل تکالیف ارسالی</div>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="stat-item">
+                      <div class="stat-number text-success">{{ submissionSummary.assignmentsGraded }}</div>
+                      <div class="stat-label">تکالیف نمره‌دار شده</div>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="stat-item">
+                      <div class="stat-number text-warning">{{ submissionSummary.assignmentsPending }}</div>
+                      <div class="stat-label">در انتظار نمره‌دهی</div>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="stat-item">
+                      <div class="stat-number text-info">{{ submissionSummary.totalExamsSubmitted }}</div>
+                      <div class="stat-label">آزمون‌های شرکت شده</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Assignment Details Table -->
+                <div v-if="enhancedAssignmentData.allAssignments && enhancedAssignmentData.allAssignments.length > 0" class="mt-4">
+                  <h6 class="mb-3">جزئیات تکالیف</h6>
+                  <div class="table-responsive">
+                    <table class="table table-sm table-striped">
+                      <thead>
+                        <tr>
+                          <th>عنوان تکلیف</th>
+                          <th>تاریخ ارسال</th>
+                          <th>وضعیت</th>
+                          <th>نمره</th>
+                          <th>درصد</th>
+                          <th>دسته‌بندی</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr v-for="assignment in enhancedAssignmentData.allAssignments" :key="`assignment-${assignment.assignmentTitle}-${assignment.submittedAt}`">
+                          <td>{{ assignment.assignmentTitle }}</td>
+                          <td>{{ formatDateTime(assignment.submittedAt) }}</td>
+                          <td>
+                            <span v-if="assignment.isGraded" class="badge bg-success">نمره‌دار شده</span>
+                            <span v-else class="badge bg-warning">در انتظار نمره‌دهی</span>
+                          </td>
+                          <td>
+                            <span v-if="assignment.isGraded">{{ assignment.score }}/{{ assignment.totalPossible }}</span>
+                            <span v-else class="text-muted">-</span>
+                          </td>
+                          <td>
+                            <span v-if="assignment.isGraded">{{ assignment.percentage }}%</span>
+                            <span v-else class="text-muted">-</span>
+                          </td>
+                          <td>
+                            <span v-if="assignment.isGraded" class="badge" :style="`background-color: ${getCategoryColor(assignment.category)}`">
+                              {{ assignment.categoryLabel }}
+                            </span>
+                            <span v-else class="text-muted">-</span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Activities List -->
       <div class="activities-section">
         <div class="section-header">
@@ -346,6 +433,9 @@ export default {
     const examDistribution = ref({})
     const assignmentDistribution = ref({})
 
+    // Enhanced analytics data
+    const enhancedAssignmentData = ref({})
+    const submissionSummary = ref({})
 
     const examScores = ref([])
     const assignmentScores = ref([])
@@ -412,12 +502,20 @@ export default {
           params.courseId = selectedCourseId.value
         }
 
-        const response = await axios.get('/analytics/student/grades-distribution', { params })
+        const response = await axios.get('/analytics/student/enhanced-grades-distribution', { params })
 
-        examScores.value = response.data.examScores || []
-        assignmentScores.value = response.data.assignmentScores || []
-        examDistribution.value = response.data.examDistribution || {}
-        assignmentDistribution.value = response.data.assignmentDistribution || {}
+        // Extract data from enhanced API structure
+        const examAnalytics = response.data.examAnalytics || {}
+        const assignmentAnalytics = response.data.assignmentAnalytics || {}
+
+        examScores.value = examAnalytics.examDetails || []
+        assignmentScores.value = assignmentAnalytics.gradedAssignments || []
+        examDistribution.value = examAnalytics.distribution || {}
+        assignmentDistribution.value = assignmentAnalytics.distribution || {}
+
+        // Store enhanced data for detailed views
+        enhancedAssignmentData.value = assignmentAnalytics
+        submissionSummary.value = response.data.submissionSummary || {}
 
 
       } catch (error) {
@@ -437,7 +535,7 @@ export default {
       examDistributionChart.value = new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: ['ممتاز (18-20)', 'خوب (15-17)', 'متوسط (10-14)', 'ضعیف (0-9)'],
+          labels: ['عالی (90-100%)', 'خوب (70-90%)', 'متوسط (50-70%)', 'ضعیف (0-50%)'],
           datasets: [{
             data: [
               examDistribution.value.excellent || 0,
@@ -489,7 +587,7 @@ export default {
       assignmentDistributionChart.value = new Chart(ctx, {
         type: 'doughnut',
         data: {
-          labels: ['ممتاز (18-20)', 'خوب (15-17)', 'متوسط (10-14)', 'ضعیف (0-9)'],
+          labels: ['عالی (90-100%)', 'خوب (70-90%)', 'متوسط (50-70%)', 'ضعیف (0-50%)'],
           datasets: [{
             data: [
               assignmentDistribution.value.excellent || 0,
@@ -772,6 +870,16 @@ export default {
       }
       return `${minutes} دقیقه`
     }
+
+    const getCategoryColor = (category) => {
+      const colors = {
+        'excellent': '#28a745',  // Green for excellent (90-100%)
+        'good': '#17a2b8',       // Blue for good (70-90%)
+        'average': '#ffc107',    // Yellow for average (50-70%)
+        'poor': '#dc3545'        // Red for poor (0-50%)
+      }
+      return colors[category] || '#6c757d'  // Default gray
+    }
     const getActivityClass = (type) => {
       const classMap = {
         'CONTENT_VIEW': 'content',
@@ -908,6 +1016,10 @@ export default {
       totalExams,
       hasGradesData,
 
+      // Enhanced data
+      enhancedAssignmentData,
+      submissionSummary,
+
       // Chart refs
       activityDistributionChart,
       dailyActivityChart,
@@ -920,6 +1032,7 @@ export default {
       resetFilters,
       formatDateTime,
       formatDuration,
+      getCategoryColor,
       getActivityClass,
       getActivityIcon,
       getActivityTypeName,
@@ -1292,5 +1405,59 @@ export default {
   .activity-time {
     margin-top: 0.25rem;
   }
+}
+
+/* Submission Summary Styles */
+.submission-summary-section .summary-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.submission-summary-section .card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px 12px 0 0;
+  padding: 1rem 1.5rem;
+  border: none;
+}
+
+.submission-summary-section .card-body {
+  padding: 1.5rem;
+}
+
+.submission-summary-section .stat-item {
+  text-align: center;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.submission-summary-section .stat-number {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.submission-summary-section .stat-label {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin: 0;
+}
+
+.submission-summary-section .table {
+  font-size: 0.9rem;
+}
+
+.submission-summary-section .table th {
+  background-color: #f8f9fa;
+  border-top: none;
+  font-weight: 600;
+  color: #495057;
+}
+
+.submission-summary-section .badge {
+  font-size: 0.75rem;
 }
 </style>

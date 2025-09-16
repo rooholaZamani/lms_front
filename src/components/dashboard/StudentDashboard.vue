@@ -68,6 +68,11 @@
               <i class="fas fa-chart-line me-1"></i> پیشرفت تحصیلی
             </a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" :class="{ active: activeTab === 'activities' }" href="#" @click.prevent="activeTab = 'activities'">
+              <i class="fas fa-chart-bar me-1"></i> فعالیت‌های من
+            </a>
+          </li>
         </ul>
       </div>
 
@@ -172,6 +177,107 @@
             </template>
           </loading-spinner>
         </div>
+
+        <!-- فعالیت‌های من -->
+        <div v-if="activeTab === 'activities'">
+          <loading-spinner :loading="loadingActivities">
+            <div class="row">
+              <!-- Daily Activity Chart -->
+              <div class="col-lg-8 mb-4">
+                <div class="modern-card">
+                  <div class="modern-card-header">
+                    <h5 class="mb-0">
+                      <i class="fas fa-chart-line me-2"></i>
+                      فعالیت‌های روزانه (30 روز گذشته)
+                    </h5>
+                  </div>
+                  <div class="modern-card-body">
+                    <canvas ref="dailyActivityChart" style="max-height: 400px;"></canvas>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Activity Summary -->
+              <div class="col-lg-4 mb-4">
+                <div class="modern-card h-100">
+                  <div class="modern-card-header">
+                    <h5 class="mb-0">
+                      <i class="fas fa-chart-pie me-2"></i>
+                      خلاصه فعالیت‌ها
+                    </h5>
+                  </div>
+                  <div class="modern-card-body">
+                    <div v-if="activitySummary" class="activity-summary">
+                      <div class="summary-item mb-3">
+                        <div class="d-flex justify-content-between">
+                          <span class="text-muted">کل فعالیت‌ها</span>
+                          <strong>{{ activitySummary.totalActivities || 0 }}</strong>
+                        </div>
+                      </div>
+                      <div class="summary-item mb-3">
+                        <div class="d-flex justify-content-between">
+                          <span class="text-muted">روزهای فعال</span>
+                          <strong>{{ activitySummary.activeDays || 0 }}</strong>
+                        </div>
+                      </div>
+                      <div class="summary-item mb-3">
+                        <div class="d-flex justify-content-between">
+                          <span class="text-muted">کل زمان مطالعه</span>
+                          <strong>{{ formatTime(activitySummary.totalTimeSpent) }}</strong>
+                        </div>
+                      </div>
+                      <div class="summary-item mb-3">
+                        <div class="d-flex justify-content-between">
+                          <span class="text-muted">میانگین روزانه</span>
+                          <strong>{{ Math.round(activitySummary.averageActivitiesPerDay || 0) }}</strong>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Activity Type Breakdown -->
+              <div class="col-lg-6 mb-4">
+                <div class="modern-card">
+                  <div class="modern-card-header">
+                    <h5 class="mb-0">
+                      <i class="fas fa-tasks me-2"></i>
+                      انواع فعالیت‌ها
+                    </h5>
+                  </div>
+                  <div class="modern-card-body">
+                    <canvas ref="activityTypeChart" style="max-height: 300px;"></canvas>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Time of Day Activity -->
+              <div class="col-lg-6 mb-4">
+                <div class="modern-card">
+                  <div class="modern-card-header">
+                    <h5 class="mb-0">
+                      <i class="fas fa-clock me-2"></i>
+                      فعالیت در ساعات مختلف
+                    </h5>
+                  </div>
+                  <div class="modern-card-body">
+                    <canvas ref="timeOfDayChart" style="max-height: 300px;"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- No Activities Message -->
+            <div v-if="!loadingActivities && dailyActivityData && dailyActivityData.summary && dailyActivityData.summary.totalActivities === 0" class="text-center py-5">
+              <div class="modern-logo large secondary mb-4">
+                <i class="fas fa-chart-bar"></i>
+              </div>
+              <h5 class="text-muted mb-3">هنوز فعالیتی ثبت نشده است</h5>
+              <p class="text-muted">با شروع مطالعه در دوره‌ها، فعالیت‌های شما در اینجا نمایش داده خواهد شد.</p>
+            </div>
+          </loading-spinner>
+        </div>
       </div>
     </div>
   </div>
@@ -182,6 +288,7 @@ import axios from 'axios';
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
 import StudentCourseCard from '@/components/dashboard/StudentCourseCard.vue';
 import StudentExamsTable from '@/components/exams/StudentExamsTable.vue';
+import Chart from 'chart.js/auto';
 import { useFormatters } from '@/composables/useFormatters.js';
 
 export default {
@@ -203,6 +310,7 @@ export default {
       loading: true,
       loadingExams: true,
       loadingProgress: true,
+      loadingActivities: true,
       courses: [],
       progressList: [],
       progressMap: {},
@@ -211,7 +319,16 @@ export default {
         totalCourses: 0,
         completedCourses: 0,
         averageProgress: 0
-      }
+      },
+      // Activity data
+      dailyActivityData: null,
+      activitySummary: null,
+      activityBreakdown: null,
+      hourlyBreakdown: null,
+      // Chart instances
+      dailyChart: null,
+      typeChart: null,
+      timeChart: null
     }
   },
   setup() {
@@ -220,6 +337,19 @@ export default {
   },
   created() {
     this.fetchData();
+  },
+  beforeUnmount() {
+    // Cleanup chart instances
+    if (this.dailyChart) this.dailyChart.destroy();
+    if (this.typeChart) this.typeChart.destroy();
+    if (this.timeChart) this.timeChart.destroy();
+  },
+  watch: {
+    activeTab(newTab) {
+      if (newTab === 'activities' && !this.dailyActivityData) {
+        this.fetchActivityData();
+      }
+    }
   },
   methods: {
     async fetchData() {
@@ -272,6 +402,250 @@ export default {
       if (progress >= 50) return 'progress-info';
       if (progress >= 25) return 'progress-warning';
       return 'progress-danger';
+    },
+
+    async fetchActivityData() {
+      this.loadingActivities = true;
+      try {
+        const [dailyResponse, summaryResponse] = await Promise.all([
+          axios.get('/api/analytics/student/daily-activity', {
+            params: { days: 30 }
+          }),
+          axios.get('/api/analytics/student/activity-summary', {
+            params: { timeFilter: 'month' }
+          })
+        ]);
+
+        this.dailyActivityData = dailyResponse.data;
+        this.activitySummary = {
+          ...this.dailyActivityData.summary,
+          ...summaryResponse.data
+        };
+
+        this.activityBreakdown = summaryResponse.data.activityBreakdown || {};
+        this.hourlyBreakdown = summaryResponse.data.hourlyBreakdown || {};
+
+        // Create charts after data is loaded
+        this.$nextTick(() => {
+          this.createCharts();
+        });
+      } catch (error) {
+        console.error('Error fetching activity data:', error);
+        this.$toast.error('خطا در بارگذاری داده‌های فعالیت');
+      } finally {
+        this.loadingActivities = false;
+      }
+    },
+
+    createCharts() {
+      this.createDailyActivityChart();
+      this.createActivityTypeChart();
+      this.createTimeOfDayChart();
+    },
+
+    createDailyActivityChart() {
+      if (!this.dailyActivityData || !this.$refs.dailyActivityChart) return;
+
+      const ctx = this.$refs.dailyActivityChart.getContext('2d');
+
+      if (this.dailyChart) {
+        this.dailyChart.destroy();
+      }
+
+      const dailyData = this.dailyActivityData.dailyData || [];
+
+      this.dailyChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: dailyData.map(day => {
+            const date = new Date(day.date);
+            return date.toLocaleDateString('fa-IR', { month: 'short', day: 'numeric' });
+          }),
+          datasets: [
+            {
+              label: 'کل فعالیت‌ها',
+              data: dailyData.map(day => day.totalActivities),
+              borderColor: '#667eea',
+              backgroundColor: 'rgba(102, 126, 234, 0.1)',
+              tension: 0.4,
+              fill: true
+            },
+            {
+              label: 'مشاهده محتوا',
+              data: dailyData.map(day => day.views),
+              borderColor: '#22c55e',
+              backgroundColor: 'rgba(34, 197, 94, 0.1)',
+              tension: 0.4
+            },
+            {
+              label: 'ارسال تکالیف',
+              data: dailyData.map(day => day.submissions),
+              borderColor: '#f59e0b',
+              backgroundColor: 'rgba(245, 158, 11, 0.1)',
+              tension: 0.4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                usePointStyle: true,
+                font: {
+                  family: 'Vazirmatn',
+                  size: 12
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                font: {
+                  family: 'Vazirmatn'
+                }
+              }
+            },
+            x: {
+              ticks: {
+                font: {
+                  family: 'Vazirmatn'
+                }
+              }
+            }
+          }
+        }
+      });
+    },
+
+    createActivityTypeChart() {
+      if (!this.activityBreakdown || !this.$refs.activityTypeChart) return;
+
+      const ctx = this.$refs.activityTypeChart.getContext('2d');
+
+      if (this.typeChart) {
+        this.typeChart.destroy();
+      }
+
+      const typeLabels = {
+        'CONTENT_VIEW': 'مشاهده محتوا',
+        'EXAM_SUBMISSION': 'ارسال آزمون',
+        'ASSIGNMENT_SUBMISSION': 'ارسال تکلیف',
+        'LESSON_COMPLETION': 'تکمیل درس',
+        'LOGIN': 'ورود به سیستم'
+      };
+
+      const labels = Object.keys(this.activityBreakdown).map(key => typeLabels[key] || key);
+      const data = Object.values(this.activityBreakdown);
+
+      this.typeChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: [
+              '#667eea',
+              '#22c55e',
+              '#f59e0b',
+              '#ef4444',
+              '#8b5cf6'
+            ],
+            borderWidth: 2,
+            borderColor: '#ffffff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                usePointStyle: true,
+                font: {
+                  family: 'Vazirmatn',
+                  size: 11
+                },
+                padding: 15
+              }
+            }
+          }
+        }
+      });
+    },
+
+    createTimeOfDayChart() {
+      if (!this.hourlyBreakdown || !this.$refs.timeOfDayChart) return;
+
+      const ctx = this.$refs.timeOfDayChart.getContext('2d');
+
+      if (this.timeChart) {
+        this.timeChart.destroy();
+      }
+
+      // Create 24-hour data array
+      const hourlyData = [];
+      for (let hour = 0; hour < 24; hour++) {
+        hourlyData.push(this.hourlyBreakdown[hour.toString()] || 0);
+      }
+
+      this.timeChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+          datasets: [{
+            label: 'تعداد فعالیت‌ها',
+            data: hourlyData,
+            backgroundColor: 'rgba(102, 126, 234, 0.6)',
+            borderColor: '#667eea',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                font: {
+                  family: 'Vazirmatn'
+                }
+              }
+            },
+            x: {
+              ticks: {
+                font: {
+                  family: 'Vazirmatn',
+                  size: 10
+                }
+              }
+            }
+          }
+        }
+      });
+    },
+
+    formatTime(minutes) {
+      if (!minutes) return '0 دقیقه';
+
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = Math.round(minutes % 60);
+
+      if (hours > 0) {
+        return `${hours} ساعت ${remainingMinutes > 0 ? `${remainingMinutes} دقیقه` : ''}`;
+      }
+      return `${remainingMinutes} دقیقه`;
     }
   }
 }

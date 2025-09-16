@@ -176,9 +176,16 @@
                     v-if="!isReviewMode"
                     type="text"
                     class="blank-input"
+                    :class="getBlankInputClass(part.blankIndex)"
                     :value="currentAnswer && currentAnswer[part.blankIndex] || ''"
-                    @input="updateBlank(part.blankIndex, $event.target.value)"
-                    placeholder="..."
+                    @input="updateBlankWithResize(part.blankIndex, $event)"
+                    @focus="onBlankFocus(part.blankIndex)"
+                    @blur="onBlankBlur(part.blankIndex)"
+                    :placeholder="`جای خالی ${part.blankIndex + 1}`"
+                    :title="`پاسخ جای خالی شماره ${part.blankIndex + 1} را وارد کنید`"
+                    autocomplete="off"
+                    spellcheck="false"
+                    :ref="`blank-${part.blankIndex}`"
                 />
                 <span v-else class="blank-review" :class="isBlankCorrect(part.blankIndex) ? 'correct' : 'incorrect'">
                   {{ currentAnswer && currentAnswer[part.blankIndex] || '...' }}
@@ -371,6 +378,51 @@ export default {
       const newAnswer = Array.isArray(this.currentAnswer) ? [...this.currentAnswer] : [];
       newAnswer[blankIndex] = value;
       this.currentAnswer = newAnswer;
+    },
+
+    updateBlankWithResize(blankIndex, event) {
+      const value = event.target.value;
+      this.updateBlank(blankIndex, value);
+
+      // Auto-resize the input based on content
+      this.resizeInput(event.target);
+    },
+
+    resizeInput(input) {
+      // Create a temporary span to measure text width
+      const span = document.createElement('span');
+      span.style.visibility = 'hidden';
+      span.style.position = 'absolute';
+      span.style.fontSize = window.getComputedStyle(input).fontSize;
+      span.style.fontFamily = window.getComputedStyle(input).fontFamily;
+      span.style.fontWeight = window.getComputedStyle(input).fontWeight;
+      span.textContent = input.value || input.placeholder;
+
+      document.body.appendChild(span);
+      const textWidth = span.offsetWidth;
+      document.body.removeChild(span);
+
+      // Set input width with padding
+      const newWidth = Math.max(80, Math.min(400, textWidth + 40));
+      input.style.width = newWidth + 'px';
+    },
+
+    onBlankFocus(blankIndex) {
+      // Add focus indication or help text if needed
+      console.log(`Focus on blank ${blankIndex}`);
+    },
+
+    onBlankBlur(blankIndex) {
+      // Validate or provide feedback when leaving the field
+      console.log(`Blur on blank ${blankIndex}`);
+    },
+
+    getBlankInputClass(blankIndex) {
+      const answer = this.currentAnswer && this.currentAnswer[blankIndex];
+      return {
+        'has-content': answer && answer.trim().length > 0,
+        'is-empty': !answer || answer.trim().length === 0
+      };
     },
 
     updateMatching(leftItem, rightItem) {
@@ -716,12 +768,75 @@ export default {
 .blank-input {
   display: inline-block;
   min-width: 120px;
-  padding: 0.25rem 0.5rem;
-  border: 1px solid #667eea;
-  border-radius: 4px;
+  max-width: 300px;
+  padding: 0.35rem 0.6rem;
+  border: 2px solid #667eea;
+  border-radius: 6px;
   background: rgba(102, 126, 234, 0.05);
   text-align: center;
   margin: 0 0.25rem;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  resize: horizontal;
+  direction: ltr; /* For mixed content */
+}
+
+.blank-input:focus {
+  outline: none;
+  border-color: #4c63d2;
+  background: rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+  transform: scale(1.02);
+}
+
+.blank-input:hover {
+  border-color: #5a73d8;
+  background: rgba(102, 126, 234, 0.08);
+}
+
+.blank-input::placeholder {
+  color: #8892b0;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+/* Auto-resize input based on content */
+.blank-input[data-auto-resize] {
+  width: auto;
+  min-width: 80px;
+  max-width: 400px;
+}
+
+/* Visual feedback for filled vs empty inputs */
+.blank-input.has-content {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.blank-input.has-content:focus {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+}
+
+.blank-input.is-empty:focus {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .blank-input {
+    min-width: 80px;
+    max-width: 200px;
+    font-size: 0.9rem;
+    padding: 0.3rem 0.5rem;
+  }
+
+  .template-content {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
 }
 
 .blank-review {
