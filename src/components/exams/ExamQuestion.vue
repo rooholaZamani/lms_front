@@ -373,6 +373,22 @@ export default {
     }
   },
 
+  created() {
+    // Debug logging for question structure analysis
+    if (this.question.questionType === 'FILL_IN_THE_BLANKS') {
+      console.log('FILL_IN_THE_BLANKS Question Debug Info:', {
+        questionId: this.question.id,
+        questionNumber: this.questionNumber,
+        questionText: this.question.text,
+        hasTemplate: !!this.question.template,
+        template: this.question.template,
+        hasBlankAnswers: !!this.question.blankAnswers,
+        blankAnswersCount: this.question.blankAnswers ? this.question.blankAnswers.length : 0,
+        templateParts: this.getTemplateParts()
+      });
+    }
+  },
+
   methods: {
     updateBlank(blankIndex, value) {
       const newAnswer = Array.isArray(this.currentAnswer) ? [...this.currentAnswer] : [];
@@ -438,7 +454,16 @@ export default {
     },
 
     getTemplateParts() {
-      if (!this.question.template) return [{ type: 'text', content: this.question.text }];
+      // Enhanced fallback logic for missing templates
+      if (!this.question.template) {
+        console.log('FILL_IN_THE_BLANKS question missing template, creating fallback:', {
+          questionId: this.question.id,
+          questionText: this.question.text,
+          questionType: this.question.questionType
+        });
+
+        return this.createFallbackTemplate();
+      }
 
       const template = this.question.template;
       const parts = [];
@@ -474,6 +499,101 @@ export default {
       }
 
       return parts;
+    },
+
+    createFallbackTemplate() {
+      const questionText = this.question.text || '';
+      const parts = [];
+
+      // Pattern 1: Look for "..." in text and replace with blank
+      const dotPattern = /\.{3,}/g;
+      if (dotPattern.test(questionText)) {
+        let lastIndex = 0;
+        let blankIndex = 0;
+        let match;
+
+        // Reset regex for iteration
+        dotPattern.lastIndex = 0;
+
+        while ((match = dotPattern.exec(questionText)) !== null) {
+          // Add text before the dots
+          if (match.index > lastIndex) {
+            parts.push({
+              type: 'text',
+              content: questionText.substring(lastIndex, match.index)
+            });
+          }
+
+          // Add blank input
+          parts.push({
+            type: 'blank',
+            blankIndex: blankIndex++
+          });
+
+          lastIndex = match.index + match[0].length;
+        }
+
+        // Add remaining text after last dots
+        if (lastIndex < questionText.length) {
+          parts.push({
+            type: 'text',
+            content: questionText.substring(lastIndex)
+          });
+        }
+
+        return parts;
+      }
+
+      // Pattern 2: Look for underscores "____"
+      const underscorePattern = /_{3,}/g;
+      if (underscorePattern.test(questionText)) {
+        let lastIndex = 0;
+        let blankIndex = 0;
+        let match;
+
+        underscorePattern.lastIndex = 0;
+
+        while ((match = underscorePattern.exec(questionText)) !== null) {
+          if (match.index > lastIndex) {
+            parts.push({
+              type: 'text',
+              content: questionText.substring(lastIndex, match.index)
+            });
+          }
+
+          parts.push({
+            type: 'blank',
+            blankIndex: blankIndex++
+          });
+
+          lastIndex = match.index + match[0].length;
+        }
+
+        if (lastIndex < questionText.length) {
+          parts.push({
+            type: 'text',
+            content: questionText.substring(lastIndex)
+          });
+        }
+
+        return parts;
+      }
+
+      // Pattern 3: Fallback - add question text and one input field at the end
+      return [
+        {
+          type: 'text',
+          content: questionText
+        },
+        {
+          type: 'text',
+          content: ' '
+        },
+        {
+          type: 'blank',
+          blankIndex: 0
+        }
+      ];
     },
 
     getAllRightItems() {
