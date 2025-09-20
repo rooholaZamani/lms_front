@@ -572,7 +572,8 @@ export default {
 
     async markContentViewed(contentId) {
       try {
-        await axios.post(`/progress/content/${contentId}/view`);
+        // Mark content as viewed with minimal timeSpent (content preview)
+        await axios.post(`/progress/content/${contentId}/view?timeSpent=1`);
       } catch (error) {
         console.error('Error marking content as viewed:', error);
       }

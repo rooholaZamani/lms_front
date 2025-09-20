@@ -395,8 +395,9 @@ export default {
 
       const gridSize = Math.floor(width / 24);
       const rowHeight = Math.floor(height / 7);
-      
-      const daysOfWeek = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'];
+
+      const daysOfWeek = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه', 'شنبه'];
+
       const hours = d3.range(24);
 
       console.log('Heatmap data structure:', this.dailyHeatmapData.slice(0, 5));

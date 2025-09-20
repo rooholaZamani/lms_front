@@ -1146,7 +1146,8 @@ export default {
 
     async markLessonComplete(lessonId) {
       try {
-        await this.$http.post(`/progress/lesson/${lessonId}/complete`);
+        // Mark lesson as complete with minimal timeSpent (manual completion)
+        await this.$http.post(`/progress/lesson/${lessonId}/complete?timeSpent=1`);
 
         if (!this.progress.completedLessonIds) {
           this.progress.completedLessonIds = [];
