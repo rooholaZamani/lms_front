@@ -347,8 +347,26 @@
         <div v-for="(answerData, index) in selectedStudentAnswers?.answers"
              :key="answerData?.questionId" class="question-item mb-4 p-3 border rounded">
           <div class="question-header mb-3">
-            <h6>سوال {{ index + 1 }}: {{ answerData?.questionText }}</h6>
-            <small class="text-muted">نوع: {{ getQuestionTypeLabel(answerData?.questionType) }}</small>
+            <div class="d-flex justify-content-between align-items-start">
+              <div class="question-info">
+                <h6>سوال {{ index + 1 }}: {{ answerData?.questionText }}</h6>
+                <small class="text-muted">نوع: {{ getQuestionTypeLabel(answerData?.questionType) }}</small>
+              </div>
+              <div class="question-score-badge">
+                <span v-if="isPartialScoringQuestion(answerData)"
+                      :class="getPartialScoreBadgeClass(answerData)"
+                      class="badge fs-6 mb-1">
+                  {{ answerData?.earnedPoints }}/{{ answerData?.totalPoints }}
+                </span>
+                <span v-else
+                      :class="answerData?.isCorrect ? 'badge bg-success fs-6 mb-1' : 'badge bg-danger fs-6 mb-1'">
+                  {{ answerData?.earnedPoints }}/{{ answerData?.totalPoints }}
+                </span>
+                <div class="score-percentage text-center">
+                  <small class="text-muted">{{ getScorePercentageForQuestion(answerData) }}%</small>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="answer-details">
@@ -398,6 +416,8 @@
             </div>
           </div>
           </div>
+        </div>
+        </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
@@ -776,7 +796,7 @@ export default {
           } else {
             console.error('Modal element not found');
           }
-        })
+        });
 
       } catch (error) {
         console.error('Error fetching student answers:', error);
@@ -1262,5 +1282,42 @@ export default {
   padding: 1rem;
   border-radius: 8px;
   margin-top: 0.5rem;
+}
+
+/* Question score badge styling */
+.question-score-badge {
+  min-width: 80px;
+  text-align: center;
+}
+
+.question-score-badge .badge {
+  font-weight: 600;
+  min-width: 60px;
+  padding: 0.5rem 0.8rem;
+}
+
+.question-score-badge .score-percentage {
+  margin-top: 0.25rem;
+}
+
+.question-info {
+  flex: 1;
+  margin-right: 1rem;
+}
+
+/* Responsive adjustments for question header */
+@media (max-width: 768px) {
+  .question-header .d-flex {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .question-info {
+    margin-right: 0;
+  }
+
+  .question-score-badge {
+    align-self: flex-start;
+  }
 }
 </style>
