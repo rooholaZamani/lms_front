@@ -211,28 +211,34 @@
               <h6 class="card-title">سوالات چالش‌برانگیز</h6>
               <div class="challenging-questions">
                 <div
+                    v-if="challengingQuestions.length > 0"
                     v-for="question in challengingQuestions"
                     :key="question.id"
                     class="question-item"
                 >
                   <div class="question-info">
-                    <h6>{{ question.title }}</h6>
-                    <p>{{ question.description }}</p>
+                    <h6>{{ question.examTitle || question.topic || 'سوال' }}</h6>
+                    <p>{{ question.questionText || question.lessonTitle || 'متن سوال در دسترس نیست' }}</p>
                     <div class="question-stats">
                       <span class="stat">
                         <i class="fas fa-users"></i>
-                        {{ question.attemptCount }} تلاش
+                        {{ question.totalAttempts || 0 }} تلاش
                       </span>
                       <span class="stat">
                         <i class="fas fa-percent"></i>
-                        {{ question.successRate }}% موفقیت
+                        {{ Math.round(100 - (question.errorRate || 0)) }}% موفقیت
                       </span>
                       <span class="stat difficulty">
                         <i class="fas fa-exclamation-triangle"></i>
-                        سختی: {{ question.difficultyLevel }}
+                        سختی: {{ Math.round((question.difficulty || 0) * 100) / 100 }}
                       </span>
                     </div>
                   </div>
+                </div>
+                <div v-else class="text-center py-4">
+                  <i class="fas fa-question-circle fa-2x text-muted mb-2"></i>
+                  <p class="text-muted">سوال چالش‌برانگیزی در این دوره یافت نشد</p>
+                  <small class="text-muted">این می‌تواند نشان‌دهنده عملکرد خوب دانش‌آموزان باشد</small>
                 </div>
               </div>
             </div>
@@ -269,27 +275,34 @@
               <h6 class="card-title">دانش‌آموزان در معرض خطر</h6>
               <div class="at-risk-students">
                 <div
+                    v-if="atRiskStudents.length > 0"
                     v-for="student in atRiskStudents"
                     :key="student.id"
                     class="student-item"
                 >
                   <div class="student-info">
-                    <div class="student-name">{{ student.name }}</div>
+                    <div class="student-name">{{ student.firstName }} {{ student.lastName }}</div>
                     <div class="risk-factors">
                       <span
-                          v-for="factor in student.riskFactors"
+                          v-for="(isRisk, factor) in student.factors"
                           :key="factor"
+                          v-if="isRisk"
                           class="risk-badge"
                       >
-                        {{ getRiskFactorLabel(factor) }}
+                        {{ getRiskFactorLabel(factor.toUpperCase()) }}
                       </span>
                     </div>
                     <div class="student-stats">
-                      <span>پیشرفت: {{ student.progress }}%</span>
-                      <span>نمره: {{ student.averageScore }}%</span>
-                      <span>فعالیت: {{ student.lastActivity }}</span>
+                      <span>حضور: {{ student.attendanceRate || 0 }}%</span>
+                      <span>نمره: {{ student.averageScore || 0 }}%</span>
+                      <span>آخرین فعالیت: {{ student.daysSinceLastActivity || 0 }} روز پیش</span>
                     </div>
                   </div>
+                </div>
+                <div v-else class="text-center py-4">
+                  <i class="fas fa-shield-alt fa-2x text-success mb-2"></i>
+                  <p class="text-muted">دانش‌آموز در معرض خطری شناسایی نشد</p>
+                  <small class="text-muted">همه دانش‌آموزان عملکرد مناسبی دارند</small>
                 </div>
               </div>
             </div>
@@ -501,9 +514,10 @@ export default {
 
     const getRiskFactorLabel = (factor) => {
       const labels = {
-        'LOW_ATTENDANCE': 'حضور پایین',
-        'POOR_PERFORMANCE': 'عملکرد ضعیف',
+        'LOWATTENDANCE': 'حضور پایین',
+        'POORPERFORMANCE': 'عملکرد ضعیف',
         'INACTIVITY': 'عدم فعالیت',
+        'BEHAVIORALISSUES': 'مشکلات رفتاری'
       };
       return labels[factor] || factor;
     };
@@ -726,25 +740,60 @@ export default {
 
         } else if (analysisType.value === 'questions') {
           // تحلیل سوالات چالش‌برانگیز
-          const questionsResponse = await axios.get(`/analytics/course/${selectedCourse.value}/challenging-questions`);
-          challengingQuestions.value = questionsResponse.data?.questions || [];
+          try {
+            const questionsResponse = await axios.get(`/analytics/course/${selectedCourse.value}/challenging-questions`);
+            challengingQuestions.value = questionsResponse.data?.challengingQuestions || [];
 
-          if (challengingQuestions.value.length > 0) {
+            if (challengingQuestions.value.length > 0) {
+              questionStats.value = {
+                mostDifficult: questionsResponse.data?.summary?.maxDifficulty || Math.max(...challengingQuestions.value.map(q => q.difficulty || 0)),
+                averageDifficulty: questionsResponse.data?.summary?.averageDifficulty || challengingQuestions.value.reduce((sum, q) => sum + (q.difficulty || 0), 0) / challengingQuestions.value.length,
+                needsReview: questionsResponse.data?.summary?.questionsNeedingReview || challengingQuestions.value.filter(q => (q.errorRate || 0) > 80).length
+              };
+            } else {
+              questionStats.value = {
+                mostDifficult: 0,
+                averageDifficulty: 0,
+                needsReview: 0
+              };
+            }
+          } catch (questionErr) {
+            console.error('Error fetching challenging questions:', questionErr);
+            challengingQuestions.value = [];
             questionStats.value = {
-              mostDifficult: Math.max(...challengingQuestions.value.map(q => q.difficulty || 0)),
-              averageDifficulty: challengingQuestions.value.reduce((sum, q) => sum + (q.difficulty || 0), 0) / challengingQuestions.value.length,
-              needsReview: challengingQuestions.value.filter(q => (q.successRate || 0) < 60).length
+              mostDifficult: 0,
+              averageDifficulty: 0,
+              needsReview: 0
             };
           }
 
         } else if (analysisType.value === 'risk') {
           // دانش‌آموزان در معرض خطر
-          const riskResponse = await axios.get(`/analytics/course/${selectedCourse.value}/at-risk-students`);
-          console.log('At-risk students response:', riskResponse.data);
+          try {
+            const riskResponse = await axios.get(`/analytics/course/${selectedCourse.value}/at-risk-students`);
+            console.log('At-risk students response:', riskResponse.data);
 
-          if (riskResponse.data) {
-            atRiskStudents.value = riskResponse.data.students || [];
-            riskFactors.value = riskResponse.data.riskFactors || {
+            if (riskResponse.data) {
+              atRiskStudents.value = riskResponse.data.students || [];
+              riskFactors.value = riskResponse.data.riskFactors || {
+                lowAttendance: 0,
+                poorPerformance: 0,
+                inactivity: 0,
+                behavioralIssues: 0
+              };
+            } else {
+              atRiskStudents.value = [];
+              riskFactors.value = {
+                lowAttendance: 0,
+                poorPerformance: 0,
+                inactivity: 0,
+                behavioralIssues: 0
+              };
+            }
+          } catch (riskErr) {
+            console.error('Error fetching at-risk students:', riskErr);
+            atRiskStudents.value = [];
+            riskFactors.value = {
               lowAttendance: 0,
               poorPerformance: 0,
               inactivity: 0,

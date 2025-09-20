@@ -408,10 +408,10 @@ export default {
       this.loadingActivities = true;
       try {
         const [dailyResponse, summaryResponse] = await Promise.all([
-          axios.get('/api/analytics/student/daily-activity', {
+          axios.get('/analytics/student/daily-activity', {
             params: { days: 30 }
           }),
-          axios.get('/api/analytics/student/activity-summary', {
+          axios.get('/analytics/student/activity-summary', {
             params: { timeFilter: 'month' }
           })
         ]);
