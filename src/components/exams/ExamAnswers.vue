@@ -441,6 +441,10 @@ export default {
     examId: {
       type: [String, Number],
       required: true
+    },
+    studentId: {
+      type: [String, Number],
+      required: false
     }
   },
   data() {
@@ -483,6 +487,11 @@ export default {
     this.$nextTick(() => {
       this.initializeCharts();
     });
+
+    // If studentId is provided, automatically show that student's answers
+    if (this.studentId) {
+      await this.autoShowStudentAnswers();
+    }
   },
   beforeUnmount() {
     if (this.scoreChart) {
@@ -803,6 +812,21 @@ export default {
         this.$toast?.error('خطا در دریافت پاسخ‌های دانش‌آموز');
       } finally {
         this.loadingAnswers = false;
+      }
+    },
+
+    async autoShowStudentAnswers() {
+      try {
+        // Find the submission for the specified student
+        const submission = this.submissions.find(s => s.student.id == this.studentId);
+        if (submission) {
+          await this.viewStudentAnswers(submission);
+        } else {
+          this.$toast?.error('دانش‌آموز مورد نظر در این آزمون شرکت نکرده است');
+        }
+      } catch (error) {
+        console.error('Error auto-showing student answers:', error);
+        this.$toast?.error('خطا در نمایش پاسخ‌های دانش‌آموز');
       }
     },
 

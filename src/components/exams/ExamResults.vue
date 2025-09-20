@@ -107,7 +107,7 @@
                       </td>
                       <td>
                         <button class="btn btn-sm btn-outline-primary"
-                                @click="viewAnswers(submission.id)">
+                                @click="viewAnswers(submission)">
                           <i class="fas fa-eye"></i>
                           مشاهده پاسخ‌ها
                         </button>
@@ -235,10 +235,13 @@ export default {
       });
     },
 
-    viewAnswers(examId) {
+    viewAnswers(submission) {
       this.$router.push({
         name: 'ExamAnswers',
-        params: { examId }
+        params: {
+          examId: this.id,
+          studentId: submission.student.id
+        }
       });
     }
   }
