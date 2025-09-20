@@ -521,14 +521,23 @@ export default {
     const fetchCourseStats = async (courseId) => {
       try {
         const stats = await analytics.fetchCoursePerformance(courseId);
-        courseStats.value = {
-          totalStudents: stats.studentCount || 0,
-          averageProgress: Math.round(stats.averageProgress || 0),
-          averageTimeSpent: stats.averageTimeSpent || 0,
-          completionRate: Math.round(stats.completionRate || 0)
-        };
+        if (stats) {
+          courseStats.value = {
+            totalStudents: stats.totalStudents || stats.studentCount || 0,
+            averageProgress: Math.round(stats.averageProgress || 0),
+            averageTimeSpent: stats.averageTimeSpent || 0,
+            completionRate: Math.round(stats.completionRate || 0)
+          };
+        }
       } catch (err) {
         console.error('Error fetching course stats:', err);
+        // Set fallback values
+        courseStats.value = {
+          totalStudents: 0,
+          averageProgress: 0,
+          averageTimeSpent: 0,
+          completionRate: 0
+        };
       }
     };
 
@@ -649,9 +658,35 @@ export default {
       try {
         console.log(`Fetching analytics for course: ${selectedCourse.value}, type: ${analysisType.value}`);
 
-        // 1. دریافت آمار کلی درس
-        const courseStatsResponse = await axios.get(`/analytics/course/${selectedCourse.value}/activity-stats`);
-        courseStats.value = courseStatsResponse.data || {};
+        // 1. دریافت آمار کلی درس - استفاده از API صحیح
+        try {
+          const coursePerformanceResponse = await analytics.fetchCoursePerformance(selectedCourse.value);
+          if (coursePerformanceResponse) {
+            courseStats.value = {
+              totalStudents: coursePerformanceResponse.totalStudents || coursePerformanceResponse.studentCount || 0,
+              averageProgress: Math.round(coursePerformanceResponse.averageProgress || 0),
+              averageTimeSpent: coursePerformanceResponse.averageTimeSpent || 0,
+              completionRate: Math.round(coursePerformanceResponse.completionRate || 0)
+            };
+          } else {
+            // Fallback values when no data is returned
+            courseStats.value = {
+              totalStudents: 0,
+              averageProgress: 0,
+              averageTimeSpent: 0,
+              completionRate: 0
+            };
+          }
+        } catch (err) {
+          console.error('Error fetching course performance:', err);
+          // Fallback values on error
+          courseStats.value = {
+            totalStudents: 0,
+            averageProgress: 0,
+            averageTimeSpent: 0,
+            completionRate: 0
+          };
+        }
 
         // 2. دریافت داده‌ها بر اساس نوع تحلیل
         if (analysisType.value === 'progress') {

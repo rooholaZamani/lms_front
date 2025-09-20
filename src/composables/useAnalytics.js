@@ -164,8 +164,10 @@ export function useAnalytics() {
         try {
             const response = await axios.get(`/analytics/teacher/course/${courseId}/performance`);
             coursePerformance.value = {
-                studentCount: response.data.studentCount || 0,
+                studentCount: response.data.studentCount || response.data.totalStudents || 0,
+                totalStudents: response.data.totalStudents || response.data.studentCount || 0,
                 averageProgress: response.data.averageProgress || 0,
+                averageTimeSpent: response.data.averageTimeSpent || 0,
                 averageExamScore: response.data.averageExamScore || 0,
                 passingRate: response.data.passingRate || 0,
                 completionRate: response.data.completionRate || 0,
