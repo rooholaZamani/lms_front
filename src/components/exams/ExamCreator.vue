@@ -530,8 +530,14 @@ export default {
           break;
 
         case 'ESSAY':
+          // سوالات تشریحی فقط فیلدهای عمومی نیاز دارند
+          break;
+
         case 'SHORT_ANSWER':
-          // این دو نوع سوال فقط فیلدهای عمومی نیاز دارند
+          // برای سوالات پاسخ کوتاه پاسخ صحیح را اضافه می‌کنیم
+          if (questionData.correctOption && questionData.correctOption.trim()) {
+            data.correctOption = questionData.correctOption.trim();
+          }
           break;
       }
 

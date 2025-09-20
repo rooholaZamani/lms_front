@@ -166,10 +166,16 @@
                     <span class="score-value" :class="getScoreClass(exam)">
                       {{ exam.score || 0 }}
                     </span>
-                  <span class="score-total">/ {{ exam?.totalPossibleScore || 100 }}</span>
+                  <span class="score-total">/ {{ exam.exam?.totalPossibleScore || exam.totalPossibleScore || 100 }}</span>
                 </div>
                 <div class="score-percentage" :class="getScoreClass(exam)">
                   {{ getScorePercentage(exam) }}%
+                </div>
+                <!-- Add debug information in development -->
+                <div v-if="isDevelopmentMode" class="score-debug">
+                  <small class="text-muted">
+                    Debug: {{ exam.score || 0 }}/{{ exam.exam?.totalPossibleScore || exam.totalPossibleScore || 100 }}
+                  </small>
                 </div>
                 <div class="score-comparison" v-if="exam.classAverage">
                   <small class="text-muted">
@@ -493,6 +499,10 @@ export default {
       }
 
       return pages;
+    },
+
+    isDevelopmentMode() {
+      return process.env.NODE_ENV === 'development';
     }
   },
   methods: {
@@ -517,7 +527,24 @@ export default {
 
     getScorePercentage(exam) {
       const score = exam.score || 0;
-      const total = exam.exam?.totalPossibleScore || 100;
+      const total = exam.exam?.totalPossibleScore || exam.totalPossibleScore || 100;
+
+      // Add debugging for development
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Score calculation debug:', {
+          examId: exam.id,
+          score: score,
+          totalPossible: total,
+          examObject: exam.exam,
+          percentage: Math.round((score / total) * 100)
+        });
+      }
+
+      if (total <= 0) {
+        console.warn('Invalid total score detected:', total, 'for exam:', exam.id);
+        return 0;
+      }
+
       return Math.round((score / total) * 100);
     },
 
