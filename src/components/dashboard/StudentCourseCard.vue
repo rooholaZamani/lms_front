@@ -102,26 +102,17 @@
           <i class="fas fa-play me-1"></i>
           {{ progressPercentage > 0 ? 'ادامه دوره' : 'شروع دوره' }}
         </router-link>
-
-        <div class="action-buttons">
-          <button class="modern-btn modern-btn-outline modern-btn-sm"
-                  @click="downloadCertificate"
-                  title="گواهی"
-                  v-if="progressPercentage >= 100">
-            <i class="fas fa-certificate"></i>
-          </button>
-        </div>
       </div>
 
       <!-- Course rating -->
-      <div class="course-rating" v-if="course.rating">
-        <div class="rating-stars">
-          <i v-for="star in 5" :key="star"
-             class="fas fa-star"
-             :class="star <= course.rating ? 'text-warning' : 'text-muted'"></i>
-        </div>
-        <div class="rating-text">{{ course.rating.toFixed(1) }}</div>
-      </div>
+<!--      <div class="course-rating" v-if="course.rating">-->
+<!--        <div class="rating-stars">-->
+<!--          <i v-for="star in 5" :key="star"-->
+<!--             class="fas fa-star"-->
+<!--             :class="star <= course.rating ? 'text-warning' : 'text-muted'"></i>-->
+<!--        </div>-->
+<!--        <div class="rating-text">{{ course.rating.toFixed(1) }}</div>-->
+<!--      </div>-->
     </div>
   </div>
 </template>
@@ -255,13 +246,6 @@ export default {
       if (this.progressPercentage >= 50) return 'progress-info';
       if (this.progressPercentage >= 25) return 'progress-warning';
       return 'progress-danger';
-    },
-    downloadCertificate() {
-      // Mock certificate download
-      this.$toast?.success('گواهی دوره در حال آماده‌سازی است...');
-      setTimeout(() => {
-        this.$toast?.info('گواهی به ایمیل شما ارسال شد');
-      }, 2000);
     }
   }
 }
