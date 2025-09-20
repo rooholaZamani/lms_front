@@ -171,12 +171,6 @@
                 <div class="score-percentage" :class="getScoreClass(exam)">
                   {{ getScorePercentage(exam) }}%
                 </div>
-                <!-- Add debug information in development -->
-                <div v-if="isDevelopmentMode" class="score-debug">
-                  <small class="text-muted">
-                    Debug: {{ exam.score || 0 }}/{{ exam.exam?.totalPossibleScore || exam.totalPossibleScore || 100 }}
-                  </small>
-                </div>
                 <div class="score-comparison" v-if="exam.classAverage">
                   <small class="text-muted">
                     میانگین کلاس: {{ exam.classAverage }}

@@ -39,7 +39,7 @@
                 <div class="info-item">
                   <span class="info-label">نمره:</span>
                   <span class="info-value score" :class="studentPassed ? 'passed' : 'failed'">
-                    {{ studentScore }}%
+                    {{ studentScore }}/{{ studentTotalPossibleScore }} امتیاز ({{ studentTotalPossibleScore > 0 ? Math.round((studentScore / studentTotalPossibleScore) * 100) : 0 }}%)
                   </span>
                 </div>
               </div>
@@ -80,6 +80,8 @@
                   :show-explanation="true"
                   :is-review-mode="true"
                   :is-correct="checkAnswer(question, answers[index])"
+                  :earned-points="getQuestionScore(question).earnedPoints"
+                  :total-points="getQuestionScore(question).totalPoints"
                   @answer-selected="() => {}"
               />
             </div>
@@ -316,6 +318,7 @@ export default {
       loading: true,
       exam: {},
       answers: {},
+      answersDetails: {},
       currentQuestionIndex: 0,
       examStarted: false,
       examCompleted: false,
@@ -325,6 +328,7 @@ export default {
       questionsForReview: [],
       previousResult: null,
       studentScore: 0,
+      studentTotalPossibleScore: 0,
       studentPassed: false,
       studentSubmissionTime: null,
       warningShown: false,
@@ -389,6 +393,7 @@ export default {
           this.previousResult = response.data;
           this.showingAnswers = true;
           this.studentScore = response.data.score;
+          this.studentTotalPossibleScore = response.data.totalPossibleScore || 0;
           this.studentPassed = response.data.passed;
           this.studentSubmissionTime = response.data.submissionTime;
 
@@ -412,7 +417,9 @@ export default {
               });
 
               this.answers = convertedAnswers;
+              this.answersDetails = answersResponse.data.answers || {};
               this.studentScore = answersResponse.data.score || this.studentScore;
+              this.studentTotalPossibleScore = answersResponse.data.totalPossibleScore || this.studentTotalPossibleScore;
               this.studentPassed = answersResponse.data.passed !== undefined ?
                   answersResponse.data.passed : this.studentPassed;
               this.studentSubmissionTime = answersResponse.data.submissionTime || this.studentSubmissionTime;
@@ -766,6 +773,15 @@ export default {
 
     goToDashboard() {
       this.$router.push('/dashboard');
+    },
+
+    getQuestionScore(question) {
+      const questionId = question.id.toString();
+      const answerDetail = this.answersDetails[questionId];
+      return {
+        earnedPoints: answerDetail ? answerDetail.earnedPoints : null,
+        totalPoints: answerDetail ? answerDetail.totalPoints : null
+      };
     }
   }
 }

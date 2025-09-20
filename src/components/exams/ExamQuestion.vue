@@ -15,7 +15,10 @@
     <div class="question-text">
       <h5>{{ question.text }}</h5>
       <div class="question-meta">
-        <span class="points-badge">{{ question.points }} امتیاز</span>
+        <span v-if="isReviewMode && earnedPoints !== null && totalPoints !== null" class="score-badge" :class="earnedPoints > 0 ? 'earned' : 'no-earned'">
+          {{ earnedPoints }}/{{ totalPoints }} امتیاز
+        </span>
+        <span v-else class="points-badge">{{ question.points }} امتیاز</span>
         <span v-if="question.timeLimit" class="time-badge">{{ question.timeLimit }} دقیقه</span>
       </div>
     </div>
@@ -339,6 +342,14 @@ export default {
     isMarkedForReview: {
       type: Boolean,
       default: false
+    },
+    earnedPoints: {
+      type: Number,
+      default: null
+    },
+    totalPoints: {
+      type: Number,
+      default: null
     }
   },
   emits: ['answer-selected', 'answer-changed', 'mark-for-review'],
@@ -708,6 +719,22 @@ export default {
   border-radius: 15px;
   font-size: 0.8rem;
   font-weight: 600;
+}
+
+.score-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+}
+
+.score-badge.earned {
+  background: #28a745;
+}
+
+.score-badge.no-earned {
+  background: #dc3545;
 }
 
 .time-badge {
