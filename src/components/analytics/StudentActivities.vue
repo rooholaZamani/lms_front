@@ -248,6 +248,7 @@
 import { Chart, registerables } from 'chart.js'
 import axios from 'axios'
 import * as d3 from 'd3'
+import { formatTimelineDate, formatFullDate } from '@/utils/timeFormatter'
 
 Chart.register(...registerables)
 
@@ -591,39 +592,8 @@ export default {
     },
 
     formatTimelineDate(dateString) {
-      if (!dateString) return '';
-
-      // Parse date with Iran timezone context
-      const date = new Date(dateString);
-      const now = new Date();
-      
-      // Calculate difference using Iran timezone
-      const iranNow = new Date().toLocaleString('en-CA', { timeZone: 'Asia/Tehran' });
-      const iranDate = date.toLocaleString('en-CA', { timeZone: 'Asia/Tehran' });
-      const diff = new Date(iranNow) - new Date(iranDate);
-
-      // اگر کمتر از یک روز باشد
-      if (diff < 24 * 60 * 60 * 1000 && diff >= 0) {
-        const hours = Math.floor(diff / (60 * 60 * 1000));
-        const minutes = Math.floor((diff % (60 * 60 * 1000)) / (60 * 1000));
-
-        if (hours > 0) {
-          return `${hours} ساعت پیش`;
-        } else if (minutes > 0) {
-          return `${minutes} دقیقه پیش`;
-        } else {
-          return 'همین الان';
-        }
-      }
-
-      // برای تاریخ‌های قدیمی‌تر - display in Iran timezone
-      return new Intl.DateTimeFormat('fa-IR', {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'Asia/Tehran'
-      }).format(date);
+      // Use the centralized time formatter to fix timezone issues
+      return formatTimelineDate(dateString);
     },
 
     loadMoreTimeline() {
@@ -1042,15 +1012,8 @@ export default {
     },
 
     formatDate(dateString) {
-      if (!dateString) return 'نامشخص'
-      const date = new Date(dateString)
-      return new Intl.DateTimeFormat('fa-IR', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      }).format(date)
+      // Use the centralized date formatter with proper timezone handling
+      return formatFullDate(dateString);
     }
   }
 }

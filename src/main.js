@@ -78,38 +78,22 @@ app.use(Vue3Toastify, {
 // ثبت اشیا عمومی
 app.config.globalProperties.$http = axios
 app.config.globalProperties.$toast = toast
-// اضافه کردن فیلترهای عمومی
+// اضافه کردن فیلترهای عمومی با timezone صحیح
+import { formatShortDate, formatFullDate, formatDuration } from './utils/timeFormatter'
+
 app.config.globalProperties.$filters = {
     formatDate(date) {
         if (!date) return 'نامشخص'
-        const dateObj = new Date(date)
-        return new Intl.DateTimeFormat('fa-IR', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        }).format(dateObj)
+        return formatShortDate(date)
+    },
+
+    formatDateTime(date) {
+        if (!date) return 'نامشخص'
+        return formatFullDate(date)
     },
 
     formatTime(seconds) {
-        if (!seconds || seconds < 0) return '0 ثانیه'
-
-        const hours = Math.floor(seconds / 3600)
-        const minutes = Math.floor((seconds % 3600) / 60)
-        const secs = Math.floor(seconds % 60)
-
-        const parts = []
-
-        if (hours > 0) {
-            parts.push(`${hours} ساعت`)
-        }
-        if (minutes > 0) {
-            parts.push(`${minutes} دقیقه`)
-        }
-        if (secs > 0 || parts.length === 0) {
-            parts.push(`${secs} ثانیه`)
-        }
-
-        return parts.join(' و ')
+        return formatDuration(seconds)
     },
 
     formatTimeShort(seconds) {

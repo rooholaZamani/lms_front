@@ -345,24 +345,46 @@
             <div class="row">
               <div class="col-md-6">
                 <strong>پاسخ دانش‌آموز:</strong>
-                <div class="answer-text mt-1">
+                <div class="answer-text mt-1"
+                     v-if="isPartialScoringQuestion(answerData)"
+                     v-html="formatStudentAnswer(answerData)">
+                </div>
+                <div class="answer-text mt-1" v-else>
                   {{ formatStudentAnswer(answerData) }}
                 </div>
               </div>
               <div class="col-md-6">
                 <strong>پاسخ صحیح:</strong>
-                <div class="correct-answer-text mt-1">
+                <div class="correct-answer-text mt-1"
+                     v-if="isPartialScoringQuestion(answerData)"
+                     v-html="formatCorrectAnswer(answerData)">
+                </div>
+                <div class="correct-answer-text mt-1" v-else>
                   {{ formatCorrectAnswer(answerData) }}
                 </div>
               </div>
             </div>
             <div class="d-flex justify-content-between align-items-center mt-3">
-            <span :class="answerData?.isCorrect ? 'badge bg-success' : 'badge bg-danger'">
-              {{ answerData?.isCorrect ? 'درست' : 'نادرست' }}
-            </span>
-              <span class="text-muted">
-              امتیاز: {{ answerData?.earnedPoints }}/{{ answerData?.totalPoints }}
-            </span>
+              <div class="score-status">
+                <span v-if="isPartialScoringQuestion(answerData)"
+                      :class="getPartialScoreBadgeClass(answerData)"
+                      class="badge">
+                  {{ getPartialScoreLabel(answerData) }}
+                </span>
+                <span v-else
+                      :class="answerData?.isCorrect ? 'badge bg-success' : 'badge bg-danger'">
+                  {{ answerData?.isCorrect ? 'درست' : 'نادرست' }}
+                </span>
+              </div>
+              <div class="score-points">
+                <span class="text-muted">
+                  امتیاز: {{ answerData?.earnedPoints }}/{{ answerData?.totalPoints }}
+                </span>
+                <span v-if="isPartialScoringQuestion(answerData) && getScorePercentageForQuestion(answerData) < 100"
+                      class="text-info ms-2">
+                  ({{ getScorePercentageForQuestion(answerData) }}%)
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -517,8 +539,10 @@ export default {
           return studentAnswer === 'true' || studentAnswer === true ? 'درست' : 'نادرست';
 
         case 'MATCHING':
+          return this.formatMatchingAnswer(studentAnswer, answerData);
+
         case 'CATEGORIZATION':
-          return JSON.stringify(studentAnswer, null, 2);
+          return this.formatCategorizationAnswer(studentAnswer, answerData);
 
         case 'FILL_IN_THE_BLANKS':
           return Array.isArray(studentAnswer) ? studentAnswer.join(', ') : studentAnswer;
@@ -543,8 +567,10 @@ export default {
           return correctAnswer === 'true' || correctAnswer === true ? 'درست' : 'نادرست';
 
         case 'MATCHING':
+          return this.formatMatchingCorrectAnswer(correctAnswer, answerData);
+
         case 'CATEGORIZATION':
-          return JSON.stringify(correctAnswer, null, 2);
+          return this.formatCategorizationCorrectAnswer(correctAnswer, answerData);
 
         case 'FILL_IN_THE_BLANKS':
           return Array.isArray(correctAnswer) ? correctAnswer.join(', ') : correctAnswer;
@@ -553,6 +579,150 @@ export default {
           return correctAnswer || 'نامشخص';
       }
     },
+
+    formatMatchingAnswer(studentAnswer, answerData) {
+      if (!studentAnswer || typeof studentAnswer !== 'object') {
+        return 'پاسخ داده نشده';
+      }
+
+      const pairs = Object.entries(studentAnswer);
+      if (pairs.length === 0) {
+        return 'پاسخ داده نشده';
+      }
+
+      const correctAnswer = answerData.correctAnswer || {};
+      let result = '<div class="matching-answer-display">';
+      let correctCount = 0;
+
+      pairs.forEach(([left, right]) => {
+        const isCorrect = correctAnswer[left] === right;
+        if (isCorrect) correctCount++;
+
+        const statusClass = isCorrect ? 'text-success' : 'text-danger';
+        const statusIcon = isCorrect ? '✓' : '✗';
+
+        result += `<div class="matching-pair ${statusClass}">`;
+        result += `<span class="status-icon">${statusIcon}</span> `;
+        result += `<span class="left-item">${left}</span> → `;
+        result += `<span class="right-item">${right}</span>`;
+        result += `</div>`;
+      });
+
+      const percentage = Math.round((correctCount / pairs.length) * 100);
+      result += `<div class="partial-score-summary mt-2">`;
+      result += `<small class="text-muted">تطبیق‌های صحیح: ${correctCount}/${pairs.length} (${percentage}%)</small>`;
+      result += `</div></div>`;
+
+      return result;
+    },
+
+    formatMatchingCorrectAnswer(correctAnswer, answerData) {
+      if (!correctAnswer || typeof correctAnswer !== 'object') {
+        return 'نامشخص';
+      }
+
+      const pairs = Object.entries(correctAnswer);
+      if (pairs.length === 0) {
+        return 'نامشخص';
+      }
+
+      let result = '<div class="matching-correct-display">';
+      pairs.forEach(([left, right]) => {
+        result += `<div class="matching-pair text-success">`;
+        result += `<span class="left-item">${left}</span> → `;
+        result += `<span class="right-item">${right}</span>`;
+        result += `</div>`;
+      });
+      result += '</div>';
+
+      return result;
+    },
+
+    formatCategorizationAnswer(studentAnswer, answerData) {
+      if (!studentAnswer || typeof studentAnswer !== 'object') {
+        return 'پاسخ داده نشده';
+      }
+
+      const categories = Object.entries(studentAnswer);
+      if (categories.length === 0) {
+        return 'پاسخ داده نشده';
+      }
+
+      const correctAnswer = answerData.correctAnswer || {};
+      let result = '<div class="categorization-answer-display">';
+      let correctCount = 0;
+
+      categories.forEach(([item, category]) => {
+        const isCorrect = correctAnswer[item] === category;
+        if (isCorrect) correctCount++;
+
+        const statusClass = isCorrect ? 'text-success' : 'text-danger';
+        const statusIcon = isCorrect ? '✓' : '✗';
+
+        result += `<div class="categorization-item ${statusClass}">`;
+        result += `<span class="status-icon">${statusIcon}</span> `;
+        result += `<span class="item-name">${item}</span> → `;
+        result += `<span class="category-name">${category}</span>`;
+        result += `</div>`;
+      });
+
+      const percentage = Math.round((correctCount / categories.length) * 100);
+      result += `<div class="partial-score-summary mt-2">`;
+      result += `<small class="text-muted">دسته‌بندی‌های صحیح: ${correctCount}/${categories.length} (${percentage}%)</small>`;
+      result += `</div></div>`;
+
+      return result;
+    },
+
+    formatCategorizationCorrectAnswer(correctAnswer, answerData) {
+      if (!correctAnswer || typeof correctAnswer !== 'object') {
+        return 'نامشخص';
+      }
+
+      const categories = Object.entries(correctAnswer);
+      if (categories.length === 0) {
+        return 'نامشخص';
+      }
+
+      let result = '<div class="categorization-correct-display">';
+      categories.forEach(([item, category]) => {
+        result += `<div class="categorization-item text-success">`;
+        result += `<span class="item-name">${item}</span> → `;
+        result += `<span class="category-name">${category}</span>`;
+        result += `</div>`;
+      });
+      result += '</div>';
+
+      return result;
+    },
+
+    isPartialScoringQuestion(answerData) {
+      return answerData?.questionType === 'MATCHING' || answerData?.questionType === 'CATEGORIZATION';
+    },
+
+    getScorePercentageForQuestion(answerData) {
+      if (!answerData?.totalPoints || answerData.totalPoints === 0) return 0;
+      return Math.round((answerData.earnedPoints / answerData.totalPoints) * 100);
+    },
+
+    getPartialScoreBadgeClass(answerData) {
+      const percentage = this.getScorePercentageForQuestion(answerData);
+      if (percentage === 100) return 'bg-success';
+      if (percentage >= 75) return 'bg-primary';
+      if (percentage >= 50) return 'bg-warning';
+      if (percentage > 0) return 'bg-info';
+      return 'bg-danger';
+    },
+
+    getPartialScoreLabel(answerData) {
+      const percentage = this.getScorePercentageForQuestion(answerData);
+      if (percentage === 100) return 'کامل';
+      if (percentage >= 75) return 'خوب';
+      if (percentage >= 50) return 'متوسط';
+      if (percentage > 0) return 'جزئی';
+      return 'نادرست';
+    },
+
     async viewStudentAnswers(submission) {
       this.$toast.info("این قسمت در حال پیاده سازی است.");
       return ""
@@ -1007,5 +1177,76 @@ export default {
     height: auto;
     padding: 0.5rem;
   }
+}
+
+/* Partial Scoring Display Styles */
+.matching-answer-display,
+.categorization-answer-display {
+  background-color: #f8f9fa;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.matching-pair,
+.categorization-item {
+  padding: 4px 0;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-icon {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.left-item,
+.right-item,
+.item-name,
+.category-name {
+  font-weight: 500;
+}
+
+.partial-score-summary {
+  border-top: 1px solid #dee2e6;
+  padding-top: 8px;
+  margin-top: 8px;
+}
+
+.matching-correct-display,
+.categorization-correct-display {
+  background-color: #d1edff;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #b3d7ff;
+}
+
+.score-status .badge {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.6rem;
+}
+
+.score-points {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Question item styling for better partial score visibility */
+.question-item {
+  transition: box-shadow 0.2s ease;
+}
+
+.question-item:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.answer-details {
+  background-color: #fbfcfd;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 0.5rem;
 }
 </style>
