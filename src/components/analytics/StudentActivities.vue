@@ -75,7 +75,7 @@
               <div class="modern-card-header">
                 <h5 class="mb-0">
                   <i class="fas fa-pie-chart text-primary me-2"></i>
-                  توزیع انواع فعالیت‌ها
+                  توزیع انواع فعالیت‌ها(تعداد)
                 </h5>
               </div>
               <div class="modern-card-body">
@@ -90,7 +90,7 @@
               <div class="modern-card-header">
                 <h5 class="mb-0">
                   <i class="fas fa-clock text-warning me-2"></i>
-                  تحلیل زمان بر اساس نوع فعالیت
+                  تحلیل زمان بر اساس نوع فعالیت(مدت)
                 </h5>
               </div>
               <div class="modern-card-body">

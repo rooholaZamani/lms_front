@@ -615,8 +615,14 @@ export default {
       if (!dateString) return '';
       const now = new Date();
       const date = new Date(dateString);
-      const diffTime = Math.abs(now - date);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      const nowDate = now.toDateString();
+      const submissionDate = date.toDateString();
+      if (nowDate === submissionDate) return 'امروز';
+
+
+      const diffTime = now - date;
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
       if (diffDays === 1) return 'دیروز';
       if (diffDays < 7) return `${diffDays} روز قبل`;
