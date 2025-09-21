@@ -634,7 +634,7 @@ export default {
       try {
         const params = {
           timeFilter: selectedTimeFilter.value,
-          limit: 10
+          limit: 10000
         }
 
         if (selectedCourseId.value) {
@@ -654,7 +654,7 @@ export default {
         }
 
         // updateActivitySummary()
-        hasMoreActivities.value = activities.value.length >= 10
+        hasMoreActivities.value = activities.value.length >= 10000
 
         await fetchGradesData()
 
@@ -695,7 +695,7 @@ export default {
       try {
         const params = {
           timeFilter: selectedTimeFilter.value,
-          limit: 10,
+          limit: 10000,
           page: currentPage.value
         }
 
@@ -707,7 +707,7 @@ export default {
         const newActivities = response.data.activities || []
 
         activities.value.push(...newActivities)
-        hasMoreActivities.value = newActivities.length >= 50
+        hasMoreActivities.value = newActivities.length >= 10000
 
       } catch (error) {
         console.error('Error loading more activities:', error)
