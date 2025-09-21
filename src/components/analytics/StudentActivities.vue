@@ -215,22 +215,22 @@
           </div>
         </div>
         <!-- ردیف دوم نمودارها -->
-        <div class="row mb-4">
-          <!-- نمودار فعالیت در هر درس -->
-          <div class="col-12 mb-4">
-            <div class="modern-card">
-              <div class="modern-card-header">
-                <h5 class="mb-0">
-                  <i class="fas fa-chart-bar text-success me-2"></i>
-                  فعالیت در هر درس
-                </h5>
-              </div>
-              <div class="modern-card-body">
-                <canvas ref="lessonActivityChart" height="400"></canvas>
-              </div>
-            </div>
-          </div>
-        </div>
+<!--        <div class="row mb-4">-->
+<!--          &lt;!&ndash; نمودار فعالیت در هر درس &ndash;&gt;-->
+<!--          <div class="col-12 mb-4">-->
+<!--            <div class="modern-card">-->
+<!--              <div class="modern-card-header">-->
+<!--                <h5 class="mb-0">-->
+<!--                  <i class="fas fa-chart-bar text-success me-2"></i>-->
+<!--                  فعالیت در هر درس-->
+<!--                </h5>-->
+<!--              </div>-->
+<!--              <div class="modern-card-body">-->
+<!--                <canvas ref="lessonActivityChart" height="400"></canvas>-->
+<!--              </div>-->
+<!--            </div>-->
+<!--          </div>-->
+<!--        </div>-->
       </div>
     </div>
 

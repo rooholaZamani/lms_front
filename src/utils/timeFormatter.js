@@ -29,10 +29,10 @@ export function formatTimelineDate(dateString) {
   const days = Math.floor(diff / (24 * 60 * 60 * 1000));
 
   // Return relative time for recent activities
-  if (diff < 0) {
-    // Future date - shouldn't happen but handle gracefully
-    return 'در آینده';
-  } else if (minutes < 1) {
+  // if (diff < 0) {
+  //   // Future date - shouldn't happen but handle gracefully
+  //   return 'در آینده';
+  if (minutes < 1) {
     return 'همین الان';
   } else if (minutes < 60) {
     return `${minutes} دقیقه پیش`;

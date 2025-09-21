@@ -560,7 +560,7 @@ export default {
 
 
     viewContent(content) {
-      this.markContentViewed(content.id);
+      // this.markContentViewed(content.id);
 
       // Navigate to full-page content viewer
       this.$router.push({
@@ -570,14 +570,14 @@ export default {
       });
     },
 
-    async markContentViewed(contentId) {
-      try {
-        // Mark content as viewed with minimal timeSpent (content preview)
-        await axios.post(`/progress/content/${contentId}/view?timeSpent=1`);
-      } catch (error) {
-        console.error('Error marking content as viewed:', error);
-      }
-    },
+    // async markContentViewed(contentId) {
+    //   try {
+    //     // Mark content as viewed with minimal timeSpent (content preview)
+    //     await axios.post(`/progress/content/${contentId}/view?timeSpent=1`);
+    //   } catch (error) {
+    //     console.error('Error marking content as viewed:', error);
+    //   }
+    // },
 
     toggleLesson(index) {
       // Emit event to parent component to handle lesson expansion
