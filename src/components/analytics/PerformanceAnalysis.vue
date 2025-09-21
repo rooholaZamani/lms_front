@@ -488,15 +488,21 @@ export default {
     });
 
     // Methods
-    const formatTime = (minutes) => {
-      if (!minutes) return '0 دقیقه';
-      const hours = Math.floor(minutes / 60);
-      const mins = minutes % 60;
-      if (hours > 0) {
-        return `${hours} ساعت ${mins} دقیقه`;
-      }
-      return `${mins} دقیقه`;
+    const formatTime = (seconds) => {
+      if (!seconds) return '0 ثانیه';
+
+      const hours = Math.floor(seconds / 3600);
+      const mins = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+
+      let result = [];
+      if (hours > 0) result.push(`${hours} ساعت`);
+      if (mins > 0) result.push(`${mins} دقیقه`);
+      if (secs > 0) result.push(`${secs} ثانیه`);
+
+      return result.join(' ');
     };
+
 
     const formatDuration = (seconds) => {
       if (!seconds) return '0 ثانیه';
