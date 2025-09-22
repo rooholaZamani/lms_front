@@ -636,16 +636,19 @@ export default {
       });
     },
 
-    formatTime(minutes) {
-      if (!minutes) return '0 دقیقه';
+    formatTime(seconds) {
+      if (!seconds) return '0 ثانیه';
 
-      const hours = Math.floor(minutes / 60);
-      const remainingMinutes = Math.round(minutes % 60);
+      const hours = Math.floor(seconds / 3600);
+      const mins = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
 
-      if (hours > 0) {
-        return `${hours} ساعت ${remainingMinutes > 0 ? `${remainingMinutes} دقیقه` : ''}`;
-      }
-      return `${remainingMinutes} دقیقه`;
+      let result = [];
+      if (hours > 0) result.push(`${hours} ساعت`);
+      if (mins > 0) result.push(`${mins} دقیقه`);
+      if (secs > 0) result.push(`${secs} ثانیه`);
+
+      return result.join(' ');
     }
   }
 }
