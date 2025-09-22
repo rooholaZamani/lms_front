@@ -82,8 +82,8 @@
           <div class="modern-card stat-card">
             <div class="card-body text-center">
               <i class="fas fa-chart-line stat-icon text-success"></i>
-              <h4 class="stat-number">{{ courseStats.averageProgress }}%</h4>
-              <p class="stat-label">میانگین پیشرفت</p>
+              <h4 class="stat-number">{{ courseStats.passingRate }}%</h4>
+              <p class="stat-label"> نرخ قبولی</p>
             </div>
           </div>
         </div>
@@ -100,8 +100,8 @@
           <div class="modern-card stat-card">
             <div class="card-body text-center">
               <i class="fas fa-check-circle stat-icon text-info"></i>
-              <h4 class="stat-number">{{ courseStats.completionRate }}%</h4>
-              <p class="stat-label">نرخ تکمیل</p>
+              <h4 class="stat-number">{{ courseStats.averageExamScore }}%</h4>
+              <p class="stat-label"> میانگین نمره آزمون</p>
             </div>
           </div>
         </div>
@@ -394,7 +394,9 @@ export default {
       totalStudents: 0,
       averageProgress: 0,
       averageTimeSpent: 0,
-      completionRate: 0
+      completionRate: 0,
+      passingRate: 0,
+      averageExamScore: 0
     });
 
     // Progress analysis data
@@ -546,7 +548,9 @@ export default {
             totalStudents: stats.totalStudents || stats.studentCount || 0,
             averageProgress: Math.round(stats.averageProgress || 0),
             averageTimeSpent: stats.averageTimeSpent || 0,
-            completionRate: Math.round(stats.completionRate || 0)
+            completionRate: Math.round(stats.completionRate || 0),
+            passingRate: Math.round(stats.passingRate || 0),
+            averageExamScore: Math.round(stats.averageExamScore || 0)
           };
         }
       } catch (err) {
@@ -556,7 +560,9 @@ export default {
           totalStudents: 0,
           averageProgress: 0,
           averageTimeSpent: 0,
-          completionRate: 0
+          completionRate: 0,
+          passingRate: 0,
+          averageExamScore: 0,
         };
       }
     };
@@ -686,7 +692,10 @@ export default {
               totalStudents: coursePerformanceResponse.totalStudents || coursePerformanceResponse.studentCount || 0,
               averageProgress: Math.round(coursePerformanceResponse.averageProgress || 0),
               averageTimeSpent: coursePerformanceResponse.averageTimeSpent || 0,
-              completionRate: Math.round(coursePerformanceResponse.completionRate || 0)
+              completionRate: Math.round(coursePerformanceResponse.completionRate || 0),
+              passingRate: coursePerformanceResponse.passingRate || 0,
+              averageExamScore: coursePerformanceResponse.averageExamScore || 0
+
             };
           } else {
             // Fallback values when no data is returned
@@ -694,7 +703,9 @@ export default {
               totalStudents: 0,
               averageProgress: 0,
               averageTimeSpent: 0,
-              completionRate: 0
+              completionRate: 0,
+              passingRate: 0,
+              averageExamScore: 0
             };
           }
         } catch (err) {
@@ -704,7 +715,9 @@ export default {
             totalStudents: 0,
             averageProgress: 0,
             averageTimeSpent: 0,
-            completionRate: 0
+            completionRate: 0,
+            passingRate: 0,
+            averageExamScore: 0
           };
         }
 
