@@ -31,7 +31,7 @@
 
               <!-- نوع تحلیل -->
               <select v-model="analysisType" class="form-select">
-                <option value="progress">پیشرفت</option>
+                <option value="progress">تحلیل آزمون</option>
                 <option value="time">زمان مطالعه</option>
                 <option value="questions">سوالات دشوار</option>
                 <option value="risk">دانش‌آموزان در معرض خطر</option>
@@ -112,7 +112,7 @@
         <div class="col-md-8">
           <div class="modern-card">
             <div class="card-body">
-              <h6 class="card-title">پیشرفت دانش‌آموزان در دروس</h6>
+              <h6 class="card-title">نمودار میانگین نمرات آزمون</h6>
               <div class="chart-container">
                 <Charts
                     v-if="progressChartData.length > 0"
@@ -131,14 +131,14 @@
         <div class="col-md-4">
           <div class="modern-card">
             <div class="card-body">
-              <h6 class="card-title">توزیع پیشرفت</h6>
+              <h6 class="card-title">توزیع آزمون ها</h6>
               <div class="progress-distribution">
                 <div class="progress-item">
-                  <span class="progress-label">عالی (90-100%)</span>
+                  <span class="progress-label">بسیار آسان (90-100%)</span>
                   <span class="progress-count">{{ progressDistribution.excellent }}</span>
                 </div>
                 <div class="progress-item">
-                  <span class="progress-label">خوب (70-89%)</span>
+                  <span class="progress-label">آسان (70-89%)</span>
                   <span class="progress-count">{{ progressDistribution.good }}</span>
                 </div>
                 <div class="progress-item">
@@ -146,7 +146,7 @@
                   <span class="progress-count">{{ progressDistribution.average }}</span>
                 </div>
                 <div class="progress-item">
-                  <span class="progress-label">ضعیف (زیر 50%)</span>
+                  <span class="progress-label">سخت (زیر 50%)</span>
                   <span class="progress-count">{{ progressDistribution.poor }}</span>
                 </div>
               </div>
@@ -186,16 +186,20 @@
                   <span class="stat-value">{{ formatTime(timeStats.totalStudyTime) }}</span>
                 </div>
                 <div class="stat-item">
-                  <span class="stat-label">میانگین روزانه</span>
-                  <span class="stat-value">{{ formatTime(timeStats.averageDailyTime) }}</span>
+                  <span class="stat-label">فعالیت کم (< 1 ساعت)</span>
+                  <span class="stat-value">{{ timeDistribution.ranges[0].studentCount }}</span>
                 </div>
                 <div class="stat-item">
-                  <span class="stat-label">بیشترین زمان</span>
-                  <span class="stat-value">{{ formatTime(timeStats.maxDailyTime) }}</span>
+                  <span class="stat-label">فعالیت متوسط (1-3 ساعت) </span>
+                  <span class="stat-value">{{ timeDistribution.ranges[0].studentCount }}</span>
                 </div>
                 <div class="stat-item">
-                  <span class="stat-label">کمترین زمان</span>
-                  <span class="stat-value">{{ formatTime(timeStats.minDailyTime) }}</span>
+                  <span class="stat-label">فعالیت زیاد (3-5 ساعت) </span>
+                  <span class="stat-value">{{ timeDistribution.ranges[0].studentCount }}</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-label">"فعالیت بسیار زیاد (> 5 ساعت) </span>
+                  <span class="stat-value">{{ timeDistribution.ranges[0].studentCount }}</span>
                 </div>
               </div>
             </div>
@@ -410,6 +414,8 @@ export default {
 
     // Time analysis data
     const timeDistributionData = ref([]);
+    let timeDistribution = ref([]);
+
     const timeStats = ref({
       totalStudyTime: 0,
       averageDailyTime: 0,
@@ -640,6 +646,8 @@ export default {
             totalTime: item.totalseconds / 60, // تبدیل ثانیه به دقیقه
             activeStudents: item.activeStudents
           }));
+
+          timeDistribution = response.timeDistribution;
 
           // محاسبه آمار زمانی
           const totalMinutes = response.timeline.reduce((sum, item) => sum + (item.totalseconds / 60), 0);
@@ -877,6 +885,7 @@ export default {
       lessonProgress,
       progressDistribution,
       timeDistributionData,
+      timeDistribution,
       timeStats,
       challengingQuestions,
       questionStats,
