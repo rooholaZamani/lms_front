@@ -187,19 +187,19 @@
                 </div>
                 <div class="stat-item">
                   <span class="stat-label">فعالیت کم (< 1 ساعت)</span>
-                  <span class="stat-value">{{ timeDistribution.ranges[0].studentCount }}</span>
+                  <span class="stat-value">{{ timeDistribution.ranges[0]?.studentCount || 0  }}</span>
                 </div>
                 <div class="stat-item">
                   <span class="stat-label">فعالیت متوسط (1-3 ساعت) </span>
-                  <span class="stat-value">{{ timeDistribution.ranges[0].studentCount }}</span>
+                  <span class="stat-value">{{ timeDistribution.ranges[1]?.studentCount || 0  }}</span>
                 </div>
                 <div class="stat-item">
                   <span class="stat-label">فعالیت زیاد (3-5 ساعت) </span>
-                  <span class="stat-value">{{ timeDistribution.ranges[0].studentCount }}</span>
+                  <span class="stat-value">{{ timeDistribution.ranges[2]?.studentCount || 0  }}</span>
                 </div>
                 <div class="stat-item">
                   <span class="stat-label">"فعالیت بسیار زیاد (> 5 ساعت) </span>
-                  <span class="stat-value">{{ timeDistribution.ranges[0].studentCount }}</span>
+                  <span class="stat-value">{{ timeDistribution.ranges[3]?.studentCount || 0  }}</span>
                 </div>
               </div>
             </div>
@@ -414,7 +414,9 @@ export default {
 
     // Time analysis data
     const timeDistributionData = ref([]);
-    let timeDistribution = ref([]);
+    const timeDistribution = ref({
+      ranges: []
+    });
 
     const timeStats = ref({
       totalStudyTime: 0,
@@ -546,143 +548,6 @@ export default {
       }
     };
 
-    const fetchCourseStats = async (courseId) => {
-      try {
-        const stats = await analytics.fetchCoursePerformance(courseId);
-        if (stats) {
-          courseStats.value = {
-            totalStudents: stats.totalStudents || stats.studentCount || 0,
-            averageProgress: Math.round(stats.averageProgress || 0),
-            averageTimeSpent: stats.averageTimeSpent || 0,
-            completionRate: Math.round(stats.completionRate || 0),
-            passingRate: Math.round(stats.passingRate || 0),
-            averageExamScore: Math.round(stats.averageExamScore || 0)
-          };
-        }
-      } catch (err) {
-        console.error('Error fetching course stats:', err);
-        // Set fallback values
-        courseStats.value = {
-          totalStudents: 0,
-          averageProgress: 0,
-          averageTimeSpent: 0,
-          completionRate: 0,
-          passingRate: 0,
-          averageExamScore: 0,
-        };
-      }
-    };
-
-    const fetchProgressData = async (courseId) => {
-      try {
-        const response = await analytics.fetchLessonPerformanceAnalysis();
-
-        if (response && response.lessons) {
-          lessonProgress.value = response.lessons;
-
-          // محاسبه توزیع پیشرفت
-          const total = response.lessons.length;
-          const excellent = response.lessons.filter(l => l.averageScore >= 90).length;
-          const good = response.lessons.filter(l => l.averageScore >= 70 && l.averageScore < 90).length;
-          const average = response.lessons.filter(l => l.averageScore >= 50 && l.averageScore < 70).length;
-          const poor = response.lessons.filter(l => l.averageScore < 50).length;
-
-          progressDistribution.value = {
-            excellent,
-            good,
-            average,
-            poor
-          };
-        }
-      } catch (err) {
-        console.error('Error fetching progress data:', err);
-      }
-    };
-
-    const fetchQuestionData = async () => {
-      try {
-        const response = await analytics.fetchChallengingQuestions();
-
-        if (response) {
-          challengingQuestions.value = response.questions || [];
-          questionStats.value = {
-            mostDifficult: response.mostDifficult || 0,
-            averageDifficulty: response.averageDifficulty || 0,
-            needsReview: response.needsReview || 0
-          };
-        }
-      } catch (err) {
-        console.error('Error fetching question data:', err);
-      }
-    };
-
-    const fetchRiskData = async (courseId) => {
-      try {
-
-        const response = await analytics.fetchAtRiskStudents(courseId);
-
-        if (response) {
-          atRiskStudents.value = response.students || [];
-          riskFactors.value = {
-            lowAttendance: response.riskFactors?.lowAttendance || 0,
-            poorPerformance: response.riskFactors?.poorPerformance || 0,
-            inactivity: response.riskFactors?.inactivity || 0,
-            behavioralIssues: response.riskFactors?.behavioralIssues || 0
-          };
-        }
-      } catch (err) {
-        console.error('Error fetching risk data:', err);
-      }
-    };
-    const fetchTimeData = async (courseId) => {
-      try {
-        // تصحیح: استفاده صحیح از API
-        const response = await analytics.fetchTimeDistribution(courseId, selectedPeriod.value);
-
-        if (response && response.timeline) {
-          // تبدیل timeline به format مناسب برای نمودار
-          timeDistributionData.value = response.timeline.map(item => ({
-            date: item.date,
-            totalTime: item.totalseconds / 60, // تبدیل ثانیه به دقیقه
-            activeStudents: item.activeStudents
-          }));
-
-          timeDistribution = response.timeDistribution;
-
-          // محاسبه آمار زمانی
-          const totalMinutes = response.timeline.reduce((sum, item) => sum + (item.totalseconds / 60), 0);
-          const activeDays = response.timeline.filter(item => item.totalseconds > 0).length;
-
-          timeStats.value = {
-            totalStudyTime: totalMinutes,
-            averageDailyTime: activeDays > 0 ? totalMinutes / activeDays : 0,
-            maxDailyTime: Math.max(...response.timeline.map(item => item.totalseconds / 60)),
-            minDailyTime: Math.min(...response.timeline.map(item => item.totalseconds / 60))
-          };
-        }
-      } catch (err) {
-        console.error('Error fetching time data:', err);
-      }
-    };
-
-    const fetchTrendData = async (courseId) => {
-      try {
-        const response = await analytics.fetchEngagementTrends();
-
-        if (response && Array.isArray(response)) {
-          // تبدیل engagement trends به format مناسب
-          trendData.value = response.map(item => ({
-            date: item.date,
-            averageScore: item.contentViews || 0, // یا هر متریک مناسب دیگر
-            participation: item.logins || 0
-          }));
-        }
-      } catch (err) {
-        console.error('Error fetching trend data:', err);
-      }
-    };
-
-
     const fetchAnalyticsData = async () => {
       if (!selectedCourse.value) return;
 
@@ -763,6 +628,8 @@ export default {
               maxDailyTime: Math.max(...timeResponse.timeline.map(day => day.activeStudents || 0)),
               minDailyTime: Math.min(...timeResponse.timeline.map(day => day.activeStudents || 0))
             };
+
+            timeDistribution.value = timeResponse.timeDistribution || { ranges: [] };
           }
 
         } else if (analysisType.value === 'questions') {
