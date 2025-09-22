@@ -283,23 +283,57 @@
                     v-for="student in atRiskStudents"
                     :key="student.id"
                     class="student-item"
+                    :class="'risk-' + student.riskLevel.toLowerCase()"
                 >
                   <div class="student-info">
-                    <div class="student-name">{{ student.firstName }} {{ student.lastName }}</div>
-                    <div class="risk-factors">
-                      <span
-                          v-for="(isRisk, factor) in student.factors"
-                          :key="factor"
-                          v-if="isRisk"
-                          class="risk-badge"
-                      >
-                        {{ getRiskFactorLabel(factor.toUpperCase()) }}
-                      </span>
+                    <div class="student-header">
+                      <div class="student-name">{{ student.firstName }} {{ student.lastName }}</div>
+                      <div class="risk-score-badge" :class="'risk-' + student.riskLevel.toLowerCase()">
+                        {{ student.riskScore }}% خطر
+                        <span class="risk-level">{{ getRiskLevelLabel(student.riskLevel) }}</span>
+                      </div>
                     </div>
-                    <div class="student-stats">
-                      <span>حضور: {{ student.attendanceRate || 0 }}%</span>
-                      <span>نمره: {{ student.averageScore || 0 }}%</span>
-                      <span>آخرین فعالیت: {{ student.daysSinceLastActivity || 0 }} روز پیش</span>
+
+                    <!-- نمایش عوامل خطر وزن‌دار -->
+                    <div class="weighted-factors">
+                      <div class="factor-item" v-if="student.factors.progressFactor > 0">
+                        <span class="factor-label">پیشرفت تحصیلی:</span>
+                        <span class="factor-score">{{ student.factors.progressFactor }}% (وزن ۵۰%)</span>
+                        <div class="factor-detail">
+                          دانش‌آموز: {{ student.studentMetrics.progress.toFixed(1) }}% |
+                          میانگین کلاس: {{ student.courseAverages.avgProgress.toFixed(1) }}%
+                        </div>
+                      </div>
+
+                      <div class="factor-item" v-if="student.factors.gradeFactor > 0">
+                        <span class="factor-label">میانگین نمرات:</span>
+                        <span class="factor-score">{{ student.factors.gradeFactor }}% (وزن ۳۵%)</span>
+                        <div class="factor-detail">
+                          دانش‌آموز: {{ student.studentMetrics.averageGrade.toFixed(1) }} |
+                          میانگین کلاس: {{ student.courseAverages.avgGrade.toFixed(1) }}
+                        </div>
+                      </div>
+
+                      <div class="factor-item" v-if="student.factors.attendanceFactor > 0">
+                        <span class="factor-label">روزهای حضور:</span>
+                        <span class="factor-score">{{ student.factors.attendanceFactor }}% (وزن ۱۵%)</span>
+                        <div class="factor-detail">
+                          دانش‌آموز: {{ student.studentMetrics.attendanceDays }} روز |
+                          میانگین کلاس: {{ student.courseAverages.avgAttendance.toFixed(1) }} روز
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- نمایش پیشرفت‌بار امتیاز خطر -->
+                    <div class="risk-progress">
+                      <div class="progress">
+                        <div
+                          class="progress-bar"
+                          :class="'bg-' + getRiskColor(student.riskLevel)"
+                          :style="{ width: student.riskScore + '%' }"
+                        ></div>
+                      </div>
+                      <small class="text-muted">امتیاز خطر: {{ student.riskScore }}% از ۱۰۰%</small>
                     </div>
                   </div>
                 </div>
@@ -315,19 +349,45 @@
         <div class="col-md-4">
           <div class="modern-card">
             <div class="card-body">
-              <h6 class="card-title">عوامل خطر</h6>
-              <div class="risk-factors-summary">
-                <div class="risk-factor">
-                  <span class="factor-label">حضور پایین</span>
-                  <span class="factor-count">{{ riskFactors.lowAttendance }}</span>
+              <h6 class="card-title">آمار کلی خطر</h6>
+              <div class="risk-summary">
+                <div class="stat-item">
+                  <span class="stat-label">تعداد کل دانش‌آموزان</span>
+                  <span class="stat-value">{{ courseStats.totalStudents }}</span>
                 </div>
-                <div class="risk-factor">
-                  <span class="factor-label">عملکرد ضعیف</span>
-                  <span class="factor-count">{{ riskFactors.poorPerformance }}</span>
+                <div class="stat-item">
+                  <span class="stat-label">در معرض خطر</span>
+                  <span class="stat-value text-danger">{{ courseStats.atRiskCount }}</span>
                 </div>
-                <div class="risk-factor">
-                  <span class="factor-label">عدم فعالیت</span>
-                  <span class="factor-count">{{ riskFactors.inactivity }}</span>
+                <div class="stat-item">
+                  <span class="stat-label">میانگین امتیاز خطر</span>
+                  <span class="stat-value">{{ courseStats.averageRiskScore }}%</span>
+                </div>
+              </div>
+
+              <h6 class="card-title mt-4">سطح خطر</h6>
+              <div class="risk-level-counts">
+                <div class="risk-level-item" v-for="(count, level) in riskLevelCounts" :key="level">
+                  <span class="level-label" :class="'text-' + getRiskColor(level)">
+                    {{ getRiskLevelLabel(level) }}
+                  </span>
+                  <span class="level-count">{{ count }}</span>
+                </div>
+              </div>
+
+              <h6 class="card-title mt-4">میانگین کلاس</h6>
+              <div class="course-averages">
+                <div class="avg-item">
+                  <span class="avg-label">پیشرفت:</span>
+                  <span class="avg-value">{{ courseAverages.avgProgress?.toFixed(1) }}%</span>
+                </div>
+                <div class="avg-item">
+                  <span class="avg-label">نمره:</span>
+                  <span class="avg-value">{{ courseAverages.avgGrade?.toFixed(1) }}</span>
+                </div>
+                <div class="avg-item">
+                  <span class="avg-label">حضور:</span>
+                  <span class="avg-value">{{ courseAverages.avgAttendance?.toFixed(1) }} روز</span>
                 </div>
               </div>
             </div>
@@ -433,13 +493,13 @@ export default {
       needsReview: 0
     });
 
-    // At-risk students data
+    // At-risk students data (updated for weighted scoring)
     const atRiskStudents = ref([]);
-    const riskFactors = ref({
-      lowAttendance: 0,
-      poorPerformance: 0,
-      inactivity: 0,
-      behavioralIssues: 0
+    const riskLevelCounts = ref({});
+    const courseAverages = ref({
+      avgProgress: 0,
+      avgGrade: 0,
+      avgAttendance: 0
     });
 
     // Trend analysis data
@@ -536,6 +596,26 @@ export default {
         'BEHAVIORALISSUES': 'مشکلات رفتاری'
       };
       return labels[factor] || factor;
+    };
+
+    const getRiskLevelLabel = (level) => {
+      const labels = {
+        'HIGH': 'خطر بالا',
+        'MEDIUM': 'خطر متوسط',
+        'LOW': 'خطر پایین',
+        'NONE': 'بدون خطر'
+      };
+      return labels[level] || level;
+    };
+
+    const getRiskColor = (level) => {
+      const colors = {
+        'HIGH': 'danger',
+        'MEDIUM': 'warning',
+        'LOW': 'info',
+        'NONE': 'success'
+      };
+      return colors[level] || 'secondary';
     };
 
     const fetchCourses = async () => {
@@ -662,36 +742,44 @@ export default {
           }
 
         } else if (analysisType.value === 'risk') {
-          // دانش‌آموزان در معرض خطر
+          // دانش‌آموزان در معرض خطر (weighted scoring system)
           try {
             const riskResponse = await axios.get(`/analytics/course/${selectedCourse.value}/at-risk-students`);
-            console.log('At-risk students response:', riskResponse.data);
+            console.log('At-risk students response (weighted):', riskResponse.data);
 
             if (riskResponse.data) {
               atRiskStudents.value = riskResponse.data.students || [];
-              riskFactors.value = riskResponse.data.riskFactors || {
-                lowAttendance: 0,
-                poorPerformance: 0,
-                inactivity: 0,
-                behavioralIssues: 0
+              riskLevelCounts.value = riskResponse.data.riskLevelCounts || {};
+              courseAverages.value = riskResponse.data.courseAverages || {
+                avgProgress: 0,
+                avgGrade: 0,
+                avgAttendance: 0
               };
+
+              // Update courseStats with the new structure
+              if (riskResponse.data.courseStats) {
+                courseStats.value = {
+                  ...courseStats.value,
+                  ...riskResponse.data.courseStats
+                };
+              }
             } else {
               atRiskStudents.value = [];
-              riskFactors.value = {
-                lowAttendance: 0,
-                poorPerformance: 0,
-                inactivity: 0,
-                behavioralIssues: 0
+              riskLevelCounts.value = {};
+              courseAverages.value = {
+                avgProgress: 0,
+                avgGrade: 0,
+                avgAttendance: 0
               };
             }
           } catch (riskErr) {
             console.error('Error fetching at-risk students:', riskErr);
             atRiskStudents.value = [];
-            riskFactors.value = {
-              lowAttendance: 0,
-              poorPerformance: 0,
-              inactivity: 0,
-              behavioralIssues: 0
+            riskLevelCounts.value = {};
+            courseAverages.value = {
+              avgProgress: 0,
+              avgGrade: 0,
+              avgAttendance: 0
             };
           }
 
@@ -757,7 +845,8 @@ export default {
       challengingQuestions,
       questionStats,
       atRiskStudents,
-      riskFactors,
+      riskLevelCounts,
+      courseAverages,
       trendData,
 
       // Computed
@@ -769,6 +858,8 @@ export default {
       formatTime,
       formatDuration,
       getRiskFactorLabel,
+      getRiskLevelLabel,
+      getRiskColor,
       onCourseChange,
       fetchAnalyticsData
     };
@@ -900,5 +991,165 @@ export default {
   .challenging-questions, .at-risk-students {
     max-height: 300px;
   }
+}
+
+/* Weighted Risk Assessment Styles */
+.student-item {
+  border-left-width: 4px;
+  border-left-style: solid;
+}
+
+.student-item.risk-high {
+  border-left-color: #dc3545;
+  background: rgba(220, 53, 69, 0.05);
+}
+
+.student-item.risk-medium {
+  border-left-color: #ffc107;
+  background: rgba(255, 193, 7, 0.05);
+}
+
+.student-item.risk-low {
+  border-left-color: #17a2b8;
+  background: rgba(23, 162, 184, 0.05);
+}
+
+.student-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.risk-score-badge {
+  padding: 0.4rem 0.8rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  text-align: center;
+  min-width: 120px;
+}
+
+.risk-score-badge.risk-high {
+  background: #dc3545;
+  color: white;
+}
+
+.risk-score-badge.risk-medium {
+  background: #ffc107;
+  color: #212529;
+}
+
+.risk-score-badge.risk-low {
+  background: #17a2b8;
+  color: white;
+}
+
+.risk-score-badge .risk-level {
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.8;
+}
+
+.weighted-factors {
+  margin: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.factor-item {
+  padding: 0.8rem;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.factor-label {
+  font-weight: 600;
+  color: #495057;
+  margin-left: 0.5rem;
+}
+
+.factor-score {
+  font-weight: 700;
+  color: #dc3545;
+}
+
+.factor-detail {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.risk-progress {
+  margin-top: 1rem;
+}
+
+.risk-progress .progress {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.risk-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.risk-level-counts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.risk-level-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.8rem;
+  background: rgba(248, 249, 250, 0.8);
+  border-radius: 6px;
+}
+
+.level-label {
+  font-weight: 600;
+}
+
+.level-count {
+  background: #495057;
+  color: white;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.course-averages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.avg-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.4rem 0.6rem;
+  background: rgba(23, 162, 184, 0.1);
+  border-radius: 6px;
+}
+
+.avg-label {
+  color: #495057;
+  font-weight: 500;
+}
+
+.avg-value {
+  color: #17a2b8;
+  font-weight: 700;
 }
 </style>
