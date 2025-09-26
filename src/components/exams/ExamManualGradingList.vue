@@ -211,13 +211,25 @@ export default {
     await this.fetchData();
   },
   methods: {
-    async fetchData() {
+    async fetchData(forceFresh = false) {
       try {
         this.loading = true;
         this.error = null;
 
-        const response = await axios.get('/exams/manual-grading-overview');
+        console.log('Fetching manual grading overview', forceFresh ? '(forced refresh)' : '');
+
+        // Add cache busting parameter if force refresh is requested
+        const url = forceFresh
+            ? `/exams/manual-grading-overview?t=${Date.now()}`
+            : '/exams/manual-grading-overview';
+
+        const response = await axios.get(url);
         this.exams = response.data.exams || [];
+
+        console.log('Manual grading overview loaded:', {
+          totalExams: this.exams.length,
+          pendingSubmissions: this.totalPendingSubmissions
+        });
 
       } catch (error) {
         console.error('Error fetching manual grading data:', error);
@@ -228,7 +240,7 @@ export default {
     },
 
     async refreshData() {
-      await this.fetchData();
+      await this.fetchData(true);
     },
 
     goToGrading(exam) {

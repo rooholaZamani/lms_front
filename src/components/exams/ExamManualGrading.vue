@@ -247,7 +247,7 @@
                     <div class="col-md-4">
                       <div class="summary-item">
                         <label>نمره کل:</label>
-                        <span class="summary-value">{{ totalCalculatedScore }}</span>
+                        <span class="summary-value">{{ gradingData.currentScore }}</span>
                       </div>
                     </div>
                     <div class="col-md-4">
@@ -259,8 +259,8 @@
                     <div class="col-md-4">
                       <div class="summary-item">
                         <label>وضعیت:</label>
-                        <span class="summary-value" :class="totalCalculatedScore >= gradingData.passingScore ? 'text-success' : 'text-danger'">
-                          {{ totalCalculatedScore >= gradingData.passingScore ? 'قبول' : 'مردود' }}
+                        <span class="summary-value" :class="currentScore >= gradingData.passingScore ? 'text-success' : 'text-danger'">
+                          {{ gradingData.currentScore >= gradingData.passingScore ? 'قبول' : 'مردود' }}
                         </span>
                       </div>
                     </div>
@@ -387,13 +387,26 @@ export default {
     await this.fetchData();
   },
   methods: {
-    async fetchData() {
+    async fetchData(forceFresh = false) {
       try {
         this.loading = true;
         this.error = null;
 
-        const response = await axios.get(`/exams/${this.examId}/submissions-for-grading`);
+        console.log('Fetching manual grading data for exam:', this.examId, forceFresh ? '(forced refresh)' : '');
+
+        // Add cache busting parameter if force refresh is requested
+        const url = forceFresh
+            ? `/exams/${this.examId}/submissions-for-grading?t=${Date.now()}`
+            : `/exams/${this.examId}/submissions-for-grading`;
+
+        const response = await axios.get(url);
         this.examData = response.data;
+
+        console.log('Manual grading data loaded:', {
+          totalSubmissions: this.examData.totalSubmissions,
+          needsGradingCount: this.examData.needsGradingCount,
+          submissionsCount: this.examData.submissions?.length || 0
+        });
 
       } catch (error) {
         console.error('Error fetching grading data:', error);
@@ -502,6 +515,12 @@ export default {
       try {
         this.submitting = true;
 
+        console.log('Saving manual grades:', {
+          submissionId: this.selectedSubmission.id,
+          manualGrades: this.manualGrades,
+          feedback: this.feedback
+        });
+
         const gradingData = {
           manualGrades: this.manualGrades,
           feedback: this.feedback
@@ -512,22 +531,61 @@ export default {
             gradingData
         );
 
+        console.log('Manual grading response:', response.data);
+
         if (response.data.success) {
           this.$toast?.success('نمره‌گذاری با موفقیت انجام شد');
+
+          // Update the local submission data immediately to reflect changes
+          if (this.examData && this.examData.submissions) {
+            const submissionIndex = this.examData.submissions.findIndex(
+                sub => sub.id === this.selectedSubmission.id
+            );
+            if (submissionIndex !== -1) {
+              this.examData.submissions[submissionIndex] = {
+                ...this.examData.submissions[submissionIndex],
+                score: response.data.totalScore,
+                passed: response.data.passed,
+                gradedManually: true,
+                gradedAt: response.data.gradedAt,
+                gradedBy: response.data.gradedBy
+              };
+
+              // Update needs grading count
+              this.examData.needsGradingCount = Math.max(0, this.examData.needsGradingCount - 1);
+            }
+          }
 
           // Close modal
           const modal = bootstrap.Modal.getInstance(document.getElementById('gradingModal'));
           modal.hide();
 
-          // Refresh data
-          await this.fetchData();
+          // Emit score update event for real-time updates
+          if (response.data.studentNotification) {
+            this.emitScoreUpdateEvent(response.data.studentNotification);
+          }
+
+          // Force refresh data from server to ensure consistency
+          setTimeout(async () => {
+            await this.fetchData(true);
+            console.log('Data refreshed after manual grading');
+          }, 500);
+
         } else {
           this.$toast?.error(response.data.message || 'خطا در ذخیره نمرات');
         }
 
       } catch (error) {
         console.error('Error saving grades:', error);
-        this.$toast?.error('خطا در ذخیره نمرات');
+
+        // Check if it's a validation error from the backend
+        if (error.response && error.response.status === 400) {
+          this.$toast?.error(error.response.data.message || 'خطا در اعتبارسنجی نمرات');
+        } else if (error.response && error.response.data && error.response.data.message) {
+          this.$toast?.error(error.response.data.message);
+        } else {
+          this.$toast?.error('خطا در ذخیره نمرات');
+        }
       } finally {
         this.submitting = false;
       }
@@ -598,6 +656,48 @@ export default {
 
     goBack() {
       this.$router.go(-1);
+    },
+
+    emitScoreUpdateEvent(notificationData) {
+      // Emit global event for real-time score updates
+      if (window.scoreUpdateBus) {
+        window.scoreUpdateBus.emit('scoreUpdated', notificationData);
+      } else {
+        // Create global event bus if it doesn't exist
+        window.scoreUpdateBus = new EventTarget();
+        window.scoreUpdateBus.emit = function(eventName, data) {
+          this.dispatchEvent(new CustomEvent(eventName, { detail: data }));
+        };
+        window.scoreUpdateBus.on = function(eventName, callback) {
+          this.addEventListener(eventName, callback);
+        };
+        window.scoreUpdateBus.off = function(eventName, callback) {
+          this.removeEventListener(eventName, callback);
+        };
+        // Emit the event
+        window.scoreUpdateBus.emit('scoreUpdated', notificationData);
+      }
+
+      console.log('Score update event emitted:', notificationData);
+
+      // Also emit Vue event for parent components
+      this.$emit('scoreUpdated', notificationData);
+
+      // Store in localStorage for persistence across tabs/windows
+      try {
+        const scoreUpdates = JSON.parse(localStorage.getItem('scoreUpdates') || '[]');
+        scoreUpdates.push({
+          ...notificationData,
+          timestamp: new Date().toISOString()
+        });
+        // Keep only last 50 updates
+        if (scoreUpdates.length > 50) {
+          scoreUpdates.splice(0, scoreUpdates.length - 50);
+        }
+        localStorage.setItem('scoreUpdates', JSON.stringify(scoreUpdates));
+      } catch (error) {
+        console.error('Error storing score update:', error);
+      }
     }
   }
 }

@@ -687,7 +687,97 @@ export default {
           params: { id: exam.exam.id }
         });
       }
+    },
+
+    setupScoreUpdateListener() {
+      // Listen for real-time score updates
+      if (window.scoreUpdateBus) {
+        this.scoreUpdateHandler = (event) => {
+          this.handleScoreUpdate(event.detail);
+        };
+        window.scoreUpdateBus.addEventListener('scoreUpdated', this.scoreUpdateHandler);
+      }
+
+      // Listen for localStorage changes (cross-tab updates)
+      this.storageHandler = (event) => {
+        if (event.key === 'scoreUpdates') {
+          this.checkForStoredScoreUpdates();
+        }
+      };
+      window.addEventListener('storage', this.storageHandler);
+
+      console.log('Score update listener setup complete');
+    },
+
+    cleanupScoreUpdateListener() {
+      if (window.scoreUpdateBus && this.scoreUpdateHandler) {
+        window.scoreUpdateBus.removeEventListener('scoreUpdated', this.scoreUpdateHandler);
+      }
+      if (this.storageHandler) {
+        window.removeEventListener('storage', this.storageHandler);
+      }
+      console.log('Score update listener cleanup complete');
+    },
+
+    handleScoreUpdate(notificationData) {
+      console.log('Received score update:', notificationData);
+
+      // Find the exam that was updated
+      const examIndex = this.exams.findIndex(exam =>
+        exam.submissionId === notificationData.submissionId ||
+        (exam.examId === notificationData.examId && exam.student?.id === notificationData.studentId)
+      );
+
+      if (examIndex !== -1) {
+        // Update the exam data with new score
+        this.$set(this.exams, examIndex, {
+          ...this.exams[examIndex],
+          score: notificationData.newScore,
+          gradedManually: notificationData.gradedManually,
+          lastUpdated: notificationData.timestamp
+        });
+
+        // Show notification to student
+        this.$toast?.info(`نمره آزمون "${notificationData.examTitle}" به‌روزرسانی شد`);
+
+        console.log(`Updated exam score: ${notificationData.previousScore} → ${notificationData.newScore}`);
+      }
+    },
+
+    checkForStoredScoreUpdates() {
+      try {
+        const scoreUpdates = JSON.parse(localStorage.getItem('scoreUpdates') || '[]');
+        const currentUserId = this.$store?.state?.user?.id;
+
+        if (!currentUserId) return;
+
+        // Process recent updates for current user
+        const recentUpdates = scoreUpdates.filter(update => {
+          const updateTime = new Date(update.timestamp);
+          const now = new Date();
+          const diffMinutes = (now - updateTime) / (1000 * 60);
+
+          return diffMinutes < 30 && update.studentId === currentUserId;
+        });
+
+        recentUpdates.forEach(update => {
+          this.handleScoreUpdate(update);
+        });
+
+        if (recentUpdates.length > 0) {
+          console.log(`Processed ${recentUpdates.length} stored score updates`);
+        }
+      } catch (error) {
+        console.error('Error checking stored score updates:', error);
+      }
     }
+  },
+  mounted() {
+    this.setupScoreUpdateListener();
+    this.checkForStoredScoreUpdates();
+  },
+  beforeUnmount() {
+    this.cleanupScoreUpdateListener();
   }
 }
 </script>
