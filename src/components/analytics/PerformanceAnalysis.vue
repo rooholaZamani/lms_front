@@ -112,7 +112,38 @@
         <div class="col-md-8">
           <div class="modern-card">
             <div class="card-body">
-              <h6 class="card-title">نمودار میانگین نمرات آزمون</h6>
+              <h6 class="card-title mb-3">نمودار میانگین نمرات آزمون</h6>
+
+              <!-- Tab Navigation for Courses -->
+              <ul class="nav nav-pills mb-3 course-tabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button
+                    class="nav-link"
+                    :class="{ active: selectedCourseTab === 'all' }"
+                    @click="selectedCourseTab = 'all'"
+                    type="button"
+                  >
+                    همه دوره‌ها
+                  </button>
+                </li>
+                <li
+                  v-for="course in courses"
+                  :key="course.id"
+                  class="nav-item"
+                  role="presentation"
+                >
+                  <button
+                    class="nav-link"
+                    :class="{ active: selectedCourseTab === course.id }"
+                    @click="selectedCourseTab = course.id"
+                    type="button"
+                  >
+                    {{ course.title }}
+                  </button>
+                </li>
+              </ul>
+
+              <!-- Chart Container -->
               <div class="chart-container">
                 <Charts
                     v-if="progressChartData.length > 0"
@@ -451,6 +482,7 @@ export default {
     const selectedCourse = ref('');
     const selectedPeriod = ref('month');
     const analysisType = ref('progress');
+    const selectedCourseTab = ref('all'); // 'all' or courseId
 
     // Course data
     const courses = ref([]);
@@ -465,6 +497,8 @@ export default {
 
     // Progress analysis data
     const lessonProgress = ref([]);
+    const lessonsByCourse = ref({}); // Grouped by course
+    const allLessons = ref([]); // All lessons combined
     const progressDistribution = ref({
       excellent: 0,
       good: 0,
@@ -507,19 +541,31 @@ export default {
 
     // Computed chart data
     const progressChartData = computed(() => {
-      if (!lessonProgress.value || lessonProgress.value.length === 0) {
-        console.log('No lesson progress data available');
+      let dataToProcess = [];
+
+      // Choose data based on selected tab
+      if (selectedCourseTab.value === 'all') {
+        dataToProcess = allLessons.value || [];
+      } else {
+        // Find lessons for specific course
+        const courseName = courses.value.find(c => c.id === selectedCourseTab.value)?.title;
+        dataToProcess = lessonsByCourse.value[courseName] || [];
+      }
+
+      if (!dataToProcess || dataToProcess.length === 0) {
+        console.log('No lesson progress data available for selected tab');
         return [];
       }
 
-      console.log('Processing lesson progress data:', lessonProgress.value);
+      console.log('Processing lesson progress data:', dataToProcess);
 
-      return lessonProgress.value.map(lesson => ({
+      return dataToProcess.map(lesson => ({
         label: lesson.lesson || lesson.title || lesson.name,
         score: lesson.avgScore || lesson.averageScore || 0,
         difficulty: lesson.difficulty || 'متوسط',
         completionRate: lesson.completionRate || 0,
-        studentFeedback: lesson.studentFeedback || 0
+        studentFeedback: lesson.studentFeedback || 0,
+        courseTitle: lesson.courseTitle || ''
       }));
     });
 
@@ -678,17 +724,29 @@ export default {
         if (analysisType.value === 'progress') {
           // تحلیل پیشرفت
           const lessonResponse = await analytics.fetchLessonPerformanceAnalysis();
-          lessonProgress.value = lessonResponse || [];
-          console.log('Lesson progress data:', lessonProgress.value);
+          console.log('Lesson response from backend:', lessonResponse);
+
+          if (lessonResponse) {
+            lessonsByCourse.value = lessonResponse.lessonsByCourse || {};
+            allLessons.value = lessonResponse.allLessons || [];
+            lessonProgress.value = lessonResponse.allLessons || []; // For backward compatibility
+          } else {
+            lessonsByCourse.value = {};
+            allLessons.value = [];
+            lessonProgress.value = [];
+          }
+
+          console.log('Lessons by course:', lessonsByCourse.value);
+          console.log('All lessons:', allLessons.value);
 
           // محاسبه توزیع پیشرفت
-          const total = lessonProgress.value.length;
+          const total = allLessons.value.length;
           if (total > 0) {
             progressDistribution.value = {
-              excellent: lessonProgress.value.filter(l => (l.avgScore || 0) >= 90).length,
-              good: lessonProgress.value.filter(l => (l.avgScore || 0) >= 70 && (l.avgScore || 0) < 90).length,
-              average: lessonProgress.value.filter(l => (l.avgScore || 0) >= 50 && (l.avgScore || 0) < 70).length,
-              poor: lessonProgress.value.filter(l => (l.avgScore || 0) < 50).length
+              excellent: allLessons.value.filter(l => (l.avgScore || 0) >= 90).length,
+              good: allLessons.value.filter(l => (l.avgScore || 0) >= 70 && (l.avgScore || 0) < 90).length,
+              average: allLessons.value.filter(l => (l.avgScore || 0) >= 50 && (l.avgScore || 0) < 70).length,
+              poor: allLessons.value.filter(l => (l.avgScore || 0) < 50).length
             };
           }
 
@@ -833,11 +891,14 @@ export default {
       selectedCourse,
       selectedPeriod,
       analysisType,
+      selectedCourseTab,
 
       // Data
       courses,
       courseStats,
       lessonProgress,
+      lessonsByCourse,
+      allLessons,
       progressDistribution,
       timeDistributionData,
       timeDistribution,
@@ -973,6 +1034,34 @@ export default {
 
 .difficulty {
   color: #dc3545;
+}
+
+/* Course Tabs Styling */
+.course-tabs {
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem !important;
+}
+
+.course-tabs .nav-link {
+  color: #6c757d;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px 8px 0 0;
+  background: transparent;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.course-tabs .nav-link:hover {
+  color: #667eea;
+  background: rgba(102, 126, 234, 0.1);
+}
+
+.course-tabs .nav-link.active {
+  color: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
 }
 
 @media (max-width: 768px) {
