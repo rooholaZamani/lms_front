@@ -262,137 +262,45 @@ export default {
         });
 
       } else if (this.type === 'scores') {
-        // Check if we need grouped chart (multiple courses)
-        const hasCourseTitle = this.data.some(item => item.courseTitle);
-
-        if (hasCourseTitle) {
-          // Group data by course
-          const courseGroups = {};
-          this.data.forEach(item => {
-            const courseTitle = item.courseTitle || 'نامشخص';
-            if (!courseGroups[courseTitle]) {
-              courseGroups[courseTitle] = [];
-            }
-            courseGroups[courseTitle].push(item);
-          });
-
-          // Generate color palette for courses
-          const colors = [
-            '#667eea', '#f093fb', '#4facfe', '#fa709a', '#30cfd0',
-            '#a8edea', '#fed6e3', '#c471ed', '#12c2e9', '#f64f59'
-          ];
-
-          // Create datasets for each course
-          const datasets = Object.keys(courseGroups).map((courseTitle, index) => ({
-            label: courseTitle,
-            data: this.data.map(item => {
-              if (item.courseTitle === courseTitle) {
-                return item.score || item.avgScore || 0;
+        this.chart = new ChartJS(ctx, {
+          type: 'bar',
+          data: {
+            labels: this.data.map(item => item.label || item.lesson || item.name),
+            datasets: [{
+              label: 'نمره میانگین',
+              data: this.data.map(item => item.score || item.avgScore || 0),
+              backgroundColor: '#667eea',
+              borderColor: '#667eea',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'top',
               }
-              return null;
-            }),
-            backgroundColor: colors[index % colors.length],
-            borderColor: colors[index % colors.length],
-            borderWidth: 1
-          }));
-
-          this.chart = new ChartJS(ctx, {
-            type: 'bar',
-            data: {
-              labels: this.data.map(item => item.label || item.lesson || item.name),
-              datasets: datasets
             },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: {
-                  position: 'top',
-                  labels: {
-                    font: {
-                      family: 'Vazirmatn',
-                      size: 12
-                    }
-                  }
+            scales: {
+              x: {
+                display: true,
+                title: {
+                  display: true,
+                  text: 'درس‌ها'
                 }
               },
-              scales: {
-                x: {
+              y: {
+                beginAtZero: true,
+                max: 100,
+                title: {
                   display: true,
-                  title: {
-                    display: true,
-                    text: 'درس‌ها',
-                    font: {
-                      family: 'Vazirmatn'
-                    }
-                  },
-                  ticks: {
-                    font: {
-                      family: 'Vazirmatn'
-                    }
-                  }
-                },
-                y: {
-                  beginAtZero: true,
-                  max: 100,
-                  title: {
-                    display: true,
-                    text: 'نمره (از 100)',
-                    font: {
-                      family: 'Vazirmatn'
-                    }
-                  },
-                  ticks: {
-                    font: {
-                      family: 'Vazirmatn'
-                    }
-                  }
+                  text: 'نمره (از 100)'
                 }
               }
             }
-          });
-        } else {
-          // Simple bar chart for single course
-          this.chart = new ChartJS(ctx, {
-            type: 'bar',
-            data: {
-              labels: this.data.map(item => item.label || item.lesson || item.name),
-              datasets: [{
-                label: 'نمره میانگین',
-                data: this.data.map(item => item.score || item.avgScore || 0),
-                backgroundColor: '#667eea',
-                borderColor: '#667eea',
-                borderWidth: 1
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: {
-                  position: 'top',
-                }
-              },
-              scales: {
-                x: {
-                  display: true,
-                  title: {
-                    display: true,
-                    text: 'درس‌ها'
-                  }
-                },
-                y: {
-                  beginAtZero: true,
-                  max: 100,
-                  title: {
-                    display: true,
-                    text: 'نمره (از 100)'
-                  }
-                }
-              }
-            }
-          });
-        }
+          }
+        });
 
       } else if (this.type === 'pie') {
         this.chart = new ChartJS(ctx, {

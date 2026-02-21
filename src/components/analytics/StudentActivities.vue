@@ -89,8 +89,8 @@
             <div class="modern-card">
               <div class="modern-card-header">
                 <h5 class="mb-0">
-                  <i class="fas fa-calendar-check text-warning me-2"></i>
-                  فعالیت روزانه
+                  <i class="fas fa-clock text-warning me-2"></i>
+                  تحلیل زمان بر اساس نوع فعالیت(مدت)
                 </h5>
               </div>
               <div class="modern-card-body">
@@ -366,32 +366,10 @@ export default {
     },
 
     processDailyHeatmapData(data) {
-      const daysOrder = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه', 'شنبه']
-      const rawHeatmap = data.heatmapData || {}
-
-      const heatmapArray = []
-      let maxCount = 0
-      let maxDay = '-'
-      let maxHour = '-'
-
-      for (const [dayName, hourMap] of Object.entries(rawHeatmap)) {
-        const dayIndex = daysOrder.indexOf(dayName)
-        if (dayIndex === -1) continue
-        for (const [hour, count] of Object.entries(hourMap)) {
-          const activityCount = Number(count)
-          heatmapArray.push({ hour: Number(hour), dayOfWeek: dayIndex, activityCount })
-          if (activityCount > maxCount) {
-            maxCount = activityCount
-            maxDay = dayName
-            maxHour = `${hour}:00`
-          }
-        }
-      }
-
-      this.dailyHeatmapData = heatmapArray
-      this.mostActiveDay = maxDay
-      this.mostActiveHour = maxHour
-      this.totalDailyActivities = data.totalActivities || 0
+      this.dailyHeatmapData = data.heatmapData || [];
+      this.mostActiveDay = data.analytics?.mostActiveDay || '-';
+      this.mostActiveHour = data.analytics?.mostActiveHour || '-';
+      this.totalDailyActivities = data.analytics?.totalActivities || 0;
     },
 
     renderDailyHeatmap() {
@@ -683,29 +661,13 @@ export default {
     },
 
     createActivityTypeChart() {
-      if (!this.$refs.activityTypeChart || !this.advancedAnalytics?.activityCounts) return
+      if (!this.$refs.activityTypeChart || !this.advancedAnalytics?.activityTypeDistribution) return
 
-      const activityLabels = {
-        'CONTENT_VIEW': 'مشاهده محتوا',
-        'CONTENT_COMPLETION': 'تکمیل محتوا',
-        'LESSON_COMPLETION': 'تکمیل درس',
-        'EXAM_START': 'شروع آزمون',
-        'EXAM_SUBMISSION': 'ارسال آزمون',
-        'ASSIGNMENT_SUBMISSION': 'ارسال تکلیف',
-        'ASSIGNMENT_VIEW': 'مشاهده تکلیف',
-        'FILE_ACCESS': 'دسترسی به فایل',
-        'CHAT_MESSAGE_SEND': 'ارسال پیام',
-        'CHAT_VIEW': 'مشاهده چت',
-        'LOGIN': 'ورود',
-        'LESSON_ACCESS': 'دسترسی به درس'
-      }
-
-      const data = this.advancedAnalytics.activityCounts
-      const total = Object.values(data).reduce((sum, v) => sum + v, 0)
-      const chartData = Object.entries(data).map(([type, count]) => ({
-        label: activityLabels[type] || type,
-        value: count,
-        percentage: total > 0 ? Math.round((count / total) * 100) : 0
+      const data = this.advancedAnalytics.activityTypeDistribution
+      const chartData = Object.entries(data).map(([type, info]) => ({
+        label: info.label,
+        value: info.count,
+        percentage: info.percentage
       }))
 
       const ctx = this.$refs.activityTypeChart.getContext('2d')
@@ -760,23 +722,41 @@ export default {
     },
 
     createTimeAnalysisChart() {
-      if (!this.$refs.timeAnalysisChart || !this.advancedAnalytics?.dailyActivity) return
+      if (!this.$refs.timeAnalysisChart || !this.advancedAnalytics?.timeAnalysisByActivityType) return
 
-      const data = this.advancedAnalytics.dailyActivity
-      const sortedEntries = Object.entries(data).sort(([a], [b]) => a.localeCompare(b))
-      const labels = sortedEntries.map(([date]) => date)
-      const values = sortedEntries.map(([, count]) => count)
+      const data = this.advancedAnalytics.timeAnalysisByActivityType
+      const chartData = Object.entries(data).map(([type, info]) => ({
+        label: info.label,
+        // اصلاح: استفاده از valueSeconds یا valueHours
+        hours: info.valueHours || (info.valueSeconds ? info.valueSeconds / 3600 : 0),
+        minutes: info.valueMinutes || (info.valueSeconds ? info.valueSeconds / 60 : 0),
+        percentage: info.percentage
+      }))
 
       const ctx = this.$refs.timeAnalysisChart.getContext('2d')
       this.timeAnalysisChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
-          labels,
+          labels: chartData.map(item => item.label),
           datasets: [{
-            label: 'تعداد فعالیت',
-            data: values,
-            backgroundColor: '#45b7d1',
-            borderColor: '#3182ce',
+            label: 'ساعت',
+            data: chartData.map(item => item.hours),
+            backgroundColor: [
+              '#667eea',
+              '#f093fb',
+              '#ff6b6b',
+              '#4ecdc4',
+              '#45b7d1',
+              '#f9ca24'
+            ],
+            borderColor: [
+              '#5a67d8',
+              '#e879f9',
+              '#e53e3e',
+              '#38b2ac',
+              '#3182ce',
+              '#d69e2e'
+            ],
             borderWidth: 1
           }]
         },
@@ -786,16 +766,9 @@ export default {
           scales: {
             y: {
               beginAtZero: true,
-              ticks: { stepSize: 1 },
               title: {
                 display: true,
-                text: 'تعداد فعالیت'
-              }
-            },
-            x: {
-              title: {
-                display: true,
-                text: 'تاریخ'
+                text: 'ساعت'
               }
             }
           },
@@ -805,7 +778,10 @@ export default {
             },
             tooltip: {
               callbacks: {
-                label: (context) => `${context.parsed.y} فعالیت`
+                label: (context) => {
+                  const item = chartData[context.dataIndex]
+                  return `${this.$filters.formatTime(item.hours * 3600)} (${item.percentage}%)`
+                }
               }
             }
           }
