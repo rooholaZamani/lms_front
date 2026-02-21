@@ -505,17 +505,20 @@ export default {
         const response = await axios.get('/analytics/student/enhanced-grades-distribution', { params })
 
         // Extract data from enhanced API structure
-        const examAnalytics = response.data.examAnalytics || {}
-        const assignmentAnalytics = response.data.assignmentAnalytics || {}
+        const examGrades = response.data.examGrades || {}
+        const assignmentGrades = response.data.assignmentGrades || {}
 
-        examScores.value = examAnalytics.examDetails || []
-        assignmentScores.value = assignmentAnalytics.gradedAssignments || []
-        examDistribution.value = examAnalytics.distribution || {}
-        assignmentDistribution.value = assignmentAnalytics.distribution || {}
+        examScores.value = []
+        assignmentScores.value = []
+        examDistribution.value = examGrades.distribution || {}
+        assignmentDistribution.value = assignmentGrades.distribution || {}
 
         // Store enhanced data for detailed views
-        enhancedAssignmentData.value = assignmentAnalytics
-        submissionSummary.value = response.data.submissionSummary || {}
+        enhancedAssignmentData.value = assignmentGrades
+        submissionSummary.value = {
+          totalExamsSubmitted: response.data.totalExams || 0,
+          totalAssignmentsSubmitted: response.data.totalAssignments || 0
+        }
 
 
       } catch (error) {
@@ -962,7 +965,7 @@ export default {
         isLoading
       })
 
-      if (!isLoading && newActivities.length > 0) {
+      if (!isLoading) {
         nextTick(() => {
           console.log('Creating charts from watch')
           createCharts()
