@@ -36,7 +36,7 @@
                 <button class="nav-link modern-nav-link" id="students-tab" data-bs-toggle="tab" data-bs-target="#students"
                         type="button" role="tab" aria-controls="students" aria-selected="false">
                   <i class="fas fa-users me-2"></i>
-                  دانش‌آموزان
+                  {{ $client.labels.students }}
                 </button>
               </li>
               <li v-if="isTeacher && isTeacherOfCourse" class="nav-item" role="presentation">
@@ -67,7 +67,7 @@
                     <div class="modern-card course-teacher animate-slide-right" style="animation-delay: 0.1s;">
                       <h5 class="modern-title">
                         <i class="fas fa-chalkboard-teacher text-success me-2"></i>
-                        استاد دوره
+                        {{ $client.labels.teacher }} دوره
                       </h5>
                       <div class="teacher-info">
                         <div class="teacher-avatar">
@@ -101,7 +101,7 @@
                             <i class="fas fa-users"></i>
                           </div>
                           <div class="stat-value">{{ course.enrolledStudents ? course.enrolledStudents.length : 0 }}</div>
-                          <div class="stat-label">دانش‌آموز</div>
+                          <div class="stat-label">{{ $client.labels.student }}</div>
                         </div>
                         <div class="stat-item">
                           <div class="stat-icon text-warning">

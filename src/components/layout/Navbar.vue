@@ -83,7 +83,7 @@
 
                     <router-link v-if="isStudent" :to="{ name: 'Dashboard' }" class="dropdown-item">
                       <i class="fas fa-graduation-cap me-2"></i>
-                      داشبورد دانش‌آموز
+                      {{ $client.labels.studentDashboard }}
                     </router-link>
 
                     <div class="dropdown-divider"></div>
@@ -109,6 +109,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useUser } from '@/composables/useUser.js';
 import { useFormatters } from '@/composables/useFormatters.js';
+import { useClientConfig } from '@/composables/useClientConfig.js';
 
 export default {
   name: 'Navbar',
@@ -117,6 +118,7 @@ export default {
     const route = useRoute();
     const { currentUser, isTeacher, isStudent, logout: userLogout } = useUser();
     const { formatDate } = useFormatters();
+    const clientConfig = useClientConfig();
 
     // Reactive state
     const searchQuery = ref('');
@@ -174,9 +176,9 @@ export default {
     };
 
     const getUserRoleText = () => {
-      if (isTeacher.value) return 'استاد';
-      if (isStudent.value) return 'دانش‌آموز';
-      return 'کاربر';
+      if (isTeacher.value) return clientConfig.labels.teacher;
+      if (isStudent.value) return clientConfig.labels.student;
+      return clientConfig.labels.user;
     };
 
     const getPageTitle = () => {
@@ -184,7 +186,7 @@ export default {
         '/dashboard': 'داشبورد',
         '/courses': 'دوره‌ها',
         '/profile': 'پروفایل',
-        '/students': 'دانش‌آموزان',
+        '/students': clientConfig.labels.students,
         '/reports': 'گزارش‌ها',
         '/recommander': 'توصیه‌های یادگیری',
         '/settings': 'تنظیمات'

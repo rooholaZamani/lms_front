@@ -127,11 +127,11 @@ export default {
 
     getUserRole() {
       if (this.isTeacher) {
-        return 'استاد';
+        return this.$client.labels.teacher;
       } else if (this.isStudent) {
-        return 'دانش‌آموز';
+        return this.$client.labels.student;
       }
-      return 'کاربر';
+      return this.$client.labels.user;
     }
   },
   mounted() {

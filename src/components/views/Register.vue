@@ -39,7 +39,7 @@
                   v-model="userType">
               <label for="student" class="user-type-label">
                 <i class="fas fa-user-graduate"></i>
-                <span>دانش آموز</span>
+                <span>{{ $client.labels.student }}</span>
                 <small>برای یادگیری دوره‌ها</small>
               </label>
             </div>
@@ -52,7 +52,7 @@
                   v-model="userType">
               <label for="teacher" class="user-type-label">
                 <i class="fas fa-chalkboard-teacher"></i>
-                <span>معلم</span>
+                <span>{{ $client.labels.teacher }}</span>
                 <small>برای تدریس و ایجاد دوره</small>
               </label>
             </div>

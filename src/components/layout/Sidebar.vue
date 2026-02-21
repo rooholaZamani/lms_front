@@ -122,12 +122,12 @@
                   class="modern-nav-link"
                   :to="{ name: 'StudentActivities' }"
                   active-class="active"
-                  :title="collapsed ? 'فعالیت دانش‌آموزان' : ''"
+                  :title="collapsed ? $client.labels.studentActivities : ''"
               >
                 <div class="nav-icon">
                   <i class="fas fa-users"></i>
                 </div>
-                <span v-if="!collapsed" class="nav-text">فعالیت دانش‌آموزان</span>
+                <span v-if="!collapsed" class="nav-text">{{ $client.labels.studentActivities }}</span>
                 <div v-if="!collapsed" class="nav-arrow">
                   <i class="fas fa-chevron-left"></i>
                 </div>
@@ -381,6 +381,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useUser } from '@/composables/useUser.js';
 import { useRouter } from 'vue-router';
 import axios from 'axios';
+import { useClientConfig } from '@/composables/useClientConfig.js';
 
 export default {
   name: 'Sidebar',
@@ -388,6 +389,7 @@ export default {
   setup(props, { emit }) {
     const { isTeacher, isStudent, currentUser, logout } = useUser();
     const router = useRouter();
+    const clientConfig = useClientConfig();
     const collapsed = ref(false);
     const isMobile = ref(false);
     const pendingGradingCount = ref(0);
@@ -451,9 +453,9 @@ export default {
     };
 
     const getUserRole = () => {
-      if (isTeacher.value) return 'استاد';
-      if (isStudent.value) return 'دانش‌آموز';
-      return 'کاربر';
+      if (isTeacher.value) return clientConfig.labels.teacher;
+      if (isStudent.value) return clientConfig.labels.student;
+      return clientConfig.labels.user;
     };
 
     const getRoleBadgeClass = () => {

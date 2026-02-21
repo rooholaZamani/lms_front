@@ -36,8 +36,8 @@
           </h6>
           <div v-if="course" class="course-info">
             <p class="mb-2"><strong>عنوان:</strong> {{ course.title || 'نامشخص' }}</p>
-            <p class="mb-2"><strong>استاد:</strong> {{ getTeacherName() }}</p>
-            <p class="mb-0"><strong>دانش‌آموزان:</strong> {{ getStudentsCount() }}</p>
+            <p class="mb-2"><strong>{{ $client.labels.teacher }}:</strong> {{ getTeacherName() }}</p>
+            <p class="mb-0"><strong>{{ $client.labels.students }}:</strong> {{ getStudentsCount() }}</p>
           </div>
           <div v-else class="text-center text-muted py-3">
             <i class="fas fa-info-circle fa-2x mb-2"></i>
@@ -505,10 +505,10 @@ export default {
 
     getRoleText(role) {
       switch (role) {
-        case 'TEACHER': return 'استاد';
-        case 'STUDENT': return 'دانش‌آموز';
+        case 'TEACHER': return this.$client.labels.teacher;
+        case 'STUDENT': return this.$client.labels.student;
         case 'ADMIN': return 'مدیر';
-        default: return 'کاربر';
+        default: return this.$client.labels.user;
       }
     },
 

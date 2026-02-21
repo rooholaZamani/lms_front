@@ -10,12 +10,12 @@
           <p class="course-subtitle">
             <span class="course-detail">
               <i class="fas fa-chalkboard-teacher me-1"></i>
-              استاد: {{ getTeacherName() }}
+              {{ $client.labels.teacher }}: {{ getTeacherName() }}
             </span>
             <span class="course-separator">|</span>
             <span class="course-detail">
               <i class="fas fa-users me-1"></i>
-              {{ course.enrolledStudents ? course.enrolledStudents.length : 0 }} دانش‌آموز
+              {{ course.enrolledStudents ? course.enrolledStudents.length : 0 }} {{ $client.labels.student }}
             </span>
             <span class="course-separator">|</span>
             <span class="course-detail">

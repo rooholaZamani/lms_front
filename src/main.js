@@ -8,6 +8,9 @@ import router from './router'
 import store from './store'
 import axios from 'axios'
 
+// کانفیگ client (مدرسه یا شرکت - بر اساس mode هنگام build)
+import clientConfig from '@client-config'
+
 // استایل‌ها
 import './assets/styles/main.css'
 import './assets/styles/common-pages.css'
@@ -78,6 +81,7 @@ app.use(Vue3Toastify, {
 // ثبت اشیا عمومی
 app.config.globalProperties.$http = axios
 app.config.globalProperties.$toast = toast
+app.config.globalProperties.$client = clientConfig
 // اضافه کردن فیلترهای عمومی با timezone صحیح
 import { formatShortDate, formatFullDate, formatDuration } from './utils/timeFormatter'
 

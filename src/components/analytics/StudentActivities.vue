@@ -3,10 +3,10 @@
     <div class="page-header">
       <h1 class="page-title">
         <i class="fas fa-chart-bar me-3"></i>
-        گزارش فعالیت دانش‌آموزان
+        {{ $client.labels.studentActivities }}
       </h1>
       <p class="page-description">
-        تحلیل جامع عملکرد و فعالیت‌های دانش‌آموزان در دوره‌های آموزشی
+        تحلیل جامع عملکرد و فعالیت‌های {{ $client.labels.students }} در دوره‌های آموزشی
       </p>
     </div>
 
@@ -27,9 +27,9 @@
 
         <div class="col-md-4" v-if="selectedCourseId">
           <div class="filter-group">
-            <label class="form-label">انتخاب دانش‌آموز:</label>
+            <label class="form-label">انتخاب {{ $client.labels.student }}:</label>
             <select v-model="selectedStudentId" @change="fetchAdvancedAnalytics" class="form-select">
-              <option value="">دانش‌آموز مورد نظر را انتخاب کنید</option>
+              <option value="">{{ $client.labels.student }} مورد نظر را انتخاب کنید</option>
               <option v-for="student in courseStudents" :key="student.studentId" :value="student.studentId">
                 {{ student.studentName }}
               </option>
@@ -56,9 +56,9 @@
         <div class="empty-state-icon">
           <i class="fas fa-user-graduate"></i>
         </div>
-        <h3 class="empty-state-title">انتخاب دانش‌آموز</h3>
+        <h3 class="empty-state-title">انتخاب {{ $client.labels.student }}</h3>
         <p class="empty-state-description">
-          برای مشاهده گزارش عملکرد، ابتدا دوره و سپس دانش‌آموز مورد نظر را انتخاب کنید
+          برای مشاهده گزارش عملکرد، ابتدا دوره و سپس {{ $client.labels.student }} مورد نظر را انتخاب کنید
         </p>
       </div>
     </div>

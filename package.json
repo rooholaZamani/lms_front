@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:school": "vite --mode school",
+    "dev:company": "vite --mode company",
     "build": "vite build",
+    "build:school": "vite build --mode school",
+    "build:company": "vite build --mode company",
     "preview": "vite preview"
   },
   "dependencies": {
